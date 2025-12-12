@@ -55,7 +55,6 @@ cmake_install.cmake
 
 # Additional generated files
 *_log.txt
-compile_flags.txt
 dumps/
 *.dmp
 
