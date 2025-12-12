@@ -1,7 +1,34 @@
 # .clang-format
 BasedOnStyle: LLVM
 IndentWidth: 4
+ColumnLimit: 120
 TabWidth: 4
 UseTab: Never
-ColumnLimit: 120
 AccessModifierOffset: -4
+AlignAfterOpenBracket: BlockIndent
+
+BinPackArguments: false
+
+# 람다가 짧아도 무조건 펼치기
+AllowShortLambdasOnASingleLine: None 
+
+# (선택 사항) 일반 함수나 블록도 한 줄 합치기 싫다면:
+AllowShortFunctionsOnASingleLine: None
+AllowShortBlocksOnASingleLine: Never
+
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true        # 함수: 다음 줄로 
+  AfterNamespace: false      # 네임스페이스: 같은 줄에
+
+  BeforeLambdaBody: true
+  
+  # 아래는 일반적인 Allman 스타일을 따르려면 true, 
+  # if/for 문은 붙이고 싶다면 false로 설정하세요.
+  AfterClass: true           # 클래스: 다음 줄
+  AfterStruct: true          # 구조체: 다음 줄
+  AfterControlStatement: Always # if, for, while 등: 다음 줄
+  BeforeElse: true           # else 앞 줄바꿈
+
+
