@@ -4,11 +4,13 @@
 
 namespace System {
 
-class IDispatcher {
+class IDispatcher
+{
 public:
     virtual ~IDispatcher() = default;
     virtual void Post(SystemMessage message) = 0;
     virtual void Process() = 0;
+    virtual size_t GetQueueSize() const = 0;
 };
 
 // Global Access Removed. Use Dependency Injection.

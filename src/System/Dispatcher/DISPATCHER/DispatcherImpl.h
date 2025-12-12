@@ -7,7 +7,8 @@
 
 namespace System {
 
-class DispatcherImpl : public IDispatcher {
+class DispatcherImpl : public IDispatcher
+{
 public:
     DispatcherImpl(std::shared_ptr<IPacketHandler> packetHandler);
     virtual ~DispatcherImpl();
@@ -16,6 +17,11 @@ public:
 
     // Main Loop processing (Called by Worker Threads)
     void Process() override;
+
+    size_t GetQueueSize() const override
+    {
+        return _messageQueue.size_approx();
+    }
 
 private:
     moodycamel::ConcurrentQueue<SystemMessage> _messageQueue;

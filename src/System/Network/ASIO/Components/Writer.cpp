@@ -1,10 +1,14 @@
-#include "System/Network/ASIO/Components/Writer.h"
+#include <boost/asio/bind_allocator.hpp>
+#include <boost/asio/recycling_allocator.hpp>
+
 #include "System/Network/ASIO/AsioSession.h"
+#include "System/Network/ASIO/Components/Writer.h"
 #include "System/Pch.h"
 
 namespace System {
 
-void Writer::Init(std::shared_ptr<boost::asio::ip::tcp::socket> socket, AsioSession *owner) {
+void Writer::Init(std::shared_ptr<boost::asio::ip::tcp::socket> socket, AsioSession *owner)
+{
     _socket = socket;
     _owner = owner;
 
@@ -14,20 +18,31 @@ void Writer::Init(std::shared_ptr<boost::asio::ip::tcp::socket> socket, AsioSess
     _linearBuffer.reserve(64 * 1024);
 
     _isSending.store(false);
+
+    // [Cleanup Reuse]
+    std::shared_ptr<std::vector<uint8_t>> dummy;
+    while (_sendQueue.try_dequeue(dummy))
+    {
+        // Drain old packets
+    }
 }
 
-void Writer::Send(std::shared_ptr<std::vector<uint8_t>> packet) {
+void Writer::Send(std::shared_ptr<std::vector<uint8_t>> packet)
+{
     // 1. 큐 삽입
     _sendQueue.enqueue(std::move(packet));
 
     // 2. 전송 트리거 (CAS 없이 exchange가 가장 빠름)
-    if (_isSending.exchange(true) == false) {
+    if (_isSending.exchange(true) == false)
+    {
         Flush();
     }
 }
 
-void Writer::Flush() {
-    if (!_socket || !_socket->is_open()) {
+void Writer::Flush()
+{
+    if (!_socket || !_socket->is_open())
+    {
         _isSending.store(false);
         return;
     }
@@ -44,19 +59,22 @@ void Writer::Flush() {
     size_t count = _sendQueue.try_dequeue_bulk(tempItems, MAX_BATCH_SIZE);
 
     // [INJECT START] Monitoring Logic (Log once per second)
-    if (count > 0) {
+    if (count > 0)
+    {
         _statFlushCount++;
         _statTotalItemCount += count;
         if (count > _statMaxBatch)
             _statMaxBatch = count;
 
         auto now = std::chrono::steady_clock::now();
-        if (now - _lastStatTime > std::chrono::seconds(1)) {
+        if (now - _lastStatTime > std::chrono::seconds(1))
+        {
             double avgBatch = (double)_statTotalItemCount / _statFlushCount;
 
             // Log format: [Writer] Flush Calls: {count}, Avg Batch: {avg}, Max Batch: {max}
-            LOG_FILE("[Writer] Flush Calls: {}, Avg Batch: {:.2f}, Max Batch: {}", _statFlushCount, avgBatch,
-                     _statMaxBatch);
+            LOG_FILE(
+                "[Writer] Flush Calls: {}, Avg Batch: {:.2f}, Max Batch: {}", _statFlushCount, avgBatch, _statMaxBatch
+            );
 
             // Reset stats
             _statFlushCount = 0;
@@ -68,15 +86,18 @@ void Writer::Flush() {
     // [INJECT END]
 
     // 2. 큐가 비었을 때 처리 (좀비 방지 Double Check)
-    if (count == 0) {
+    if (count == 0)
+    {
         _isSending.store(false); // 퇴근 도장
 
         // 뒤돌아보기: 퇴근 직전에 누가 넣었나?
         std::shared_ptr<std::vector<uint8_t>> straggler;
-        if (_sendQueue.try_dequeue(straggler)) {
+        if (_sendQueue.try_dequeue(straggler))
+        {
             bool expected = false;
             // 다시 출근 시도
-            if (_isSending.compare_exchange_strong(expected, true)) {
+            if (_isSending.compare_exchange_strong(expected, true))
+            {
                 // [낙오자 처리]
                 // 1개뿐이니 복잡한 병합 없이 바로 전송
                 _linearBuffer.clear();
@@ -92,11 +113,24 @@ void Writer::Flush() {
                 straggler.reset();
 
                 // 전송
+                // [Lifetime Safety] Capture self
+                std::shared_ptr<AsioSession> self = _owner->shared_from_this();
+
                 boost::asio::async_write(
-                    *_socket, boost::asio::buffer(_linearBuffer),
-                    [this](const boost::system::error_code &ec, size_t tr) { OnWriteComplete(ec, tr); });
+                    *_socket,
+                    boost::asio::buffer(_linearBuffer),
+                    boost::asio::bind_allocator(
+                        boost::asio::recycling_allocator<void>(),
+                        [this, self](const boost::system::error_code &ec, size_t tr)
+                        {
+                            OnWriteComplete(ec, tr);
+                        }
+                    )
+                );
                 return;
-            } else {
+            }
+            else
+            {
                 // 다른 스레드가 이미 들어옴 -> 다시 큐에 넣고 퇴근
                 _sendQueue.enqueue(std::move(straggler));
             }
@@ -110,13 +144,15 @@ void Writer::Flush() {
 
     // A. 전체 크기 계산
     size_t totalSize = 0;
-    for (size_t i = 0; i < count; ++i) {
+    for (size_t i = 0; i < count; ++i)
+    {
         totalSize += tempItems[i]->size();
     }
 
     // B. 버퍼 준비 (Capacity 내에서는 할당 없음)
     _linearBuffer.clear();
-    if (_linearBuffer.capacity() < totalSize) {
+    if (_linearBuffer.capacity() < totalSize)
+    {
         // 부족하면 1.5배~2배 넉넉히 확장
         _linearBuffer.reserve(std::max(totalSize, _linearBuffer.capacity() * 2));
     }
@@ -126,7 +162,8 @@ void Writer::Flush() {
 
     // C. 고속 복사 (memcpy loop)
     uint8_t *destPtr = _linearBuffer.data();
-    for (size_t i = 0; i < count; ++i) {
+    for (size_t i = 0; i < count; ++i)
+    {
         size_t pktSize = tempItems[i]->size();
 
         // 메모리 복사 (L1 캐시 내에서 동작하므로 매우 빠름)
@@ -140,14 +177,27 @@ void Writer::Flush() {
     }
 
     // 3. 전송 (OS에는 거대 버퍼 주소 1개만 던짐)
-    boost::asio::async_write(*_socket, boost::asio::buffer(_linearBuffer),
-                             [this](const boost::system::error_code &ec, size_t bytesTransferred) {
-                                 OnWriteComplete(ec, bytesTransferred);
-                             });
+    // [Lifetime Safety] buffer pointer is valid (member of Writer),
+    // and writer is member of Session. Capture Session to keep all alive.
+    std::shared_ptr<AsioSession> self = _owner->shared_from_this();
+
+    boost::asio::async_write(
+        *_socket,
+        boost::asio::buffer(_linearBuffer),
+        boost::asio::bind_allocator(
+            boost::asio::recycling_allocator<void>(),
+            [this, self](const boost::system::error_code &ec, size_t bytesTransferred)
+            {
+                OnWriteComplete(ec, bytesTransferred);
+            }
+        )
+    );
 }
 
-void Writer::OnWriteComplete(const boost::system::error_code &ec, size_t bytesTransferred) {
-    if (ec) {
+void Writer::OnWriteComplete(const boost::system::error_code &ec, size_t bytesTransferred)
+{
+    if (ec)
+    {
         _isSending.store(false);
         return;
     }

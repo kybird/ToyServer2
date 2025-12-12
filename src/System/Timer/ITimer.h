@@ -15,8 +15,8 @@ public:
     virtual void SetInterval(std::chrono::milliseconds interval, std::function<void()> callback) = 0;
 };
 
-// Global Access
-ITimer &GetTimer();
-void SetGlobalTimer(std::shared_ptr<ITimer> timer);
+// Global Access - REMOVED
+// ITimer &GetTimer();
+// void SetGlobalTimer(std::shared_ptr<ITimer> timer);
 
 } // namespace System

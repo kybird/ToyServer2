@@ -6,42 +6,62 @@
 
 namespace System {
 
-/*
-    Pools std::vector<uint8_t> to reduce allocations for variable length
-   packets. The capacity of vectors in the pool is preserved, allowing reuse for
-   large packets.
-*/
-class PacketPool {
+class PacketPool
+{
 public:
-  static std::shared_ptr<std::vector<uint8_t>> Allocate(size_t size) {
-    std::vector<uint8_t> *ptr = nullptr;
-    if (_pool.try_dequeue(ptr)) {
-      // Reuse existing vector
-      ptr->clear();
-      if (ptr->capacity() < size) {
-        ptr->reserve(size);
-      }
-    } else {
-      // Create new vector
-      ptr = new std::vector<uint8_t>();
-      ptr->reserve(size);
+    static std::atomic<int> _poolSize; // Track pool size
+    static int GetPoolSize()
+    {
+        return _poolSize.load();
     }
 
-    // Return with custom deleter that returns to pool
-    return std::shared_ptr<std::vector<uint8_t>>(
-        ptr, [](std::vector<uint8_t> *p) { Release(p); });
-  }
+    static std::shared_ptr<std::vector<uint8_t>> Allocate(size_t size)
+    {
+        std::vector<uint8_t> *ptr = nullptr;
+
+        // [수정] 포인터 접근(->)으로 변경
+        if (_pool->try_dequeue(ptr))
+        {
+            _poolSize--;
+            ptr->clear();
+            if (ptr->capacity() < size)
+                ptr->reserve(size);
+        }
+        else
+        {
+            ptr = new std::vector<uint8_t>();
+            ptr->reserve(size);
+        }
+
+        return std::shared_ptr<std::vector<uint8_t>>(
+            ptr,
+            [](std::vector<uint8_t> *p)
+            {
+                Release(p);
+            }
+        );
+    }
+
+    static void Clear()
+    {
+        std::vector<uint8_t> *ptr = nullptr;
+        // [수정] 포인터 접근
+        while (_pool->try_dequeue(ptr))
+        {
+            delete ptr;
+        }
+    }
 
 private:
-  static void Release(std::vector<uint8_t> *ptr) { _pool.enqueue(ptr); }
+    static void Release(std::vector<uint8_t> *ptr)
+    {
+        // [핵심] _pool은 포인터라서 프로그램 끝까지 살아있음
+        _pool->enqueue(ptr);
+        _poolSize++;
+    }
 
-  static moodycamel::ConcurrentQueue<std::vector<uint8_t> *> _pool;
+    // [수정] 객체(Queue)가 아니라 포인터(Queue*)로 선언
+    static moodycamel::ConcurrentQueue<std::vector<uint8_t> *> *_pool;
 };
-
-// Define static member in header for simplicity (inline) or need cpp file?
-// Template static members are fine in headers, but this is a normal class.
-// We should put the definition in a cpp file or make it inline/template.
-// To avoid strict ODR issues, let's just make it a CP file or use inline
-// variable (C++17).
 
 } // namespace System

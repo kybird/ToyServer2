@@ -13,7 +13,8 @@ namespace System {
 
 class IDispatcher;
 
-class AsioSession : public ISession, public std::enable_shared_from_this<AsioSession> {
+class AsioSession : public ISession, public std::enable_shared_from_this<AsioSession>
+{
 public:
     AsioSession();
     virtual ~AsioSession();
@@ -28,7 +29,10 @@ public:
     void Send(std::span<const uint8_t> data) override;
     void Send(std::shared_ptr<std::vector<uint8_t>> packet) override;
     void Close() override;
-    uint64_t GetId() const override { return _id; }
+    uint64_t GetId() const override
+    {
+        return _id;
+    }
 
     // Component Callbacks
     void OnRead(size_t bytesTransferred);
@@ -42,6 +46,7 @@ private:
     std::shared_ptr<boost::asio::ip::tcp::socket> _socket;
     uint64_t _id = 0;
     IDispatcher *_dispatcher = nullptr;
+    std::atomic<bool> _connected = false;
 
     // Components
     Reader _reader;

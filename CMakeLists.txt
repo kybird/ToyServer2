@@ -54,8 +54,9 @@ target_sources(System PRIVATE
     src/System/Network/ASIO/SessionFactory.cpp
     src/System/Dispatcher/DISPATCHER/DispatcherImpl.cpp
     src/System/Debug/CrashHandler.cpp
-    src/System/Timer/AsioTimer.cpp
-    src/System/Timer/Timer.cpp
+    src/System/Timer/ASIO/AsioTimer.cpp
+    src/System/Timer/ITimer.h
+    src/System/Timer/TimerHandle.h
     # Will add files here as we create them
 )
 target_include_directories(System PUBLIC src/System src)

@@ -11,7 +11,8 @@ class IDispatcher;
 class ThreadPool;
 class IPacketHandler;
 
-class Framework {
+class Framework
+{
 public:
     Framework();
     ~Framework();
@@ -19,15 +20,23 @@ public:
     // Dependency Injection: User provides PacketHandler
     bool Init(const std::string &configPath, std::shared_ptr<IPacketHandler> packetHandler);
     void Run();
+    void Stop();
 
-    std::shared_ptr<IDispatcher> GetDispatcher() const { return _dispatcher; }
-    std::shared_ptr<ITimer> GetTimer() const { return _timer; }
+    std::shared_ptr<IDispatcher> GetDispatcher() const
+    {
+        return _dispatcher;
+    }
+    std::shared_ptr<ITimer> GetTimer() const
+    {
+        return _timer;
+    }
 
 private:
     std::shared_ptr<AsioService> _network;
     std::shared_ptr<ITimer> _timer;
     std::shared_ptr<IDispatcher> _dispatcher;
     std::shared_ptr<ThreadPool> _threadPool;
+    std::atomic<bool> _running{false};
 };
 
 } // namespace System
