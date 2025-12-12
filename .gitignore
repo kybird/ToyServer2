@@ -1,0 +1,75 @@
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.ipch
+*.aps
+*.opendb
+*.db
+*.pdb
+*.ilk
+
+# VS Code
+.vscode/
+
+# CMake
+build/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+*.cmake
+!CMakeLists.txt
+
+# Additional generated files
+*_log.txt
+compile_flags.txt
+dumps/
+*.dmp
+
+# Vcpkg
+vcpkg_installed/
+
+# Logs
+*.log
+logs/
+
+# Agent specific
+.gemini/
+
+# OS generated
+Thumbs.db
+Desktop.ini
+.DS_Store

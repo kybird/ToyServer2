@@ -1,0 +1,71 @@
+#include "System/ILog.h"
+#include "System/Pch.h"
+#include <spdlog/async.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_sinks.h>
+
+namespace System {
+
+class LogImpl : public ILog {
+public:
+    void Init() override {
+        try {
+            // Setup Async Logger
+            spdlog::init_thread_pool(8192, 1);
+
+            // Use simple stdout sink (No Color for stability)
+            // auto console_sink =
+            // std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+            auto console_sink = std::make_shared<spdlog::sinks::stdout_sink_mt>();
+
+            auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/server.log", true);
+
+            std::vector<spdlog::sink_ptr> sinks{console_sink, file_sink};
+
+            auto logger = std::make_shared<spdlog::async_logger>(
+                "server", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+
+            spdlog::register_logger(logger);
+            spdlog::set_default_logger(logger);
+            // Removed colors from pattern: [%^%l%$] -> [%l]
+            spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] %v");
+
+            // Setup File-Only Logger
+            _fileLogger = std::make_shared<spdlog::async_logger>("file_only", file_sink, spdlog::thread_pool(),
+                                                                 spdlog::async_overflow_policy::block);
+            spdlog::register_logger(_fileLogger);
+            _fileLogger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [FILE] %v");
+
+            spdlog::flush_on(spdlog::level::err);
+            spdlog::flush_every(std::chrono::seconds(1));
+            spdlog::info("Logger Initialized");
+            logger->flush();
+        } catch (const std::exception &e) {
+            std::cerr << "Logger Init Failed: " << e.what() << std::endl;
+        } catch (...) {
+            std::cerr << "Logger Init Failed: Unknown Error" << std::endl;
+        }
+    }
+
+    void Info(const std::string &msg) override { spdlog::info(msg); }
+
+    void Error(const std::string &msg) override { spdlog::error(msg); }
+
+    void Debug(const std::string &msg) override { spdlog::debug(msg); }
+
+    void File(const std::string &msg) override {
+        if (_fileLogger) {
+            _fileLogger->info(msg);
+        }
+    }
+
+private:
+    std::shared_ptr<spdlog::logger> _fileLogger;
+};
+
+ILog &GetLog() {
+    static LogImpl instance;
+    return instance;
+}
+
+} // namespace System
