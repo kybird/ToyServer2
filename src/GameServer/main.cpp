@@ -28,8 +28,10 @@ void operator delete(void *ptr) noexcept
 #include "System/Memory/ObjectPool.h"
 #include "System/Memory/PacketPool.h"
 #include "System/Network/ASIO/AsioSession.h"
+#include "System/Network/ASIO/SessionFactory.h"
 #include <csignal>
 #include <functional>
+
 
 // Global Shutdown Handler
 std::function<void(int)> g_SignalHandler;
@@ -94,11 +96,13 @@ int main(int argc, char *argv[])
                         auto sessionPoolSize = System::ObjectPool<System::AsioSession>::GetPoolSize();
                         auto queueSize = framework.GetDispatcher()->GetQueueSize();
 
+                        auto activeSessionCount = System::SessionFactory::GetSessionCount();
+
                         LOG_INFO(
-                            "Mem: Alloc={}, PktPool={}, SessPool={}, Queue={}",
+                            "Mem: Alloc={}, PktPool={}, ActiveSess={}, Queue={}",
                             active,
                             packetPoolSize,
-                            sessionPoolSize,
+                            activeSessionCount,
                             queueSize
                         );
                     }

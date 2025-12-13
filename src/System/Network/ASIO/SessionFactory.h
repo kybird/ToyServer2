@@ -10,13 +10,15 @@ namespace System {
 
 class IDispatcher;
 
-class SessionFactory {
+class SessionFactory
+{
 public:
     // Use ObjectPool to get a session
-    static std::shared_ptr<AsioSession> CreateSession(std::shared_ptr<boost::asio::ip::tcp::socket> socket,
-                                                      IDispatcher *dispatcher);
+    static std::shared_ptr<AsioSession>
+    CreateSession(std::shared_ptr<boost::asio::ip::tcp::socket> socket, IDispatcher *dispatcher);
     static std::shared_ptr<AsioSession> FindSession(uint64_t id);
     static void RemoveSession(uint64_t id);
+    static size_t GetSessionCount();
 
 private:
     static std::atomic<uint64_t> _nextSessionId;

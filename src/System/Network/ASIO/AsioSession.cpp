@@ -14,6 +14,7 @@ AsioSession::AsioSession()
 
 AsioSession::~AsioSession()
 {
+    LOG_INFO("Session Destroyed: ID {}", _id);
 }
 
 void AsioSession::Reset(
