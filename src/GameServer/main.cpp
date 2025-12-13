@@ -32,7 +32,6 @@ void operator delete(void *ptr) noexcept
 #include <csignal>
 #include <functional>
 
-
 // Global Shutdown Handler
 std::function<void(int)> g_SignalHandler;
 void SignalHandlerWrapper(int signal)
@@ -60,10 +59,15 @@ int main(int argc, char *argv[])
         // 1. Init Logger
         System::GetLog().Init();
 
-        // 1.5 Prepare Packet Pool (Pre-allocate 2M packets to handle burst)
-        LOG_INFO("Pre-allocating PacketPool...");
-        System::PacketPool::Prepare(2000000);
-        LOG_INFO("PacketPool Ready. Size: {}", System::PacketPool::GetPoolSize());
+        // 1.5 Prepare Packet Pool & Session Pool
+        LOG_INFO("Pre-allocating PacketPool & SessionPool...");
+        System::PacketPool::Prepare(1000);
+        System::SessionPool<System::AsioSession>::Init(1000);
+        LOG_INFO(
+            "Pools Ready. PacketPool: {}, SessionPool: {}",
+            System::PacketPool::GetPoolSize(),
+            System::SessionPool<System::AsioSession>::GetApproximatePoolSize()
+        );
 
         {
             // 2. Create Packet Handler (User Logic)
@@ -93,10 +97,11 @@ int main(int argc, char *argv[])
                     {
                         auto active = System::Debug::MemoryMetrics::GetActiveAllocations();
                         auto packetPoolSize = System::PacketPool::GetPoolSize();
-                        auto sessionPoolSize = System::ObjectPool<System::AsioSession>::GetPoolSize();
+                        auto sessionPoolSize = 0; // System::ObjectPool<System::AsioSession>::GetPoolSize();
                         auto queueSize = framework.GetDispatcher()->GetQueueSize();
 
-                        auto activeSessionCount = System::SessionFactory::GetSessionCount();
+                        auto activeSessionCount = 0; // System::SessionFactory::GetSessionCount(); // Removed
+                        // We can get it from Dispatcher if we expose it
 
                         LOG_INFO(
                             "Mem: Alloc={}, PktPool={}, ActiveSess={}, Queue={}",
@@ -111,9 +116,9 @@ int main(int argc, char *argv[])
 
                 framework.Run();
 
-                // 4. Memory Cleanup Verification (Must be done while Framework/IOContext is alive)
+                // 4. Memory Cleanup Verification
                 LOG_INFO("Starting Memory Cleanup...");
-                System::ObjectPool<System::AsioSession>::Clear();
+                // System::ObjectPool<System::AsioSession>::Clear(); // Removed
                 System::PacketPool::Clear();
             }
             else

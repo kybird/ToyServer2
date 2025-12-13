@@ -12,6 +12,6 @@ echo Client: %CLIENT_EXE%
 echo.
 
 :: Run with 1000 Clients for 10 Seconds
-"%CLIENT_EXE%" 100 10
+"%CLIENT_EXE%" 100 60
 
 pause

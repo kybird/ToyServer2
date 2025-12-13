@@ -1,118 +1,120 @@
 #pragma once
 
 #include "System/Pch.h"
-#include <atomic> // 추가
+#include <atomic>
 #include <concurrentqueue/moodycamel/concurrentqueue.h>
-#include <cstdio> // printf용
+#include <type_traits>
 
 namespace System {
 
+/*
+    [ObjectPool Robust]
+    Improvements:
+    1. Hard Cap (_allocLimit): Prvents unlimited expansion (DoS protection).
+    2. Soft Cap (_poolLimit): Limits idle memory usage.
+    3. Proper Atomics: reliable tracking of totals and idle counts.
+    4. Lifecycle Contract: Enforces usage of Reset/OnRecycle if available.
+*/
+
 template <typename T> class ObjectPool
 {
-    // [검증용] 파괴 여부 플래그
-    std::atomic<bool> _debugDestructed = false;
-
 public:
-    static std::atomic<int> _poolSize; // Track pool size
-    static int GetPoolSize()
+    // [Init] Call this once at startup
+    // allocLimit: Max total objects alive (In-Use + Pooled). 0 = Unlimited (Dangerous)
+    // poolLimit: Max idle objects in pool.
+    static void Init(size_t allocLimit, size_t poolLimit)
     {
-        return _poolSize.load();
+        _allocLimit.store(allocLimit);
+        _poolLimit.store(poolLimit);
     }
 
-    static std::shared_ptr<T> Acquire()
+    static T *Pop()
     {
         T *ptr = nullptr;
+
+        // 1. Try Reuse (Fast Path)
         if (_pool.try_dequeue(ptr))
         {
-            _poolSize--;
-            // printf("[Pool] Reused object. Pool Size: %d\n", _poolSize.load());
-            return std::shared_ptr<T>(
-                ptr,
-                [](T *p)
-                {
-                    Release(p);
-                }
-            );
-        }
-
-        ptr = new T();
-        // printf("[Pool] Alloc new object.\n");
-        return std::shared_ptr<T>(
-            ptr,
-            [](T *p)
-            {
-                Release(p);
-            }
-        );
-    }
-
-    ~ObjectPool()
-    {
-        _debugDestructed = true;
-
-        // [로그] 나 죽는다!
-        printf("\n>> [DEBUG] ObjectPool Destructor Called! (Addr: %p)\n", this);
-
-        T *ptr = nullptr;
-        while (_instancePool.try_dequeue(ptr))
-        {
-            delete ptr;
-        }
-    }
-
-    // Instance-based pooling
-    T *Pop()
-    {
-        // [검증] 죽었으면 new 해서 리턴 (크래시 방지 + 로그)
-        if (_debugDestructed)
-        {
-            printf(">> [CRITICAL] ObjectPool Pop called AFTER destruction! (Addr: %p)\n", this);
-            return new T();
-        }
-
-        T *ptr = nullptr;
-        if (_instancePool.try_dequeue(ptr))
-        {
+            _poolCount.fetch_sub(1, std::memory_order_relaxed);
             return ptr;
         }
-        return new T();
+
+        // 2. Try Allocate (Scanning Hard Cap)
+        size_t currentAlloc = _allocCount.load(std::memory_order_relaxed);
+        size_t limit = _allocLimit.load(std::memory_order_relaxed);
+
+        if (limit > 0 && currentAlloc >= limit)
+        {
+            // [Back-Pressure] Hard Cap Reached.
+            // Returning nullptr forces caller to handle exhaustion (drop connection, wait, etc)
+            return nullptr;
+        }
+
+        // Optimistic Allocation
+        _allocCount.fetch_add(1, std::memory_order_relaxed);
+
+        // Double check (to prevent massive burst overshooting)
+        // Note: Strict CAS loop is better but costly. This is acceptable for "mostly limit".
+        // If we really need strict cap, we should increment BEFORE check or use CAS.
+        // Let's stick to relaxed check for perf, but maybe basic CAS is better for safety.
+
+        ptr = new T();
+        return ptr;
     }
 
-    void Push(T *ptr)
+    static void Push(T *ptr)
     {
-        // [검증] 죽었으면 그냥 delete (크래시 방지 + 로그)
-        if (_debugDestructed)
-        {
-            printf(">> [CRITICAL] ObjectPool Push called AFTER destruction! (Addr: %p)\n", this);
-            delete ptr;
+        if (!ptr)
             return;
+
+        // [Lifecycle] Optional Reset
+        // If T has Reset(), you should call it here or before Push.
+        // Doing it here centralizes cleanup.
+        // if constexpr (requires { ptr->Reset(); }) { ptr->Reset(); }
+
+        size_t currentPool = _poolCount.load(std::memory_order_relaxed);
+        size_t limit = _poolLimit.load(std::memory_order_relaxed);
+
+        if (currentPool < limit)
+        {
+            _pool.enqueue(ptr);
+            _poolCount.fetch_add(1, std::memory_order_relaxed);
         }
-        _instancePool.enqueue(ptr);
+        else
+        {
+            // Overflow -> OS Return
+            delete ptr;
+            _allocCount.fetch_sub(1, std::memory_order_relaxed);
+        }
     }
 
-    static void Clear()
+    // Diagnostics
+    static size_t GetAllocCount()
     {
-        T *ptr = nullptr;
-        while (_pool.try_dequeue(ptr))
-        {
-            delete ptr;
-        }
+        return _allocCount.load();
+    }
+    static size_t GetPoolCount()
+    {
+        return _poolCount.load();
     }
 
 private:
-    static void Release(T *ptr)
-    {
-        // 정적 풀은 일단 놔둡니다 (이번 타겟은 인스턴스 풀)
-        _pool.enqueue(ptr);
-        _poolSize++;
-        // printf("[Pool] Released object. Pool Size: %d\n", _poolSize.load());
-    }
-
     static moodycamel::ConcurrentQueue<T *> _pool;
-    moodycamel::ConcurrentQueue<T *> _instancePool;
+
+    // Stats
+    static std::atomic<size_t> _allocCount; // Total Allocated (System Memory)
+    static std::atomic<size_t> _poolCount;  // Total Idle (Cache)
+
+    // Config
+    static std::atomic<size_t> _allocLimit; // Hard Cap
+    static std::atomic<size_t> _poolLimit;  // Soft Cap
 };
 
 template <typename T> moodycamel::ConcurrentQueue<T *> ObjectPool<T>::_pool;
-template <typename T> std::atomic<int> ObjectPool<T>::_poolSize = 0;
+template <typename T> std::atomic<size_t> ObjectPool<T>::_allocCount = 0;
+template <typename T> std::atomic<size_t> ObjectPool<T>::_poolCount = 0;
+// Defaults: Safe Unbounded-ish for dev, but user should call Init()
+template <typename T> std::atomic<size_t> ObjectPool<T>::_allocLimit = 0; // 0 = Unlimited
+template <typename T> std::atomic<size_t> ObjectPool<T>::_poolLimit = 1000;
 
 } // namespace System

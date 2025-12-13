@@ -11,6 +11,7 @@ public:
     virtual void Post(SystemMessage message) = 0;
     virtual bool Process() = 0;
     virtual size_t GetQueueSize() const = 0;
+    virtual bool IsOverloaded() const = 0;
 };
 
 // Global Access Removed. Use Dependency Injection.

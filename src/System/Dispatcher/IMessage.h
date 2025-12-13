@@ -3,9 +3,6 @@
 #include "System/Network/Packet.h"
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 #include <cstdint>
-#include <memory>
-#include <variant>
-#include <vector>
 
 
 namespace System {
@@ -19,7 +16,7 @@ struct SystemMessage
     MessageType type;
     uint64_t sessionId;                // 0 if system
     boost::intrusive_ptr<Packet> data; // Payload (Zero Allocation)
-    std::shared_ptr<ISession> session; // Direct Pointer for Zero-Lookup
+    ISession *session;                 // Direct Raw Pointer (Zero-Alloc, Dispatcher-Lifetime Disconnect)
 };
 
 } // namespace System

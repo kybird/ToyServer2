@@ -7,7 +7,6 @@
 #include <unordered_set>
 #include <vector>
 
-
 using namespace System;
 
 void TestAddressStability()
@@ -50,8 +49,8 @@ void TestReferenceCounting()
 
     {
         auto p1 = PacketPool::Allocate(100);
-        assert(p1->size() == 0); // Reset called?
-        assert(p1->capacity() >= 100);
+        assert(p1->size == 0); // Reset called
+        assert(p1->capacity >= 100);
 
         {
             boost::intrusive_ptr<Packet> p2 = p1;

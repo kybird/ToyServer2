@@ -176,7 +176,7 @@ private:
 int main(int argc, char *argv[])
 {
     int clientCount = 500;
-    int durationSeconds = 10;
+    int durationSeconds = 60;
 
     if (argc > 1)
         clientCount = std::stoi(argv[1]);
@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
 
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard(io_context.get_executor());
     std::vector<std::thread> threads;
-    for (int i = 0; i < 2; ++i)
+    for (int i = 0; i < 8; ++i)
     {
         threads.emplace_back(
             [&io_context]()

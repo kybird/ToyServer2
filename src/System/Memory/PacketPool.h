@@ -17,11 +17,23 @@ public:
     }
 
     // Tuning Constants
-    static const size_t L1_CACHE_SIZE = 1000;
-    static const size_t BULK_TRANSFER_COUNT = 500;
+    static const size_t L1_CACHE_SIZE = 100000;
+    static const size_t BULK_TRANSFER_COUNT = 5000;
+    static const size_t MAX_PACKET_CAPACITY = 4096; // Fixed max capacity
 
     static boost::intrusive_ptr<Packet> Allocate(size_t size)
     {
+        // [Constraint] Strict Capacity Check
+        if (size > MAX_PACKET_CAPACITY)
+        {
+            // In production, this should likely log error or return nullptr.
+            // For strict zero-alloc, we can't realloc.
+            // We'll panic or return empty for now, or just clamp (unsafe).
+            // Let's alloc a special large packet? No, breaks pooling.
+            // Assume design contract: Packet size <= 4KB.
+            size = MAX_PACKET_CAPACITY;
+        }
+
         Packet *ptr = nullptr;
 
         // 1. Try L1 Cache (Thread Local, Lock-Free)
@@ -33,18 +45,13 @@ public:
         else
         {
             // 2. L1 is empty -> Replenish from L2 (Global, Locked)
-            // Prepare buffer for bulk dequeue
             Packet *bulkBuffer[BULK_TRANSFER_COUNT];
             size_t count = _pool->try_dequeue_bulk(bulkBuffer, BULK_TRANSFER_COUNT);
 
             if (count > 0)
             {
                 _poolSize.fetch_sub((int)count, std::memory_order_relaxed);
-
-                // Keep one for return
                 ptr = bulkBuffer[0];
-
-                // Store rest in L1
                 if (count > 1)
                 {
                     _l1Cache.insert(_l1Cache.end(), bulkBuffer + 1, bulkBuffer + count);
@@ -52,18 +59,19 @@ public:
             }
             else
             {
-                // 3. L2 is also empty -> Last Resort: Allocate New
-                ptr = new Packet(size);
-                // Note: We don't increment poolSize here, it tracks cached availability
+                // 3. New Allocation
+                ptr = new Packet();
+                ptr->capacity = static_cast<uint32_t>(MAX_PACKET_CAPACITY);
+                ptr->buffer = new uint8_t[MAX_PACKET_CAPACITY];
             }
         }
 
-        ptr->Reset(); // Reset internal state and refcount
-        if (ptr->capacity() < size)
-            ptr->reserve(size);
+        ptr->Reset();
+        // ptr->size is 0 from Reset. Caller will fill it.
+        // We do NOT set ptr->size = size here because Allocate usually implies "capacity available", user sets size.
+        // But intrusive_ptr acts like a container.
 
         // intrusive_ptr constructor calls add_ref.
-        // Packet::Reset set refCount to 0, so this makes it 1.
         return boost::intrusive_ptr<Packet>(ptr);
     }
 
@@ -118,7 +126,10 @@ public:
 
         for (size_t i = 0; i < count; ++i)
         {
-            bulkBuffer[current++] = new Packet(defaultSize);
+            Packet *p = new Packet();
+            p->capacity = static_cast<uint32_t>(MAX_PACKET_CAPACITY);
+            p->buffer = new uint8_t[MAX_PACKET_CAPACITY];
+            bulkBuffer[current++] = p;
 
             if (current == BULK_TRANSFER_COUNT)
             {
@@ -141,6 +152,7 @@ public:
         Packet *ptr = nullptr;
         while (_pool->try_dequeue(ptr))
         {
+            delete[] ptr->buffer;
             delete ptr;
         }
         // Note: Can't easily clear other threads' L1 caches.

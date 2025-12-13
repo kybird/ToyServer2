@@ -7,7 +7,6 @@
 #include "System/Network/Packet.h"
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 
-
 namespace System {
 
 class ISession
@@ -23,6 +22,11 @@ public:
 
     virtual void Close() = 0;
     virtual uint64_t GetId() const = 0;
+    virtual void Reset() = 0;
+    virtual bool CanDestroy() const = 0;
+    virtual void OnRecycle()
+    {
+    }
 };
 
 } // namespace System

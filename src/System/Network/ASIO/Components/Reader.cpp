@@ -19,19 +19,23 @@ void Reader::ReadSome(void *buffer, size_t length)
         return;
 
     // [Lifetime Safety]
-    // Capture 'self' (shared_ptr<AsioSession>) to keep session alive during async read.
-    // Reader is owned by Session, so keeping Session alive keeps Reader alive.
+    // Manual RefCount for Async Dispatcher-controlled lifetime
     if (!_owner)
         return;
-    std::shared_ptr<AsioSession> self = _owner->shared_from_this();
+
+    _owner->IncRef();
+    AsioSession *rawOwner = _owner;
 
     _socket->async_read_some(
         boost::asio::buffer(buffer, length),
         boost::asio::bind_allocator(
             boost::asio::recycling_allocator<void>(),
-            [this, self](const boost::system::error_code &ec, size_t bytesTransferred)
+            [this, rawOwner](const boost::system::error_code &ec, size_t bytesTransferred)
             {
+                // Note: 'this' (Reader) is member of 'rawOwner' (Session).
+                // If Session is alive, Reader is alive.
                 OnReadComplete(ec, bytesTransferred);
+                rawOwner->DecRef();
             }
         )
     );

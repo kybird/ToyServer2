@@ -8,7 +8,6 @@
 #include "System/Network/Packet.h"
 #include <boost/smart_ptr/intrusive_ptr.hpp>
 
-
 namespace System {
 
 class AsioSession;
@@ -17,6 +16,7 @@ class Writer
 {
 public:
     void Init(std::shared_ptr<boost::asio::ip::tcp::socket> socket, AsioSession *owner);
+    void Clear();
 
     // [최적화] Zero Allocation Packet
     void Send(boost::intrusive_ptr<Packet> packet);

@@ -20,11 +20,17 @@ void Writer::Init(std::shared_ptr<boost::asio::ip::tcp::socket> socket, AsioSess
     _isSending.store(false);
 
     // [Cleanup Reuse]
+    Clear();
+}
+
+void Writer::Clear()
+{
     boost::intrusive_ptr<Packet> dummy;
     while (_sendQueue.try_dequeue(dummy))
     {
-        // Drain old packets
+        // Drain packets back to pool
     }
+    _isSending.store(false);
 }
 
 void Writer::Send(boost::intrusive_ptr<Packet> packet)
@@ -103,27 +109,29 @@ void Writer::Flush()
                 _linearBuffer.clear();
 
                 // 낙오자 데이터 복사
-                size_t size = straggler->size();
+                size_t size = straggler->size;
                 if (_linearBuffer.capacity() < size)
                     _linearBuffer.reserve(size);
                 _linearBuffer.resize(size);
-                ::memcpy(_linearBuffer.data(), straggler->data(), size);
+                std::memcpy(_linearBuffer.data(), straggler->data(), size);
 
                 // 원본 즉시 반납 (풀로 복귀)
                 straggler.reset();
 
                 // 전송
                 // [Lifetime Safety] Capture self
-                std::shared_ptr<AsioSession> self = _owner->shared_from_this();
+                _owner->IncRef();
+                AsioSession *rawOwner = _owner;
 
                 boost::asio::async_write(
                     *_socket,
                     boost::asio::buffer(_linearBuffer),
                     boost::asio::bind_allocator(
                         boost::asio::recycling_allocator<void>(),
-                        [this, self](const boost::system::error_code &ec, size_t tr)
+                        [this, rawOwner](const boost::system::error_code &ec, size_t tr)
                         {
                             OnWriteComplete(ec, tr);
+                            rawOwner->DecRef();
                         }
                     )
                 );
@@ -146,7 +154,7 @@ void Writer::Flush()
     size_t totalSize = 0;
     for (size_t i = 0; i < count; ++i)
     {
-        totalSize += tempItems[i]->size();
+        totalSize += tempItems[i]->size;
     }
 
     // B. 버퍼 준비 (Capacity 내에서는 할당 없음)
@@ -164,10 +172,10 @@ void Writer::Flush()
     uint8_t *destPtr = _linearBuffer.data();
     for (size_t i = 0; i < count; ++i)
     {
-        size_t pktSize = tempItems[i]->size();
+        size_t pktSize = tempItems[i]->size;
 
         // 메모리 복사 (L1 캐시 내에서 동작하므로 매우 빠름)
-        ::memcpy(destPtr, tempItems[i]->data(), pktSize);
+        std::memcpy(destPtr, tempItems[i]->data(), pktSize);
         destPtr += pktSize;
 
         // [핵심] 복사했으니 원본 패킷은 즉시 반납!
@@ -179,16 +187,18 @@ void Writer::Flush()
     // 3. 전송 (OS에는 거대 버퍼 주소 1개만 던짐)
     // [Lifetime Safety] buffer pointer is valid (member of Writer),
     // and writer is member of Session. Capture Session to keep all alive.
-    std::shared_ptr<AsioSession> self = _owner->shared_from_this();
+    _owner->IncRef();
+    AsioSession *rawOwner = _owner;
 
     boost::asio::async_write(
         *_socket,
         boost::asio::buffer(_linearBuffer),
         boost::asio::bind_allocator(
             boost::asio::recycling_allocator<void>(),
-            [this, self](const boost::system::error_code &ec, size_t bytesTransferred)
+            [this, rawOwner](const boost::system::error_code &ec, size_t bytesTransferred)
             {
                 OnWriteComplete(ec, bytesTransferred);
+                rawOwner->DecRef();
             }
         )
     );

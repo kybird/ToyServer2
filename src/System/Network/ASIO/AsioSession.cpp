@@ -6,15 +6,32 @@
 
 namespace System {
 
-// Reader implementation moved to System/Network/ASIO/Components/Reader.cpp
-
 AsioSession::AsioSession()
 {
 }
-
 AsioSession::~AsioSession()
 {
     LOG_INFO("Session Destroyed: ID {}", _id);
+}
+
+// Pool reuse
+void AsioSession::Reset()
+{
+    _id = 0;
+    _connected.store(false, std::memory_order_relaxed);
+    _gracefulShutdown.store(false, std::memory_order_relaxed);
+    _ioRef.store(0, std::memory_order_relaxed);
+    _socket.reset();
+    _recvBuffer.Reset();
+    _flowControlTimer.reset();
+}
+
+void AsioSession::OnRecycle()
+{
+    if (_socket && _socket->is_open())
+        Close();
+    _socket.reset();
+    _dispatcher = nullptr;
 }
 
 void AsioSession::Reset(
@@ -25,11 +42,14 @@ void AsioSession::Reset(
     _id = sessionId;
     _dispatcher = dispatcher;
 
+    _connected.store(false, std::memory_order_relaxed);
+    _gracefulShutdown.store(false, std::memory_order_relaxed);
+    _ioRef.store(0, std::memory_order_relaxed);
+
     if (_socket && _socket->is_open())
     {
-        boost::system::error_code ec;
-
         boost::asio::ip::tcp::no_delay noDelay(true);
+        boost::system::error_code ec;
         _socket->set_option(noDelay, ec);
 
         boost::asio::socket_base::receive_buffer_size recvOption(4 * 1024 * 1024);
@@ -42,17 +62,26 @@ void AsioSession::Reset(
     _reader.Init(_socket, this);
     _writer.Init(_socket, this);
     _recvBuffer.Reset();
+    _flowControlTimer.reset();
+}
+
+void AsioSession::GracefulClose()
+{
+    if (!_gracefulShutdown.exchange(true))
+    {
+        // Writer will handle flush/drain
+    }
 }
 
 void AsioSession::OnConnect()
 {
     LOG_INFO("Session Connected: ID {}", _id);
-    _connected.store(true);
+    _connected.store(true, std::memory_order_relaxed);
 
     SystemMessage msg;
     msg.type = MessageType::NETWORK_CONNECT;
     msg.sessionId = _id;
-    msg.session = shared_from_this(); // Direct Pointer
+    msg.session = this;
     if (_dispatcher)
         _dispatcher->Post(msg);
 
@@ -61,13 +90,12 @@ void AsioSession::OnConnect()
 
 void AsioSession::OnDisconnect()
 {
-    // LOG_INFO("Session Disconnected: ID {}", _id); // Logged in Dispatcher
     if (_connected.exchange(false))
     {
         SystemMessage msg;
         msg.type = MessageType::NETWORK_DISCONNECT;
         msg.sessionId = _id;
-        msg.session = shared_from_this(); // Direct Pointer
+        msg.session = this;
         if (_dispatcher)
             _dispatcher->Post(msg);
     }
@@ -75,20 +103,19 @@ void AsioSession::OnDisconnect()
 
 void AsioSession::Send(std::span<const uint8_t> data)
 {
-    if (!_connected)
+    if (!_connected.load(std::memory_order_relaxed))
         return;
+
     auto packet = PacketPool::Allocate(data.size());
-
-    packet->assign(data.begin(), data.end());
-
-    _writer.Send(packet);
+    packet->assign(data.data(), data.data() + data.size());
+    _writer.Send(std::move(packet));
 }
 
 void AsioSession::Send(boost::intrusive_ptr<Packet> packet)
 {
-    if (!_connected)
+    if (!_connected.load(std::memory_order_relaxed))
         return;
-    _writer.Send(packet);
+    _writer.Send(std::move(packet));
 }
 
 void AsioSession::Close()
@@ -99,15 +126,15 @@ void AsioSession::Close()
         _socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
         _socket->close(ec);
     }
-    // Ensure Disconnect is triggered
+    _writer.Clear();
     OnDisconnect();
 }
 
 void AsioSession::RegisterRecv()
 {
-    if (_socket->is_open())
+    if (_socket && _socket->is_open())
     {
-        _recvBuffer.Clean(); // Compact if needed
+        _recvBuffer.Clean();
         _reader.ReadSome(_recvBuffer.WritePos(), _recvBuffer.FreeSize());
     }
 }
@@ -121,19 +148,13 @@ void AsioSession::OnRead(size_t bytesTransferred)
         return;
     }
 
-    // Process Packets Loop
     while (true)
     {
         int32_t dataSize = _recvBuffer.DataSize();
         if (dataSize < sizeof(Share::PacketHeader))
-        {
-            break; // Not enough for header
-        }
+            break;
 
-        // Peek Header
         Share::PacketHeader *header = reinterpret_cast<Share::PacketHeader *>(_recvBuffer.ReadPos());
-
-        // Validate Size
         if (header->size > 1024 * 10)
         {
             LOG_ERROR("Session {} Invalid Packet Size: {}", _id, header->size);
@@ -142,32 +163,69 @@ void AsioSession::OnRead(size_t bytesTransferred)
         }
 
         if (dataSize < header->size)
-        {
-            break; // Not enough for full packet
-        }
+            break;
 
-        // Full Packet Available
-        // Dispatch
         SystemMessage msg;
         msg.type = MessageType::NETWORK_DATA;
         msg.sessionId = _id;
-        msg.session = shared_from_this(); // Direct Pointer
+        msg.session = this;
 
-        // Create a copy for Dispatcher (Safe async ownership)
-        // Use PacketPool to reuse vectors
         auto packetData = PacketPool::Allocate(header->size);
         packetData->assign(_recvBuffer.ReadPos(), _recvBuffer.ReadPos() + header->size);
+        msg.data = std::move(packetData);
 
-        msg.data = packetData;
         if (_dispatcher)
             _dispatcher->Post(msg);
-        // Send(packetData); // Removed immediate echo
 
-        // Consume Packet
         _recvBuffer.OnRead(header->size);
+
+        // [Flow Control]
+        if (_dispatcher && _dispatcher->IsOverloaded())
+        {
+            // LOG_WARN("Session {} Overloaded. Pausing Read.", _id);
+
+            // Pause Reading: Schedule Resume after 10ms
+            if (!_flowControlTimer)
+            {
+                // Create timer associated with socket's executor (thread-safe)
+                _flowControlTimer = std::make_unique<boost::asio::steady_timer>(_socket->get_executor());
+            }
+
+            _flowControlTimer->expires_after(std::chrono::milliseconds(10));
+            _flowControlTimer->async_wait(
+                [this](const boost::system::error_code &ec)
+                {
+                    OnResumeRead(ec);
+                }
+            );
+            return; // Stop Reading (TCP Back-pressure)
+        }
     }
 
     RegisterRecv();
+}
+
+void AsioSession::OnResumeRead(const boost::system::error_code &ec)
+{
+    if (ec || !_connected.load(std::memory_order_relaxed))
+        return;
+
+    if (_dispatcher && _dispatcher->IsOverloaded())
+    {
+        // Still overloaded, backoff more
+        _flowControlTimer->expires_after(std::chrono::milliseconds(50));
+        _flowControlTimer->async_wait(
+            [this](const boost::system::error_code &ec)
+            {
+                OnResumeRead(ec);
+            }
+        );
+    }
+    else
+    {
+        // Resuming
+        RegisterRecv();
+    }
 }
 
 void AsioSession::OnError(const std::string &errorMsg)
@@ -177,4 +235,3 @@ void AsioSession::OnError(const std::string &errorMsg)
 }
 
 } // namespace System
-  // namespace System

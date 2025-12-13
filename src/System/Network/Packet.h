@@ -1,104 +1,67 @@
 #pragma once
-
-#include "System/Pch.h"
-#include <atomic>
 #include <boost/smart_ptr/intrusive_ptr.hpp>
-#include <vector>
+#include <cstdint>
+#include <cstring> // for memcpy
 
 
 namespace System {
 
-class Packet;
-void intrusive_ptr_add_ref(Packet *p);
-void intrusive_ptr_release(Packet *p);
-
-class Packet
+// [Thread Confinement Rule]
+// Packet allows Non-Atomic RefCount because it is strictly confined to the Dispatcher Thread.
+// Violation of this rule will cause Race Conditions.
+struct Packet
 {
-public:
-    Packet(size_t initialCapacity = 4096) : _refCount(0)
+    uint32_t refCount = 0; // Non-Atomic
+    uint32_t size = 0;     // Current used size
+    uint32_t capacity = 0; // Buffer capacity
+    uint8_t *buffer = nullptr;
+
+    void Reset()
     {
-        _buffer.reserve(initialCapacity);
+        size = 0;
+        refCount = 0;
+        // Capacity and buffer are preserved
     }
 
-    // Disable Copy/Move to prevent accidental heavy copies
-    Packet(const Packet &) = delete;
-    Packet &operator=(const Packet &) = delete;
-    Packet(Packet &&) = delete;
-    Packet &operator=(Packet &&) = delete;
-
-    ~Packet() = default;
-
-    // Direct buffer access
     uint8_t *data()
     {
-        return _buffer.data();
+        return buffer;
     }
     const uint8_t *data() const
     {
-        return _buffer.data();
+        return buffer;
     }
 
-    size_t size() const
+    // Helper to mimic vector interface for compatibility
+    void assign(const uint8_t *start, const uint8_t *end)
     {
-        return _buffer.size();
+        size_t newSize = end - start;
+        if (newSize > capacity)
+        {
+            // In a strict pool system, we can't easily reallocate in hot path.
+            // For safety, truncate or error. Here we truncate to avoid crash.
+            newSize = capacity;
+        }
+        size = static_cast<uint32_t>(newSize);
+        if (newSize > 0)
+            std::memcpy(buffer, start, newSize);
     }
-    size_t capacity() const
-    {
-        return _buffer.capacity();
-    }
-
-    // vector-like interface
-    void reserve(size_t newCapacity)
-    {
-        _buffer.reserve(newCapacity);
-    }
-
-    void resize(size_t newSize)
-    {
-        // Optimization: For now, we use standard resize (zero-init).
-        // Future: Use uninitialized_value_construct or custom allocator if needed.
-        _buffer.resize(newSize);
-    }
-
-    void clear()
-    {
-        _buffer.clear();
-    }
-
-    void assign(const uint8_t *begin, const uint8_t *end)
-    {
-        _buffer.assign(begin, end);
-    }
-
-    template <typename InputIt> void assign(InputIt first, InputIt last)
-    {
-        _buffer.assign(first, last);
-    }
-
-    // Called by PacketPool when retrieving from pool
-    void Reset()
-    {
-        _buffer.clear();
-        // Crucial: Ref count must be 0 when coming out of pool
-        _refCount.store(0, std::memory_order_relaxed);
-    }
-
-private:
-    friend void intrusive_ptr_add_ref(Packet *p);
-    friend void intrusive_ptr_release(Packet *p);
-
-    std::atomic<int> _refCount;
-    std::vector<uint8_t> _buffer;
 };
 
-// Inline add_ref for performance
+// Forward declaration for Release (Implemented in PacketPool.cpp)
+void Packet_Release_To_Pool(Packet *p);
+
 inline void intrusive_ptr_add_ref(Packet *p)
 {
-    // relaxed order is sufficient for increment
-    p->_refCount.fetch_add(1, std::memory_order_relaxed);
+    ++p->refCount;
 }
 
-// release is defined in .cpp to avoid circular dependency with PacketPool
-void intrusive_ptr_release(Packet *p);
+inline void intrusive_ptr_release(Packet *p)
+{
+    if (--p->refCount == 0)
+    {
+        Packet_Release_To_Pool(p);
+    }
+}
 
 } // namespace System
