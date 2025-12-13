@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
 
     boost::asio::executor_work_guard<boost::asio::io_context::executor_type> workGuard(io_context.get_executor());
     std::vector<std::thread> threads;
-    for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 2; ++i)
     {
         threads.emplace_back(
             [&io_context]()

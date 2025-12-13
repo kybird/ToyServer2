@@ -2,11 +2,21 @@
 
 namespace System {
 
-// [핵심] 힙에 할당하고 절대 delete 하지 않음 (Leaky Pointer)
-// 이렇게 하면 main()이 끝나도 소멸자가 호출되지 않아서 크래시가 안 남
-moodycamel::ConcurrentQueue<std::vector<uint8_t> *> *PacketPool::_pool =
-    new moodycamel::ConcurrentQueue<std::vector<uint8_t> *>();
+// Static Member Initialization
+std::atomic<int> PacketPool::_poolSize{0};
+moodycamel::ConcurrentQueue<Packet *> *PacketPool::_pool = new moodycamel::ConcurrentQueue<Packet *>();
+thread_local std::vector<Packet *> PacketPool::_l1Cache; // TLS Definition
 
-std::atomic<int> PacketPool::_poolSize = 0;
+// Implementation of intrusive_ptr_release
+// Moved here to break circular dependency: Packet.h -> PacketPool.h -> Packet.h
+void intrusive_ptr_release(Packet *p)
+{
+    // relaxed order is sufficient, we just want to know when it hits 0
+    if (p->_refCount.fetch_sub(1, std::memory_order_release) == 1)
+    {
+        std::atomic_thread_fence(std::memory_order_acquire);
+        PacketPool::Push(p);
+    }
+}
 
 } // namespace System

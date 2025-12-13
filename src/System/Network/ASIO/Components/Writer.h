@@ -5,16 +5,21 @@
 #include <memory>
 #include <vector>
 
+#include "System/Network/Packet.h"
+#include <boost/smart_ptr/intrusive_ptr.hpp>
+
+
 namespace System {
 
 class AsioSession;
 
-class Writer {
+class Writer
+{
 public:
     void Init(std::shared_ptr<boost::asio::ip::tcp::socket> socket, AsioSession *owner);
 
-    // [최적화] 복사 비용 없이 소유권만 이동 (move)
-    void Send(std::shared_ptr<std::vector<uint8_t>> packet);
+    // [최적화] Zero Allocation Packet
+    void Send(boost::intrusive_ptr<Packet> packet);
 
 private:
     void Flush();
@@ -25,7 +30,7 @@ private:
     AsioSession *_owner = nullptr;
 
     // 1. Lock-Free Queue
-    moodycamel::ConcurrentQueue<std::shared_ptr<std::vector<uint8_t>>> _sendQueue;
+    moodycamel::ConcurrentQueue<boost::intrusive_ptr<Packet>> _sendQueue;
 
     // 2. Atomic Flag (가장 빠름)
     std::atomic<bool> _isSending = false;

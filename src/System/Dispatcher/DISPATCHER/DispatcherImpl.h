@@ -16,7 +16,7 @@ public:
     void Post(SystemMessage message) override;
 
     // Main Loop processing (Called by Worker Threads)
-    void Process() override;
+    bool Process() override;
 
     size_t GetQueueSize() const override
     {

@@ -4,15 +4,19 @@
 #include <span>
 #include <vector>
 
+#include "System/Network/Packet.h"
+#include <boost/smart_ptr/intrusive_ptr.hpp>
+
 
 namespace System {
 
-class ISession {
+class ISession
+{
 public:
     virtual ~ISession() = default;
 
-    // Zero-copy send (shared_ptr)
-    virtual void Send(std::shared_ptr<std::vector<uint8_t>> packet) = 0;
+    // Zero-copy send (boost::intrusive_ptr<Packet>)
+    virtual void Send(boost::intrusive_ptr<Packet> packet) = 0;
 
     // Send helper (might copy if not careful, but useful for small packets)
     virtual void Send(std::span<const uint8_t> data) = 0;

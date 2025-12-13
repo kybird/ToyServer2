@@ -83,7 +83,7 @@ void AsioSession::Send(std::span<const uint8_t> data)
     _writer.Send(packet);
 }
 
-void AsioSession::Send(std::shared_ptr<std::vector<uint8_t>> packet)
+void AsioSession::Send(boost::intrusive_ptr<Packet> packet)
 {
     if (!_connected)
         return;

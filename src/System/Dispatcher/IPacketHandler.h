@@ -4,16 +4,20 @@
 #include <memory>
 #include <vector>
 
+#include "System/Network/Packet.h"
+#include <boost/smart_ptr/intrusive_ptr.hpp>
+
 
 namespace System {
 
-class IPacketHandler {
+class IPacketHandler
+{
 public:
     virtual ~IPacketHandler() = default;
 
-    // Zero-copy: Packet data is shared_ptr
+    // Zero-copy: Packet data is boost::intrusive_ptr<Packet>
     // Session is pre-looked-up ISession
-    virtual void HandlePacket(std::shared_ptr<ISession> session, std::shared_ptr<std::vector<uint8_t>> packet) = 0;
+    virtual void HandlePacket(std::shared_ptr<ISession> session, boost::intrusive_ptr<Packet> packet) = 0;
 };
 
 } // namespace System

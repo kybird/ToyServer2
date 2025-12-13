@@ -9,7 +9,7 @@ class IDispatcher
 public:
     virtual ~IDispatcher() = default;
     virtual void Post(SystemMessage message) = 0;
-    virtual void Process() = 0;
+    virtual bool Process() = 0;
     virtual size_t GetQueueSize() const = 0;
 };
 

@@ -20,14 +20,14 @@ void Writer::Init(std::shared_ptr<boost::asio::ip::tcp::socket> socket, AsioSess
     _isSending.store(false);
 
     // [Cleanup Reuse]
-    std::shared_ptr<std::vector<uint8_t>> dummy;
+    boost::intrusive_ptr<Packet> dummy;
     while (_sendQueue.try_dequeue(dummy))
     {
         // Drain old packets
     }
 }
 
-void Writer::Send(std::shared_ptr<std::vector<uint8_t>> packet)
+void Writer::Send(boost::intrusive_ptr<Packet> packet)
 {
     // 1. 큐 삽입
     _sendQueue.enqueue(std::move(packet));
@@ -53,7 +53,7 @@ void Writer::Flush()
     static const size_t MAX_BATCH_SIZE = 1000;
 
     // 스택 메모리에 포인터 배열 할당 (힙 할당 X)
-    std::shared_ptr<std::vector<uint8_t>> tempItems[MAX_BATCH_SIZE];
+    boost::intrusive_ptr<Packet> tempItems[MAX_BATCH_SIZE];
 
     // 1. 큐에서 뭉텅이로 꺼내기
     size_t count = _sendQueue.try_dequeue_bulk(tempItems, MAX_BATCH_SIZE);
@@ -91,7 +91,7 @@ void Writer::Flush()
         _isSending.store(false); // 퇴근 도장
 
         // 뒤돌아보기: 퇴근 직전에 누가 넣었나?
-        std::shared_ptr<std::vector<uint8_t>> straggler;
+        boost::intrusive_ptr<Packet> straggler;
         if (_sendQueue.try_dequeue(straggler))
         {
             bool expected = false;

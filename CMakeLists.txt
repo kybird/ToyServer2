@@ -81,3 +81,9 @@ add_executable(DummyClient src/DummyClient/main.cpp)
 target_include_directories(DummyClient PRIVATE src/DummyClient src)
 target_precompile_headers(DummyClient PRIVATE src/System/Pch.h)
 target_link_libraries(DummyClient PRIVATE System Share)
+
+# Packet Test Executable
+add_executable(PacketTest src/Tools/PacketTest/PacketTest.cpp)
+target_include_directories(PacketTest PRIVATE src)
+target_precompile_headers(PacketTest PRIVATE src/System/Pch.h)
+target_link_libraries(PacketTest PRIVATE System Share)

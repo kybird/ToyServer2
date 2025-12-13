@@ -58,6 +58,11 @@ int main(int argc, char *argv[])
         // 1. Init Logger
         System::GetLog().Init();
 
+        // 1.5 Prepare Packet Pool (Pre-allocate 2M packets to handle burst)
+        LOG_INFO("Pre-allocating PacketPool...");
+        System::PacketPool::Prepare(2000000);
+        LOG_INFO("PacketPool Ready. Size: {}", System::PacketPool::GetPoolSize());
+
         {
             // 2. Create Packet Handler (User Logic)
             auto packetHandler = std::make_shared<ServerPacketHandler>();

@@ -5,9 +5,12 @@
 #include "System/Network/ASIO/Components/Writer.h"
 #include "System/Network/ASIO/RecvBuffer.h"
 #include "System/Network/ISession.h"
+#include "System/Network/Packet.h"
 #include "System/Pch.h"
+#include <boost/smart_ptr/intrusive_ptr.hpp>
 #include <memory>
 #include <vector>
+
 
 namespace System {
 
@@ -27,7 +30,7 @@ public:
 
     // ISession Interface
     void Send(std::span<const uint8_t> data) override;
-    void Send(std::shared_ptr<std::vector<uint8_t>> packet) override;
+    void Send(boost::intrusive_ptr<Packet> packet) override;
     void Close() override;
     uint64_t GetId() const override
     {

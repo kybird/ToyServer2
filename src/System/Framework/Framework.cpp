@@ -78,8 +78,17 @@ void Framework::Run()
     // 2. Main Thread Logic Loop
     while (_running)
     {
-        _dispatcher->Process();
-        std::this_thread::yield();
+        // Optimization: Handle all available packets before yielding
+        if (_dispatcher->Process())
+        {
+            // Packet processed, don't yield, check queue again immediately
+            continue;
+        }
+        else
+        {
+            // Queue empty, yield to OS
+            std::this_thread::yield();
+        }
     }
 }
 
