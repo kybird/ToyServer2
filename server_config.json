@@ -1,7 +1,7 @@
 {
     "server": {
         "port": 9000,
-        "worker_threads": 4,
+        "worker_threads": 16,
         "db_info": "localhost:3306"
     }
 }

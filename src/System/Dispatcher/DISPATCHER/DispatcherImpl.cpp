@@ -1,11 +1,12 @@
 #include "System/Dispatcher/DISPATCHER/DispatcherImpl.h"
 #include "Share/Protocol.h"
 #include "System/ILog.h"
-#include "System/Network/ASIO/AsioSession.h" // Needed for SessionPool<AsioSession> cast
+#include "System/Network/ASIO/AsioSession.h"
 #include "System/Network/ASIO/SessionPool.h"
-#include "System/Network/ISession.h"
 #include "System/Pch.h"
 
+#include "System/Debug/MemoryMetrics.h"
+#include "System/Dispatcher/MessagePool.h"
 
 namespace System {
 
@@ -17,7 +18,7 @@ DispatcherImpl::~DispatcherImpl()
 {
 }
 
-void DispatcherImpl::Post(SystemMessage message)
+void DispatcherImpl::Post(IMessage *message)
 {
     _messageQueue.enqueue(message);
 }
@@ -26,7 +27,7 @@ bool DispatcherImpl::Process()
 {
     // [Phase 1] Process Messages
     static const size_t BATCH_SIZE = 64;
-    SystemMessage msgs[BATCH_SIZE];
+    IMessage *msgs[BATCH_SIZE];
 
     size_t count = _messageQueue.try_dequeue_bulk(msgs, BATCH_SIZE);
 
@@ -34,51 +35,52 @@ bool DispatcherImpl::Process()
     {
         for (size_t i = 0; i < count; ++i)
         {
-            SystemMessage &msg = msgs[i];
+            IMessage *msg = msgs[i];
 
-            switch (msg.type)
+#ifdef ENABLE_DIAGNOSTICS
+            System::Debug::MemoryMetrics::Processed.fetch_add(1, std::memory_order_relaxed);
+#endif
+
+            switch (msg->type)
             {
-            case MessageType::NETWORK_DATA:
-                if (auto it = _sessionRegistry.find(msg.sessionId); it != _sessionRegistry.end())
+            case MessageType::NETWORK_DATA: {
+                // [Hot Path] Direct AsioSession access - no map lookup, no vtable
+                // session pointer is concrete AsioSession*, not ISession*
+                AsioSession *session = msg->session;
+                if (session && session->IsConnected())
                 {
-                    if (msg.data && msg.data->size > sizeof(Share::PacketHeader))
-                    {
-                        _packetHandler->HandlePacket(it->second, msg.data);
-                    }
+                    PacketMessage *content = static_cast<PacketMessage *>(msg);
+                    _packetHandler->HandlePacket(session, content);
                 }
-                break;
+            }
+            break;
 
             case MessageType::NETWORK_CONNECT:
-                if (msg.session)
-                {
-                    ISession *session = msg.session;
-                    _sessionRegistry[msg.sessionId] = session;
-                    LOG_INFO(
-                        "Dispatcher: Session {} Connected. Registry Size: {}", msg.sessionId, _sessionRegistry.size()
-                    );
-                }
+                // No registry - just notification, session is already managed by AsioSession
                 break;
 
             case MessageType::NETWORK_DISCONNECT:
-                if (msg.session)
+                if (msg->session)
                 {
-                    ISession *session = msg.session;
-                    _sessionRegistry.erase(msg.sessionId);
-
-                    // Defer destruction: pool로 반환
-                    _pendingDestroy.push_back(session);
-
-                    LOG_INFO(
-                        "Dispatcher: Session {} Disconnected. Pending Destroy: {}",
-                        msg.sessionId,
-                        _pendingDestroy.size()
-                    );
+                    // [Invariant] After DISCONNECT, no new NETWORK_DATA messages
+                    // will be generated for this session. Remaining messages in queue
+                    // are protected by IncRef and will be safely processed.
+                    _pendingDestroy.push_back(msg->session);
                 }
                 break;
 
             default:
                 break;
             }
+
+            // [Lifetime] Release session reference (matches IncRef before Post)
+            if (msg->session)
+            {
+                msg->session->DecRef();
+            }
+
+            // Return to pool
+            MessagePool::Free(msg);
         }
     }
 
@@ -93,19 +95,35 @@ void DispatcherImpl::ProcessPendingDestroys()
     if (_pendingDestroy.empty())
         return;
 
-    auto it = _pendingDestroy.begin();
-    while (it != _pendingDestroy.end())
+    // =========================================================================
+    // [OPTIMIZATION] Swap-and-Pop Deletion - O(1) per element
+    // =========================================================================
+    // Standard vector::erase is O(n) because it shifts all following elements.
+    // Swap-and-pop achieves O(1) by:
+    //   1. Swapping the target with the last element
+    //   2. Popping the last element (O(1))
+    // Order is not preserved, but _pendingDestroy order doesn't matter.
+    //
+    // DO NOT REFACTOR TO erase() - This is intentional optimization.
+    // =========================================================================
+
+    size_t i = 0;
+    while (i < _pendingDestroy.size())
     {
-        ISession *session = *it;
+        AsioSession *session = _pendingDestroy[i];
         if (session->CanDestroy())
         {
-            // Returning to pool requires casting to concrete type
-            SessionPool<AsioSession>::Release(static_cast<AsioSession *>(session));
-            it = _pendingDestroy.erase(it);
+            // Release to pool
+            SessionPool<AsioSession>::Release(session);
+
+            // Swap-and-pop: O(1) deletion
+            _pendingDestroy[i] = _pendingDestroy.back();
+            _pendingDestroy.pop_back();
+            // Don't increment i - check the swapped element at same position
         }
         else
         {
-            ++it;
+            ++i;
         }
     }
 }

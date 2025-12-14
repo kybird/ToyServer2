@@ -25,8 +25,8 @@ void operator delete(void *ptr) noexcept
 }
 #endif
 
+#include "System/Dispatcher/MessagePool.h"
 #include "System/Memory/ObjectPool.h"
-#include "System/Memory/PacketPool.h"
 #include "System/Network/ASIO/AsioSession.h"
 #include "System/Network/ASIO/SessionFactory.h"
 #include <csignal>
@@ -59,13 +59,13 @@ int main(int argc, char *argv[])
         // 1. Init Logger
         System::GetLog().Init();
 
-        // 1.5 Prepare Packet Pool & Session Pool
-        LOG_INFO("Pre-allocating PacketPool & SessionPool...");
-        System::PacketPool::Prepare(1000);
+        // 1.5 Prepare Message Pool & Session Pool
+        LOG_INFO("Pre-allocating MessagePool & SessionPool...");
+        System::MessagePool::Prepare(6000);
         System::SessionPool<System::AsioSession>::Init(1000);
         LOG_INFO(
-            "Pools Ready. PacketPool: {}, SessionPool: {}",
-            System::PacketPool::GetPoolSize(),
+            "Pools Ready. MessagePool: {}, SessionPool: {}",
+            System::MessagePool::GetPoolSize(),
             System::SessionPool<System::AsioSession>::GetApproximatePoolSize()
         );
 
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
                     [&framework]()
                     {
                         auto active = System::Debug::MemoryMetrics::GetActiveAllocations();
-                        auto packetPoolSize = System::PacketPool::GetPoolSize();
+                        auto msgPoolSize = System::MessagePool::GetPoolSize();
                         auto sessionPoolSize = 0; // System::ObjectPool<System::AsioSession>::GetPoolSize();
                         auto queueSize = framework.GetDispatcher()->GetQueueSize();
 
@@ -104,11 +104,26 @@ int main(int argc, char *argv[])
                         // We can get it from Dispatcher if we expose it
 
                         LOG_INFO(
-                            "Mem: Alloc={}, PktPool={}, ActiveSess={}, Queue={}",
+                            "Mem: Alloc={}, MsgPool={}, ActiveSess={}, Queue={}",
                             active,
-                            packetPoolSize,
+                            msgPoolSize,
                             activeSessionCount,
                             queueSize
+                        );
+
+                        // [Diagnostics] 패킷 흐름 카운터
+                        auto recv = System::Debug::MemoryMetrics::RecvPacket.load();
+                        auto allocFail = System::Debug::MemoryMetrics::AllocFail.load();
+                        auto posted = System::Debug::MemoryMetrics::Posted.load();
+                        auto processed = System::Debug::MemoryMetrics::Processed.load();
+                        auto echoed = System::Debug::MemoryMetrics::Echoed.load();
+                        LOG_INFO(
+                            "[Pkt] Recv={}, AllocFail={}, Posted={}, Processed={}, Echoed={}",
+                            recv,
+                            allocFail,
+                            posted,
+                            processed,
+                            echoed
                         );
                     }
                 );
@@ -119,7 +134,7 @@ int main(int argc, char *argv[])
                 // 4. Memory Cleanup Verification
                 LOG_INFO("Starting Memory Cleanup...");
                 // System::ObjectPool<System::AsioSession>::Clear(); // Removed
-                System::PacketPool::Clear();
+                System::MessagePool::Clear();
             }
             else
             {

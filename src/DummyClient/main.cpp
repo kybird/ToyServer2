@@ -13,12 +13,33 @@ std::atomic<long long> g_SendCount = 0;
 std::atomic<long long> g_RecvCount = 0;
 std::atomic<bool> g_IsRunning = true;
 
+// [Latency Tracking]
+std::atomic<long long> g_TotalLatencyUs = 0; // 총 레이턴시 (마이크로초)
+std::atomic<long long> g_LatencySamples = 0; // 샘플 수
+std::atomic<long long> g_MinLatencyUs = LLONG_MAX;
+std::atomic<long long> g_MaxLatencyUs = 0;
+
+// 원자적 최소값 갱신
+void UpdateMinLatency(long long value)
+{
+    long long prev = g_MinLatencyUs.load();
+    while (value < prev && !g_MinLatencyUs.compare_exchange_weak(prev, value))
+        ;
+}
+
+// 원자적 최대값 갱신
+void UpdateMaxLatency(long long value)
+{
+    long long prev = g_MaxLatencyUs.load();
+    while (value > prev && !g_MaxLatencyUs.compare_exchange_weak(prev, value))
+        ;
+}
+
 class ClientSession : public std::enable_shared_from_this<ClientSession>
 {
 public:
     ClientSession(boost::asio::io_context &io_context) : _socket(io_context), _resolver(io_context)
     {
-        // 수신 버퍼 넉넉히 (64KB)
         _recvBuffer.resize(65536);
     }
 
@@ -34,24 +55,35 @@ public:
                 {
                     g_ConnectedCount++;
 
-                    // [최적화] 소켓 버퍼 크기 늘리기 (OS 레벨)
-                    boost::asio::socket_base::receive_buffer_size option(1024 * 1024); // 1MB
+                    boost::asio::socket_base::receive_buffer_size option(1024 * 1024);
                     _socket.set_option(option);
 
-                    // Nagle 끄기 (반응 속도 향상)
                     tcp::no_delay noDelay(true);
                     _socket.set_option(noDelay);
 
                     SendLoop();
-                    RecvLoop(); // 바뀐 수신 함수 호출
+                    RecvLoop();
                 }
             }
         );
     }
 
+    void StopSending()
+    {
+        _sendStopped = true;
+    }
+
+    void Close()
+    {
+        boost::system::error_code ec;
+        if (_socket.is_open())
+        {
+            _socket.shutdown(tcp::socket::shutdown_both, ec);
+            _socket.close(ec);
+        }
+    }
+
 private:
-    // [기존] ReadHeader -> ReadBody (삭제)
-    // [신규] 뭉텅이로 읽어서 루프로 처리
     void RecvLoop()
     {
         _socket.async_read_some(
@@ -59,46 +91,58 @@ private:
             [this, self = shared_from_this()](const boost::system::error_code &ec, size_t bytesTransferred)
             {
                 if (ec)
-                    return; // 연결 끊김 등
+                    return;
 
-                // 1. 커서 이동
                 _writePos += bytesTransferred;
 
-                // 2. 패킷 처리 루프 (서버와 동일한 로직!)
                 while (_writePos - _readPos >= sizeof(Share::PacketHeader))
                 {
-                    // 헤더 확인
                     Share::PacketHeader *header = reinterpret_cast<Share::PacketHeader *>(&_recvBuffer[_readPos]);
 
-                    // 패킷 크기 검증
                     if (header->size > 1024 * 10)
                     {
-                        // 에러 처리: 너무 큰 패킷 (Close)
                         return;
                     }
 
-                    // 아직 바디가 다 안 왔으면 대기
                     if (_writePos - _readPos < header->size)
                     {
                         break;
                     }
 
-                    // --- [패킷 처리 완료] ---
-                    g_RecvCount++; // 카운트 증가
-                    // -----------------------
+                    // =========================================================
+                    // [Latency Measurement] Extract timestamp from packet
+                    // =========================================================
+                    size_t payloadSize = header->size - sizeof(Share::PacketHeader);
+                    if (payloadSize >= sizeof(int64_t))
+                    {
+                        const uint8_t *payload = &_recvBuffer[_readPos + sizeof(Share::PacketHeader)];
+                        int64_t sendTime;
+                        std::memcpy(&sendTime, payload, sizeof(int64_t));
 
-                    // 읽은 만큼 포지션 이동
+                        auto now = std::chrono::steady_clock::now();
+                        int64_t nowUs =
+                            std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+
+                        int64_t rtt = nowUs - sendTime;
+                        if (rtt > 0 && rtt < 10000000) // 유효 범위: 0 ~ 10초
+                        {
+                            g_TotalLatencyUs.fetch_add(rtt, std::memory_order_relaxed);
+                            g_LatencySamples.fetch_add(1, std::memory_order_relaxed);
+                            UpdateMinLatency(rtt);
+                            UpdateMaxLatency(rtt);
+                        }
+                    }
+                    // =========================================================
+
+                    g_RecvCount++;
                     _readPos += header->size;
                 }
 
-                // 3. 버퍼 정리 (남은 데이터 앞으로 당기기)
-                // 만약 읽을 데이터가 없으면 커서 초기화 (가장 빠름)
                 if (_readPos == _writePos)
                 {
                     _readPos = 0;
                     _writePos = 0;
                 }
-                // 만약 버퍼가 꽉 찼거나 남은 공간이 부족하면 앞으로 당김 (Memmove)
                 else if (_recvBuffer.size() - _writePos < 1024)
                 {
                     size_t remaining = _writePos - _readPos;
@@ -107,7 +151,6 @@ private:
                     _writePos = remaining;
                 }
 
-                // 4. 다시 수신 대기
                 RecvLoop();
             }
         );
@@ -115,46 +158,42 @@ private:
 
     void SendLoop()
     {
-        if (!_socket.is_open() || !g_IsRunning)
+        if (!_socket.is_open() || !g_IsRunning || _sendStopped)
             return;
 
-        // ... 패킷 생성 로직 (기존과 동일) ...
-        // (주의: 테스트할 때 Sleep을 0ms로 하거나 제거하면 엄청난 속도로 나감)
+        // =========================================================
+        // [Latency Measurement] Embed timestamp in packet payload
+        // =========================================================
+        auto now = std::chrono::steady_clock::now();
+        int64_t nowUs = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
 
-        // 패킷 생성 비용을 아끼기 위해 멤버변수로 미리 만들어두고 재사용 추천
-        // [수정] static vector는 멀티스레드 환경(4 threads)에서 Race Condition 발생 -> 크래시 원인!
-        // 대신 각 세션별 멤버 변수(_sendBuf)를 사용해야 함.
-        static std::string payload = "Hello Dummy Client"; // static으로 한 번만 생성
+        // Payload: [timestamp (8 bytes)] + "Hello"
+        static const char *msg = "Hello";
+        size_t payloadSize = sizeof(int64_t) + strlen(msg);
+        uint16_t packetSize = static_cast<uint16_t>(sizeof(Share::PacketHeader) + payloadSize);
 
-        uint16_t size = static_cast<uint16_t>(sizeof(Share::PacketHeader) + payload.size());
-        if (_sendBuf.size() < size)
-            _sendBuf.resize(size);
+        if (_sendBuf.size() < packetSize)
+            _sendBuf.resize(packetSize);
 
         Share::PacketHeader *header = reinterpret_cast<Share::PacketHeader *>(_sendBuf.data());
-        header->size = size;
+        header->size = packetSize;
         header->id = Share::PacketType::PKT_C_ECHO;
-        memcpy(_sendBuf.data() + sizeof(Share::PacketHeader), payload.data(), payload.size());
 
-        g_SendCount++;
+        // Copy timestamp + message
+        uint8_t *payload = _sendBuf.data() + sizeof(Share::PacketHeader);
+        std::memcpy(payload, &nowUs, sizeof(int64_t));
+        std::memcpy(payload + sizeof(int64_t), msg, strlen(msg));
+        // =========================================================
 
         boost::asio::async_write(
             _socket,
-            boost::asio::buffer(_sendBuf, size), // 전체 벡터가 아니라 size만큼만
+            boost::asio::buffer(_sendBuf, packetSize),
             [this, self = shared_from_this()](const boost::system::error_code &ec, size_t)
             {
                 if (!ec)
                 {
-                    // 스트레스 테스트: Sleep 없애거나 1ms
+                    g_SendCount++;
                     SendLoop();
-                }
-                else
-                {
-                    g_SendCount--;
-                    // 로그 출력 (aborted 제외)
-                    if (ec != boost::asio::error::operation_aborted)
-                    {
-                        // std::cerr << "Send Fail" << std::endl;
-                    }
                 }
             }
         );
@@ -164,13 +203,13 @@ private:
     tcp::socket _socket;
     tcp::resolver _resolver;
 
-    // [수신 버퍼 관리용 변수]
     std::vector<uint8_t> _recvBuffer;
     size_t _writePos = 0;
     size_t _readPos = 0;
 
-    // [송신 버퍼]
     std::vector<uint8_t> _sendBuf;
+
+    bool _sendStopped = false;
 };
 
 int main(int argc, char *argv[])
@@ -186,7 +225,7 @@ int main(int argc, char *argv[])
     boost::asio::io_context io_context;
 
     std::cout << "========================================" << std::endl;
-    std::cout << " Starting Stress Test" << std::endl;
+    std::cout << " Starting Stress Test (with Latency)" << std::endl;
     std::cout << " Client Count: " << clientCount << std::endl;
     std::cout << " Duration: " << durationSeconds << "s" << std::endl;
     std::cout << "========================================" << std::endl;
@@ -225,15 +264,28 @@ int main(int argc, char *argv[])
         totalSent += sent;
         totalRecv += recv;
 
+        // [Latency Stats] 매초 출력
+        long long samples = g_LatencySamples.load();
+        double avgLatMs = 0;
+        if (samples > 0)
+        {
+            avgLatMs = (double)g_TotalLatencyUs.load() / samples / 1000.0;
+        }
+
         std::cout << "[Sec " << i + 1 << "] Connected: " << g_ConnectedCount << " | Send: " << sent
-                  << " | Recv: " << recv << std::endl;
+                  << " | Recv: " << recv << " | AvgLat: " << avgLatMs << "ms" << std::endl;
     }
 
-    // Stop Sending
+    // [Phase 1] Stop Sending
     g_IsRunning = false;
-    std::cout << "\n[Stopping sends... Waiting for remaining packets (2s)...]" << std::endl;
+    std::cout << "\n[Phase 1] Stopping sends... Recv continues." << std::endl;
+    for (auto &session : sessions)
+    {
+        session->StopSending();
+    }
 
-    // Grace Period
+    // [Phase 2] Grace Period
+    int zeroRecvCount = 0;
     for (int i = 0; i < 30; ++i)
     {
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -243,23 +295,50 @@ int main(int argc, char *argv[])
         totalRecv += recv;
         std::cout << "[Grace " << i + 1 << "] Recv: " << recv << std::endl;
 
-        if (sent == 0 && recv == 0)
+        if (recv == 0)
+            zeroRecvCount++;
+        else
+            zeroRecvCount = 0;
+
+        if (zeroRecvCount >= 2)
             break;
     }
 
-    // Stop IO
+    // [Phase 3] Close Sockets
+    std::cout << "[Phase 3] Closing sockets..." << std::endl;
+    for (auto &session : sessions)
+    {
+        session->Close();
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    // [Phase 4] Stop IO
     workGuard.reset();
     io_context.stop();
     for (auto &t : threads)
         t.join();
 
+    // Final Report
     double avgSend = (double)totalSent / durationSeconds;
     double avgRecv = (double)totalRecv / durationSeconds;
 
+    long long samples = g_LatencySamples.load();
+    double avgLatMs = samples > 0 ? (double)g_TotalLatencyUs.load() / samples / 1000.0 : 0;
+    double minLatMs = g_MinLatencyUs.load() == LLONG_MAX ? 0 : g_MinLatencyUs.load() / 1000.0;
+    double maxLatMs = g_MaxLatencyUs.load() / 1000.0;
+
     std::cout << "\n========================================" << std::endl;
     std::cout << " Test Finished" << std::endl;
-    std::cout << " Total Sent: " << totalSent << " (Avg: " << avgSend << "/s)" << std::endl;
-    std::cout << " Total Recv: " << totalRecv << " (Avg: " << avgRecv << "/s)" << std::endl;
+    std::cout << " Raw Sent (OS Buffer): " << totalSent << " (Avg: " << avgSend << "/s)" << std::endl;
+    std::cout << " Confirmed (=Recv):    " << totalRecv << " (Avg: " << avgRecv << "/s)" << std::endl;
+    std::cout << " Loss (Shutdown):      " << (totalSent - totalRecv) << " ("
+              << (totalSent > 0 ? (double)(totalSent - totalRecv) / totalSent * 100 : 0) << "%)" << std::endl;
+    std::cout << "----------------------------------------" << std::endl;
+    std::cout << " Latency (RTT):" << std::endl;
+    std::cout << "   Samples: " << samples << std::endl;
+    std::cout << "   Avg:     " << avgLatMs << " ms" << std::endl;
+    std::cout << "   Min:     " << minLatMs << " ms" << std::endl;
+    std::cout << "   Max:     " << maxLatMs << " ms" << std::endl;
     std::cout << "========================================" << std::endl;
 
     return 0;

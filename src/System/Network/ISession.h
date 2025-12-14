@@ -4,20 +4,19 @@
 #include <span>
 #include <vector>
 
-#include "System/Network/Packet.h"
-#include <boost/smart_ptr/intrusive_ptr.hpp>
-
 namespace System {
+
+struct PacketMessage;
 
 class ISession
 {
 public:
     virtual ~ISession() = default;
 
-    // Zero-copy send (boost::intrusive_ptr<Packet>)
-    virtual void Send(boost::intrusive_ptr<Packet> packet) = 0;
+    // Zero-copy send (PacketMessage from MessagePool)
+    virtual void Send(PacketMessage *msg) = 0;
 
-    // Send helper (might copy if not careful, but useful for small packets)
+    // Send helper (allocates from MessagePool internally)
     virtual void Send(std::span<const uint8_t> data) = 0;
 
     virtual void Close() = 0;
@@ -27,6 +26,9 @@ public:
     virtual void OnRecycle()
     {
     }
+
+    // [Lifetime] Reference counting for async message queue safety
+    virtual void DecRef() = 0;
 };
 
 } // namespace System

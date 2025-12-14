@@ -42,17 +42,15 @@ target_sources(System PRIVATE
     src/System/Log/LogImpl.cpp
     src/System/Config/CONFIG/ConfigLoader.cpp
     src/System/Memory/MemoryManager.cpp
-    src/System/Memory/PacketPool.cpp
     src/System/Monitor/MONITOR/MonitorImpl.cpp
     src/System/Framework/Framework.cpp
     src/System/Thread/THREAD/ThreadPool.cpp
     src/System/Network/ASIO/AsioSession.cpp
     src/System/Network/ASIO/AsioService.cpp
-    src/System/Network/ASIO/Components/Reader.cpp
-    src/System/Network/ASIO/Components/Writer.cpp
     src/System/Network/ASIO/RecvBuffer.cpp
     src/System/Network/ASIO/SessionFactory.cpp
     src/System/Dispatcher/DISPATCHER/DispatcherImpl.cpp
+    src/System/Dispatcher/MessagePool.cpp
     src/System/Debug/CrashHandler.cpp
     src/System/Timer/ASIO/AsioTimer.cpp
     src/System/Timer/ITimer.h

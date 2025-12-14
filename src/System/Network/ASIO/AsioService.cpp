@@ -50,9 +50,6 @@ void AsioService::Run()
 
 void AsioService::StartAccept()
 {
-    // Placeholder: In full version, we create a Session via SessionFactory
-    // For now, we will just accept and close to prove connectivity or print
-    // info.
     auto socket = std::make_shared<boost::asio::ip::tcp::socket>(_ioContext);
 
     _acceptor.async_accept(

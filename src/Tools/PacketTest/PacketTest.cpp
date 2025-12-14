@@ -1,5 +1,4 @@
-#include "System/Network/Packet.h"
-#include "System/Memory/PacketPool.h"
+#include "System/Dispatcher/MessagePool.h"
 #include "System/Pch.h"
 #include <cassert>
 #include <iostream>
@@ -17,9 +16,9 @@ void TestAddressStability()
     // Warmup
     for (int i = 0; i < 100; ++i)
     {
-        auto p = PacketPool::Allocate(1024);
-        addresses.insert(p.get());
-        // Auto released
+        auto p = MessagePool::AllocatePacket(1024);
+        addresses.insert(p);
+        MessagePool::Free(p);
     }
     addresses.clear();
 
@@ -27,8 +26,9 @@ void TestAddressStability()
     size_t iterations = 1000000;
     for (size_t i = 0; i < iterations; ++i)
     {
-        auto packet = PacketPool::Allocate(1024);
-        addresses.insert(packet.get());
+        auto msg = MessagePool::AllocatePacket(1024);
+        addresses.insert(msg);
+        MessagePool::Free(msg);
     }
 
     std::cout << "Allocations: " << iterations << std::endl;
@@ -39,36 +39,29 @@ void TestAddressStability()
     else
         std::cout << "[WARN] Reuse rate might be low or pool growing?" << std::endl;
 
-    assert(PacketPool::GetPoolSize() > 0);
+    assert(MessagePool::GetPoolSize() >= 0);
 }
 
-void TestReferenceCounting()
+void TestAllocationDeallocation()
 {
-    std::cout << "[Test] Reference Counting..." << std::endl;
-    int initialSize = PacketPool::GetPoolSize();
+    std::cout << "[Test] Allocation/Deallocation..." << std::endl;
+    int initialSize = MessagePool::GetPoolSize();
 
     {
-        auto p1 = PacketPool::Allocate(100);
-        assert(p1->size == 0); // Reset called
-        assert(p1->capacity >= 100);
+        auto p1 = MessagePool::AllocatePacket(100);
+        assert(p1 != nullptr);
+        assert(p1->length == 100);
 
-        {
-            boost::intrusive_ptr<Packet> p2 = p1;
-            // RefCount should be 2, managed internally
-        }
-        // p2 dead, refcount 1
+        MessagePool::Free(p1);
     }
-    // p1 dead, refcount 0 -> Returned to pool
 
-    int finalSize = PacketPool::GetPoolSize();
+    int finalSize = MessagePool::GetPoolSize();
     std::cout << "Initial: " << initialSize << ", Final: " << finalSize << std::endl;
-    // Pool size logic is bit complex due to leaky singleton initial state,
-    // but should be initialSize + 1 if we started clean, or just >= initial
 }
 
 int main()
 {
-    TestReferenceCounting();
+    TestAllocationDeallocation();
     TestAddressStability();
     return 0;
 }

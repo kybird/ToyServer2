@@ -1,32 +1,39 @@
 #pragma once
 #include "Share/Protocol.h"
+#include "System/Debug/MemoryMetrics.h"
 #include "System/Dispatcher/IPacketHandler.h"
+#include "System/Dispatcher/MessagePool.h"
 #include "System/ILog.h"
-#include "System/Memory/PacketPool.h"
 #include <iostream>
 
 class ServerPacketHandler : public System::IPacketHandler
 {
 public:
-    void HandlePacket(System::ISession *session, boost::intrusive_ptr<System::Packet> packet) override
+    void HandlePacket(System::ISession *session, System::PacketMessage *packet) override
     {
         // Simple ECHO logic
-        if (packet->size < sizeof(Share::PacketHeader))
+        if (packet->length < sizeof(Share::PacketHeader))
             return;
 
-        Share::PacketHeader *header = reinterpret_cast<Share::PacketHeader *>(packet->data());
+        Share::PacketHeader *header = reinterpret_cast<Share::PacketHeader *>(packet->Payload());
 
         if (header->id == Share::PacketType::PKT_C_ECHO)
         {
-
             // Allocate new packet from pool
-            auto response = System::PacketPool::Allocate(packet->size);
-            response->assign(packet->data(), packet->data() + packet->size);
+            auto response = System::MessagePool::AllocatePacket(packet->length);
+            if (!response)
+                return;
+            std::memcpy(response->Payload(), packet->Payload(), packet->length);
 
-            Share::PacketHeader *respHeader = reinterpret_cast<Share::PacketHeader *>(response->data());
+            Share::PacketHeader *respHeader = reinterpret_cast<Share::PacketHeader *>(response->Payload());
             respHeader->id = Share::PacketType::PKT_S_ECHO;
 
-            session->Send(std::move(response));
+            session->Send(response);
+
+#ifdef ENABLE_DIAGNOSTICS
+            // [Diagnostics] Echo 응답 카운트
+            System::Debug::MemoryMetrics::Echoed.fetch_add(1, std::memory_order_relaxed);
+#endif
         }
     }
 };

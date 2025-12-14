@@ -4,9 +4,7 @@
 #include <memory>
 #include <vector>
 
-#include "System/Network/Packet.h"
-#include <boost/smart_ptr/intrusive_ptr.hpp>
-
+#include "System/Dispatcher/IMessage.h"
 namespace System {
 
 class IPacketHandler
@@ -14,9 +12,9 @@ class IPacketHandler
 public:
     virtual ~IPacketHandler() = default;
 
-    // Zero-copy: Packet data is boost::intrusive_ptr<Packet>
+    // Zero-copy: Packet data is PacketMessage* (Single Allocation)
     // Session is pre-looked-up ISession (Raw Pointer)
-    virtual void HandlePacket(ISession *session, boost::intrusive_ptr<Packet> packet) = 0;
+    virtual void HandlePacket(ISession *session, PacketMessage *packet) = 0;
 };
 
 } // namespace System

@@ -2,13 +2,16 @@
 
 #include "System/Dispatcher/IDispatcher.h"
 #include "System/Dispatcher/IPacketHandler.h"
-#include "System/Network/ASIO/SessionPool.h"
 #include <concurrentqueue/moodycamel/concurrentqueue.h>
 #include <memory>
-#include <unordered_map>
 #include <vector>
 
+static constexpr size_t HIGH_WATER = 5000;
+static constexpr size_t LOW_WATER = 3000;
+
 namespace System {
+
+class AsioSession;
 
 class DispatcherImpl : public IDispatcher
 {
@@ -16,7 +19,7 @@ public:
     DispatcherImpl(std::shared_ptr<IPacketHandler> packetHandler);
     virtual ~DispatcherImpl();
 
-    void Post(SystemMessage message) override;
+    void Post(IMessage *message) override;
 
     // Main Loop processing (Called by Worker Threads)
     bool Process() override;
@@ -28,21 +31,24 @@ public:
 
     bool IsOverloaded() const override
     {
-        // Simple Threshold
-        return _messageQueue.size_approx() > 5000;
+        return _messageQueue.size_approx() > HIGH_WATER;
+    }
+
+    bool IsRecovered() const override
+    {
+        return _messageQueue.size_approx() < LOW_WATER;
     }
 
 private:
     void ProcessPendingDestroys();
 
 private:
-    moodycamel::ConcurrentQueue<SystemMessage> _messageQueue;
+    moodycamel::ConcurrentQueue<IMessage *> _messageQueue;
     std::shared_ptr<IPacketHandler> _packetHandler;
 
-    // [Thread-Local Session Registry]
-    // Dispatcher owns the sessions. No global lock.
-    std::unordered_map<uint64_t, ISession *> _sessionRegistry;
-    std::vector<ISession *> _pendingDestroy;
+    // [No session registry] Dispatcher doesn't own sessions, just processes messages
+    // Session lifetime is managed by AsioSession IncRef/DecRef
+    std::vector<AsioSession *> _pendingDestroy;
 };
 
 } // namespace System
