@@ -8,6 +8,8 @@
         "spdlog",
         "nlohmann-json",
         "concurrentqueue",
-        "gtest"
+        "gtest",
+        "sqlite3",
+        "protobuf"
     ]
 }

@@ -1,0 +1,10 @@
+{
+    "server": {
+        "port": 9000,
+        "workerThreadCount": 4,
+        "taskWorkerCount": 4,
+        "dbAddress": "server=localhost;uid=root;pwd=root;database=toy",
+        "rateLimit": 100.0,
+        "rateBurst": 200.0
+    }
+}

@@ -1,4 +1,5 @@
 #include "ServerPacketHandler.h"
+#include "System/Config/Json/JsonConfigLoader.h"
 #include "System/Debug/CrashHandler.h"
 #include "System/Dispatcher/IDispatcher.h"
 #include "System/IFramework.h"
@@ -7,6 +8,7 @@
 #include "System/Pch.h"
 #include <iostream>
 #include <string>
+
 
 #define ENABLE_MEMORY_PROFILE
 #ifdef ENABLE_MEMORY_PROFILE
@@ -63,8 +65,16 @@ int main(int argc, char *argv[])
             // 2. Create Packet Handler (User Logic)
             auto packetHandler = std::make_shared<ServerPacketHandler>();
 
+            // 2.5 Load Config
+            auto config = std::make_shared<System::JsonConfigLoader>();
+            if (!config->Load("server_config.json"))
+            {
+                LOG_ERROR("Failed to load server_config.json");
+                return 1;
+            }
+
             // 3. Create & Run Framework
-            // Stack allocated, finding config in "server_config.json"
+            // Stack allocated
             auto framework = System::IFramework::Create(); // Use Factory
 
             // Signal Handling
@@ -76,7 +86,7 @@ int main(int argc, char *argv[])
             std::signal(SIGINT, SignalHandlerWrapper);
             std::signal(SIGTERM, SignalHandlerWrapper);
 
-            if (framework->Init("server_config.json", packetHandler))
+            if (framework->Init(config, packetHandler))
             {
 
 #ifdef ENABLE_MEMORY_PROFILE
@@ -100,7 +110,7 @@ int main(int argc, char *argv[])
                         // Assuming GetApproximatePoolSize exists based on previous file reads.
                         // Actually let's just use 0 if unsure to avoid build break, or use what was there.
                         auto sessionPoolSize = 0;
-                        auto queueSize = framework->GetDispatcher()->GetQueueSize();
+                        auto queueSize = framework->GetDispatcherQueueSize();
                         auto activeSessionCount = 0;
 
                         LOG_INFO(

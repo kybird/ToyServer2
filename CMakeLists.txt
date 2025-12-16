@@ -21,6 +21,9 @@ find_package(spdlog CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(concurrentqueue CONFIG REQUIRED)
+find_package(GTest CONFIG REQUIRED)
+find_package(unofficial-sqlite3 CONFIG REQUIRED)
+find_package(Protobuf REQUIRED)
 
 # Common functionality
 add_library(Share STATIC)
@@ -43,9 +46,9 @@ add_library(System STATIC)
 target_sources(System PRIVATE
     src/System/Pch.h
     src/System/Log/LogImpl.cpp
-    src/System/Config/CONFIG/ConfigLoader.cpp
+    src/System/Config/Json/JsonConfigLoader.cpp
     src/System/Memory/MemoryManager.cpp
-    src/System/Monitor/MONITOR/MonitorImpl.cpp
+    src/System/Metrics/MetricsCollector.cpp # Refactored from Monitor
     # Session (Refactored)
     src/System/Session/Session.cpp
     src/System/Session/Session.h
@@ -57,6 +60,10 @@ target_sources(System PRIVATE
     src/System/Network/INetwork.h
     src/System/Network/NetworkImpl.cpp
     src/System/Network/RecvBuffer.cpp
+    src/System/Network/RateLimiter.h # Added
+    src/System/Events/EventBus.h
+    src/System/Network/ByteBuffer.h # Added
+    src/System/Database/DBConnectionPool.cpp # Added
     src/System/Framework/Framework.cpp
     src/System/Thread/ThreadPool.cpp
     src/System/Dispatcher/DISPATCHER/DispatcherImpl.cpp
@@ -66,6 +73,8 @@ target_sources(System PRIVATE
     src/System/Timer/TimerImpl.cpp
     src/System/ITimer.h
     src/System/Timer/TimerHandle.h
+    src/System/Console/CommandConsole.h # Added
+    src/System/Console/CommandConsole.cpp # Added
     
     # New Refactoring
     src/System/ToyServerSystem.h
@@ -76,7 +85,7 @@ target_sources(System PRIVATE
 )
 target_include_directories(System PUBLIC src/System src)
 target_precompile_headers(System PRIVATE src/System/Pch.h)
-target_link_libraries(System PUBLIC Share dbghelp)
+target_link_libraries(System PUBLIC Share dbghelp unofficial::sqlite3::sqlite3)
 
 # GameServer Executable
 add_executable(GameServer src/GameServer/main.cpp)
@@ -98,11 +107,58 @@ target_precompile_headers(DummyClient PRIVATE src/System/Pch.h)
 target_link_libraries(DummyClient PRIVATE System Share)
 
 # Packet Test Executable
-# Packet Test Executable
 add_executable(PacketTest src/Tools/PacketTest/PacketTest.cpp)
 target_include_directories(PacketTest PRIVATE src)
 target_precompile_headers(PacketTest PRIVATE src/System/Pch.h)
 target_link_libraries(PacketTest PRIVATE System Share)
+
+# Rate Limiter Test
+add_executable(RateLimiterTest tests/TestRateLimiter.cpp)
+target_include_directories(RateLimiterTest PRIVATE src)
+target_precompile_headers(RateLimiterTest PRIVATE src/System/Pch.h)
+target_link_libraries(RateLimiterTest PRIVATE System Share GTest::gtest GTest::gtest_main)
+
+# Event Bus Test
+add_executable(EventBusTest tests/TestEventBus_Mock.cpp)
+target_include_directories(EventBusTest PRIVATE src)
+target_precompile_headers(EventBusTest PRIVATE src/System/Pch.h)
+target_link_libraries(EventBusTest PRIVATE System Share GTest::gtest GTest::gmock)
+
+# ByteBuffer Test
+add_executable(ByteBufferTest tests/TestByteBuffer.cpp)
+target_include_directories(ByteBufferTest PRIVATE src)
+target_precompile_headers(ByteBufferTest PRIVATE src/System/Pch.h)
+target_link_libraries(ByteBufferTest PRIVATE System Share GTest::gtest GTest::gtest_main)
+
+# DBConnectionPool Test
+add_executable(DBConnectionPoolTest tests/TestDBConnectionPool.cpp)
+target_include_directories(DBConnectionPoolTest PRIVATE src)
+target_precompile_headers(DBConnectionPoolTest PRIVATE src/System/Pch.h)
+target_link_libraries(DBConnectionPoolTest PRIVATE System Share GTest::gtest GTest::gmock)
+
+enable_testing()
+include(GoogleTest)
+add_subdirectory(tests)
+
+# ==========================================
+# Example: Vampire Survivor Server (Formerly SimpleGame)
+# ==========================================
+
+# Protobuf Generation
+set(PROTO_SRC_DIR "src/Examples/VampireSurvivor/Proto")
+set(PROTO_FILES "${PROTO_SRC_DIR}/Protocol.proto")
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
+
+add_executable(VampireSurvivorServer
+    src/Examples/VampireSurvivor/Server/Main.cpp
+    src/Examples/VampireSurvivor/Server/Room.cpp
+    ${PROTO_SRCS} ${PROTO_HDRS}
+)
+target_include_directories(VampireSurvivorServer PRIVATE src ${CMAKE_CURRENT_BINARY_DIR})
+target_precompile_headers(VampireSurvivorServer PRIVATE src/System/Pch.h)
+target_link_libraries(VampireSurvivorServer PRIVATE System Share protobuf::libprotobuf)
+
+
 
 # Install Configuration
 install(TARGETS System Share
