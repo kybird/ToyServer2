@@ -2,8 +2,8 @@
 #include "Share/Protocol.h"
 #include "System/Debug/MemoryMetrics.h"
 #include "System/Dispatcher/IPacketHandler.h"
-#include "System/Dispatcher/MessagePool.h"
 #include "System/ILog.h"
+#include "System/Network/PacketUtils.h"
 #include <iostream>
 
 class ServerPacketHandler : public System::IPacketHandler
@@ -20,7 +20,7 @@ public:
         if (header->id == Share::PacketType::PKT_C_ECHO)
         {
             // Allocate new packet from pool
-            auto response = System::MessagePool::AllocatePacket(packet->length);
+            auto response = System::PacketUtils::CreatePacket(packet->length);
             if (!response)
                 return;
             std::memcpy(response->Payload(), packet->Payload(), packet->length);

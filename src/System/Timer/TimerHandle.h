@@ -1,15 +1,16 @@
 #pragma once
+
 #include <boost/asio.hpp>
 #include <memory>
 
-
 namespace System {
 
-struct TimerHandle {
-    // Reuse this timer object repeatedly
+struct TimerHandle
+{
     std::shared_ptr<boost::asio::steady_timer> _timer;
 
-    void Cancel() {
+    void Cancel()
+    {
         if (_timer)
             _timer->cancel();
     }

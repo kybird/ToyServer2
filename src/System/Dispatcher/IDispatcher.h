@@ -3,6 +3,7 @@
 #include "System/Dispatcher/IMessage.h"
 
 namespace System {
+struct ITimerHandler;
 
 class IDispatcher
 {
@@ -13,6 +14,9 @@ public:
     virtual size_t GetQueueSize() const = 0;
     virtual bool IsOverloaded() const = 0;
     virtual bool IsRecovered() const = 0;
+
+    // System Handlers
+    virtual void RegisterTimerHandler(ITimerHandler *handler) = 0;
 };
 
 // Global Access Removed. Use Dependency Injection.

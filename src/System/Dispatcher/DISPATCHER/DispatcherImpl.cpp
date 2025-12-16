@@ -1,9 +1,12 @@
 #include "System/Dispatcher/DISPATCHER/DispatcherImpl.h"
 #include "Share/Protocol.h"
+#include "System/Dispatcher/SystemMessages.h"
 #include "System/ILog.h"
-#include "System/Network/ASIO/AsioSession.h"
-#include "System/Network/ASIO/SessionPool.h"
+#include "System/ITimer.h"
 #include "System/Pch.h"
+#include "System/Session/Session.h"
+#include "System/Session/SessionPool.h"
+
 
 #include "System/Debug/MemoryMetrics.h"
 #include "System/Dispatcher/MessagePool.h"
@@ -43,10 +46,10 @@ bool DispatcherImpl::Process()
 
             switch (msg->type)
             {
-            case MessageType::NETWORK_DATA: {
-                // [Hot Path] Direct AsioSession access - no map lookup, no vtable
-                // session pointer is concrete AsioSession*, not ISession*
-                AsioSession *session = msg->session;
+            case (uint32_t)MessageType::NETWORK_DATA: {
+                // [Hot Path] Direct Session access - no map lookup, no vtable
+                // session pointer is concrete Session*, not ISession*
+                Session *session = msg->session;
                 if (session && session->IsConnected())
                 {
                     PacketMessage *content = static_cast<PacketMessage *>(msg);
@@ -55,11 +58,11 @@ bool DispatcherImpl::Process()
             }
             break;
 
-            case MessageType::NETWORK_CONNECT:
-                // No registry - just notification, session is already managed by AsioSession
+            case (uint32_t)MessageType::NETWORK_CONNECT:
+                // No registry - just notification, session is already managed by Session
                 break;
 
-            case MessageType::NETWORK_DISCONNECT:
+            case (uint32_t)MessageType::NETWORK_DISCONNECT:
                 if (msg->session)
                 {
                     // [Invariant] After DISCONNECT, no new NETWORK_DATA messages
@@ -68,6 +71,47 @@ bool DispatcherImpl::Process()
                     _pendingDestroy.push_back(msg->session);
                 }
                 break;
+
+            case (uint32_t)InternalMessageType::IMT_LOGIC_TIMER: {
+                // [DEPRECATED]
+            }
+            break;
+
+            case (uint32_t)InternalMessageType::IMT_LOGIC_TIMER_EXPIRED: {
+                if (_timerHandler)
+                {
+                    TimerExpiredMessage *tMsg = static_cast<TimerExpiredMessage *>(msg);
+                    _timerHandler->OnTimerExpired(tMsg->timerId);
+                }
+            }
+            break;
+
+            case (uint32_t)InternalMessageType::IMT_LOGIC_TIMER_ADD: {
+                if (_timerHandler)
+                {
+                    TimerAddMessage *tMsg = static_cast<TimerAddMessage *>(msg);
+                    _timerHandler->OnTimerAdd(tMsg);
+                }
+            }
+            break;
+
+            case (uint32_t)InternalMessageType::IMT_LOGIC_TIMER_CANCEL: {
+                if (_timerHandler)
+                {
+                    TimerCancelMessage *tMsg = static_cast<TimerCancelMessage *>(msg);
+                    _timerHandler->OnTimerCancel(tMsg);
+                }
+            }
+            break;
+
+            case (uint32_t)InternalMessageType::IMT_LOGIC_TIMER_TICK: {
+                if (_timerHandler)
+                {
+                    TimerTickMessage *tMsg = static_cast<TimerTickMessage *>(msg);
+                    _timerHandler->OnTick(tMsg);
+                }
+            }
+            break;
 
             default:
                 break;
@@ -110,11 +154,11 @@ void DispatcherImpl::ProcessPendingDestroys()
     size_t i = 0;
     while (i < _pendingDestroy.size())
     {
-        AsioSession *session = _pendingDestroy[i];
+        Session *session = _pendingDestroy[i];
         if (session->CanDestroy())
         {
             // Release to pool
-            SessionPool<AsioSession>::Release(session);
+            SessionPool<Session>::Release(session);
 
             // Swap-and-pop: O(1) deletion
             _pendingDestroy[i] = _pendingDestroy.back();
@@ -126,6 +170,27 @@ void DispatcherImpl::ProcessPendingDestroys()
             ++i;
         }
     }
+}
+
+// DispatcherImpl.h Implementations
+size_t DispatcherImpl::GetQueueSize() const
+{
+    return _messageQueue.size_approx();
+}
+
+bool DispatcherImpl::IsOverloaded() const
+{
+    return _messageQueue.size_approx() > HIGH_WATER;
+}
+
+bool DispatcherImpl::IsRecovered() const
+{
+    return _messageQueue.size_approx() < LOW_WATER;
+}
+
+void DispatcherImpl::RegisterTimerHandler(ITimerHandler *handler)
+{
+    _timerHandler = handler;
 }
 
 } // namespace System

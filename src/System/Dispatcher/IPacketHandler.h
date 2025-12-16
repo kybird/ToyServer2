@@ -1,5 +1,5 @@
 #pragma once
-#include "System/Network/ISession.h"
+#include "System/ISession.h"
 #include <cstdint>
 #include <memory>
 #include <vector>

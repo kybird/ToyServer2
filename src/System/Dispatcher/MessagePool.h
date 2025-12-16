@@ -7,14 +7,18 @@
 
 namespace System {
 
+struct TimerMessage;
+struct TimerExpiredMessage;
+struct TimerAddMessage;
+struct TimerCancelMessage;
+struct TimerTickMessage;
+struct EventMessage;
+
 class MessagePool
 {
 public:
     static std::atomic<int> _poolSize;
-    static int GetPoolSize()
-    {
-        return _poolSize.load();
-    }
+    static int GetPoolSize();
 
     // Constants
     static const size_t MAX_PACKET_BODY_SIZE = 4096; // 4KB Body limit for pooled messages
@@ -25,7 +29,11 @@ public:
     // Allocation
     static PacketMessage *AllocatePacket(uint16_t bodySize);
     static EventMessage *AllocateEvent();
-    static TimerMessage *AllocateTimer(); // TBD
+    static TimerMessage *AllocateTimer();
+    static TimerExpiredMessage *AllocateTimerExpired();
+    static TimerAddMessage *AllocateTimerAdd();
+    static TimerCancelMessage *AllocateTimerCancel();
+    static TimerTickMessage *AllocateTimerTick();
 
     // Deallocation
     static void Free(IMessage *msg);

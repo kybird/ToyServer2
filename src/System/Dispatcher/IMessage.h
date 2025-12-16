@@ -1,26 +1,47 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 
 namespace System {
 
-class AsioSession; // Direct type, no ISession abstraction in message
+class Session;
 
-enum class MessageType { NETWORK_CONNECT, NETWORK_DISCONNECT, NETWORK_DATA, LOGIC_JOB };
+// Public Message Types
+enum class MessageType {
+    NETWORK_CONNECT = 0,
+    NETWORK_DISCONNECT,
+    NETWORK_DATA,
+    LOGIC_JOB,
+
+    // User defined messages start here or after reserved range
+    PACKET = 10
+};
 
 // [New Architecture: Single Allocation Polymorphism]
 struct IMessage
 {
     virtual ~IMessage() = default;
-    MessageType type;
+    uint32_t type; // Changed from enum class to support internal/external extension
     uint64_t sessionId;
-    AsioSession *session = nullptr; // Direct pointer, no vtable
+    Session *session = nullptr;
+};
+
+struct EventMessage : public IMessage
+{
+    EventMessage()
+    {
+        type = (uint32_t)MessageType::LOGIC_JOB;
+    }
+    // Generic event data can be added here if needed
 };
 
 struct PacketMessage : public IMessage
 {
-    // uint16_t packetId; // Can be parsed from data if needed, or stored here.
-    // For now, raw data containment.
+    PacketMessage()
+    {
+        type = (uint32_t)MessageType::PACKET;
+    }
     uint16_t length;
     uint8_t data[1]; // Flexible Array Member
 
@@ -33,27 +54,12 @@ struct PacketMessage : public IMessage
         return data;
     }
 
-    // Helper to get total allocation size needed
     static size_t CalculateAllocSize(uint16_t bodySize)
     {
-        // sizeof(PacketMessage) includes the first byte of data[1].
-        // So we need sizeof(PacketMessage) - 1 + bodySize.
-        // But for safety and alignment, usually sizeof(PacketMessage) + bodySize is fine (1 byte waste).
         return sizeof(PacketMessage) + bodySize;
     }
 };
 
-struct TimerMessage : public IMessage
-{
-    uint32_t timerId;
-    uint32_t contextId;
-    // Add other timer data as needed
-};
-
-// Generic System Event (Connect/Disconnect)
-struct EventMessage : public IMessage
-{
-    // No extra data needed, just Header info
-};
+struct ITimer;
 
 } // namespace System

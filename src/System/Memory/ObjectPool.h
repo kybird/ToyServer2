@@ -22,13 +22,13 @@ public:
     // [Init] Call this once at startup
     // allocLimit: Max total objects alive (In-Use + Pooled). 0 = Unlimited (Dangerous)
     // poolLimit: Max idle objects in pool.
-    static void Init(size_t allocLimit, size_t poolLimit)
+    void Init(size_t allocLimit, size_t poolLimit)
     {
         _allocLimit.store(allocLimit);
         _poolLimit.store(poolLimit);
     }
 
-    static T *Pop()
+    T *Pop()
     {
         T *ptr = nullptr;
 
@@ -53,22 +53,16 @@ public:
         // Optimistic Allocation
         _allocCount.fetch_add(1, std::memory_order_relaxed);
 
-        // Double check (to prevent massive burst overshooting)
-        // Note: Strict CAS loop is better but costly. This is acceptable for "mostly limit".
-        // If we really need strict cap, we should increment BEFORE check or use CAS.
-        // Let's stick to relaxed check for perf, but maybe basic CAS is better for safety.
-
         ptr = new T();
         return ptr;
     }
 
-    static void Push(T *ptr)
+    void Push(T *ptr)
     {
         if (!ptr)
             return;
 
         // [Lifecycle] Optional Reset
-        // If T has Reset(), you should call it here or before Push.
         // Doing it here centralizes cleanup.
         // if constexpr (requires { ptr->Reset(); }) { ptr->Reset(); }
 
@@ -89,32 +83,25 @@ public:
     }
 
     // Diagnostics
-    static size_t GetAllocCount()
+    size_t GetAllocCount() const
     {
         return _allocCount.load();
     }
-    static size_t GetPoolCount()
+    size_t GetPoolCount() const
     {
         return _poolCount.load();
     }
 
 private:
-    static moodycamel::ConcurrentQueue<T *> _pool;
+    moodycamel::ConcurrentQueue<T *> _pool;
 
     // Stats
-    static std::atomic<size_t> _allocCount; // Total Allocated (System Memory)
-    static std::atomic<size_t> _poolCount;  // Total Idle (Cache)
+    std::atomic<size_t> _allocCount = 0; // Total Allocated (System Memory)
+    std::atomic<size_t> _poolCount = 0;  // Total Idle (Cache)
 
     // Config
-    static std::atomic<size_t> _allocLimit; // Hard Cap
-    static std::atomic<size_t> _poolLimit;  // Soft Cap
+    std::atomic<size_t> _allocLimit = 0;   // Hard Cap. 0 = Unlimited
+    std::atomic<size_t> _poolLimit = 1000; // Soft Cap
 };
-
-template <typename T> moodycamel::ConcurrentQueue<T *> ObjectPool<T>::_pool;
-template <typename T> std::atomic<size_t> ObjectPool<T>::_allocCount = 0;
-template <typename T> std::atomic<size_t> ObjectPool<T>::_poolCount = 0;
-// Defaults: Safe Unbounded-ish for dev, but user should call Init()
-template <typename T> std::atomic<size_t> ObjectPool<T>::_allocLimit = 0; // 0 = Unlimited
-template <typename T> std::atomic<size_t> ObjectPool<T>::_poolLimit = 1000;
 
 } // namespace System

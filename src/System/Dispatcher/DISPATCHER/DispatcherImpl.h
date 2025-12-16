@@ -11,7 +11,7 @@ static constexpr size_t LOW_WATER = 3000;
 
 namespace System {
 
-class AsioSession;
+class Session;
 
 class DispatcherImpl : public IDispatcher
 {
@@ -24,20 +24,11 @@ public:
     // Main Loop processing (Called by Worker Threads)
     bool Process() override;
 
-    size_t GetQueueSize() const override
-    {
-        return _messageQueue.size_approx();
-    }
+    size_t GetQueueSize() const override;
+    bool IsOverloaded() const override;
+    bool IsRecovered() const override;
 
-    bool IsOverloaded() const override
-    {
-        return _messageQueue.size_approx() > HIGH_WATER;
-    }
-
-    bool IsRecovered() const override
-    {
-        return _messageQueue.size_approx() < LOW_WATER;
-    }
+    void RegisterTimerHandler(ITimerHandler *handler) override;
 
 private:
     void ProcessPendingDestroys();
@@ -47,8 +38,11 @@ private:
     std::shared_ptr<IPacketHandler> _packetHandler;
 
     // [No session registry] Dispatcher doesn't own sessions, just processes messages
-    // Session lifetime is managed by AsioSession IncRef/DecRef
-    std::vector<AsioSession *> _pendingDestroy;
+    // Session lifetime is managed by Session IncRef/DecRef
+    std::vector<Session *> _pendingDestroy;
+
+    // System Handlers
+    ITimerHandler *_timerHandler = nullptr;
 };
 
 } // namespace System

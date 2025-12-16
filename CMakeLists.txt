@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 
+# Setup VCPKG (Must be before project() to activate toolchain)
+set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake")
+
 project(HGSF VERSION 0.1.0 LANGUAGES CXX)
 
 if(MSVC)
@@ -10,17 +13,17 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Setup VCPKG
-set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake") 
+
 
 # Dependencies
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost CONFIG REQUIRED COMPONENTS system)
 find_package(spdlog CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(concurrentqueue CONFIG REQUIRED)
 
 # Common functionality
-add_library(Share OBJECT)
+add_library(Share STATIC)
 target_sources(Share PRIVATE 
     src/System/Pch.h
     src/Share/Protocol.cpp
@@ -36,25 +39,39 @@ target_link_libraries(Share PUBLIC
 )
 
 # System Library (The Engine)
-add_library(System OBJECT)
+add_library(System STATIC)
 target_sources(System PRIVATE
     src/System/Pch.h
     src/System/Log/LogImpl.cpp
     src/System/Config/CONFIG/ConfigLoader.cpp
     src/System/Memory/MemoryManager.cpp
     src/System/Monitor/MONITOR/MonitorImpl.cpp
+    # Session (Refactored)
+    src/System/Session/Session.cpp
+    src/System/Session/Session.h
+    src/System/Session/SessionFactory.cpp
+    src/System/Session/SessionFactory.h
+    src/System/Session/SessionPool.h
+    src/System/ISession.h
+
+    src/System/Network/INetwork.h
+    src/System/Network/NetworkImpl.cpp
+    src/System/Network/RecvBuffer.cpp
     src/System/Framework/Framework.cpp
-    src/System/Thread/THREAD/ThreadPool.cpp
-    src/System/Network/ASIO/AsioSession.cpp
-    src/System/Network/ASIO/AsioService.cpp
-    src/System/Network/ASIO/RecvBuffer.cpp
-    src/System/Network/ASIO/SessionFactory.cpp
+    src/System/Thread/ThreadPool.cpp
     src/System/Dispatcher/DISPATCHER/DispatcherImpl.cpp
     src/System/Dispatcher/MessagePool.cpp
     src/System/Debug/CrashHandler.cpp
-    src/System/Timer/ASIO/AsioTimer.cpp
-    src/System/Timer/ITimer.h
+    src/System/Debug/MemoryMetrics.cpp
+    src/System/Timer/TimerImpl.cpp
+    src/System/ITimer.h
     src/System/Timer/TimerHandle.h
+    
+    # New Refactoring
+    src/System/ToyServerSystem.h
+    src/System/Network/PacketUtils.cpp
+    src/System/Network/PacketUtils.h
+    src/System/Dispatcher/SystemMessages.h
     # Will add files here as we create them
 )
 target_include_directories(System PUBLIC src/System src)
@@ -81,7 +98,26 @@ target_precompile_headers(DummyClient PRIVATE src/System/Pch.h)
 target_link_libraries(DummyClient PRIVATE System Share)
 
 # Packet Test Executable
+# Packet Test Executable
 add_executable(PacketTest src/Tools/PacketTest/PacketTest.cpp)
 target_include_directories(PacketTest PRIVATE src)
 target_precompile_headers(PacketTest PRIVATE src/System/Pch.h)
 target_link_libraries(PacketTest PRIVATE System Share)
+
+# Install Configuration
+install(TARGETS System Share
+    ARCHIVE DESTINATION dist/lib
+    LIBRARY DESTINATION dist/lib
+    RUNTIME DESTINATION dist/bin
+)
+
+install(DIRECTORY src/System DESTINATION dist/include
+    FILES_MATCHING PATTERN "*.h"
+    PATTERN "BOOTSTRAP" EXCLUDE
+    PATTERN "System/Dispatcher/MessagePool.h" EXCLUDE
+    PATTERN "System/Dispatcher/SystemMessages.h" EXCLUDE
+)
+
+install(DIRECTORY src/Share DESTINATION dist/include
+    FILES_MATCHING PATTERN "*.h"
+)

@@ -1,38 +1,35 @@
-#pragma once
-
-#include <memory>
-#include <string>
+#include "System/IFramework.h"
 
 namespace System {
 
-class AsioService;
+class NetworkImpl;
 class ITimer;
 class IDispatcher;
 class ThreadPool;
 class IPacketHandler;
 
-class Framework
+class Framework : public IFramework
 {
 public:
     Framework();
     ~Framework();
 
     // Dependency Injection: User provides PacketHandler
-    bool Init(const std::string &configPath, std::shared_ptr<IPacketHandler> packetHandler);
-    void Run();
-    void Stop();
+    bool Init(const std::string &configPath, std::shared_ptr<IPacketHandler> packetHandler) override;
+    void Run() override;
+    void Stop() override;
 
-    std::shared_ptr<IDispatcher> GetDispatcher() const
+    std::shared_ptr<IDispatcher> GetDispatcher() const override
     {
         return _dispatcher;
     }
-    std::shared_ptr<ITimer> GetTimer() const
+    std::shared_ptr<ITimer> GetTimer() const override
     {
         return _timer;
     }
 
 private:
-    std::shared_ptr<AsioService> _network;
+    std::shared_ptr<NetworkImpl> _network;
     std::shared_ptr<ITimer> _timer;
     std::shared_ptr<IDispatcher> _dispatcher;
     std::shared_ptr<ThreadPool> _threadPool;
