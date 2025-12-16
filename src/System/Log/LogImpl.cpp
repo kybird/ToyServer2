@@ -6,10 +6,13 @@
 
 namespace System {
 
-class LogImpl : public ILog {
+class LogImpl : public ILog
+{
 public:
-    void Init() override {
-        try {
+    void Init() override
+    {
+        try
+        {
             // Setup Async Logger
             spdlog::init_thread_pool(8192, 1);
 
@@ -23,7 +26,8 @@ public:
             std::vector<spdlog::sink_ptr> sinks{console_sink, file_sink};
 
             auto logger = std::make_shared<spdlog::async_logger>(
-                "server", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+                "server", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block
+            );
 
             spdlog::register_logger(logger);
             spdlog::set_default_logger(logger);
@@ -31,8 +35,9 @@ public:
             spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] %v");
 
             // Setup File-Only Logger
-            _fileLogger = std::make_shared<spdlog::async_logger>("file_only", file_sink, spdlog::thread_pool(),
-                                                                 spdlog::async_overflow_policy::block);
+            _fileLogger = std::make_shared<spdlog::async_logger>(
+                "file_only", file_sink, spdlog::thread_pool(), spdlog::async_overflow_policy::block
+            );
             spdlog::register_logger(_fileLogger);
             _fileLogger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [FILE] %v");
 
@@ -40,21 +45,39 @@ public:
             spdlog::flush_every(std::chrono::seconds(1));
             spdlog::info("Logger Initialized");
             logger->flush();
-        } catch (const std::exception &e) {
+        } catch (const std::exception &e)
+        {
             std::cerr << "Logger Init Failed: " << e.what() << std::endl;
-        } catch (...) {
+        } catch (...)
+        {
             std::cerr << "Logger Init Failed: Unknown Error" << std::endl;
         }
     }
 
-    void Info(const std::string &msg) override { spdlog::info(msg); }
+    void Info(const std::string &msg) override
+    {
+        spdlog::info(msg);
+    }
 
-    void Error(const std::string &msg) override { spdlog::error(msg); }
+    void Warn(const std::string &msg) override
+    {
+        spdlog::warn(msg);
+    }
 
-    void Debug(const std::string &msg) override { spdlog::debug(msg); }
+    void Error(const std::string &msg) override
+    {
+        spdlog::error(msg);
+    }
 
-    void File(const std::string &msg) override {
-        if (_fileLogger) {
+    void Debug(const std::string &msg) override
+    {
+        spdlog::debug(msg);
+    }
+
+    void File(const std::string &msg) override
+    {
+        if (_fileLogger)
+        {
             _fileLogger->info(msg);
         }
     }
@@ -63,7 +86,8 @@ private:
     std::shared_ptr<spdlog::logger> _fileLogger;
 };
 
-ILog &GetLog() {
+ILog &GetLog()
+{
     static LogImpl instance;
     return instance;
 }

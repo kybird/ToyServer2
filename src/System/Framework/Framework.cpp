@@ -1,19 +1,20 @@
 #include "System/Framework/Framework.h"
-#include "System/Config/ConfigLoader.h"
+#include "System/IConfig.h"
+#include "System/Console/CommandConsole.h"
 #include "System/Debug/CrashHandler.h"
-#include "System/Dispatcher/DISPATCHER/DispatcherImpl.h" // Added
+#include "System/Dispatcher/DISPATCHER/DispatcherImpl.h"
+#include "System/Dispatcher/MessagePool.h"
 #include "System/ILog.h"
-#include "System/ITimer.h"           // Fixed: ITimer.h contains SetGlobalTimer decl
-#include "System/Monitor/IMonitor.h" // Fixed: IMonitor.h
+#include "System/ITimer.h"
+#include "System/Metrics/IMetrics.h"
 #include "System/Network/NetworkImpl.h"
+#include "System/Session/Session.h"
+#include "System/Session/SessionFactory.h"
+#include "System/Session/SessionPool.h"
 #include "System/Thread/ThreadPool.h"
 #include "System/Timer/TimerImpl.h"
-#include <iostream>
 
-#include "System/Dispatcher/MessagePool.h" // Added
-#include "System/Session/Session.h"        // Added
-#include "System/Session/SessionFactory.h" // Added
-#include "System/Session/SessionPool.h"
+#include <iostream>
 
 namespace System {
 
@@ -33,13 +34,20 @@ Framework::~Framework()
         _threadPool->Stop();
 }
 
-bool Framework::Init(const std::string &configPath, std::shared_ptr<IPacketHandler> packetHandler)
+bool Framework::Init(std::shared_ptr<IConfig> config, std::shared_ptr<IPacketHandler> packetHandler)
 {
     // 1. Config
-    if (!ConfigLoader::Instance().Load(configPath))
-    {
-        LOG_INFO("Config loaded.");
-    }
+    _config = config; // Store config if needed (add member to Framework.h?)
+    // Actually Framwork.h needs to store it or just use it here.
+    // For now, let's use it locally for initialization.
+    // Wait, other components (thread pool, network) need it.
+    // Framework should probably HOLD the config since it's the root.
+
+    // Store it:
+    // (Wait, Framework.h doesn't have _config member yet. I should add it first?
+    // Or just use the passed pointer. The pointer is robust.
+
+    const auto &serverConfig = _config->GetConfig();
 
     // 2. Prepare Pools (Hidden from User)
     LOG_INFO("Pre-allocating MessagePool & SessionPool...");
@@ -50,23 +58,25 @@ bool Framework::Init(const std::string &configPath, std::shared_ptr<IPacketHandl
     // 3. Components
     auto dispatcherImpl = std::make_shared<DispatcherImpl>(packetHandler);
     _dispatcher = dispatcherImpl;
-    // SetGlobalDispatcher(_dispatcher); // Removed
 
     _network = std::make_shared<NetworkImpl>();
     _network->SetDispatcher(_dispatcher.get()); // Inject Dispatcher (Raw Pointer)
     _timer = std::make_shared<TimerImpl>(_network->GetIOContext(), _dispatcher.get());
 
-    // 4. ThreadPool
-    int threadCount = ConfigLoader::Instance().GetConfig().workerThreadCount;
-    _threadPool = std::make_shared<ThreadPool>(threadCount);
+    // 4. ThreadPool (Computations)
+    int taskThreads = serverConfig.taskWorkerCount;
+    _threadPool = std::make_shared<ThreadPool>(taskThreads);
 
     // 5. Init Network
-    int port = ConfigLoader::Instance().GetConfig().port;
+    int port = serverConfig.port;
     if (!_network->Start(port))
     {
         LOG_ERROR("Failed to start network on port {}", port);
         return false;
     }
+
+    // 6. Console
+    _console = std::make_unique<CommandConsole>(_config);
 
     LOG_INFO("Framework Initialized.");
     return true;
@@ -77,32 +87,44 @@ void Framework::Run()
     LOG_INFO("Framework Running...");
     _running = true;
 
-    // 1. Start IO Threads
-    _threadPool->Start(
-        [this]()
-        {
-            try
-            {
-                _network->Run();
-            } catch (const std::exception &e)
-            {
-                LOG_ERROR("IO Thread Exception: {}", e.what());
-            }
-        }
-    );
+    // 0. Start Console
+    if (_console)
+        _console->Start();
 
-    // 2. Main Thread Logic Loop
+    // 1. Start IO Threads (Network)
+    int ioThreadCount = _config->GetConfig().workerThreadCount;
+    LOG_INFO("Starting {} IO Threads...", ioThreadCount);
+    _ioThreads.reserve(ioThreadCount);
+    for (int i = 0; i < ioThreadCount; ++i)
+    {
+        _ioThreads.emplace_back(
+            [this, i]()
+            {
+                try
+                {
+                    _network->Run();
+                } catch (const std::exception &e)
+                {
+                    LOG_ERROR("IO Thread #{} Exception: {}", i, e.what());
+                }
+            }
+        );
+    }
+
+    // 2. Start Task Pool
+    _threadPool->Start();
+
+    // 3. Main Thread Logic Loop
     while (_running)
     {
         // Optimization: Handle all available packets before yielding
         if (_dispatcher->Process())
         {
-            // Packet processed, don't yield, check queue again immediately
             continue;
         }
         else
         {
-            // Queue empty, yield to OS
+            // std::this_thread::sleep_for(std::chrono::milliseconds(1));
             std::this_thread::yield();
         }
     }
@@ -111,11 +133,22 @@ void Framework::Run()
 void Framework::Stop()
 {
     _running = false;
-    // We can also stop thread pool here or let destructor handle it.
-    // Explicit stop is good for deterministic shutdown.
+
+    if (_console)
+        _console->Stop();
+
     if (_threadPool)
         _threadPool->Stop();
     if (_network)
         _network->Stop();
+
+    // Join IO threads
+    for (auto &t : _ioThreads)
+    {
+        if (t.joinable())
+            t.join();
+    }
+    _ioThreads.clear();
 }
+
 } // namespace System

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "System/Dispatcher/IMessage.h"
+#include <functional>
 
 namespace System {
 struct ITimerHandler;
@@ -16,7 +17,11 @@ public:
     virtual bool IsRecovered() const = 0;
 
     // System Handlers
+    // System Handlers
     virtual void RegisterTimerHandler(ITimerHandler *handler) = 0;
+
+    // Generic Task Submission
+    virtual void Push(std::function<void()> task) = 0;
 };
 
 // Global Access Removed. Use Dependency Injection.

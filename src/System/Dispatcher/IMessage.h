@@ -1,7 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <functional> // Added
 #include <memory>
+
 
 namespace System {
 
@@ -13,6 +15,7 @@ enum class MessageType {
     NETWORK_DISCONNECT,
     NETWORK_DATA,
     LOGIC_JOB,
+    LAMBDA_JOB, // Added for generic tasks
 
     // User defined messages start here or after reserved range
     PACKET = 10
@@ -34,6 +37,16 @@ struct EventMessage : public IMessage
         type = (uint32_t)MessageType::LOGIC_JOB;
     }
     // Generic event data can be added here if needed
+};
+
+// Generic Job for Dispatcher
+struct LambdaMessage : public IMessage
+{
+    LambdaMessage()
+    {
+        type = (uint32_t)MessageType::LAMBDA_JOB;
+    }
+    std::function<void()> task;
 };
 
 struct PacketMessage : public IMessage

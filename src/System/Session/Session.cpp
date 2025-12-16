@@ -6,7 +6,6 @@
 #include "System/Pch.h"
 #include "System/Session/SessionPool.h"
 
-
 #include <boost/asio/bind_allocator.hpp>
 #include <boost/asio/recycling_allocator.hpp>
 
@@ -196,11 +195,23 @@ void Session::OnReadComplete(const boost::system::error_code &ec, size_t bytesTr
         return;
     }
 
-    ProcessReceivedData(bytesTransferred);
+    OnRecv(bytesTransferred);
 }
 
-void Session::ProcessReceivedData(size_t bytesTransferred)
+void Session::OnRecv(size_t bytesTransferred)
 {
+    // Rate Limiter Check
+    if (!_ingressLimiter.TryConsume(1.0))
+    {
+        _violationCount++;
+        if (_violationCount > 20)
+        {
+            LOG_ERROR("Session Disconnected due to Rate Limit Violated: {}", GetRemoteAddress());
+            Close();
+        }
+        return;
+    }
+
     if (!_recvBuffer.MoveWritePos(bytesTransferred))
     {
         Close();
@@ -461,6 +472,19 @@ void Session::OnError(const std::string &errorMsg)
 {
     LOG_ERROR("Session {} Error: {}", _id, errorMsg);
     Close();
+}
+
+std::string Session::GetRemoteAddress() const
+{
+    if (!_socket || !_socket->is_open())
+        return "Unknown";
+    try
+    {
+        return _socket->remote_endpoint().address().to_string();
+    } catch (...)
+    {
+        return "Unknown";
+    }
 }
 
 } // namespace System

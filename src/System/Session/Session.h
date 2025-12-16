@@ -3,6 +3,7 @@
 #include "Share/Protocol.h"
 #include "System/Dispatcher/IMessage.h"
 #include "System/ISession.h"
+#include "System/Network/RateLimiter.h" // Added
 #include "System/Network/RecvBuffer.h"
 #include "System/Pch.h"
 #include <concurrentqueue/moodycamel/concurrentqueue.h>
@@ -55,6 +56,8 @@ public:
         return _dispatcherThreadId;
     }
 
+    std::string GetRemoteAddress() const; // Added helper
+
     // Lifetime safety
     void IncRef()
     {
@@ -82,7 +85,7 @@ private:
     // ========== Read Section ==========
     void StartRead();
     void OnReadComplete(const boost::system::error_code &ec, size_t bytesTransferred);
-    void ProcessReceivedData(size_t bytesTransferred);
+    void OnRecv(size_t bytesTransferred); // Renamed from ProcessReceivedData
     void OnResumeRead(const boost::system::error_code &ec);
 
     // ========== Write Section ==========
@@ -117,6 +120,10 @@ private:
     size_t _statTotalItemCount = 0;
     size_t _statMaxBatch = 0;
     std::chrono::steady_clock::time_point _lastStatTime = std::chrono::steady_clock::now();
+
+    // Rate Limiting
+    RateLimiter _ingressLimiter;
+    int _violationCount = 0;
 };
 
 } // namespace System

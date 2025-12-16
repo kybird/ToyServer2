@@ -30,6 +30,9 @@ public:
 
     void RegisterTimerHandler(ITimerHandler *handler) override;
 
+    // Generic Task Submission
+    void Push(std::function<void()> task) override;
+
 private:
     void ProcessPendingDestroys();
 

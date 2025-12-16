@@ -7,7 +7,6 @@
 #include "System/Session/Session.h"
 #include "System/Session/SessionPool.h"
 
-
 #include "System/Debug/MemoryMetrics.h"
 #include "System/Dispatcher/MessagePool.h"
 
@@ -113,6 +112,22 @@ bool DispatcherImpl::Process()
             }
             break;
 
+            case (uint32_t)MessageType::LAMBDA_JOB: {
+                LambdaMessage *lMsg = static_cast<LambdaMessage *>(msg);
+                if (lMsg->task)
+                {
+                    lMsg->task();
+                }
+                // Manual delete since it was allocated with new in Push
+                delete lMsg;
+                // Prevent MessagePool::Free below which expects Pool-allocated objects
+                // OR adapt MessagePool to handle it. Actually, MessagePool::Free handles IMessage*.
+                // BUT LambdaMessage is NOT in MessagePool yet.
+                // Hack: continue to avoid MessagePool::Free
+                continue;
+            }
+            break;
+
             default:
                 break;
             }
@@ -191,6 +206,15 @@ bool DispatcherImpl::IsRecovered() const
 void DispatcherImpl::RegisterTimerHandler(ITimerHandler *handler)
 {
     _timerHandler = handler;
+}
+
+void DispatcherImpl::Push(std::function<void()> task)
+{
+    // [Optimization] Consider ObjectPool for LambdaMessage to reduce allocations
+    // For now, new/delete is acceptable as per Phase 3 plan.
+    LambdaMessage *msg = new LambdaMessage();
+    msg->task = std::move(task);
+    Post(msg);
 }
 
 } // namespace System
