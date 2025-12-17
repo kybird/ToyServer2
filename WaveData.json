@@ -1,0 +1,26 @@
+[
+    {
+        "wave_id": 1,
+        "start_time": 1.0,
+        "duration": 10.0,
+        "monster_type_id": 1,
+        "count": 10,
+        "interval": 1.0
+    },
+    {
+        "wave_id": 2,
+        "start_time": 5.0,
+        "duration": 10.0,
+        "monster_type_id": 2,
+        "count": 5,
+        "interval": 2.0
+    },
+    {
+        "wave_id": 3,
+        "start_time": 15.0,
+        "duration": 20.0,
+        "monster_type_id": 1,
+        "count": 50,
+        "interval": 0.5
+    }
+]

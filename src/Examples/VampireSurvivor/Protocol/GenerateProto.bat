@@ -1,0 +1,45 @@
+@echo off
+setlocal
+
+:: Switch to script directory
+cd /d "%~dp0"
+
+:: Paths (Now relative to current dir)
+set PROTOC=..\..\..\..\vcpkg_installed\x64-windows\tools\protobuf\protoc.exe
+set PROTO_FILE=game.proto
+set CPP_OUT_DIR=.
+set CSHARP_OUT_DIR=..\Client\Assets\Scripts\Protocol
+
+:: Check Protoc
+if not exist "%PROTOC%" (
+    echo [ERROR] protoc.exe not found at %PROTOC%
+    echo Please build the server project first to restore vcpkg packages.
+    pause
+    exit /b 1
+)
+
+:: Generate C++ (Optional - CMake handles this, but useful for manual regeneration)
+echo [INFO] Generating C++ from %PROTO_FILE%...
+"%PROTOC%" --proto_path=. --cpp_out="%CPP_OUT_DIR%" "%PROTO_FILE%"
+
+if %errorlevel% neq 0 (
+    echo [ERROR] C++ Protobuf generation failed.
+    pause
+    exit /b 1
+)
+
+echo [SUCCESS] C++ files generated in %CPP_OUT_DIR%
+
+:: Generate C# (for Unity Client)
+if not exist "%CSHARP_OUT_DIR%" mkdir "%CSHARP_OUT_DIR%"
+echo [INFO] Generating C# from %PROTO_FILE%...
+"%PROTOC%" --proto_path=. --csharp_out="%CSHARP_OUT_DIR%" "%PROTO_FILE%"
+
+if %errorlevel% neq 0 (
+    echo [ERROR] C# Protobuf generation failed.
+    pause
+    exit /b 1
+)
+
+echo [SUCCESS] C# files generated in %CSHARP_OUT_DIR%
+pause

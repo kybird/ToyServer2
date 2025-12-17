@@ -1,5 +1,7 @@
-#include "Room.h"
-#include "Player.h"
+#include "Game/Room.h"
+#include "Entity/Player.h"
+#include "Entity/PlayerFactory.h"
+#include "System/ObjectManager.h"
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -28,13 +30,16 @@ private:
 
 TEST(RoomTest, EnterAndLeave)
 {
-    Room room(1);
+    // Fix: Room ctor needs 3 args
+    Room room(1, nullptr, nullptr);
     EXPECT_EQ(room.GetId(), 1);
     EXPECT_EQ(room.GetPlayerCount(), 0);
 
     // Create a player
     MockSession session1(100);
-    auto player1 = std::make_shared<Player>(&session1);
+    // Use Factory
+    ObjectManager objMgr; 
+    auto player1 = PlayerFactory::Instance().CreatePlayer(objMgr, 1, &session1);
 
     // Enter
     room.Enter(player1);
@@ -43,17 +48,23 @@ TEST(RoomTest, EnterAndLeave)
     // Leave
     room.Leave(100);
     EXPECT_EQ(room.GetPlayerCount(), 0);
+    
+    // Release back to factory (room calls leave but doesn't release shared_ptr held here)
+    // Custom deleter in factory logic handles release when shared_ptr dies?
+    // PlayerFactory creates shared_ptr with custom deleter that calls Release.
+    // So when player1 goes out of scope, it should return to pool.
 }
 
 TEST(RoomTest, MultiplePlayers)
 {
-    Room room(2);
+    Room room(2, nullptr, nullptr);
     
     MockSession s1(101);
     MockSession s2(102);
     
-    auto p1 = std::make_shared<Player>(&s1);
-    auto p2 = std::make_shared<Player>(&s2);
+    ObjectManager objMgr;
+    auto p1 = PlayerFactory::Instance().CreatePlayer(objMgr, 101, &s1);
+    auto p2 = PlayerFactory::Instance().CreatePlayer(objMgr, 102, &s2); // Use diff GameIDs
 
     room.Enter(p1);
     room.Enter(p2);

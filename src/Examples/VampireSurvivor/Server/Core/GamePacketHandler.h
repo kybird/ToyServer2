@@ -2,7 +2,7 @@
 
 #include "GameEvents.h"
 #include "Protocol.h"
-#include "Protocol.pb.h"
+#include "../../Protocol/game.pb.h"
 #include "System/Dispatcher/IPacketHandler.h"
 #include "System/Events/EventBus.h"
 #include "System/ILog.h"
@@ -31,8 +31,8 @@ public:
 
         switch (header->id)
         {
-        case PacketID::C_LOGIN_REQ: {
-            Protocol::LoginRequest req;
+        case PacketID::C_LOGIN: {
+            Protocol::C_Login req;
             if (req.ParseFromArray(payload, (int)payloadSize))
             {
                 // Map to Event
@@ -41,22 +41,30 @@ public:
                 evt.username = req.username();
                 evt.password = req.password();
                 EventBus::Instance().Publish(evt);
+                LOG_INFO("Login Requested: {}", evt.username);
             }
             else
             {
-                LOG_ERROR("Failed to parse C_LOGIN_REQ");
+                LOG_ERROR("Failed to parse C_LOGIN");
             }
             break;
         }
         case PacketID::C_MOVE: {
-            Protocol::CS_Move req;
+            Protocol::C_Move req;
             if (req.ParseFromArray(payload, (int)payloadSize))
             {
-                // Logic to handle move (Propagate to Room/Player)
-                LOG_INFO("Player {} moved to ({}, {})", session->GetId(), req.x(), req.y());
+                // Logic to handle move (Client sends input direction)
+                // TODO: EventBus::Instance().Publish(MoveEvent{...});
+                LOG_INFO("Player {} Input: ({}, {})", session->GetId(), req.dir_x(), req.dir_y());
             }
             break;
         }
+        case PacketID::C_CREATE_ROOM:
+        case PacketID::C_JOIN_ROOM:
+        case PacketID::C_USE_SKILL:
+        case PacketID::C_SELECT_LEVEL_UP:
+            LOG_WARN("Packet ID {} not implemented yet", header->id);
+            break;
         default:
             LOG_ERROR("Unknown Packet ID: {}", header->id);
             break;

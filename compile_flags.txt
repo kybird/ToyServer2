@@ -3,3 +3,4 @@
 -D_WIN32_WINNT=0x0601
 -I./vcpkg_installed/x64-windows/include
 -I./src
+-I./Examples/VampireSurvivor/Server

@@ -1,6 +1,8 @@
-#include "GamePacketHandler.h"
-#include "LoginController.h"
-#include "RoomManager.h"
+#include "Core/GamePacketHandler.h"
+#include "System/DataManager.h"
+#include "Core/LoginController.h"
+#include "Game/RoomManager.h"
+#include "System/UserDB.h"
 #include "System/Config/Json/JsonConfigLoader.h"
 #include "System/Database/DBConnectionPool.h"
 #include "System/Database/SQLiteConnection.h"
@@ -32,6 +34,13 @@ int main()
         return 1;
     }
 
+    // Load Game Data
+    if (!DataManager::Instance().LoadMonsterData("MonsterData.json") ||
+        !DataManager::Instance().LoadWaveData("WaveData.json"))
+    {
+        LOG_WARN("Failed to load game data (Mocking might be used or files missing).");
+    }
+
     // Init with Config File and Handler
     if (!framework.Init(config, packetHandler))
     {
@@ -60,6 +69,11 @@ int main()
             );
             // Insert default user if not exists
             conn->Execute("INSERT OR IGNORE INTO users (username, password) VALUES ('test_user', 'password');");
+            
+            // New Tables for Meta-Progression
+            conn->Execute("CREATE TABLE IF NOT EXISTS user_game_data (user_id INTEGER PRIMARY KEY, points INTEGER DEFAULT 0);");
+            conn->Execute("CREATE TABLE IF NOT EXISTS user_skills (user_id INTEGER, skill_id INTEGER, level INTEGER, PRIMARY KEY (user_id, skill_id));");
+
             dbPool->Release(conn);
             LOG_INFO("Database Initialized (game.db).");
         }
@@ -69,13 +83,18 @@ int main()
         }
     }
 
+    // Initialize UserDB (Persistent Data Access)
+    auto userDB = std::make_shared<UserDB>(dbPool);
+
     // Initialize Login Controller
     auto loginController = std::make_shared<LoginController>(dbPool, &framework);
     loginController->Init();
 
     // Initialize RoomManager
     auto &roomMgr = RoomManager::Instance();
-    // Default room 1 created by ctor
+    roomMgr.Init(framework.GetTimer(), userDB);
+    
+    // Default room 1 created by ctor -> Re-created/Available
     auto room = roomMgr.GetRoom(1);
     if (room)
     {
