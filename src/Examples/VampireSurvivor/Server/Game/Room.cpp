@@ -1,5 +1,6 @@
-#include "Room.h"
-#include "../../Protocol/game.pb.h"
+#include "Game/Room.h"
+#include "Core/UserDB.h"
+#include "Protocol/game.pb.h"
 #include "System/Dispatcher/MessagePool.h"
 #include "System/Network/PacketUtils.h"
 #include <limits>

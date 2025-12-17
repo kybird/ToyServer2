@@ -3,15 +3,18 @@
 #include "System/ILog.h"
 #include <vector>
 #include <utility>
+// 임시. 나중에 싹고쳐야함
+namespace System {
+    class DBConnectionPool;
+}
 
 namespace SimpleGame {
 
-using namespace System;
 
 class UserDB
 {
 public:
-    UserDB(std::shared_ptr<DBConnectionPool> dbPool) : _dbPool(dbPool)
+    UserDB(std::shared_ptr<System::DBConnectionPool> dbPool) : _dbPool(dbPool)
     {
     }
 
@@ -112,7 +115,7 @@ public:
     }
 
 private:
-    std::shared_ptr<DBConnectionPool> _dbPool;
+    std::shared_ptr<System::DBConnectionPool> _dbPool;
 };
 
 } // namespace SimpleGame

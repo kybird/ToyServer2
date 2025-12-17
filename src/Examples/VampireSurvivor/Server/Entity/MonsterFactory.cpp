@@ -1,6 +1,6 @@
 #include "Entity/MonsterFactory.h"
-#include "System/ObjectManager.h"
-#include "System/DataManager.h"
+#include "Game/ObjectManager.h"
+#include "Core/DataManager.h"
 #include "Entity/Monster.h"
 #include "Entity/AI/ChaserAI.h"
 #include "Entity/AI/WanderAI.h"

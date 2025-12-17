@@ -9,8 +9,6 @@
 #include "System/ITimer.h"
 
 
-using namespace SimpleGame;
-
 // Mock Timer to manual stepping
 class MockTimer : public System::ITimer {
 public:

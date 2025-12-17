@@ -1,6 +1,6 @@
 #pragma once
-#include "../Entity/Player.h"
-#include "../Core/Protocol.h"
+#include "Entity/Player.h"
+#include "Core/Protocol.h"
 #include "System/ILog.h"
 #include "System/Network/PacketUtils.h"
 #include <mutex>
@@ -9,15 +9,16 @@
 
 #include "System/ITimer.h"
 
-#include "../System/ObjectManager.h"
-#include "../System/SpatialGrid.h"
-#include "WaveManager.h"
-#include "../System/UserDB.h"
+#include "Game/ObjectManager.h"
+#include "Game/SpatialGrid.h"
+#include "Game/WaveManager.h"
+
 
 // Forward declaration for Test
 class SwarmPerformanceTest_StressTest500Monsters_Test;
 
 namespace SimpleGame {
+class UserDB;
 
 class Room : public System::ITimerListener, public std::enable_shared_from_this<Room>
 {

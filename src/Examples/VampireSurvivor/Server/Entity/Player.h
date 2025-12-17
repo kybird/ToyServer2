@@ -1,7 +1,7 @@
 #pragma once
 #include "System/ISession.h"
 #include <string>
-#include "GameObject.h"
+#include "Entity/GameObject.h"
 
 namespace SimpleGame {
 

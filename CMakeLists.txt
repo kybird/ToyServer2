@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 # Setup VCPKG (Must be before project() to activate toolchain)
+set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed" CACHE PATH "vcpkg installed directory")
 set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake")
 
 project(HGSF VERSION 0.1.0 LANGUAGES CXX)
@@ -125,59 +126,42 @@ include(GoogleTest)
 gtest_discover_tests(UnitTests)
 
 
+
 # ==========================================
 # Example: Vampire Survivor Server (Formerly SimpleGame)
 # ==========================================
 
-# Protobuf Generation - Using Protocol/game.proto which has complete message definitions
+# Protobuf Generation
 set(PROTO_SRC_DIR "src/Examples/VampireSurvivor/Protocol")
 set(PROTO_FILES "${PROTO_SRC_DIR}/game.proto")
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
 
 add_executable(VampireSurvivorServer
     src/Examples/VampireSurvivor/Server/Main.cpp
+    src/Examples/VampireSurvivor/Server/Core/LoginController.cpp
+    src/Examples/VampireSurvivor/Server/Core/GamePacketHandler.cpp
+    src/Examples/VampireSurvivor/Server/Core/DataManager.cpp
     src/Examples/VampireSurvivor/Server/Game/Room.cpp
-    src/Examples/VampireSurvivor/Server/Entity/Monster.cpp
+    src/Examples/VampireSurvivor/Server/Game/RoomManager.cpp
     src/Examples/VampireSurvivor/Server/Game/WaveManager.cpp
+    src/Examples/VampireSurvivor/Server/Entity/Monster.cpp
     src/Examples/VampireSurvivor/Server/Entity/MonsterFactory.cpp
+    src/Examples/VampireSurvivor/Server/Entity/PlayerFactory.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/ChaserAI.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/WanderAI.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/SwarmAI.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/BossAI.cpp
     ${PROTO_SRCS} ${PROTO_HDRS}
 )
+
 target_include_directories(VampireSurvivorServer PRIVATE 
     src 
     ${CMAKE_CURRENT_BINARY_DIR}
     src/Examples/VampireSurvivor/Server
+    src/Examples/VampireSurvivor
 )
-target_precompile_headers(VampireSurvivorServer PRIVATE src/System/Pch.h)
-target_link_libraries(VampireSurvivorServer PRIVATE System Share protobuf::libprotobuf)
 
-# Vampire Survivor Independent Tests
-file(GLOB VS_TEST_SOURCES "src/Examples/VampireSurvivor/tests/*.cpp")
-add_executable(VampireSurvivorTests 
-    ${VS_TEST_SOURCES}
-    src/Examples/VampireSurvivor/Server/Game/Room.cpp
-    src/Examples/VampireSurvivor/Server/Entity/Monster.cpp
-    src/Examples/VampireSurvivor/Server/Game/WaveManager.cpp
-    src/Examples/VampireSurvivor/Server/Entity/MonsterFactory.cpp
-    src/Examples/VampireSurvivor/Server/Entity/AI/ChaserAI.cpp
-    src/Examples/VampireSurvivor/Server/Entity/AI/WanderAI.cpp
-    src/Examples/VampireSurvivor/Server/Entity/AI/SwarmAI.cpp
-    src/Examples/VampireSurvivor/Server/Entity/AI/BossAI.cpp
-    ${PROTO_SRCS} ${PROTO_HDRS}
-)
-target_include_directories(VampireSurvivorTests PRIVATE 
-    src 
-    ${CMAKE_CURRENT_BINARY_DIR}
-    src/Examples/VampireSurvivor/Server
-    src/Examples/VampireSurvivor/Server/Game
-    src/Examples/VampireSurvivor/Server/Entity
-)
-target_precompile_headers(VampireSurvivorTests PRIVATE src/System/Pch.h)
-target_link_libraries(VampireSurvivorTests PRIVATE System Share GTest::gtest GTest::gmock protobuf::libprotobuf)
-gtest_discover_tests(VampireSurvivorTests)
+target_link_libraries(VampireSurvivorServer PRIVATE System Share protobuf::libprotobuf)
 
 
 

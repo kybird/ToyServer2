@@ -72,7 +72,4 @@ struct PacketMessage : public IMessage
         return sizeof(PacketMessage) + bodySize;
     }
 };
-
-struct ITimer;
-
 } // namespace System

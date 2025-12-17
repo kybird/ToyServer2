@@ -1,9 +1,17 @@
 #pragma once
-#include "Room.h"
-#include "../System/UserDB.h"
+#include "Game/Room.h"
 #include <map>
+#include <memory>
+#include <mutex>
+#include <stdint.h>
+
+namespace System {
+class ITimer;
+}
 
 namespace SimpleGame {
+class UserDB;
+class Player;
 
 class RoomManager
 {
@@ -14,42 +22,19 @@ public:
         return instance;
     }
 
-    void Init(std::shared_ptr<System::ITimer> timer, std::shared_ptr<UserDB> userDB)
-    {
-        _timer = timer;
-        _userDB = userDB;
-        // Re-create default room with timer
-        if (_rooms.empty())
-        {
-             CreateRoom(1);
-        }
-    }
+    void Init(std::shared_ptr<System::ITimer> timer, std::shared_ptr<UserDB> userDB);
+    void TestMethod(); // Test linking
 
-    std::shared_ptr<Room> CreateRoom(int roomId)
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-        if (!_timer)
-        {
-             // If Init not called yet, wait or creates without timer?
-             // Better to warn. For now, just create.
-        }
-        auto room = std::make_shared<Room>(roomId, _timer, _userDB);
-        _rooms[roomId] = room;
-        room->Start(); // Auto start
-        return room;
-    }
+    std::shared_ptr<Room> CreateRoom(int roomId);
+    std::shared_ptr<Room> GetRoom(int roomId);
 
-    std::shared_ptr<Room> GetRoom(int roomId)
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-        auto it = _rooms.find(roomId);
-        if (it != _rooms.end())
-            return it->second;
-        return nullptr;
-    }
+    void RegisterPlayer(uint64_t sessionId, std::shared_ptr<Player> player);
+    void UnregisterPlayer(uint64_t sessionId);
+    std::shared_ptr<Player> GetPlayer(uint64_t sessionId);
 
 private:
     std::map<int, std::shared_ptr<Room>> _rooms;
+    std::map<uint64_t, std::shared_ptr<Player>> _players;
     std::mutex _mutex;
     std::shared_ptr<System::ITimer> _timer;
     std::shared_ptr<UserDB> _userDB;

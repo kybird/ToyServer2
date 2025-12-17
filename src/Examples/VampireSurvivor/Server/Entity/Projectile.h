@@ -1,5 +1,5 @@
 #pragma once
-#include "GameObject.h"
+#include "Entity/GameObject.h"
 
 namespace SimpleGame {
 

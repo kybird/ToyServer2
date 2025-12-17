@@ -1,9 +1,9 @@
 #pragma once
-#include "../System/DataManager.h"
-#include "../Entity/MonsterFactory.h"
-#include "../System/ObjectManager.h"
-#include "../System/SpatialGrid.h"
-#include "../Core/Protocol.h"
+#include "Core/DataManager.h"
+#include "Entity/MonsterFactory.h"
+#include "Game/ObjectManager.h"
+#include "Game/SpatialGrid.h"
+#include "Core/Protocol.h"
 
 namespace SimpleGame {
 

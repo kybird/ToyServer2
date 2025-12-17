@@ -1,6 +1,6 @@
 #include "WaveManager.h"
-#include "Room.h"
-#include "../Entity/MonsterFactory.h"
+#include "Game/Room.h"
+#include "Entity/MonsterFactory.h"
 #include "System/Dispatcher/MessagePool.h"
 #include "System/Network/PacketUtils.h"
 

@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-#include "../../Protocol/game.pb.h"
+#include "Protocol/game.pb.h"
 
 namespace SimpleGame {
 

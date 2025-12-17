@@ -1,6 +1,6 @@
 #pragma once
-#include "../System/ObjectManager.h"
-#include "Projectile.h"
+#include "Game/ObjectManager.h"
+#include "Entity/Projectile.h"
 #include "System/IObjectPool.h"
 #include "System/Memory/SimplePool.h"
 

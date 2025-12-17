@@ -1,8 +1,8 @@
 #include "Core/GamePacketHandler.h"
-#include "System/DataManager.h"
+#include "Core/DataManager.h"
 #include "Core/LoginController.h"
 #include "Game/RoomManager.h"
-#include "System/UserDB.h"
+#include "Core/UserDB.h"
 #include "System/Config/Json/JsonConfigLoader.h"
 #include "System/Database/DBConnectionPool.h"
 #include "System/Database/SQLiteConnection.h"
@@ -10,8 +10,6 @@
 #include "System/ILog.h"
 #include <iostream>
 
-using namespace System;
-using namespace SimpleGame;
 
 int main()
 {
@@ -21,10 +19,10 @@ int main()
     LOG_INFO("SimpleGame Server Starting...");
 
     // Basic Framework Setup
-    Framework framework;
+    System::Framework framework;
 
     // Packet Handler
-    auto packetHandler = std::make_shared<GamePacketHandler>();
+    auto packetHandler = std::make_shared<SimpleGame::GamePacketHandler>();
 
     // Config
     auto config = std::make_shared<System::JsonConfigLoader>();
@@ -35,8 +33,8 @@ int main()
     }
 
     // Load Game Data
-    if (!DataManager::Instance().LoadMonsterData("MonsterData.json") ||
-        !DataManager::Instance().LoadWaveData("WaveData.json"))
+    if (!SimpleGame::DataManager::Instance().LoadMonsterData("MonsterData.json") ||
+        !SimpleGame::DataManager::Instance().LoadWaveData("WaveData.json"))
     {
         LOG_WARN("Failed to load game data (Mocking might be used or files missing).");
     }
@@ -49,13 +47,13 @@ int main()
     }
 
     // Initialize DB Pool (SQLite)
-    DBConnectionPool::ConnectionFactory dbFactory = []()
+System::DBConnectionPool::ConnectionFactory dbFactory = []()
     {
-        return new SQLiteConnection();
+        return new System::SQLiteConnection();
     };
 
     // Use "game.db" as connection string (filename)
-    auto dbPool = std::make_shared<DBConnectionPool>(2, "game.db", dbFactory);
+    auto dbPool = std::make_shared<System::DBConnectionPool>(2, "game.db", dbFactory);
     dbPool->Init();
 
     // Ensure Table Exists
@@ -84,14 +82,15 @@ int main()
     }
 
     // Initialize UserDB (Persistent Data Access)
-    auto userDB = std::make_shared<UserDB>(dbPool);
+    auto userDB = std::make_shared<SimpleGame::UserDB>(dbPool);
 
     // Initialize Login Controller
-    auto loginController = std::make_shared<LoginController>(dbPool, &framework);
+    auto loginController = std::make_shared<SimpleGame::LoginController>(dbPool, &framework);
     loginController->Init();
 
     // Initialize RoomManager
-    auto &roomMgr = RoomManager::Instance();
+    auto &roomMgr = SimpleGame::RoomManager::Instance();
+    roomMgr.TestMethod();
     roomMgr.Init(framework.GetTimer(), userDB);
     
     // Default room 1 created by ctor -> Re-created/Available

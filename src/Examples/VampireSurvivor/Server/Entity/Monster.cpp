@@ -1,5 +1,5 @@
 #include "Monster.h"
-#include "../Game/Room.h"
+#include "Game/Room.h"
 #include "AI/IAIBehavior.h"
 
 namespace SimpleGame {
