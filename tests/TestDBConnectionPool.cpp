@@ -17,7 +17,7 @@ public:
     MOCK_METHOD(std::shared_ptr<IResultSet>, Query, (const std::string &), (override));
 };
 
-TEST(Sanity, Check)
+TEST(DBPoolSanity, Check)
 {
     EXPECT_TRUE(true);
 }
@@ -96,8 +96,4 @@ TEST(DBConnectionPoolTest, ReconnectOnFailure)
     EXPECT_EQ(connNew, conn); // Same object, reconnected
 }
 
-int main(int argc, char **argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
+

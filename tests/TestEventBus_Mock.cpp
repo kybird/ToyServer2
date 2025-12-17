@@ -26,7 +26,7 @@ struct TestLoginEvent
     int userId;
 };
 
-TEST(Sanity, Check)
+TEST(EventBusSanity, Check)
 {
     EXPECT_TRUE(true);
 }
@@ -80,8 +80,4 @@ TEST(EventBusTest, MultipleSubscribers)
     System::EventBus::Instance().Publish(TestLoginEvent{200});
 }
 
-int main(int argc, char **argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
+

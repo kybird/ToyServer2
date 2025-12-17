@@ -112,33 +112,18 @@ target_include_directories(PacketTest PRIVATE src)
 target_precompile_headers(PacketTest PRIVATE src/System/Pch.h)
 target_link_libraries(PacketTest PRIVATE System Share)
 
-# Rate Limiter Test
-add_executable(RateLimiterTest tests/TestRateLimiter.cpp)
-target_include_directories(RateLimiterTest PRIVATE src)
-target_precompile_headers(RateLimiterTest PRIVATE src/System/Pch.h)
-target_link_libraries(RateLimiterTest PRIVATE System Share GTest::gtest GTest::gtest_main)
-
-# Event Bus Test
-add_executable(EventBusTest tests/TestEventBus_Mock.cpp)
-target_include_directories(EventBusTest PRIVATE src)
-target_precompile_headers(EventBusTest PRIVATE src/System/Pch.h)
-target_link_libraries(EventBusTest PRIVATE System Share GTest::gtest GTest::gmock)
-
-# ByteBuffer Test
-add_executable(ByteBufferTest tests/TestByteBuffer.cpp)
-target_include_directories(ByteBufferTest PRIVATE src)
-target_precompile_headers(ByteBufferTest PRIVATE src/System/Pch.h)
-target_link_libraries(ByteBufferTest PRIVATE System Share GTest::gtest GTest::gtest_main)
-
-# DBConnectionPool Test
-add_executable(DBConnectionPoolTest tests/TestDBConnectionPool.cpp)
-target_include_directories(DBConnectionPoolTest PRIVATE src)
-target_precompile_headers(DBConnectionPoolTest PRIVATE src/System/Pch.h)
-target_link_libraries(DBConnectionPoolTest PRIVATE System Share GTest::gtest GTest::gmock)
+# UnitTests (Consolidated Test Suite)
+file(GLOB_RECURSE TEST_SOURCES "tests/*.cpp")
+add_executable(UnitTests ${TEST_SOURCES})
+target_include_directories(UnitTests PRIVATE src)
+target_precompile_headers(UnitTests PRIVATE src/System/Pch.h)
+target_link_libraries(UnitTests PRIVATE System Share GTest::gtest GTest::gmock)
 
 enable_testing()
 include(GoogleTest)
-add_subdirectory(tests)
+# add_subdirectory(tests) # No longer needed as we compile sources directly
+gtest_discover_tests(UnitTests)
+
 
 # ==========================================
 # Example: Vampire Survivor Server (Formerly SimpleGame)
@@ -157,6 +142,23 @@ add_executable(VampireSurvivorServer
 target_include_directories(VampireSurvivorServer PRIVATE src ${CMAKE_CURRENT_BINARY_DIR})
 target_precompile_headers(VampireSurvivorServer PRIVATE src/System/Pch.h)
 target_link_libraries(VampireSurvivorServer PRIVATE System Share protobuf::libprotobuf)
+
+# Vampire Survivor Independent Tests
+file(GLOB VS_TEST_SOURCES "src/Examples/VampireSurvivor/tests/*.cpp")
+add_executable(VampireSurvivorTests 
+    ${VS_TEST_SOURCES}
+    src/Examples/VampireSurvivor/Server/Room.cpp
+    ${PROTO_SRCS} ${PROTO_HDRS}
+)
+target_include_directories(VampireSurvivorTests PRIVATE 
+    src 
+    ${CMAKE_CURRENT_BINARY_DIR}
+    src/Examples/VampireSurvivor/Server
+)
+target_precompile_headers(VampireSurvivorTests PRIVATE src/System/Pch.h)
+target_link_libraries(VampireSurvivorTests PRIVATE System Share GTest::gtest GTest::gmock protobuf::libprotobuf)
+gtest_discover_tests(VampireSurvivorTests)
+
 
 
 
