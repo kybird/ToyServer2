@@ -2,7 +2,6 @@
 #include "Game/ObjectManager.h"
 #include "Entity/Player.h"
 #include "System/IObjectPool.h"
-#include "System/Memory/SimplePool.h"
 
 namespace SimpleGame {
 
@@ -24,7 +23,7 @@ public:
 private:
     PlayerFactory();
 
-    System::SimplePool<Player> _pool;
+    std::unique_ptr<System::IObjectPool<Player>> _pool;
 };
 
 } // namespace SimpleGame

@@ -11,6 +11,14 @@ enum PacketID : uint16_t {
     C_JOIN_ROOM = 104,
     S_JOIN_ROOM = 105,
 
+    C_ENTER_LOBBY = 110,
+    S_ENTER_LOBBY = 111,
+    C_LEAVE_ROOM = 112,
+    S_LEAVE_ROOM = 113,
+
+    C_CHAT = 120,
+    S_CHAT = 121,
+
     S_SPAWN_OBJECT = 200,
     S_DESPAWN_OBJECT = 201,
     S_MOVE_OBJECT_BATCH = 202,

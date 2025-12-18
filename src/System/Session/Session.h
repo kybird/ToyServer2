@@ -8,11 +8,13 @@
 #include "System/Pch.h"
 #include <concurrentqueue/moodycamel/concurrentqueue.h>
 #include <memory>
+#include <span> // Added
 #include <vector>
 
 namespace System {
 
 class IDispatcher;
+struct IPacketEncryption; // Forward declaration
 
 /*
     High-Performance AsioSession for MMORPG Servers.
@@ -58,6 +60,9 @@ public:
 
     std::string GetRemoteAddress() const; // Added helper
 
+    // Encryption
+    void SetEncryption(std::unique_ptr<IPacketEncryption> encryption);
+
     // Lifetime safety
     void IncRef()
     {
@@ -98,6 +103,7 @@ private:
     std::shared_ptr<boost::asio::ip::tcp::socket> _socket;
     uint64_t _id = 0;
     IDispatcher *_dispatcher = nullptr;
+    std::unique_ptr<IPacketEncryption> _encryption; // Added
 
     std::thread::id _dispatcherThreadId;
 

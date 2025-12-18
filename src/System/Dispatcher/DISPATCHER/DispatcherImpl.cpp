@@ -3,6 +3,7 @@
 #include "System/Dispatcher/SystemMessages.h"
 #include "System/ILog.h"
 #include "System/ITimer.h"
+#include "System/PacketView.h" // Added
 #include "System/Pch.h"
 #include "System/Session/Session.h"
 #include "System/Session/SessionPool.h"
@@ -52,7 +53,25 @@ bool DispatcherImpl::Process()
                 if (session && session->IsConnected())
                 {
                     PacketMessage *content = static_cast<PacketMessage *>(msg);
-                    _packetHandler->HandlePacket(session, content);
+
+                    if (content->length >= sizeof(Share::PacketHeader))
+                    {
+                        Share::PacketHeader *header = reinterpret_cast<Share::PacketHeader *>(content->Payload());
+
+                        // [Refactoring] Create PacketView (Body Only)
+                        // Strip header so handler only sees the payload
+                        PacketView view(
+                            header->id,
+                            content->Payload() + sizeof(Share::PacketHeader),
+                            content->length - sizeof(Share::PacketHeader)
+                        );
+
+                        _packetHandler->HandlePacket(session, view);
+                    }
+                    else
+                    {
+                        LOG_ERROR("Packet too small for header: {}", content->length);
+                    }
                 }
             }
             break;

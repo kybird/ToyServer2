@@ -8,7 +8,7 @@ namespace SimpleGame {
 class GamePacketHandler : public System::IPacketHandler
 {
 public:
-    void HandlePacket(System::ISession *session, System::PacketMessage *packet) override;
+    void HandlePacket(System::ISession *session, System::PacketView packet) override;
 };
 
 } // namespace SimpleGame

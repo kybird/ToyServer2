@@ -1,28 +1,21 @@
 #pragma once
-
 #include "GameEvents.h"
-#include "System/IFramework.h"
+#include "System/ToyServerSystem.h"
 #include <memory>
-
-
-// 임시. 나중에 싹고쳐야함
-namespace System {
-    class DBConnectionPool;
-}
 
 namespace SimpleGame {
 
 class LoginController
 {
 public:
-    LoginController(std::shared_ptr<System::DBConnectionPool> dbPool, System::IFramework *framework);
+    LoginController(std::shared_ptr<System::IDatabase> db, System::IFramework *framework);
 
     void Init();
 
 private:
     void OnLogin(const LoginRequestEvent &evt);
 
-    std::shared_ptr<System::DBConnectionPool> _dbPool;
+    std::shared_ptr<System::IDatabase> _db;
     System::IFramework *_framework;
 };
 

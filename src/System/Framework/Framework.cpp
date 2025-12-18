@@ -1,18 +1,22 @@
 #include "System/Framework/Framework.h"
-#include "System/IConfig.h"
 #include "System/Console/CommandConsole.h"
 #include "System/Debug/CrashHandler.h"
 #include "System/Dispatcher/DISPATCHER/DispatcherImpl.h"
 #include "System/Dispatcher/MessagePool.h"
+#include "System/IConfig.h"
 #include "System/ILog.h"
 #include "System/ITimer.h"
 #include "System/Metrics/IMetrics.h"
+#include "System/Network/AesEncryption.h"
 #include "System/Network/NetworkImpl.h"
+#include "System/Network/XorEncryption.h"
 #include "System/Session/Session.h"
 #include "System/Session/SessionFactory.h"
 #include "System/Session/SessionPool.h"
 #include "System/Thread/ThreadPool.h"
 #include "System/Timer/TimerImpl.h"
+#include <algorithm> // for min
+#include <vector>
 
 #include <iostream>
 
@@ -49,10 +53,59 @@ bool Framework::Init(std::shared_ptr<IConfig> config, std::shared_ptr<IPacketHan
 
     const auto &serverConfig = _config->GetConfig();
 
-    // 2. Prepare Pools (Hidden from User)
+    // 2. Prepare Pools & Encryption (Hidden from User)
     LOG_INFO("Pre-allocating MessagePool & SessionPool...");
-    System::MessagePool::Prepare(6000);                     // Configurable?
-    System::SessionPool<System::Session>::Init(1000, 1000); // Configurable?
+    System::MessagePool::Prepare(6000);
+    System::SessionPool<System::Session>::Init(1000, 1000);
+
+    // [Encryption] Configure Factory
+    std::string encType = serverConfig.encryption;
+    if (encType == "xor")
+    {
+        uint8_t key = 0xA5;
+        if (!serverConfig.encryptionKey.empty())
+        {
+            try
+            {
+                key = (uint8_t)std::stoi(serverConfig.encryptionKey);
+            } catch (...)
+            {
+                key = (uint8_t)serverConfig.encryptionKey[0];
+            }
+        }
+
+        SessionFactory::SetEncryptionFactory(
+            [key]()
+            {
+                return std::make_unique<XorEncryption>(key);
+            }
+        );
+        LOG_INFO("Encryption Enabled: XOR (Key: {})", key);
+    }
+    else if (encType == "aes")
+    {
+        std::vector<uint8_t> key(16, 0);
+        std::vector<uint8_t> iv(16, 0);
+
+        const auto &kStr = serverConfig.encryptionKey;
+        std::memcpy(key.data(), kStr.data(), std::min(key.size(), kStr.size()));
+
+        const auto &ivStr = serverConfig.encryptionIV;
+        std::memcpy(iv.data(), ivStr.data(), std::min(iv.size(), ivStr.size()));
+
+        SessionFactory::SetEncryptionFactory(
+            [key, iv]()
+            {
+                return std::make_unique<AesEncryption>(key, iv);
+            }
+        );
+        LOG_INFO("Encryption Enabled: AES-128-CBC");
+    }
+    else
+    {
+        LOG_INFO("Encryption: None");
+    }
+
     LOG_INFO("Pools Ready.");
 
     // 3. Components

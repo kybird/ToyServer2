@@ -19,3 +19,16 @@
 - **Idea**: Hot-reloading of configuration files (JSON) and scripts.
 - **Why**: Faster iteration without restarting server.
 - **Status**: Deferred. Priority given to Core Game Logic.
+
+## Advanced Database Architecture (Capability-based)
+- **Todo**: Refactor `IDatabase` to support Capability querying (e.g., `GetCapability<ISQLiteSpecific>()`).
+- **Why**: To cleanly separate RDBMS-specific features (Vacuum, Backup, Kill) from the common interface.
+- **Status**: Planned for future phase.
+
+## Database Monitoring & Statistics
+- **Todo**: Implement `IDatabaseMonitor` interface.
+    - `OnAcquireTimeout()`: Track connection pool saturation.
+    - `OnConnectionInvalid()`: Track driver/network stability.
+    - `OnTransactionRollback()`: Track logical or runtime errors.
+- **Why**: Essential for operating a high-performance DB layer. Current system lacks visibility into pool exhaustion or hidden errors.
+- **Status**: **High Priority** for next iteration.

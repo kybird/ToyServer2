@@ -1,7 +1,6 @@
 #pragma once
 #include <memory>
 #include "System/IObjectPool.h"
-#include "System/Memory/SimplePool.h"
 #include "Entity/MonsterAIType.h"
 
 namespace SimpleGame {
@@ -42,7 +41,7 @@ private:
      */
     std::unique_ptr<IAIBehavior> CreateAI(MonsterAIType type, float speed);
 
-    System::SimplePool<Monster> _pool;
+    std::unique_ptr<System::IObjectPool<Monster>> _pool;
 };
 
 } // namespace SimpleGame

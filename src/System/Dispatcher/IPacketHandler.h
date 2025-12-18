@@ -5,16 +5,22 @@
 #include <vector>
 
 #include "System/Dispatcher/IMessage.h"
+#include "System/PacketView.h"
+#include "System/Pch.h"
+
+
 namespace System {
+
+class ISession;
+struct PacketMessage;
 
 class IPacketHandler
 {
 public:
     virtual ~IPacketHandler() = default;
 
-    // Zero-copy: Packet data is PacketMessage* (Single Allocation)
-    // Session is pre-looked-up ISession (Raw Pointer)
-    virtual void HandlePacket(ISession *session, PacketMessage *packet) = 0;
+    // Interface Change: PacketMessage* -> PacketView (Zero-Copy View)
+    virtual void HandlePacket(ISession *session, PacketView packet) = 0;
 };
 
 } // namespace System

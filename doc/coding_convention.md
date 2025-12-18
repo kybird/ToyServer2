@@ -8,13 +8,15 @@
 *   **위치**: 모듈의 루트 디렉토리.
 *   **네이밍**: `I` 접두어 + PascalCase (예: `IDispatcher.h`, `ISession.h`).
 *   **목적**: 계약(Contract)을 정의합니다. 다른 모듈에서 포함(include)할 수 있는 **유일한** 파일들입니다.
+*   **중요**: 향후 Framework는 라이브러리(Static Lib/DLL) 형태로 배포될 예정이며, 오직 이 인터페이스들만 외부로 노출(Export)됩니다. 따라서 내부 구현 클래스에 직접 의존성을 가지는 코드는 빌드 오류를 유발하게 됩니다.
 
 ### **구현 (Private Details)**
 *   **위치**: 모듈 내 하위 디렉토리.
 *   **네이밍**:
     *   디렉토리: 보통 대문자 또는 기술명 사용 (예: `DISPATCHER`, `ASIO`, `BOOTSTRAP`).
     *   파일/클래스: `Impl` 접미사 또는 구체적인 기술명 사용 (예: `DispatcherImpl.h`, `AsioSession.h`).
-*   **목적**: 구체적인 로직. 이 파일들은 가능한 한 외부 모듈에서 직접 포함해서는 **안 됩니다**. 의존성 주입(DI)을 사용하십시오.
+*   **목적**: 구체적인 로직. 이 파일들은 외부 모듈(Application)에서 직접 포함하는 것이 **절대 금지**됩니다.
+*   **의존성 관리**: 항상 `I`로 시작하는 인터페이스를 통해 접근하고, 실제 객체 생성은 Factory 또는 DI를 통해서만 수행하십시오.
 
 **예시:**
 ```
@@ -49,3 +51,55 @@ src/System/Dispatcher/
 ### **RAII & 소유권**
 *   리소스 관리에는 `std::shared_ptr` / `std::unique_ptr`를 사용합니다.
 *   `Framework` 클래스는 `AsioService`, `DispatcherImpl` 등 핵심 컴포넌트의 수명(소유권)을 명시적으로 관리합니다.
+
+## 4. 핫패스 가이드라인 (Hot Path Guidelines)
+
+핫패스에서는 **"알림만 하고, 아무것도 하지 마라."**는 대원칙을 준수합니다.
+
+### 4.1. 핫패스 정의 및 구간
+다음 구간은 핫패스로 간주하며, "지연 가능성"이 있는 모든 작업이 금지됩니다.
+*   IO 스레드 (ASIO poll / epoll loop)
+*   패킷 수신/송신 직후 경로
+*   타이머 만료 감지 콜백 (ASIO callback)
+*   `dispatcher->Post()` 호출 직전까지
+
+### 4.2. 절대 금지 조건 (Hard No)
+1.  **Lock / Mutex**: `std::mutex`, `shared_mutex`, `spinlock`, `condition_variable` 등 (이유: 경쟁 시 레이턴시 폭증, IO 스레드 스톨)
+2.  **동적 메모리 할당**: `new`, `delete`, `malloc`, `free`, `std::make_shared`, `std::vector::push_back()` 등 (허용 예외: 미리 할당된 풀이나 락프리 프리리스트)
+3.  **사용자 코드 실행**: 게임 로직, 리스너 콜백 실행, 가상 함수 체이닝 등 (이유: 실행 시간 예측 불가)
+4.  **상태 접근/변경**: 타이머 컨테이너 접근, 맵/벡터 스캔, `weak_ptr.lock()` 등
+
+### 4.3. 허용 조건 (Hot Path OK)
+*   단순 계산 (정수 연산, 포인터/핸들 복사)
+*   Lock-free Queue에 `push`
+*   미리 할당된 풀 객체를 이용한 메시지 포스팅 (`dispatcher->Post(msg)`)
+
+### 4.4. 핫패스 안전 핵심 규칙 (Golden Rules)
+*   **Rule 1**: 핫패스는 "사실상 ISR(Interrupt Service Routine)"처럼 취급한다.
+*   **Rule 2**: 핫패스에서는 상태를 변경하지 않는다. 상태 변경은 반드시 Logic Thread(Dispatcher 루프 안)에서만 수행한다.
+*   **Rule 3**: 핫패스는 "알림만 한다". (Timer expired -> 알림, Packet arrived -> 알림 등)
+*   **Rule 4**: 실행 시간은 O(1) + 상수를 유지해야 한다. (루프 금지, 조건 분기 최소화)
+
+### 4.5. 책임 분리
+*   **IO / ASIO**: 이벤트 감지 (핫패스)
+*   **Dispatcher**: 이벤트 직렬화 및 라우팅 (Router)
+*   **Logic Thread**: 실제 게임 로직 및 상태 관리 처리
+
+## 5. 데이터베이스 규칙 (Database Rules)
+
+### 5.1. DbResult<T> 사용 패턴 (소유권 이전 필수)
+*   **원칙**: `ITransaction`, `IResultSet` 등 **RAII 객체**를 반환받을 때는 반드시 소유권을 이전받아야 합니다.
+*   **방법**: `auto tx = std::move(*res.value);` 처럼 `std::move`를 사용합니다.
+*   **이유**: 참조(`auto&`)를 사용하면 RAII 주체가 `res` (임시 객체 또는 결과 컨테이너)에 남게 되어, `res` 소멸 시 의도치 않은 롤백이나 자원 해제가 발생합니다.
+*   **예시**:
+    ```cpp
+    auto res = db->BeginTransaction();
+    if (res.status.IsOk()) {
+        auto tx = std::move(*res.value); // ✅ 정답: 이제 tx가 유일한 소유자이며 RAII 주체임
+        // ... 작업
+        tx->Commit();
+    } // tx가 스코프를 벗어나며 소멸 (Commit 안 했으면 여기서 자동 Rollback)
+    ```
+
+### 5.2. 트랜잭션 관리
+*   반드시 RAII(`ITransaction`)를 사용하며, 명시적으로 `Commit()`을 호출하지 않으면 스코프 종료 시 자동 Rollback 됩니다.

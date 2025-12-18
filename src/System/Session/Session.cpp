@@ -3,6 +3,7 @@
 #include "System/Dispatcher/IDispatcher.h"
 #include "System/Dispatcher/MessagePool.h"
 #include "System/ILog.h"
+#include "System/Network/IPacketEncryption.h" // Added
 #include "System/Pch.h"
 #include "System/Session/SessionPool.h"
 
@@ -40,6 +41,7 @@ void Session::OnRecycle()
         Close();
     _socket.reset();
     _dispatcher = nullptr;
+    _encryption.reset(); // Clear encryption on recycle
 }
 
 void Session::Reset(std::shared_ptr<boost::asio::ip::tcp::socket> socket, uint64_t sessionId, IDispatcher *dispatcher)
@@ -133,7 +135,17 @@ void Session::Send(std::span<const uint8_t> data)
     auto msg = MessagePool::AllocatePacket(static_cast<uint16_t>(data.size()));
     if (!msg)
         return;
-    std::memcpy(msg->Payload(), data.data(), data.size());
+
+    // [Encryption] Encrypt directly into packet payload
+    if (_encryption)
+    {
+        _encryption->Encrypt(data.data(), msg->Payload(), data.size());
+    }
+    else
+    {
+        std::memcpy(msg->Payload(), data.data(), data.size());
+    }
+
     EnqueueSend(msg);
 }
 
@@ -250,7 +262,16 @@ void Session::OnRecv(size_t bytesTransferred)
 
         msg->sessionId = _id;
         msg->session = this;
-        std::memcpy(msg->Payload(), _recvBuffer.ReadPos(), header->size);
+
+        // [Decryption] Decrypt directly into target buffer (Decrypt-on-Copy)
+        if (_encryption)
+        {
+            _encryption->Decrypt(_recvBuffer.ReadPos(), msg->Payload(), header->size);
+        }
+        else
+        {
+            std::memcpy(msg->Payload(), _recvBuffer.ReadPos(), header->size);
+        }
 
         if (_dispatcher)
         {
@@ -485,6 +506,11 @@ std::string Session::GetRemoteAddress() const
     {
         return "Unknown";
     }
+}
+
+void Session::SetEncryption(std::unique_ptr<IPacketEncryption> encryption)
+{
+    _encryption = std::move(encryption);
 }
 
 } // namespace System

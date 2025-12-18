@@ -6,6 +6,7 @@
 namespace System {
 
 std::atomic<uint64_t> SessionFactory::_nextSessionId = 1;
+std::function<std::unique_ptr<IPacketEncryption>()> SessionFactory::_encryptionFactory;
 
 Session *SessionFactory::CreateSession(std::shared_ptr<boost::asio::ip::tcp::socket> socket, IDispatcher *dispatcher)
 {
@@ -20,6 +21,12 @@ Session *SessionFactory::CreateSession(std::shared_ptr<boost::asio::ip::tcp::soc
     uint64_t id = _nextSessionId.fetch_add(1);
     session->Reset(socket, id, dispatcher);
 
+    // [Encryption] Inject if factory is set
+    if (_encryptionFactory)
+    {
+        session->SetEncryption(_encryptionFactory());
+    }
+
     return session;
 }
 
@@ -29,6 +36,11 @@ void SessionFactory::Destroy(Session *session)
     {
         SessionPool<Session>::Release(session);
     }
+}
+
+void SessionFactory::SetEncryptionFactory(std::function<std::unique_ptr<IPacketEncryption>()> factory)
+{
+    _encryptionFactory = factory;
 }
 
 } // namespace System

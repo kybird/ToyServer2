@@ -7,6 +7,7 @@
 #include "Entity/AI/SwarmAI.h"
 #include "Entity/AI/BossAI.h"
 #include "System/ILog.h"
+#include "System/Memory/SimplePool.h"
 
 namespace SimpleGame {
 
@@ -15,8 +16,8 @@ MonsterFactory& MonsterFactory::Instance() {
     return instance;
 }
 
-MonsterFactory::MonsterFactory() : _pool(1000) {
-    // Pool limit 1000
+MonsterFactory::MonsterFactory() {
+    _pool = std::make_unique<System::SimplePool<Monster>>(1000);
 }
 
 std::shared_ptr<Monster> MonsterFactory::CreateMonster(ObjectManager& objMgr, int32_t monsterTypeId, float x, float y) {
@@ -27,7 +28,7 @@ std::shared_ptr<Monster> MonsterFactory::CreateMonster(ObjectManager& objMgr, in
     }
 
     // Acquire from pool or alloc
-    Monster* raw = _pool.Acquire();
+    Monster* raw = _pool->Acquire();
     if (!raw) {
         // Should not happen with current SimplePool unless alloc limit reached
         return nullptr;
@@ -57,7 +58,7 @@ std::shared_ptr<Monster> MonsterFactory::CreateMonster(ObjectManager& objMgr, in
 void MonsterFactory::Release(Monster* monster) {
     if (monster) {
         monster->Reset();
-        _pool.Release(monster);
+        _pool->Release(monster);
     }
 }
 

@@ -1,13 +1,17 @@
 #pragma once
 #include "Game/Room.h"
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <stdint.h>
+#include <vector>
 
 namespace System {
 class ITimer;
-}
+class ISession;
+struct PacketMessage;
+} // namespace System
 
 namespace SimpleGame {
 class UserDB;
@@ -32,9 +36,16 @@ public:
     void UnregisterPlayer(uint64_t sessionId);
     std::shared_ptr<Player> GetPlayer(uint64_t sessionId);
 
+    // Lobby Management
+    void EnterLobby(System::ISession *session);
+    void LeaveLobby(uint64_t sessionId);
+    bool IsInLobby(uint64_t sessionId);
+    void BroadcastToLobby(System::PacketMessage *packet);
+
 private:
     std::map<int, std::shared_ptr<Room>> _rooms;
     std::map<uint64_t, std::shared_ptr<Player>> _players;
+    std::map<uint64_t, System::ISession *> _lobbySessions; // Session ID -> Session Pointer
     std::mutex _mutex;
     std::shared_ptr<System::ITimer> _timer;
     std::shared_ptr<UserDB> _userDB;

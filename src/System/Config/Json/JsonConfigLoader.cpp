@@ -6,6 +6,11 @@
 
 namespace System {
 
+std::shared_ptr<IConfig> IConfig::Create()
+{
+    return std::make_shared<JsonConfigLoader>();
+}
+
 bool JsonConfigLoader::Load(const std::string &filePath)
 {
     try
@@ -30,6 +35,9 @@ bool JsonConfigLoader::Load(const std::string &filePath)
             _config.dbAddress = server.value("db_info", "");
             _config.rateLimit = server.value("rate_limit", 50.0);
             _config.rateBurst = server.value("rate_burst", 100.0);
+            _config.encryption = server.value("encryption", "none");
+            _config.encryptionKey = server.value("encryption_key", "");
+            _config.encryptionIV = server.value("encryption_iv", "");
         }
 
         LOG_INFO(

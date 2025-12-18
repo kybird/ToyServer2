@@ -64,7 +64,8 @@ target_sources(System PRIVATE
     src/System/Network/RateLimiter.h # Added
     src/System/Events/EventBus.h
     src/System/Network/ByteBuffer.h # Added
-    src/System/Database/DBConnectionPool.cpp # Added
+    src/System/Database/DatabaseImpl.cpp
+    src/System/Database/SQLite/SQLiteConnection.cpp
     src/System/Framework/Framework.cpp
     src/System/Thread/ThreadPool.cpp
     src/System/Dispatcher/DISPATCHER/DispatcherImpl.cpp
@@ -82,6 +83,10 @@ target_sources(System PRIVATE
     src/System/Network/PacketUtils.cpp
     src/System/Network/PacketUtils.h
     src/System/Dispatcher/SystemMessages.h
+    src/System/PacketView.h
+    src/System/Network/XorEncryption.h
+    src/System/Network/AesEncryption.h
+    src/System/Network/AesEncryption.cpp
     # Will add files here as we create them
 )
 target_include_directories(System PUBLIC src/System src)
@@ -151,6 +156,7 @@ add_executable(VampireSurvivorServer
     src/Examples/VampireSurvivor/Server/Entity/AI/WanderAI.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/SwarmAI.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/BossAI.cpp
+    src/Examples/VampireSurvivor/Server/Entity/ProjectileFactory.cpp
     ${PROTO_SRCS} ${PROTO_HDRS}
 )
 
@@ -162,6 +168,11 @@ target_include_directories(VampireSurvivorServer PRIVATE
 )
 
 target_link_libraries(VampireSurvivorServer PRIVATE System Share protobuf::libprotobuf)
+
+# Vampire Survivor Console Client
+add_executable(VampireSurvivorClient src/Examples/VampireSurvivor/Client/ConsoleClient.cpp ${PROTO_SRCS} ${PROTO_HDRS})
+target_include_directories(VampireSurvivorClient PRIVATE src/Examples/VampireSurvivor src)
+target_link_libraries(VampireSurvivorClient PRIVATE System Share protobuf::libprotobuf)
 
 
 
@@ -178,6 +189,7 @@ install(DIRECTORY src/System DESTINATION dist/include
     PATTERN "BOOTSTRAP" EXCLUDE
     PATTERN "System/Dispatcher/MessagePool.h" EXCLUDE
     PATTERN "System/Dispatcher/SystemMessages.h" EXCLUDE
+    PATTERN "System/Database/*.h" EXCLUDE # Internal headers
 )
 
 install(DIRECTORY src/Share DESTINATION dist/include

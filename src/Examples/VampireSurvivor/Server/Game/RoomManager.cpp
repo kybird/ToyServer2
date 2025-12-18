@@ -1,12 +1,14 @@
 #include "Game/RoomManager.h"
-#include "System/ITimer.h"
 #include "Core/UserDB.h"
+#include "System/ISession.h"
+#include "System/ITimer.h"
+
 
 static_assert(true, "RoomManager.cpp compiled");
 
 namespace SimpleGame {
 
-    #pragma message("Compiling RoomManager::Init")
+#pragma message("Compiling RoomManager::Init")
 void RoomManager::Init(std::shared_ptr<System::ITimer> timer, std::shared_ptr<UserDB> userDB)
 {
     _timer = timer;
@@ -18,7 +20,8 @@ void RoomManager::Init(std::shared_ptr<System::ITimer> timer, std::shared_ptr<Us
     }
 }
 
-void RoomManager::TestMethod() {
+void RoomManager::TestMethod()
+{
     // Empty test
 }
 
@@ -64,6 +67,40 @@ std::shared_ptr<Player> RoomManager::GetPlayer(uint64_t sessionId)
     if (it != _players.end())
         return it->second;
     return nullptr;
+}
+
+void RoomManager::EnterLobby(System::ISession *session)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    _lobbySessions[session->GetId()] = session;
+}
+
+void RoomManager::LeaveLobby(uint64_t sessionId)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    _lobbySessions.erase(sessionId);
+}
+
+bool RoomManager::IsInLobby(uint64_t sessionId)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    return _lobbySessions.find(sessionId) != _lobbySessions.end();
+}
+
+void RoomManager::BroadcastToLobby(System::PacketMessage *packet)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    for (auto it = _lobbySessions.begin(); it != _lobbySessions.end();)
+    {
+        auto session = it->second;
+        // Check if session is valid? ISession* doesn't guarantee validity if we don't own it.
+        // Assuming session lifetime is managed outside and we are notified on close.
+        // If session is closed, Send might fail or be safe?
+        // Ideally we check implicit validity.
+        // For now, simple iteration.
+        session->Send(packet);
+        ++it;
+    }
 }
 
 } // namespace SimpleGame

@@ -4,31 +4,38 @@
 #include "System/Dispatcher/IPacketHandler.h"
 #include "System/ILog.h"
 #include "System/Network/PacketUtils.h"
+#include "System/PacketView.h" // Added
 #include <iostream>
 
 class ServerPacketHandler : public System::IPacketHandler
 {
 public:
-    void HandlePacket(System::ISession *session, System::PacketMessage *packet) override
+    void HandlePacket(System::ISession *session, System::PacketView packet) override
     {
         // Simple ECHO logic
-        if (packet->length < sizeof(Share::PacketHeader))
-            return;
+        // PacketView provides stripped payload and ID.
 
-        Share::PacketHeader *header = reinterpret_cast<Share::PacketHeader *>(packet->Payload());
-
-        if (header->id == Share::PacketType::PKT_C_ECHO)
+        if (packet.GetId() == Share::PacketType::PKT_C_ECHO)
         {
+            // Calculate total size: Header + Body
+            uint16_t bodyLen = (uint16_t)packet.GetLength();
+            uint16_t totalSize = (uint16_t)(sizeof(Share::PacketHeader) + bodyLen);
+
             // Allocate new packet from pool
-            auto response = System::PacketUtils::CreatePacket(packet->length);
+            auto response = System::PacketUtils::CreatePacket(totalSize);
             if (!response)
                 return;
-            std::memcpy(response->Payload(), packet->Payload(), packet->length);
 
+            // Construct Header
             Share::PacketHeader *respHeader = reinterpret_cast<Share::PacketHeader *>(response->Payload());
+            respHeader->size = totalSize;
             respHeader->id = Share::PacketType::PKT_S_ECHO;
 
+            // Copy Payload
+            std::memcpy(response->Payload() + sizeof(Share::PacketHeader), packet.GetPayload(), bodyLen);
+
             session->Send(response);
+            System::PacketUtils::ReleasePacket(response); // Release after Send (since CreatePacket was used)
 
 #ifdef ENABLE_DIAGNOSTICS
             // [Diagnostics] Echo 응답 카운트

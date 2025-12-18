@@ -37,6 +37,29 @@ message S_JoinRoom {
     int32 room_id = 2;
 }
 
+message C_EnterLobby {
+}
+
+message S_EnterLobby {
+    bool success = 1;
+}
+
+message C_LeaveRoom {
+}
+
+message S_LeaveRoom {
+    bool success = 1;
+}
+
+message C_Chat {
+    string msg = 1;
+}
+
+message S_Chat {
+    int32 player_id = 1;
+    string msg = 2;
+}
+
 // ==========================================================
 // In-Game Logic
 // ==========================================================
