@@ -9,7 +9,6 @@
 #include <iostream>
 #include <string>
 
-
 #define ENABLE_MEMORY_PROFILE
 #ifdef ENABLE_MEMORY_PROFILE
 #include "System/Debug/MemoryMetrics.h"

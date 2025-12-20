@@ -13,6 +13,7 @@
 #include "System/Session/Session.h"
 #include "System/Session/SessionFactory.h"
 #include "System/Session/SessionPool.h"
+#include "System/Thread/Strand.h"
 #include "System/Thread/ThreadPool.h"
 #include "System/Timer/TimerImpl.h"
 #include <algorithm> // for min
@@ -25,6 +26,21 @@ namespace System {
 std::unique_ptr<IFramework> IFramework::Create()
 {
     return std::make_unique<Framework>();
+}
+
+std::shared_ptr<ITimer> Framework::GetTimer() const
+{
+    return _timer;
+}
+
+std::shared_ptr<IStrand> Framework::CreateStrand()
+{
+    return std::make_shared<Strand>(_threadPool);
+}
+
+std::shared_ptr<IDispatcher> Framework::GetDispatcher() const
+{
+    return _dispatcher;
 }
 
 Framework::Framework()
@@ -106,6 +122,10 @@ bool Framework::Init(std::shared_ptr<IConfig> config, std::shared_ptr<IPacketHan
         LOG_INFO("Encryption: None");
     }
 
+    // [RateLimiter] Configure from config file
+    SessionFactory::SetRateLimitConfig(serverConfig.rateLimit, serverConfig.rateBurst);
+    LOG_INFO("RateLimiter Config: rate={}, burst={}", serverConfig.rateLimit, serverConfig.rateBurst);
+
     LOG_INFO("Pools Ready.");
 
     // 3. Components
@@ -118,6 +138,11 @@ bool Framework::Init(std::shared_ptr<IConfig> config, std::shared_ptr<IPacketHan
 
     // 4. ThreadPool (Computations)
     int taskThreads = serverConfig.taskWorkerCount;
+    if (taskThreads <= 0)
+    {
+        LOG_ERROR("Invalid Configuration: 'task_worker_threads' must be positive. Found: {}", taskThreads);
+        return false;
+    }
     _threadPool = std::make_shared<ThreadPool>(taskThreads);
 
     // 5. Init Network

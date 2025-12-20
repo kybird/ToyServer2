@@ -1,23 +1,22 @@
 #include "Core/GamePacketHandler.h"
 #include "Entity/Player.h"
 #include "Entity/PlayerFactory.h"
+#include "Game/Room.h"
 #include "Game/RoomManager.h"
 #include "GameEvents.h"
+#include "GamePackets.h"
 #include "Protocol/game.pb.h"
-#include "System/Dispatcher/MessagePool.h"
 #include "System/Events/EventBus.h"
 #include "System/ILog.h"
 #include "System/ISession.h"
 #include "System/Network/ByteBuffer.h"
-#include "System/PacketView.h" // Added
+#include "System/PacketView.h"
+#include "System/Thread/IStrand.h"
 
 namespace SimpleGame {
 
 void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketView packet)
 {
-    // PacketView already points to Body. Header is stripped by Dispatcher.
-    // Length check for header is already done.
-
     switch (packet.GetId())
     {
     case PacketID::C_LOGIN: {
@@ -47,18 +46,47 @@ void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketVi
             auto player = RoomManager::Instance().GetPlayer(session->GetId());
             if (player)
             {
-                // Simple Movement Logic: Set Velocity based on Direction
-                float speed = 200.0f;
-                player->SetVelocity(req.dir_x() * speed, req.dir_y() * speed);
-
-                // Update state
-                if (req.dir_x() == 0 && req.dir_y() == 0)
+                // [Strand] Use Room's Strand for processing
+                auto room = RoomManager::Instance().GetRoom(player->GetRoomId());
+                if (room && room->GetStrand())
                 {
-                    player->SetState(Protocol::IDLE);
+                    // Capture by value for thread safety
+                    float dx = req.dir_x();
+                    float dy = req.dir_y();
+
+                    room->GetStrand()->Post(
+                        [player, dx, dy]()
+                        {
+                            // Simple Movement Logic: Set Velocity based on Direction
+                            float speed = 200.0f;
+                            player->SetVelocity(dx * speed, dy * speed);
+
+                            // Update state
+                            if (dx == 0 && dy == 0)
+                            {
+                                player->SetState(Protocol::IDLE);
+                            }
+                            else
+                            {
+                                player->SetState(Protocol::MOVING);
+                            }
+                        }
+                    );
                 }
                 else
                 {
-                    player->SetState(Protocol::MOVING);
+                    // Fallback (Main Thread)
+                    float speed = 200.0f;
+                    player->SetVelocity(req.dir_x() * speed, req.dir_y() * speed);
+
+                    if (req.dir_x() == 0 && req.dir_y() == 0)
+                    {
+                        player->SetState(Protocol::IDLE);
+                    }
+                    else
+                    {
+                        player->SetState(Protocol::MOVING);
+                    }
                 }
             }
             else
@@ -69,9 +97,12 @@ void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketVi
         break;
     }
     case PacketID::C_CREATE_ROOM: {
+        std::cout << "[DEBUG] Handling C_CREATE_ROOM" << std::endl;
         Protocol::C_CreateRoom req;
         if (packet.Parse(req))
         {
+            std::cout << "[DEBUG] Parsed C_CREATE_ROOM" << std::endl;
+
             static int nextRoomId = 2; // Simple auto-increment
             int newRoomId = nextRoomId++;
 
@@ -81,17 +112,8 @@ void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketVi
             res.set_success(true);
             res.set_room_id(newRoomId);
 
-            size_t resSize = res.ByteSizeLong();
-            auto packet = System::MessagePool::AllocatePacket((uint16_t)resSize);
-            if (packet)
-            {
-                PacketHeader *h = (PacketHeader *)packet->Payload();
-                h->size = (uint16_t)(sizeof(PacketHeader) + resSize);
-                h->id = PacketID::S_CREATE_ROOM;
-                res.SerializeToArray(packet->Payload() + sizeof(PacketHeader), (int)resSize);
-                session->Send((System::PacketMessage *)packet);
-                System::PacketUtils::ReleasePacket(packet);
-            }
+            S_CreateRoomPacket respPacket(res);
+            session->SendPacket(respPacket);
             LOG_INFO("Created Room {}", newRoomId);
         }
         break;
@@ -128,18 +150,8 @@ void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketVi
                 res.set_success(true);
                 res.set_room_id(roomId);
 
-                size_t resSize = res.ByteSizeLong();
-                auto packet = System::MessagePool::AllocatePacket((uint16_t)resSize);
-                if (packet)
-                {
-                    PacketHeader *h = (PacketHeader *)packet->Payload();
-                    h->size = (uint16_t)(sizeof(PacketHeader) + resSize);
-                    h->id = PacketID::S_JOIN_ROOM;
-                    res.SerializeToArray(packet->Payload() + sizeof(PacketHeader), (int)resSize);
-                    session->Send((System::PacketMessage *)packet);
-                    System::PacketUtils::ReleasePacket(packet);
-                }
-
+                S_JoinRoomPacket respPacket(res);
+                session->SendPacket(respPacket);
                 LOG_INFO("Player joined Room {}", roomId);
             }
             else
@@ -159,18 +171,13 @@ void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketVi
             res.set_success(true);
 
             // Send Response
-            size_t resSize = res.ByteSizeLong();
-            auto packet = System::MessagePool::AllocatePacket((uint16_t)resSize);
-            if (packet)
-            {
-                PacketHeader *h = (PacketHeader *)packet->Payload();
-                h->size = (uint16_t)(sizeof(PacketHeader) + resSize);
-                h->id = PacketID::S_ENTER_LOBBY;
-                res.SerializeToArray(packet->Payload() + sizeof(PacketHeader), (int)resSize);
-                session->Send((System::PacketMessage *)packet);
-                System::PacketUtils::ReleasePacket(packet);
-            }
+            S_EnterLobbyPacket respPacket(res);
+            session->SendPacket(respPacket);
             LOG_INFO("Session {} Entered Lobby", session->GetId());
+        }
+        else
+        {
+            LOG_ERROR("Failed to parse C_ENTER_LOBBY (Len: {})", packet.GetLength());
         }
         break;
     }
@@ -199,60 +206,45 @@ void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketVi
             Protocol::S_LeaveRoom res;
             res.set_success(true);
             // Send Response
-            size_t resSize = res.ByteSizeLong();
-            auto packet = System::MessagePool::AllocatePacket((uint16_t)resSize);
-            if (packet)
-            {
-                PacketHeader *h = (PacketHeader *)packet->Payload();
-                h->size = (uint16_t)(sizeof(PacketHeader) + resSize);
-                h->id = PacketID::S_LEAVE_ROOM;
-                res.SerializeToArray(packet->Payload() + sizeof(PacketHeader), (int)resSize);
-                session->Send((System::PacketMessage *)packet);
-                System::PacketUtils::ReleasePacket(packet);
-            }
+            S_LeaveRoomPacket respPacket(res);
+            session->SendPacket(respPacket);
             LOG_INFO("Session {} Left Room -> Lobby", session->GetId());
         }
         break;
     }
     case PacketID::C_CHAT: {
+        std::cout << "[DEBUG] Handling C_CHAT" << std::endl;
         Protocol::C_Chat req;
         if (packet.Parse(req))
         {
             std::string msg = req.msg();
+            std::cout << "[DEBUG] Chat Msg: " << msg << std::endl;
 
             // Broadcast
             Protocol::S_Chat res;
             res.set_player_id((int32_t)session->GetId());
             res.set_msg(msg);
 
-            size_t resSize = res.ByteSizeLong();
-            auto packet = System::MessagePool::AllocatePacket((uint16_t)resSize);
-            if (packet)
+            S_ChatPacket chatPacket(res);
+            // If in Lobby, broadcast to all lobby sessions
+            if (RoomManager::Instance().IsInLobby(session->GetId()))
             {
-                PacketHeader *h = (PacketHeader *)packet->Payload();
-                h->size = (uint16_t)(sizeof(PacketHeader) + resSize);
-                h->id = PacketID::S_CHAT;
-                res.SerializeToArray(packet->Payload() + sizeof(PacketHeader), (int)resSize);
-
-                // If in Lobby, broadcast to all lobby sessions
-                if (RoomManager::Instance().IsInLobby(session->GetId()))
+                std::cout << "[DEBUG] Broadcasting to Lobby..." << std::endl;
+                RoomManager::Instance().BroadcastPacketToLobby(chatPacket);
+                std::cout << "[DEBUG] Broadcast to Lobby Complete." << std::endl;
+            }
+            else
+            {
+                // In Room - Broadcast via Room
+                std::cout << "[DEBUG] Broadcasting to Room..." << std::endl;
+                auto player = RoomManager::Instance().GetPlayer(session->GetId());
+                if (player)
                 {
-                    RoomManager::Instance().BroadcastToLobby((System::PacketMessage *)packet);
+                    // Room broadcast logic
+                    // player->GetRoom()->BroadcastPacket(chatPacket);
+                    LOG_WARN("Room Chat not fully implemented. Echoing only.");
+                    session->SendPacket(chatPacket);
                 }
-                else
-                {
-                    // In Room - Broadcast via Room
-                    auto player = RoomManager::Instance().GetPlayer(session->GetId());
-                    if (player)
-                    {
-                        // Room broadcast logic
-                        // player->GetRoom()->Broadcast(packet);
-                        LOG_WARN("Room Chat not fully implemented. Echoing only.");
-                        session->Send((System::PacketMessage *)packet);
-                    }
-                }
-
-                System::PacketUtils::ReleasePacket(packet);
             }
         }
         break;
@@ -262,5 +254,27 @@ void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketVi
         break;
     }
 } // End HandlePacket
+
+void GamePacketHandler::OnSessionDisconnect(System::ISession *session)
+{
+    LOG_INFO("Session {} Disconnected. Cleaning up...", session->GetId());
+
+    // 1. Remove from Lobby
+    if (RoomManager::Instance().IsInLobby(session->GetId()))
+    {
+        RoomManager::Instance().LeaveLobby(session->GetId());
+        LOG_INFO("Session {} removed from Lobby.", session->GetId());
+    }
+
+    // 2. Remove from Room/Game
+    auto player = RoomManager::Instance().GetPlayer(session->GetId());
+    if (player)
+    {
+        // TODO: Notify Room to remove player object safely (Strand)
+        // For now, just unregister from global map to prevent lookups
+        RoomManager::Instance().UnregisterPlayer(session->GetId());
+        LOG_INFO("Session {} unregistered from Player Map.", session->GetId());
+    }
+}
 
 } // namespace SimpleGame

@@ -38,6 +38,9 @@ private:
 
 private:
     moodycamel::ConcurrentQueue<IMessage *> _messageQueue;
+
+    std::mutex _mutex;
+    std::condition_variable _cv;
     std::shared_ptr<IPacketHandler> _packetHandler;
 
     // [No session registry] Dispatcher doesn't own sessions, just processes messages

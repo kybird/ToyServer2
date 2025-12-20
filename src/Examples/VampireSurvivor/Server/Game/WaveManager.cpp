@@ -1,12 +1,12 @@
 #include "WaveManager.h"
-#include "Game/Room.h"
 #include "Entity/MonsterFactory.h"
-#include "System/Dispatcher/MessagePool.h"
-#include "System/Network/PacketUtils.h"
+#include "Game/Room.h"
+#include "GamePackets.h"
 
 namespace SimpleGame {
 
-void WaveManager::Start() {
+void WaveManager::Start()
+{
     _currentTime = 0.0f;
     _currentWaveIndex = 0;
     _nextSpawnTime = 0.0f;
@@ -14,39 +14,59 @@ void WaveManager::Start() {
     LOG_INFO("WaveManager Started for Room {}", _roomId);
 }
 
-void WaveManager::Update(float dt, Room* room) {
+void WaveManager::Update(float dt, Room *room)
+{
     _currentTime += dt;
 
     // Check for new waves or spawning
-    while (_currentWaveIndex < _waves.size()) {
-        const auto& wave = _waves[_currentWaveIndex];
-        
-        if (_currentTime >= wave.startTime) {
+    while (_currentWaveIndex < _waves.size())
+    {
+        const auto &wave = _waves[_currentWaveIndex];
+
+        if (_currentTime >= wave.startTime)
+        {
             StartSpawner(wave);
             _currentWaveIndex++;
-        } else {
+        }
+        else
+        {
             break; // Future waves
         }
     }
 
     // Update Active Spawners
-    for (auto it = _activeSpawners.begin(); it != _activeSpawners.end(); ) {
-         it->timer -= dt;
-         if (it->timer <= 0) {
-             SpawnMonster(*it, room);
-             it->spawnedCount++;
-             it->timer = it->interval;
-         }
+    for (auto it = _activeSpawners.begin(); it != _activeSpawners.end();)
+    {
+        it->timer -= dt;
+        if (it->timer <= 0)
+        {
+            // [CPU Optimization] Cap monster population
+            static const size_t MAX_MONSTERS_PER_ROOM = 500;
+            if (_objMgr.GetObjectCount() < MAX_MONSTERS_PER_ROOM)
+            {
+                SpawnMonster(*it, room);
+                it->spawnedCount++;
+            }
+            else
+            {
+                // LOG_DEBUG("Monster cap reached in room {}", _roomId);
+            }
+            it->timer = it->interval;
+        }
 
-         if (it->spawnedCount >= it->totalCount) {
-             it = _activeSpawners.erase(it);
-         } else {
-             ++it;
-         }
+        if (it->spawnedCount >= it->totalCount)
+        {
+            it = _activeSpawners.erase(it);
+        }
+        else
+        {
+            ++it;
+        }
     }
 }
 
-void WaveManager::StartSpawner(const WaveData& wave) {
+void WaveManager::StartSpawner(const WaveData &wave)
+{
     PeriodicSpawner spawner;
     spawner.monsterTypeId = wave.monsterTypeId;
     spawner.totalCount = wave.count;
@@ -56,7 +76,8 @@ void WaveManager::StartSpawner(const WaveData& wave) {
     _activeSpawners.push_back(spawner);
 }
 
-void WaveManager::SpawnMonster(const PeriodicSpawner& spawner, Room* room) {
+void WaveManager::SpawnMonster(const PeriodicSpawner &spawner, Room *room)
+{
     // Random Position around 0,0 (or players)
     // For MVP: Random around 0,0 within 20m
     float angle = (float)(rand() % 360) * 3.14159f / 180.0f;
@@ -65,13 +86,14 @@ void WaveManager::SpawnMonster(const PeriodicSpawner& spawner, Room* room) {
     float y = sin(angle) * dist;
 
     auto monster = MonsterFactory::Instance().CreateMonster(_objMgr, spawner.monsterTypeId, x, y);
-    if (monster) {
+    if (monster)
+    {
         _objMgr.AddObject(monster);
         _grid.Add(monster);
-        
+
         // Broadcast Spawn
         Protocol::S_SpawnObject msg;
-        auto* info = msg.add_objects();
+        auto *info = msg.add_objects();
         info->set_object_id(monster->GetId());
         info->set_type(Protocol::ObjectType::MONSTER);
         info->set_type_id(monster->GetMonsterTypeId());
@@ -79,20 +101,19 @@ void WaveManager::SpawnMonster(const PeriodicSpawner& spawner, Room* room) {
         info->set_y(y);
         info->set_hp(monster->GetHp());
         info->set_max_hp(monster->GetMaxHp());
-        
+
         BroadcastProto(room, PacketID::S_SPAWN_OBJECT, msg);
     }
 }
 
-void WaveManager::BroadcastProto(Room* room, PacketID id, const Protocol::S_SpawnObject& msg) {
-     size_t bodySize = msg.ByteSizeLong();
-     auto* packet = System::MessagePool::AllocatePacket((uint16_t)bodySize);
-     PacketHeader* header = (PacketHeader*)packet->Payload();
-     header->size = (uint16_t)(sizeof(PacketHeader) + bodySize);
-     header->id = (uint16_t)id;
-     msg.SerializeToArray(packet->Payload() + sizeof(PacketHeader), (int)bodySize);
-     room->Broadcast(packet);
-     System::PacketUtils::ReleasePacket(packet);
+// Helper removed in favor of direct packet creation in SpawnMonster or Update BroadcastProto
+void WaveManager::BroadcastProto(Room *room, PacketID id, const Protocol::S_SpawnObject &msg)
+{
+    if (id == PacketID::S_SPAWN_OBJECT)
+    {
+        S_SpawnObjectPacket packet(msg);
+        room->BroadcastPacket(packet);
+    }
 }
 
 } // namespace SimpleGame

@@ -1,6 +1,7 @@
 #include "Core/LoginController.h"
 #include "Core/GameEvents.h"
-#include "Core/Protocol.h"
+#include "GamePackets.h"
+#include "Protocol.h"
 #include "Protocol/game.pb.h"
 #include <fmt/format.h>
 
@@ -55,18 +56,8 @@ void LoginController::OnLogin(const LoginRequestEvent &evt)
         res.set_map_width(0);
         res.set_map_height(0);
 
-        size_t bodySize = res.ByteSizeLong();
-        auto packet = System::PacketUtils::CreatePacket((uint16_t)bodySize);
-        if (packet)
-        {
-            PacketHeader *header = (PacketHeader *)packet->Payload();
-            header->size = (uint16_t)(sizeof(PacketHeader) + bodySize);
-            header->id = PacketID::S_LOGIN;
-            res.SerializeToArray(packet->Payload() + sizeof(PacketHeader), (int)bodySize);
-
-            evt.session->Send(packet);
-            System::PacketUtils::ReleasePacket(packet);
-        }
+        S_LoginPacket packet(res);
+        evt.session->SendPacket(packet);
 
         LOG_INFO("Login Auth Success: {} (Session: {})", evt.username, evt.sessionId);
     }

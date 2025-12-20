@@ -37,6 +37,7 @@ public:
 
     // Deallocation
     static void Free(IMessage *msg);
+    static void FreeRaw(void *block); // [Fix] Bypass destructor for PacketStorage (Type Punning)
 
     // Management
     static void Prepare(size_t count);

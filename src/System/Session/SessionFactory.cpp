@@ -7,6 +7,8 @@ namespace System {
 
 std::atomic<uint64_t> SessionFactory::_nextSessionId = 1;
 std::function<std::unique_ptr<IPacketEncryption>()> SessionFactory::_encryptionFactory;
+double SessionFactory::_rateLimit = 100.0;
+double SessionFactory::_rateBurst = 200.0;
 
 Session *SessionFactory::CreateSession(std::shared_ptr<boost::asio::ip::tcp::socket> socket, IDispatcher *dispatcher)
 {
@@ -41,6 +43,12 @@ void SessionFactory::Destroy(Session *session)
 void SessionFactory::SetEncryptionFactory(std::function<std::unique_ptr<IPacketEncryption>()> factory)
 {
     _encryptionFactory = factory;
+}
+
+void SessionFactory::SetRateLimitConfig(double rate, double burst)
+{
+    _rateLimit = rate;
+    _rateBurst = burst;
 }
 
 } // namespace System

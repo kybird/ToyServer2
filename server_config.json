@@ -2,6 +2,9 @@
     "server": {
         "port": 9000,
         "worker_threads": 16,
-        "db_info": "localhost:3306"
+        "task_worker_threads": 8,
+        "db_info": "localhost:3306",
+        "rate_limit": 100.0,
+        "rate_burst": 200.0
     }
 }

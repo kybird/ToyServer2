@@ -5,3 +5,4 @@
 -I./src
 -I./src/Examples/VampireSurvivor/Server
 -I./src/Examples/VampireSurvivor
+-I./src/Examples/VampireSurvivor/Common

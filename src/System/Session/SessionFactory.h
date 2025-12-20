@@ -22,9 +22,22 @@ public:
     // [Encryption]
     static void SetEncryptionFactory(std::function<std::unique_ptr<IPacketEncryption>()> factory);
 
+    // [RateLimiter Config]
+    static void SetRateLimitConfig(double rate, double burst);
+    static double GetRateLimit()
+    {
+        return _rateLimit;
+    }
+    static double GetRateBurst()
+    {
+        return _rateBurst;
+    }
+
 private:
     static std::atomic<uint64_t> _nextSessionId;
     static std::function<std::unique_ptr<IPacketEncryption>()> _encryptionFactory;
+    static double _rateLimit;
+    static double _rateBurst;
 };
 
 } // namespace System

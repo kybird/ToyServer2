@@ -1,17 +1,21 @@
 #include "Game/RoomManager.h"
 #include "Core/UserDB.h"
+#include "System/IFramework.h"
 #include "System/ISession.h"
 #include "System/ITimer.h"
-
+#include "System/Packet/IPacket.h"
+#include "System/Packet/PacketBroadcast.h"
+#include "System/Thread/IStrand.h"
 
 static_assert(true, "RoomManager.cpp compiled");
 
 namespace SimpleGame {
 
 #pragma message("Compiling RoomManager::Init")
-void RoomManager::Init(std::shared_ptr<System::ITimer> timer, std::shared_ptr<UserDB> userDB)
+void RoomManager::Init(std::shared_ptr<System::IFramework> framework, std::shared_ptr<UserDB> userDB)
 {
-    _timer = timer;
+    _framework = framework;
+    _timer = framework->GetTimer(); // Convenience
     _userDB = userDB;
     // Re-create default room with timer
     if (_rooms.empty())
@@ -27,16 +31,45 @@ void RoomManager::TestMethod()
 
 std::shared_ptr<Room> RoomManager::CreateRoom(int roomId)
 {
+    std::cout << "[DEBUG] RoomManager::CreateRoom(" << roomId << ") Entry" << std::endl;
     std::lock_guard<std::mutex> lock(_mutex);
     if (!_timer)
     {
-        // If Init not called yet, wait or creates without timer?
-        // Better to warn. For now, just create.
+        // ...
     }
-    auto room = std::make_shared<Room>(roomId, _timer, _userDB);
-    _rooms[roomId] = room;
-    room->Start(); // Auto start
-    return room;
+    // Create Strand for this room
+    std::shared_ptr<System::IStrand> strand = nullptr;
+    if (_framework)
+    {
+        std::cout << "[DEBUG] Creating Strand..." << std::endl;
+        strand = _framework->CreateStrand();
+        std::cout << "[DEBUG] Strand Created." << std::endl;
+    }
+
+    std::cout << "[DEBUG] Creating Room Object..." << std::endl;
+    std::shared_ptr<Room> newRoom = std::make_shared<Room>(roomId, _timer, strand, _userDB);
+    std::cout << "[DEBUG] Room Object Created. Adding to map..." << std::endl;
+    _rooms[roomId] = newRoom;
+    std::cout << "[DEBUG] Starting Room..." << std::endl;
+    newRoom->Start(); // Auto start
+    std::cout << "[DEBUG] Room Started. Returning." << std::endl;
+    return newRoom;
+}
+
+void RoomManager::DestroyRoom(int roomId)
+{
+    // Don't destroy default room 1
+    if (roomId == 1)
+        return;
+
+    std::lock_guard<std::mutex> lock(_mutex);
+    auto it = _rooms.find(roomId);
+    if (it != _rooms.end())
+    {
+        it->second->Stop();
+        _rooms.erase(it);
+        LOG_INFO("Room {} destroyed and removed from RoomManager.", roomId);
+    }
 }
 
 std::shared_ptr<Room> RoomManager::GetRoom(int roomId)
@@ -87,20 +120,38 @@ bool RoomManager::IsInLobby(uint64_t sessionId)
     return _lobbySessions.find(sessionId) != _lobbySessions.end();
 }
 
-void RoomManager::BroadcastToLobby(System::PacketMessage *packet)
+void RoomManager::BroadcastPacketToLobby(const System::IPacket &pkt)
 {
+    LOG_INFO("Broadcasting packet to lobby");
     std::lock_guard<std::mutex> lock(_mutex);
-    for (auto it = _lobbySessions.begin(); it != _lobbySessions.end();)
+    LOG_INFO("Lock is Problem");
+    // Collect real sessions
+    std::vector<System::Session *> realSessions;
+    realSessions.reserve(_lobbySessions.size());
+
+    for (auto &pair : _lobbySessions)
     {
-        auto session = it->second;
-        // Check if session is valid? ISession* doesn't guarantee validity if we don't own it.
-        // Assuming session lifetime is managed outside and we are notified on close.
-        // If session is closed, Send might fail or be safe?
-        // Ideally we check implicit validity.
-        // For now, simple iteration.
-        session->Send(packet);
-        ++it;
+        auto isess = pair.second;
+        if (!isess)
+            continue;
+
+        auto sess = dynamic_cast<System::Session *>(isess);
+        if (sess)
+        {
+            realSessions.push_back(sess);
+        }
+        else
+        {
+            isess->SendPacket(pkt);
+        }
     }
+
+    if (!realSessions.empty())
+    {
+        LOG_INFO("realSessions is not empty");
+        System::PacketBroadcast::Broadcast(pkt, realSessions);
+    }
+    LOG_INFO("Broadcasting packet to lobby done");
 }
 
 } // namespace SimpleGame

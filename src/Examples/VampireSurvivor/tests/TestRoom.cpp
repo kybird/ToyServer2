@@ -5,7 +5,6 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-
 // Mock Session to use with Player
 class MockSession : public System::ISession
 {
@@ -20,10 +19,7 @@ public:
         return _id;
     }
 
-    void Send(System::PacketMessage *msg) override
-    {
-    }
-    void Send(std::span<const uint8_t> data) override
+    void SendPacket(const System::IPacket &pkt) override
     {
     }
 
@@ -92,4 +88,179 @@ TEST(RoomTest, MultiplePlayers)
 
     room.Leave(102);
     EXPECT_EQ(room.GetPlayerCount(), 0);
+}
+
+// =============================================================================
+// SendPacket Failure Path Tests
+// =============================================================================
+// [WARNING] DO NOT DELETE - Phase 1 리팩토링 검증 테스트
+//
+// 이 테스트들은 PacketBase → PacketMessage 의존성 제거 리팩토링 후
+// 실패 경로에서 크래시가 발생하지 않음을 검증합니다.
+// =============================================================================
+
+/**
+ * @brief MockPacket - 테스트용 IPacket 구현
+ *
+ * 검증 목적:
+ * - IPacket 인터페이스가 올바르게 동작하는지 확인
+ * - SerializeTo가 정상적으로 호출되는지 확인
+ */
+class MockPacket : public System::IPacket
+{
+public:
+    uint16_t GetPacketId() const override
+    {
+        return 9999;
+    }
+    uint16_t GetTotalSize() const override
+    {
+        return 10;
+    }
+    void SerializeTo(void *buffer) const override
+    {
+        std::memset(buffer, 0xAB, 10);
+    }
+};
+
+/**
+ * @brief TrackingMockSession - SendPacket 호출 추적용 Mock
+ *
+ * 검증 목적:
+ * - ISession::SendPacket이 호출되었는지 추적
+ * - 전달된 패킷 ID가 올바른지 확인
+ */
+class TrackingMockSession : public System::ISession
+{
+public:
+    TrackingMockSession(uint64_t id) : _id(id)
+    {
+    }
+
+    uint64_t GetId() const override
+    {
+        return _id;
+    }
+
+    void SendPacket(const System::IPacket &pkt) override
+    {
+        sendPacketCalled = true;
+        lastPacketId = pkt.GetPacketId();
+    }
+
+    void Close() override
+    {
+    }
+    void Reset() override
+    {
+    }
+    bool CanDestroy() const override
+    {
+        return true;
+    }
+    void DecRef() override
+    {
+    }
+
+    bool sendPacketCalled = false;
+    bool sendCalled = false;
+    uint16_t lastPacketId = 0;
+
+private:
+    uint64_t _id;
+};
+
+/**
+ * @test SendPacketTest.MockSessionSendPacketNoCrash
+ *
+ * [검증 조건]
+ * - MockSession에서 SendPacket 호출
+ *
+ * [기대 결과]
+ * - 크래시 없이 정상 완료
+ * - SendPacket이 호출됨
+ * - 패킷 ID가 올바르게 전달됨
+ *
+ * [Phase 1 관련]
+ * - ISession::SendPacket 인터페이스 동작 검증
+ */
+TEST(SendPacketTest, MockSessionSendPacketNoCrash)
+{
+    TrackingMockSession session(1);
+    MockPacket packet;
+
+    // ACT: SendPacket 호출
+    session.SendPacket(packet);
+
+    // ASSERT: 정상 호출 확인
+    EXPECT_TRUE(session.sendPacketCalled);
+    EXPECT_EQ(session.lastPacketId, 9999);
+}
+
+/**
+ * @test SendPacketTest.BroadcastPacketToEmptyRoomNoCrash
+ *
+ * [검증 조건]
+ * - 플레이어가 0명인 Room에 BroadcastPacket 호출
+ *
+ * [기대 결과]
+ * - 크래시 없이 정상 완료
+ * - 빈 루프이므로 아무 일도 일어나지 않음
+ *
+ * [Phase 1 관련]
+ * - Room::BroadcastPacket의 edge case 처리 검증
+ */
+TEST(SendPacketTest, BroadcastPacketToEmptyRoomNoCrash)
+{
+    Room room(999, nullptr, nullptr);
+    MockPacket packet;
+
+    // ACT: 빈 Room에 브로드캐스트
+    room.BroadcastPacket(packet);
+
+    // ASSERT: 크래시 없이 완료
+    EXPECT_EQ(room.GetPlayerCount(), 0);
+}
+
+/**
+ * @test SendPacketTest.BroadcastPacketToRoomWithPlayers
+ *
+ * [검증 조건]
+ * - 2명의 플레이어가 있는 Room에 BroadcastPacket 호출
+ *
+ * [기대 결과]
+ * - 모든 플레이어 세션에 SendPacket 호출됨
+ * - 중복 전송 없음 (각 세션에 1회씩)
+ * - 패킷 ID가 올바르게 전달됨
+ *
+ * [Phase 1 관련]
+ * - Room::BroadcastPacket → ISession::SendPacket 체인 검증
+ * - 다중 세션에 대한 정상 배포 확인
+ */
+TEST(SendPacketTest, BroadcastPacketToRoomWithPlayers)
+{
+    Room room(998, nullptr, nullptr);
+
+    TrackingMockSession s1(201);
+    TrackingMockSession s2(202);
+
+    auto p1 = PlayerFactory::Instance().CreatePlayer(201, &s1);
+    auto p2 = PlayerFactory::Instance().CreatePlayer(202, &s2);
+
+    room.Enter(p1);
+    room.Enter(p2);
+
+    MockPacket packet;
+
+    // ACT: 브로드캐스트
+    room.BroadcastPacket(packet);
+
+    // ASSERT: 두 세션 모두 SendPacket 수신
+    EXPECT_TRUE(s1.sendPacketCalled);
+    EXPECT_TRUE(s2.sendPacketCalled);
+    EXPECT_EQ(s1.lastPacketId, 9999);
+    EXPECT_EQ(s2.lastPacketId, 9999);
+
+    room.Leave(201);
+    room.Leave(202);
 }

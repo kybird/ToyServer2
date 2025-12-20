@@ -1,5 +1,6 @@
 #pragma once
-#include <cstdint>
+
+#include "System/Packet/PacketHeader.h"
 
 namespace SimpleGame {
 
@@ -10,7 +11,7 @@ enum PacketID : uint16_t {
     S_CREATE_ROOM = 103,
     C_JOIN_ROOM = 104,
     S_JOIN_ROOM = 105,
-
+    // ...
     C_ENTER_LOBBY = 110,
     S_ENTER_LOBBY = 111,
     C_LEAVE_ROOM = 112,
@@ -38,12 +39,6 @@ enum PacketID : uint16_t {
     S_GAME_OVER = 501,
 };
 
-#pragma pack(push, 1)
-struct PacketHeader
-{
-    uint16_t size; // Total packet size including header
-    uint16_t id;   // Packet ID
-};
-#pragma pack(pop)
+using PacketHeader = System::PacketHeader;
 
 } // namespace SimpleGame

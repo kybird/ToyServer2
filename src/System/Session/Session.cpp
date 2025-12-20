@@ -3,8 +3,11 @@
 #include "System/Dispatcher/IDispatcher.h"
 #include "System/Dispatcher/MessagePool.h"
 #include "System/ILog.h"
-#include "System/Network/IPacketEncryption.h" // Added
+#include "System/Network/IPacketEncryption.h"
+#include "System/Packet/IPacket.h"
+#include "System/Packet/PacketHeader.h"
 #include "System/Pch.h"
+#include "System/Session/SessionFactory.h"
 #include "System/Session/SessionPool.h"
 
 #include <boost/asio/bind_allocator.hpp>
@@ -79,6 +82,10 @@ void Session::Reset(std::shared_ptr<boost::asio::ip::tcp::socket> socket, uint64
     _linearBuffer.reserve(64 * 1024);
     _recvBuffer.Reset();
     ClearSendQueue();
+
+    // [RateLimiter] Apply config from SessionFactory
+    _ingressLimiter.UpdateConfig(SessionFactory::GetRateLimit(), SessionFactory::GetRateBurst());
+    _violationCount = 0;
 }
 
 void Session::GracefulClose()
@@ -127,35 +134,50 @@ void Session::OnDisconnect()
     }
 }
 
-void Session::Send(std::span<const uint8_t> data)
+void Session::SendPacket(const IPacket &pkt)
 {
     if (!_connected.load(std::memory_order_relaxed))
         return;
 
-    auto msg = MessagePool::AllocatePacket(static_cast<uint16_t>(data.size()));
+    uint16_t size = pkt.GetTotalSize();
+    auto msg = MessagePool::AllocatePacket(size);
     if (!msg)
         return;
 
-    // [Encryption] Encrypt directly into packet payload
+    pkt.SerializeTo(msg->Payload());
+
+    // [Encryption] Encrypt inside packet payload (In-place)
     if (_encryption)
     {
-        _encryption->Encrypt(data.data(), msg->Payload(), data.size());
-    }
-    else
-    {
-        std::memcpy(msg->Payload(), data.data(), data.size());
+        _encryption->Encrypt(msg->Payload(), msg->Payload(), size);
     }
 
     EnqueueSend(msg);
 }
 
-void Session::Send(PacketMessage *msg)
+void Session::SendPreSerialized(const PacketMessage *source)
 {
     if (!_connected.load(std::memory_order_relaxed))
-    {
-        MessagePool::Free(msg);
         return;
+
+    // [Single Ownership] Always allocate a NEW message for this session.
+    // This avoids shared state, atomic contention, and false sharing.
+    auto msg = MessagePool::AllocatePacket(source->length);
+    if (!msg)
+        return;
+
+    // Copy Content (Header + Body)
+    // Serialization was already done once in source.
+    std::memcpy(msg->Payload(), source->Payload(), source->length);
+
+    // [Encryption]
+    // If enabled, we encrypt strictly IN-PLACE on the *private copy*.
+    if (_encryption)
+    {
+        _encryption->Encrypt(msg->Payload(), msg->Payload(), source->length);
     }
+
+    // Now this session owns 'msg' exclusively.
     EnqueueSend(msg);
 }
 
@@ -212,9 +234,11 @@ void Session::OnReadComplete(const boost::system::error_code &ec, size_t bytesTr
 
 void Session::OnRecv(size_t bytesTransferred)
 {
+
     // Rate Limiter Check
     if (!_ingressLimiter.TryConsume(1.0))
     {
+        LOG_WARN("Session {} Rate Limited! (violation: {})", _id, _violationCount);
         _violationCount++;
         if (_violationCount > 20)
         {
@@ -233,12 +257,15 @@ void Session::OnRecv(size_t bytesTransferred)
     while (true)
     {
         int32_t dataSize = _recvBuffer.DataSize();
-        if (dataSize < static_cast<int32_t>(sizeof(Share::PacketHeader)))
+
+        if (dataSize < static_cast<int32_t>(sizeof(System::PacketHeader)))
             break;
 
-        Share::PacketHeader *header = reinterpret_cast<Share::PacketHeader *>(_recvBuffer.ReadPos());
+        System::PacketHeader *header = reinterpret_cast<System::PacketHeader *>(_recvBuffer.ReadPos());
+
         if (header->size > 1024 * 10)
         {
+            LOG_ERROR("Session {} Packet Too Large: {}", _id, header->size);
             Close();
             return;
         }

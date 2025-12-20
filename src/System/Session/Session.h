@@ -1,20 +1,20 @@
 #pragma once
 
-#include "Share/Protocol.h"
 #include "System/Dispatcher/IMessage.h"
 #include "System/ISession.h"
 #include "System/Network/RateLimiter.h" // Added
 #include "System/Network/RecvBuffer.h"
-#include "System/Pch.h"
+
 #include <concurrentqueue/moodycamel/concurrentqueue.h>
 #include <memory>
-#include <span> // Added
+
 #include <vector>
 
 namespace System {
 
 class IDispatcher;
 struct IPacketEncryption; // Forward declaration
+class PacketBroadcast;
 
 /*
     High-Performance AsioSession for MMORPG Servers.
@@ -25,6 +25,8 @@ struct IPacketEncryption; // Forward declaration
 */
 class Session : public ISession
 {
+    friend class PacketBroadcast;
+
 public:
     Session();
     Session(std::shared_ptr<boost::asio::ip::tcp::socket> socket, uint64_t sessionId, IDispatcher *dispatcher);
@@ -43,8 +45,7 @@ public:
     void OnDisconnect();
 
     // ISession Interface
-    void Send(std::span<const uint8_t> data) override;
-    void Send(PacketMessage *msg) override;
+    void SendPacket(const IPacket &pkt) override;
     void Close() override;
     uint64_t GetId() const override
     {
@@ -96,8 +97,13 @@ private:
     // ========== Write Section ==========
     void EnqueueSend(PacketMessage *msg);
     void Flush();
+    void HandleRead(const boost::system::error_code &error, size_t bytesTransferred);
+    void HandleWrite(const boost::system::error_code &error, size_t bytesTransferred);
     void OnWriteComplete(const boost::system::error_code &ec, size_t bytesTransferred);
     void ClearSendQueue();
+
+    // [Phase 3] Broadcast-safe internal sender
+    void SendPreSerialized(const PacketMessage *source);
 
 private:
     std::shared_ptr<boost::asio::ip::tcp::socket> _socket;

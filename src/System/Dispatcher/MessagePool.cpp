@@ -120,10 +120,25 @@ void MessagePool::Free(IMessage *msg)
     if (!msg)
         return;
 
-    // Destructor? trivial for these structs, but good practice if limits change.
-    msg->~IMessage();
+    // [RefCount] Decrement and only free if 0
+    if (msg->refCount.fetch_sub(1, std::memory_order_acq_rel) == 1)
+    {
+        // Destructor? trivial for these structs, but good practice if limits change.
+        msg->~IMessage();
 
-    PushBlock(static_cast<void *>(msg));
+        // Check if PacketMessage and use larger size?
+        // MessagePool uses FIXED_BLOCK_SIZE for everything currently.
+        PushBlock(static_cast<void *>(msg));
+    }
+}
+
+void MessagePool::FreeRaw(void *block)
+{
+    // [Deprecated] Removed
+    if (block)
+    {
+        PushBlock(block);
+    }
 }
 
 void *MessagePool::PopBlock()

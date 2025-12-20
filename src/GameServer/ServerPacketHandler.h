@@ -1,10 +1,10 @@
 #pragma once
+#include "Share/EchoPacket.h"
 #include "Share/Protocol.h"
 #include "System/Debug/MemoryMetrics.h"
 #include "System/Dispatcher/IPacketHandler.h"
 #include "System/ILog.h"
-#include "System/Network/PacketUtils.h"
-#include "System/PacketView.h" // Added
+#include "System/PacketView.h"
 #include <iostream>
 
 class ServerPacketHandler : public System::IPacketHandler
@@ -17,25 +17,9 @@ public:
 
         if (packet.GetId() == Share::PacketType::PKT_C_ECHO)
         {
-            // Calculate total size: Header + Body
-            uint16_t bodyLen = (uint16_t)packet.GetLength();
-            uint16_t totalSize = (uint16_t)(sizeof(Share::PacketHeader) + bodyLen);
-
-            // Allocate new packet from pool
-            auto response = System::PacketUtils::CreatePacket(totalSize);
-            if (!response)
-                return;
-
-            // Construct Header
-            Share::PacketHeader *respHeader = reinterpret_cast<Share::PacketHeader *>(response->Payload());
-            respHeader->size = totalSize;
-            respHeader->id = Share::PacketType::PKT_S_ECHO;
-
-            // Copy Payload
-            std::memcpy(response->Payload() + sizeof(Share::PacketHeader), packet.GetPayload(), bodyLen);
-
-            session->Send(response);
-            System::PacketUtils::ReleasePacket(response); // Release after Send (since CreatePacket was used)
+            // Echo Response using EchoPacket (Zero-copy payload view)
+            Share::EchoPacket response(std::span<const uint8_t>(packet.GetPayload(), packet.GetLength()));
+            session->SendPacket(response);
 
 #ifdef ENABLE_DIAGNOSTICS
             // [Diagnostics] Echo 응답 카운트

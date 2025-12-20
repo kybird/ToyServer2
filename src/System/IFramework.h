@@ -10,6 +10,7 @@ class IConfig;
 class IDispatcher;
 class ITimer;
 class IPacketHandler;
+class IStrand;
 
 class IFramework
 {
@@ -27,6 +28,7 @@ public:
     // Accessors
     // Accessors
     virtual std::shared_ptr<ITimer> GetTimer() const = 0;
+    virtual std::shared_ptr<IStrand> CreateStrand() = 0;
     virtual size_t GetDispatcherQueueSize() const = 0;
 
     // Event Subscription Helper (Hides IDispatcher)

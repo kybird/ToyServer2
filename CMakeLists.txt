@@ -87,7 +87,13 @@ target_sources(System PRIVATE
     src/System/Network/XorEncryption.h
     src/System/Network/AesEncryption.h
     src/System/Network/AesEncryption.cpp
-    # Will add files here as we create them
+    
+    # Phase 3 Internal
+    src/System/Internal/PacketStorage.h
+    src/System/Internal/PacketStorage.cpp
+    src/System/Packet/PacketBuilder.h
+    src/System/Packet/SharedPacket.h
+    src/System/Packet/PacketBroadcast.h
 )
 target_include_directories(System PUBLIC src/System src)
 target_precompile_headers(System PRIVATE src/System/Pch.h)
@@ -165,13 +171,14 @@ target_include_directories(VampireSurvivorServer PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}
     src/Examples/VampireSurvivor/Server
     src/Examples/VampireSurvivor
+    src/Examples/VampireSurvivor/Common
 )
 
 target_link_libraries(VampireSurvivorServer PRIVATE System Share protobuf::libprotobuf)
 
 # Vampire Survivor Console Client
 add_executable(VampireSurvivorClient src/Examples/VampireSurvivor/Client/ConsoleClient.cpp ${PROTO_SRCS} ${PROTO_HDRS})
-target_include_directories(VampireSurvivorClient PRIVATE src/Examples/VampireSurvivor src)
+target_include_directories(VampireSurvivorClient PRIVATE src/Examples/VampireSurvivor src src/Examples/VampireSurvivor/Common)
 target_link_libraries(VampireSurvivorClient PRIVATE System Share protobuf::libprotobuf)
 
 

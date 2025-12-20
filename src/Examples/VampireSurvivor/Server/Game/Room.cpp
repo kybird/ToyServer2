@@ -1,14 +1,20 @@
 #include "Game/Room.h"
 #include "Core/UserDB.h"
+#include "Game/RoomManager.h"
+#include "GamePackets.h"
 #include "Protocol/game.pb.h"
-#include "System/Dispatcher/MessagePool.h"
-#include "System/Network/PacketUtils.h"
+#include "System/Packet/IPacket.h"
+#include "System/Packet/PacketBroadcast.h"
+#include "System/Thread/IStrand.h"
 #include <limits>
 
 namespace SimpleGame {
 
-Room::Room(int roomId, std::shared_ptr<System::ITimer> timer, std::shared_ptr<UserDB> userDB) 
-    : _roomId(roomId), _timer(timer), _waveMgr(_objMgr, _grid, roomId), _userDB(userDB)
+Room::Room(
+    int roomId, std::shared_ptr<System::ITimer> timer, std::shared_ptr<System::IStrand> strand,
+    std::shared_ptr<UserDB> userDB
+)
+    : _roomId(roomId), _timer(timer), _strand(strand), _waveMgr(_objMgr, _grid, roomId), _userDB(userDB)
 {
 }
 
@@ -19,13 +25,21 @@ Room::~Room()
 
 void Room::Start()
 {
+    std::cout << "[DEBUG] Room::Start(" << _roomId << ")" << std::endl;
     if (_timer)
     {
         // 50ms = 20 FPS
         _timerHandle = _timer->SetInterval(1, 50, this);
-        LOG_INFO("Room {} Game Loop Started (20 FPS)", _roomId);
+        std::cout << "[DEBUG] Room " << _roomId << " Game Loop Started (20 FPS). TimerHandle: " << _timerHandle
+                  << std::endl;
     }
+    else
+    {
+        std::cerr << "[ERROR] Room " << _roomId << " has NO TIMER!" << std::endl;
+    }
+    std::cout << "[DEBUG] Starting WaveManager..." << std::endl;
     _waveMgr.Start();
+    std::cout << "[DEBUG] WaveManager Started." << std::endl;
 }
 
 void Room::Stop()
@@ -39,63 +53,62 @@ void Room::Stop()
 
 void Room::OnTimer(uint32_t timerId, void *pParam)
 {
-    // Fixed Delta Time = 0.05f
-    Update(0.05f);
+    // Offload to Strand (Worker Thread)
+    // capture shared_ptr to keep room alive if needed, but 'this' is safe if Timer cancels on destruct.
+    // However, safest pattern is capturing shared_from_this() if we want to be 100% sure,
+    // but OnTimer is called by Timer which we manage.
+    // Let's use 'this' for now as Timer is cancelled in Stop/Destructor.
+
+    if (_strand)
+    {
+        _strand->Post(
+            [this]()
+            {
+                // Fixed Delta Time = 0.05f
+                this->Update(0.05f);
+            }
+        );
+    }
+    else
+    {
+        // Fallback or Error
+        Update(0.05f);
+    }
 }
 
-
-
 // Helper to broadcast Protobuf message
-template <typename T>
-void BroadcastProto(Room* room, PacketID id, const T& msg) {
-    // TODO: Optimize buffer usage
-    size_t bodySize = msg.ByteSizeLong();
-    
-    // Handle large packets by using heap allocation directly
-    bool usedHeap = false;
-    System::PacketMessage* packet = nullptr;
-    
-    if (bodySize > System::MessagePool::MAX_PACKET_BODY_SIZE) {
-        // Fallback to direct heap allocation for large packets
-        size_t allocSize = System::PacketMessage::CalculateAllocSize(static_cast<uint16_t>(bodySize));
-        packet = reinterpret_cast<System::PacketMessage*>(::operator new(allocSize));
-        new (packet) System::PacketMessage();
-        usedHeap = true;
-    } else {
-        packet = System::MessagePool::AllocatePacket(static_cast<uint16_t>(bodySize));
-    }
-    
-    if (!packet) {
-        LOG_ERROR("Failed to allocate packet for broadcast, bodySize={}", bodySize);
-        return;
-    }
-    
-    PacketHeader* header = reinterpret_cast<PacketHeader*>(packet->Payload());
-    header->size = static_cast<uint16_t>(sizeof(PacketHeader) + bodySize);
-    header->id = static_cast<uint16_t>(id);
-    msg.SerializeToArray(packet->Payload() + sizeof(PacketHeader), static_cast<int>(bodySize));
-    room->Broadcast(packet);
-    
-    // Release the packet
-    if (usedHeap) {
-        packet->~PacketMessage();
-        ::operator delete(packet);
-    } else {
-        System::PacketUtils::ReleasePacket(packet);
-    }
+// Helper to broadcast Protobuf message - Overloaded for specific packets
+void BroadcastProto(Room *room, const Protocol::S_SpawnObject &msg)
+{
+    S_SpawnObjectPacket packet(msg);
+    room->BroadcastPacket(packet);
+}
+
+void BroadcastProto(Room *room, const Protocol::S_DespawnObject &msg)
+{
+    S_DespawnObjectPacket packet(msg);
+    room->BroadcastPacket(packet);
+}
+
+void BroadcastProto(Room *room, const Protocol::S_MoveObjectBatch &msg)
+{
+    S_MoveObjectBatchPacket packet(msg);
+    room->BroadcastPacket(packet);
 }
 
 void Room::Enter(std::shared_ptr<Player> player)
 {
     std::lock_guard<std::recursive_mutex> lock(_mutex);
     _players[player->GetSessionId()] = player;
-    
+    player->SetRoomId(_roomId);
+
     // Load Persistent Data
     // TODO: Need UserId properly. Assuming SessionId maps to UserId for now or passed separately.
     // In real app, Player object should store UserId from Login.
     // For now, cast SessionId to int (Warning: data loss if big)
-    int userId = (int)player->GetSessionId(); 
-    if (_userDB) {
+    int userId = (int)player->GetSessionId();
+    if (_userDB)
+    {
         auto skills = _userDB->GetUserSkills(userId);
         player->ApplySkills(skills);
         LOG_INFO("Applied {} skills to Player {}", skills.size(), userId);
@@ -110,49 +123,68 @@ void Room::Enter(std::shared_ptr<Player> player)
     // Send Initial State (S_CREATE_ROOM or S_JOIN_ROOM success handled by caller usually, but here we spawn objects)
     // S_SPAWN_OBJECT for this player
     Protocol::S_SpawnObject spawnSelf;
-    auto* info = spawnSelf.add_objects();
+    auto *info = spawnSelf.add_objects();
     info->set_object_id(player->GetId());
     info->set_type(Protocol::ObjectType::PLAYER);
     info->set_x(player->GetX());
     info->set_y(player->GetY());
     info->set_hp(player->GetHp()); // Updated HP
     info->set_max_hp(player->GetMaxHp());
-    
+
     // Broadcast spawn to others
-    BroadcastProto(this, PacketID::S_SPAWN_OBJECT, spawnSelf);
+    BroadcastProto(this, spawnSelf);
 }
 
 void Room::Leave(uint64_t sessionId)
 {
     std::lock_guard<std::recursive_mutex> lock(_mutex);
-    
+
     auto it = _players.find(sessionId);
-    if (it != _players.end()) {
+    if (it != _players.end())
+    {
         auto player = it->second;
-        
+        player->SetRoomId(0);
+
         // Remove from Systems
         _grid.Remove(player);
         _objMgr.RemoveObject(player->GetId());
-        
+
         // Broadcast Despawn
         Protocol::S_DespawnObject despawn;
         despawn.add_object_ids(player->GetId());
-        BroadcastProto(this, PacketID::S_DESPAWN_OBJECT, despawn);
+        BroadcastProto(this, despawn);
 
         _players.erase(it);
         LOG_INFO("Player {} left Room {}", sessionId, _roomId);
+
+        // [CPU Optimization] Stop timer and destroy room if it's empty
+        if (_players.empty())
+        {
+            Stop();
+            LOG_INFO("Room {} is empty. Stopping game loop timer.", _roomId);
+
+            if (_roomId != 1)
+            {
+                RoomManager::Instance().DestroyRoom(_roomId);
+            }
+        }
     }
 }
 
 void Room::Update(float deltaTime)
 {
     std::lock_guard<std::recursive_mutex> lock(_mutex);
-    
+
+    // 0. Wave & Spawning Update
+    // LOG_DEBUG("Room {} Update Tick", _roomId); // Too spammy? Maybe only for Room 1
+    _waveMgr.Update(deltaTime, this);
+
     // 1. Physics & Logic Update
     auto objects = _objMgr.GetAllObjects();
     Protocol::S_MoveObjectBatch moveBatch;
-    
-    for (auto& obj : objects) {
+
+    for (auto &obj : objects)
+    {
         // AI / Logic Update
         obj->Update(deltaTime, this);
 
@@ -160,19 +192,20 @@ void Room::Update(float deltaTime)
         float oldY = obj->GetY();
 
         // Simple Euler Integration
-        // TODO: Server-side validation of input? 
+        // TODO: Server-side validation of input?
         // For now, assume Velocity is set by Input Packet (C_MOVE)
-        if (obj->GetVX() != 0 || obj->GetVY() != 0) {
+        if (obj->GetVX() != 0 || obj->GetVY() != 0)
+        {
             float newX = oldX + obj->GetVX() * deltaTime;
             float newY = oldY + obj->GetVY() * deltaTime;
-            
+
             // Map Bounds Check (TODO)
-             
+
             obj->SetPos(newX, newY);
             _grid.Update(obj, oldX, oldY);
 
             // Add to Batch
-            auto* move = moveBatch.add_moves();
+            auto *move = moveBatch.add_moves();
             move->set_object_id(obj->GetId());
             move->set_x(newX);
             move->set_y(newY);
@@ -182,8 +215,9 @@ void Room::Update(float deltaTime)
     }
 
     // 2. Broadcast Batched Movement
-    if (moveBatch.moves_size() > 0) {
-        BroadcastProto(this, PacketID::S_MOVE_OBJECT_BATCH, moveBatch);
+    if (moveBatch.moves_size() > 0)
+    {
+        BroadcastProto(this, moveBatch);
     }
 }
 
@@ -192,12 +226,14 @@ std::shared_ptr<Player> Room::GetNearestPlayer(float x, float y)
     std::shared_ptr<Player> nearest = nullptr;
     float minDistSq = std::numeric_limits<float>::max();
 
-    for (auto& pair : _players) {
+    for (auto &pair : _players)
+    {
         auto p = pair.second;
         float dx = p->GetX() - x;
         float dy = p->GetY() - y;
-        float dSq = dx*dx + dy*dy;
-        if (dSq < minDistSq) {
+        float dSq = dx * dx + dy * dy;
+        if (dSq < minDistSq)
+        {
             minDistSq = dSq;
             nearest = p;
         }
@@ -205,14 +241,38 @@ std::shared_ptr<Player> Room::GetNearestPlayer(float x, float y)
     return nearest;
 }
 
-void Room::Broadcast(System::PacketMessage *packet)
+// [Phase 3] Broadcast Optimization
+void Room::BroadcastPacket(const System::IPacket &pkt)
 {
     std::lock_guard<std::recursive_mutex> lock(_mutex);
+
+    // Collect real sessions for optimized broadcast
+    std::vector<System::Session *> realSessions;
+    realSessions.reserve(_players.size());
+
     for (auto &pair : _players)
     {
-        // Send to each session
-        // Note: Packet refCount is managed. Send increments.
-        pair.second->GetSession()->Send(packet);
+        auto *isess = pair.second->GetSession();
+        if (!isess)
+            continue;
+
+        // Dynamic cast to check if it's a real Session (vs MockSession)
+        // This overhead is acceptable compared to serialization savings for many players.
+        auto *sess = dynamic_cast<System::Session *>(isess);
+        if (sess)
+        {
+            realSessions.push_back(sess);
+        }
+        else
+        {
+            // Fallback for MockSession (e.g. Unit Tests)
+            isess->SendPacket(pkt);
+        }
+    }
+
+    if (!realSessions.empty())
+    {
+        System::PacketBroadcast::Broadcast(pkt, realSessions);
     }
 }
 

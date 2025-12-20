@@ -1,10 +1,10 @@
 {
     "server": {
         "port": 9000,
-        "workerThreadCount": 4,
-        "taskWorkerCount": 4,
-        "dbAddress": "server=localhost;uid=root;pwd=root;database=toy",
-        "rateLimit": 100.0,
-        "rateBurst": 200.0
+        "worker_threads": 2,
+        "task_worker_threads": 4,
+        "db_info": "game.db",
+        "rate_limit": 100.0,
+        "rate_burst": 200.0
     }
 }

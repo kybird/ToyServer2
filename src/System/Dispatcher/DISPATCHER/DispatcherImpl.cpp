@@ -1,8 +1,8 @@
 #include "System/Dispatcher/DISPATCHER/DispatcherImpl.h"
-#include "Share/Protocol.h"
 #include "System/Dispatcher/SystemMessages.h"
 #include "System/ILog.h"
 #include "System/ITimer.h"
+#include "System/Packet/PacketHeader.h"
 #include "System/PacketView.h" // Added
 #include "System/Pch.h"
 #include "System/Session/Session.h"
@@ -54,16 +54,18 @@ bool DispatcherImpl::Process()
                 {
                     PacketMessage *content = static_cast<PacketMessage *>(msg);
 
-                    if (content->length >= sizeof(Share::PacketHeader))
+                    if (content->length >= sizeof(System::PacketHeader))
                     {
-                        Share::PacketHeader *header = reinterpret_cast<Share::PacketHeader *>(content->Payload());
+                        System::PacketHeader *header = reinterpret_cast<System::PacketHeader *>(content->Payload());
+
+                        // Dispatch packet to handler
 
                         // [Refactoring] Create PacketView (Body Only)
                         // Strip header so handler only sees the payload
                         PacketView view(
                             header->id,
-                            content->Payload() + sizeof(Share::PacketHeader),
-                            content->length - sizeof(Share::PacketHeader)
+                            content->Payload() + sizeof(System::PacketHeader),
+                            content->length - sizeof(System::PacketHeader)
                         );
 
                         _packetHandler->HandlePacket(session, view);
@@ -83,6 +85,12 @@ bool DispatcherImpl::Process()
             case (uint32_t)MessageType::NETWORK_DISCONNECT:
                 if (msg->session)
                 {
+                    // Notify Logic verify cleanup before destruction
+                    if (_packetHandler)
+                    {
+                        _packetHandler->OnSessionDisconnect(msg->session);
+                    }
+
                     // [Invariant] After DISCONNECT, no new NETWORK_DATA messages
                     // will be generated for this session. Remaining messages in queue
                     // are protected by IncRef and will be safely processed.

@@ -4,7 +4,9 @@
 #include <concurrentqueue/moodycamel/concurrentqueue.h>
 #include <functional>
 #include <future>
+#include <limits>
 #include <memory>
+#include <semaphore>
 #include <thread>
 #include <vector>
 
@@ -21,15 +23,22 @@ public:
     void Start();
 
     // Stop the thread pool.
-    // wait = true: Process all remaining tasks before exiting (FINISH_PENDING).
-    // wait = false: Exit as soon as possible (ABORT_PENDING).
-    void Stop(bool wait = true);
+    // Drains any remaining tasks in the queue before exiting.
+    // New tasks will be rejected.
+    void Stop();
 
     // Enqueue a generic callable task. Returns a std::future.
     template <typename Func, typename... Args>
     auto Enqueue(Func &&func, Args &&...args) -> std::future<std::invoke_result_t<Func, Args...>>
     {
         using ResultType = std::invoke_result_t<Func, Args...>;
+
+        // Check stop first
+        if (_stop.load(std::memory_order_acquire))
+        {
+            // Return empty/invalid future or dummy
+            return {};
+        }
 
         // Wrap the task in a packaged_task to retrieve the return value asynchronously
         auto task = std::make_shared<std::packaged_task<ResultType()>>(
@@ -46,6 +55,9 @@ public:
             }
         );
 
+        // Wake up a worker
+        _taskSemaphore.release();
+
         return res;
     }
 
@@ -58,8 +70,10 @@ public:
 private:
     int _threadCount;
     std::vector<std::jthread> _threads;
-    std::atomic<bool> _running = false;
-    std::atomic<bool> _stop = false;
+    std::atomic<bool> _stop{false};
+
+    using TaskSemaphore = std::counting_semaphore<std::numeric_limits<std::ptrdiff_t>::max()>;
+    TaskSemaphore _taskSemaphore{0};
 
     // Lock-Free Queue for Tasks
     moodycamel::ConcurrentQueue<std::function<void()>> _tasks;

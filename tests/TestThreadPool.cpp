@@ -1,6 +1,8 @@
 #include "System/Thread/ThreadPool.h"
 #include <atomic>
+#include <chrono>
 #include <gtest/gtest.h>
+#include <iostream>
 #include <vector>
 
 class ThreadPoolTest : public ::testing::Test
@@ -104,7 +106,7 @@ TEST_F(ThreadPoolTest, GracefulShutdown)
         ));
     }
 
-    pool.Stop(true); // finishPending = true
+    pool.Stop(); // finishPending = true
 
     // Check if all tasks completed
     EXPECT_EQ(completed.load(), 10);
@@ -143,4 +145,11 @@ TEST_F(ThreadPoolTest, Performance)
     EXPECT_LT(duration.count(), 2000);
 
     pool.Stop();
+}
+
+// Test Invalid Thread Count
+TEST_F(ThreadPoolTest, InvalidConfiguration)
+{
+    EXPECT_THROW({ System::ThreadPool pool(0); }, std::invalid_argument);
+    EXPECT_THROW({ System::ThreadPool pool(-1); }, std::invalid_argument);
 }

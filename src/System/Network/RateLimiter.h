@@ -3,13 +3,12 @@
 #include <algorithm>
 #include <chrono>
 
-
 namespace System {
 
 class RateLimiter
 {
 public:
-    RateLimiter(double rate = 1.0, double burst = 1.0) : _refillRate(rate), _capacity(burst), _tokens(burst)
+    RateLimiter(double rate = 100.0, double burst = 200.0) : _refillRate(rate), _capacity(burst), _tokens(burst)
     {
         _lastRefillTime = std::chrono::steady_clock::now();
     }

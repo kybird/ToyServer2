@@ -25,20 +25,15 @@ public:
     void Run() override;
     void Stop() override;
 
-    std::shared_ptr<ITimer> GetTimer() const override
-    {
-        return _timer;
-    }
+    std::shared_ptr<ITimer> GetTimer() const override;
+    std::shared_ptr<IStrand> CreateStrand() override;
     size_t GetDispatcherQueueSize() const override
     {
         return _dispatcher ? _dispatcher->GetQueueSize() : 0;
     }
 
 protected:
-    std::shared_ptr<IDispatcher> GetDispatcher() const override
-    {
-        return _dispatcher;
-    }
+    std::shared_ptr<IDispatcher> GetDispatcher() const override;
 
 private:
     std::shared_ptr<NetworkImpl> _network;

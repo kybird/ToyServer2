@@ -14,7 +14,7 @@ int main()
     LOG_INFO("SimpleGame Server Starting...");
 
     // Basic Framework Setup
-    auto framework = System::IFramework::Create();
+    std::shared_ptr<System::IFramework> framework = System::IFramework::Create();
 
     // Packet Handler
     auto packetHandler = std::make_shared<SimpleGame::GamePacketHandler>();
@@ -76,7 +76,7 @@ int main()
     // Initialize RoomManager
     auto &roomMgr = SimpleGame::RoomManager::Instance();
     roomMgr.TestMethod();
-    roomMgr.Init(framework->GetTimer(), userDB);
+    roomMgr.Init(framework, userDB);
 
     // Default room 1 created by ctor -> Re-created/Available
     auto room = roomMgr.GetRoom(1);

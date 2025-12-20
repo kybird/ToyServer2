@@ -10,7 +10,8 @@
 namespace System {
 class ITimer;
 class ISession;
-struct PacketMessage;
+class IPacket;
+class IFramework;
 } // namespace System
 
 namespace SimpleGame {
@@ -26,10 +27,11 @@ public:
         return instance;
     }
 
-    void Init(std::shared_ptr<System::ITimer> timer, std::shared_ptr<UserDB> userDB);
+    void Init(std::shared_ptr<System::IFramework> framework, std::shared_ptr<UserDB> userDB);
     void TestMethod(); // Test linking
 
     std::shared_ptr<Room> CreateRoom(int roomId);
+    void DestroyRoom(int roomId);
     std::shared_ptr<Room> GetRoom(int roomId);
 
     void RegisterPlayer(uint64_t sessionId, std::shared_ptr<Player> player);
@@ -40,13 +42,14 @@ public:
     void EnterLobby(System::ISession *session);
     void LeaveLobby(uint64_t sessionId);
     bool IsInLobby(uint64_t sessionId);
-    void BroadcastToLobby(System::PacketMessage *packet);
+    void BroadcastPacketToLobby(const System::IPacket &pkt);
 
 private:
     std::map<int, std::shared_ptr<Room>> _rooms;
     std::map<uint64_t, std::shared_ptr<Player>> _players;
     std::map<uint64_t, System::ISession *> _lobbySessions; // Session ID -> Session Pointer
     std::mutex _mutex;
+    std::shared_ptr<System::IFramework> _framework;
     std::shared_ptr<System::ITimer> _timer;
     std::shared_ptr<UserDB> _userDB;
 };
