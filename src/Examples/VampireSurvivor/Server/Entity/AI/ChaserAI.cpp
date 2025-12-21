@@ -4,24 +4,31 @@
 
 namespace SimpleGame {
 
-void ChaserAI::Think(Monster* monster, Room* room, float currentTime) {
-    if (currentTime < _nextThinkTime) return;
+void ChaserAI::Think(Monster *monster, Room *room, float currentTime)
+{
+    if (currentTime < _nextThinkTime)
+        return;
     _nextThinkTime = currentTime + _thinkInterval;
 
     // Find nearest player
     auto target = room->GetNearestPlayer(monster->GetX(), monster->GetY());
-    if (target) {
+    if (target)
+    {
         _targetX = target->GetX();
         _targetY = target->GetY();
         _hasTarget = true;
-    } else {
+    }
+    else
+    {
         _hasTarget = false;
     }
 }
 
-void ChaserAI::Execute(Monster* monster, float dt) {
+void ChaserAI::Execute(Monster *monster, float dt)
+{
     (void)dt;
-    if (!_hasTarget) {
+    if (!_hasTarget)
+    {
         monster->SetVelocity(0, 0);
         return;
     }
@@ -30,21 +37,27 @@ void ChaserAI::Execute(Monster* monster, float dt) {
     float dy = _targetY - monster->GetY();
     float distSq = dx * dx + dy * dy;
 
-    if (distSq > 0.1f) {
+    if (distSq > 0.1f)
+    {
         float dist = std::sqrt(distSq);
         float nx = dx / dist;
         float ny = dy / dist;
         monster->SetVelocity(nx * _speed, ny * _speed);
-    } else {
+    }
+    else
+    {
         monster->SetVelocity(0, 0);
     }
 }
 
-void ChaserAI::Reset() {
+void ChaserAI::Reset()
+{
     _hasTarget = false;
     _targetX = 0;
     _targetY = 0;
-    _nextThinkTime = 0;
+    // Load Balancing: Randomize initial think time [0, interval]
+    float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+    _nextThinkTime = r * _thinkInterval;
 }
 
 } // namespace SimpleGame

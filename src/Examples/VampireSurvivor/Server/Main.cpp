@@ -12,6 +12,7 @@ int main()
     System::GetLog().Init();
 
     LOG_INFO("SimpleGame Server Starting...");
+    // Force Recompile
 
     // Basic Framework Setup
     std::shared_ptr<System::IFramework> framework = System::IFramework::Create();

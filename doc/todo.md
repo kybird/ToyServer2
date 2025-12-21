@@ -4,29 +4,7 @@
 
 ---
 
-## 🔴 P1: 아키텍처 위반 해결
 
-### PacketMessage 직접 접근 캡슐화
-- **상태**: 검토 중
-- **파일**: `GamePacketHandler.h/cpp`, `Room.h/cpp`
-- **설명**: `PacketMessage` 내부 멤버(`Payload()`, `type`) 직접 접근 제거
-- **해결방안**: 인터페이스 기반 데이터 접근 or `PacketUtils` 루트 노출
-- **난이도**: ⭐⭐ (반나절)
-- **이유**: 프레임워크 설계 원칙 준수
-
----
-
-## 🟡 P2: 게임 로직 - 엔진 검증 (spec.md P1)
-
-### 대량 몬스터 스폰 & 이동 동기화
-- **상태**: 미완료
-- **목표**: 한 화면에 500+ 마리 몬스터 스폰 및 위치 동기화
-- **구현사항**:
-  - [ ] `MonsterFactory` 대량 생성 최적화
-  - [ ] `S_MoveObjectBatch` 패킷 구현 (Batching)
-  - [ ] Delta Compression 적용
-  - [ ] Grid 기반 Spatial Partitioning
-- **난이도**: ⭐⭐⭐ (2~3일)
 
 ---
 
@@ -45,6 +23,25 @@
 - [ ] 5분 생존 시 `S_GameWin`
 - [ ] 전원 DOWNED 시 `S_GameOver`
 - [ ] 결과 화면 및 보상 처리
+
+---
+
+## 🟠 P2.5: 프레임워크 안전성 개선 (MCP 분석 결과)
+
+### RoomManager 동시성 개선
+- **상태**: 제안됨
+- **설명**: `RoomManager`의 Global Mutex 의존 제거 및 세분화 (Lobby vs Room Lock 분리)
+- **이유**: 동접 증가 시 병목 예상
+
+### Session 생명주기 안전장치
+- **상태**: 제안됨
+- **설명**: `OnSessionDisconnect` 수동 호출 의존성 제거, `WeakPtr` 또는 `Handle` 기반 자동 만료 도입
+- **이유**: 유지보수 실수로 인한 Dangling Pointer 방지
+
+### RoomManager 싱글톤 리팩토링
+- **상태**: 제안됨
+- **설명**: Global Singleton 제거 및 DI(Dependency Injection) 적용
+- **이유**: 테스트 용이성 확보
 
 ---
 

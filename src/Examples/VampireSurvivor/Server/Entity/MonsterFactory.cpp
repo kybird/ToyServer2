@@ -1,48 +1,57 @@
 #include "Entity/MonsterFactory.h"
-#include "Game/ObjectManager.h"
 #include "Core/DataManager.h"
-#include "Entity/Monster.h"
-#include "Entity/AI/ChaserAI.h"
-#include "Entity/AI/WanderAI.h"
-#include "Entity/AI/SwarmAI.h"
 #include "Entity/AI/BossAI.h"
+#include "Entity/AI/ChaserAI.h"
+#include "Entity/AI/SwarmAI.h"
+#include "Entity/AI/WanderAI.h"
+#include "Entity/Monster.h"
+#include "Game/ObjectManager.h"
 #include "System/ILog.h"
 #include "System/Memory/SimplePool.h"
 
 namespace SimpleGame {
 
-MonsterFactory& MonsterFactory::Instance() {
+MonsterFactory &MonsterFactory::Instance()
+{
     static MonsterFactory instance;
     return instance;
 }
 
-MonsterFactory::MonsterFactory() {
+MonsterFactory::MonsterFactory()
+{
     _pool = std::make_unique<System::SimplePool<Monster>>(1000);
 }
 
-std::shared_ptr<Monster> MonsterFactory::CreateMonster(ObjectManager& objMgr, int32_t monsterTypeId, float x, float y) {
-    const auto* tmpl = DataManager::Instance().GetMonsterTemplate(monsterTypeId);
-    if (!tmpl) {
+std::shared_ptr<Monster> MonsterFactory::CreateMonster(ObjectManager &objMgr, int32_t monsterTypeId, float x, float y)
+{
+    const auto *tmpl = DataManager::Instance().GetMonsterTemplate(monsterTypeId);
+    if (!tmpl)
+    {
         LOG_ERROR("Invalid Monster Type ID: {}", monsterTypeId);
         return nullptr;
     }
 
     // Acquire from pool or alloc
-    Monster* raw = _pool->Acquire();
-    if (!raw) {
+    Monster *raw = _pool->Acquire();
+    if (!raw)
+    {
         // Should not happen with current SimplePool unless alloc limit reached
         return nullptr;
     }
 
     int32_t id = objMgr.GenerateId();
-    
+
     // Custom deleter returns to pool
-    std::shared_ptr<Monster> monster(raw, [](Monster* m) {
-        MonsterFactory::Instance().Release(m);
-    });
+    std::shared_ptr<Monster> monster(
+        raw,
+        [](Monster *m)
+        {
+            MonsterFactory::Instance().Release(m);
+        }
+    );
 
     // Init
-    monster->Initialize(id, monsterTypeId); 
+    monster->Initialize(id, monsterTypeId);
 
     // Apply Template Stats
     monster->SetHp(tmpl->hp);
@@ -55,25 +64,53 @@ std::shared_ptr<Monster> MonsterFactory::CreateMonster(ObjectManager& objMgr, in
     return monster;
 }
 
-void MonsterFactory::Release(Monster* monster) {
-    if (monster) {
+std::vector<std::shared_ptr<Monster>> MonsterFactory::SpawnBatch(
+    ObjectManager &objMgr, int32_t monsterTypeId, int count, float minX, float maxX, float minY, float maxY
+)
+{
+    std::vector<std::shared_ptr<Monster>> monsters;
+    monsters.reserve(count);
+
+    // Naive Random for now (Can be improved with proper C++ random if needed)
+    for (int i = 0; i < count; ++i)
+    {
+        float r1 = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        float r2 = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+        float x = minX + r1 * (maxX - minX);
+        float y = minY + r2 * (maxY - minY);
+
+        auto monster = CreateMonster(objMgr, monsterTypeId, x, y);
+        if (monster)
+        {
+            monsters.push_back(monster);
+        }
+    }
+    return monsters;
+}
+
+void MonsterFactory::Release(Monster *monster)
+{
+    if (monster)
+    {
         monster->Reset();
         _pool->Release(monster);
     }
 }
 
-std::unique_ptr<IAIBehavior> MonsterFactory::CreateAI(MonsterAIType type, float speed) {
-    switch (type) {
-        case MonsterAIType::CHASER:
-            return std::make_unique<ChaserAI>(speed);
-        case MonsterAIType::WANDER:
-            return std::make_unique<WanderAI>(speed);
-        case MonsterAIType::SWARM:
-            return std::make_unique<SwarmAI>(speed);
-        case MonsterAIType::BOSS:
-            return std::make_unique<BossAI>();
-        default:
-            return std::make_unique<ChaserAI>(speed);
+std::unique_ptr<IAIBehavior> MonsterFactory::CreateAI(MonsterAIType type, float speed)
+{
+    switch (type)
+    {
+    case MonsterAIType::CHASER:
+        return std::make_unique<ChaserAI>(speed);
+    case MonsterAIType::WANDER:
+        return std::make_unique<WanderAI>(speed);
+    case MonsterAIType::SWARM:
+        return std::make_unique<SwarmAI>(speed);
+    case MonsterAIType::BOSS:
+        return std::make_unique<BossAI>();
+    default:
+        return std::make_unique<ChaserAI>(speed);
     }
 }
 

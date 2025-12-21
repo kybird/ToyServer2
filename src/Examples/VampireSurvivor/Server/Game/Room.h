@@ -36,6 +36,8 @@ public:
     void Enter(std::shared_ptr<Player> player);
     void Leave(uint64_t sessionId);
     void BroadcastPacket(const System::IPacket &pkt);
+    void BroadcastSpawn(const std::vector<std::shared_ptr<GameObject>> &objects);
+    void BroadcastDespawn(const std::vector<int32_t> &objectIds);
 
     // Game Loop
     void Start();
@@ -67,9 +69,10 @@ private:
 
     // Game Logic Components
     ObjectManager _objMgr;
-    SpatialGrid _grid{100.0f}; // Cell Size 100
+    SpatialGrid _grid{2000.0f}; // [Phase 1] Large cell for Full Broadcast
     WaveManager _waveMgr;
     std::shared_ptr<UserDB> _userDB;
+    float _totalRunTime = 0.0f;
 };
 
 } // namespace SimpleGame

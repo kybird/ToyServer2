@@ -1,5 +1,14 @@
 # 완료된 작업 (Done)
 
+## 2025-12-21
+
+### PacketMessage 직접 접근 캡슐화 (P1)
+- **파일**: `GamePacketHandler.h/cpp`
+- **설명**: `PacketMessage` 내부 멤버 직접 접근 제거 및 `PacketView` 도입 완료.
+- **결과**: 프레임워크 아키텍처 원칙 준수 및 안전성 확보.
+
+
+
 ## Phase 2: Operation Tools ✅
 - [x] **Structured Logger** - Context fields, Macros
 - [x] **Rate Limiter** - Token Bucket (Header-only)
@@ -38,3 +47,15 @@
 - [x] **RateLimiter 동적 설정 적용** (2025-12-20)
   - `JsonConfigLoader` → `Framework` → `SessionFactory` → `Session::Reset` 체인 완성
   - `server_config.json`에 `rate_limit`, `rate_burst` 명시
+
+## 2025-12-22
+
+### 🟡 P2: 게임 로직 - 엔진 검증 (대량 몬스터 스폰)
+- **상태**: 완료
+- **파일**: `Room.cpp`, `MonsterFactory.cpp`, `ChaserAI.cpp`, `TestPerformance.cpp`
+- **구현사항**:
+  - `MonsterFactory`: `SpawnBatch` 구현으로 대량 생성 최적화.
+  - `Room`: `SpatialGrid`(2000x2000) 통합 및 `S_MoveObjectBatch` 패킷 송신.
+  - `Optimization`: Delta Sync (State/Velocity 기반) 및 10KB 패킷 스플리팅 적용.
+  - `AI`: Nearest Player 추적 + Load Balancing (Phase Offset) 적용.
+  - **검증**: `TestPerformance` (500마리 스웜 테스트) -> 1ms 미만 틱타임 달성.

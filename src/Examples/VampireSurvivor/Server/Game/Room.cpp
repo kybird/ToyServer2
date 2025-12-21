@@ -96,6 +96,40 @@ void BroadcastProto(Room *room, const Protocol::S_MoveObjectBatch &msg)
     room->BroadcastPacket(packet);
 }
 
+void Room::BroadcastSpawn(const std::vector<std::shared_ptr<GameObject>> &objects)
+{
+    if (objects.empty())
+        return;
+
+    Protocol::S_SpawnObject msg;
+    for (const auto &obj : objects)
+    {
+        auto *info = msg.add_objects();
+        info->set_object_id(obj->GetId());
+        info->set_type(obj->GetType());
+        info->set_x(obj->GetX());
+        info->set_y(obj->GetY());
+        info->set_hp(obj->GetHp());
+        info->set_max_hp(obj->GetMaxHp());
+        info->set_state(obj->GetState());
+        // TypeId customization could be added here if needed
+    }
+    BroadcastProto(this, msg);
+}
+
+void Room::BroadcastDespawn(const std::vector<int32_t> &objectIds)
+{
+    if (objectIds.empty())
+        return;
+
+    Protocol::S_DespawnObject msg;
+    for (int32_t id : objectIds)
+    {
+        msg.add_object_ids(id);
+    }
+    BroadcastProto(this, msg);
+}
+
 void Room::Enter(std::shared_ptr<Player> player)
 {
     std::lock_guard<std::recursive_mutex> lock(_mutex);
@@ -178,10 +212,14 @@ void Room::Update(float deltaTime)
     // 0. Wave & Spawning Update
     // LOG_DEBUG("Room {} Update Tick", _roomId); // Too spammy? Maybe only for Room 1
     _waveMgr.Update(deltaTime, this);
+    _totalRunTime += deltaTime;
 
     // 1. Physics & Logic Update
     auto objects = _objMgr.GetAllObjects();
     Protocol::S_MoveObjectBatch moveBatch;
+    size_t currentBatchSize = 0;
+    const size_t MAX_PAYLOAD_BYTES = 10000;
+    const size_t PACKET_OVERHEAD = 64;
 
     for (auto &obj : objects)
     {
@@ -203,18 +241,56 @@ void Room::Update(float deltaTime)
 
             obj->SetPos(newX, newY);
             _grid.Update(obj, oldX, oldY);
+        }
+
+        // 2. Network Optimization (Delta Sync)
+        bool isDirty = false;
+
+        // A. State Changed (Idle <-> Moving)
+        if (obj->GetState() != obj->GetLastSentState())
+            isDirty = true;
+
+        // B. Velocity Changed (Threshold)
+        float dvx = obj->GetVX() - obj->GetLastSentVX();
+        float dvy = obj->GetVY() - obj->GetLastSentVY();
+        if ((dvx * dvx + dvy * dvy) > 0.01f)
+            isDirty = true; // > 0.1 difference
+
+        // C. Hard Sync (Drift Correction) - Every 1.0s
+        if (_totalRunTime - obj->GetLastSentTime() > 1.0f)
+            isDirty = true;
+
+        if (isDirty)
+        {
+            // Update Sync State
+            obj->UpdateLastSentState(_totalRunTime);
+
+            // Create Proto Message (temp to check size)
+            Protocol::ObjectPos move; // Create temporary to check size
+            move.set_object_id(obj->GetId());
+            move.set_x(obj->GetX());
+            move.set_y(obj->GetY());
+            move.set_vx(obj->GetVX());
+            move.set_vy(obj->GetVY());
+
+            size_t msgSize = move.ByteSizeLong();
+
+            // Packet Splitting Check
+            if (currentBatchSize + msgSize > MAX_PAYLOAD_BYTES - PACKET_OVERHEAD)
+            {
+                BroadcastProto(this, moveBatch);
+                moveBatch.Clear();
+                currentBatchSize = 0;
+            }
 
             // Add to Batch
-            auto *move = moveBatch.add_moves();
-            move->set_object_id(obj->GetId());
-            move->set_x(newX);
-            move->set_y(newY);
-            move->set_vx(obj->GetVX());
-            move->set_vy(obj->GetVY());
+            auto *added = moveBatch.add_moves();
+            *added = move; // Copy
+            currentBatchSize += msgSize;
         }
     }
 
-    // 2. Broadcast Batched Movement
+    // 2. Broadcast Batched Movement (Remaining)
     if (moveBatch.moves_size() > 0)
     {
         BroadcastProto(this, moveBatch);

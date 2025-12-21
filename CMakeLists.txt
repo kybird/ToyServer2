@@ -124,17 +124,7 @@ target_include_directories(PacketTest PRIVATE src)
 target_precompile_headers(PacketTest PRIVATE src/System/Pch.h)
 target_link_libraries(PacketTest PRIVATE System Share)
 
-# UnitTests (Consolidated Test Suite)
-file(GLOB_RECURSE TEST_SOURCES "tests/*.cpp")
-add_executable(UnitTests ${TEST_SOURCES})
-target_include_directories(UnitTests PRIVATE src)
-target_precompile_headers(UnitTests PRIVATE src/System/Pch.h)
-target_link_libraries(UnitTests PRIVATE System Share GTest::gtest GTest::gmock)
 
-enable_testing()
-include(GoogleTest)
-# add_subdirectory(tests) # No longer needed as we compile sources directly
-gtest_discover_tests(UnitTests)
 
 
 
@@ -147,8 +137,8 @@ set(PROTO_SRC_DIR "src/Examples/VampireSurvivor/Protocol")
 set(PROTO_FILES "${PROTO_SRC_DIR}/game.proto")
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
 
-add_executable(VampireSurvivorServer
-    src/Examples/VampireSurvivor/Server/Main.cpp
+# Common Game Sources
+set(GAME_SOURCES
     src/Examples/VampireSurvivor/Server/Core/LoginController.cpp
     src/Examples/VampireSurvivor/Server/Core/GamePacketHandler.cpp
     src/Examples/VampireSurvivor/Server/Core/DataManager.cpp
@@ -164,6 +154,11 @@ add_executable(VampireSurvivorServer
     src/Examples/VampireSurvivor/Server/Entity/AI/BossAI.cpp
     src/Examples/VampireSurvivor/Server/Entity/ProjectileFactory.cpp
     ${PROTO_SRCS} ${PROTO_HDRS}
+)
+
+add_executable(VampireSurvivorServer
+    src/Examples/VampireSurvivor/Server/Main.cpp
+    ${GAME_SOURCES}
 )
 
 target_include_directories(VampireSurvivorServer PRIVATE 
@@ -204,3 +199,20 @@ install(DIRECTORY src/Share DESTINATION dist/include
 )
 
 # Force CMake Re-scan
+
+# UnitTests (Consolidated Test Suite)
+file(GLOB_RECURSE TEST_SOURCES "tests/*.cpp")
+add_executable(UnitTests ${TEST_SOURCES} ${GAME_SOURCES})
+target_include_directories(UnitTests PRIVATE 
+    src
+    src/Examples/VampireSurvivor/Server
+    src/Examples/VampireSurvivor
+    src/Examples/VampireSurvivor/Common
+)
+target_precompile_headers(UnitTests PRIVATE src/System/Pch.h)
+target_link_libraries(UnitTests PRIVATE System Share GTest::gtest GTest::gmock protobuf::libprotobuf unofficial::sqlite3::sqlite3)
+
+enable_testing()
+include(GoogleTest)
+# add_subdirectory(tests) # No longer needed as we compile sources directly
+gtest_discover_tests(UnitTests)
