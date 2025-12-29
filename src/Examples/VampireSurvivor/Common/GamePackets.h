@@ -82,6 +82,15 @@ public:
     using ProtobufPacketBase::ProtobufPacketBase;
 };
 
+// --- S_DAMAGE_EFFECT ---
+class S_DamageEffectPacket
+    : public System::ProtobufPacketBase<S_DamageEffectPacket, PacketHeader, Protocol::S_DamageEffect>
+{
+public:
+    static constexpr uint16_t ID = PacketID::S_DAMAGE_EFFECT;
+    using ProtobufPacketBase::ProtobufPacketBase;
+};
+
 // --- CLIENT PACKETS (For Client Use) ---
 
 // --- C_LOGIN ---

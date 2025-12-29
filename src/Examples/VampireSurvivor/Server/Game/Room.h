@@ -12,8 +12,6 @@
 #include "Game/SpatialGrid.h"
 #include "Game/WaveManager.h"
 
-// Forward declaration for Test
-class SwarmPerformanceTest_StressTest500Monsters_Test;
 
 namespace System {
 class IPacket;
@@ -25,7 +23,9 @@ class UserDB;
 
 class Room : public System::ITimerListener, public std::enable_shared_from_this<Room>
 {
-    friend class ::SwarmPerformanceTest_StressTest500Monsters_Test; // Access for GTest
+    friend class CombatTest_ProjectileHitsMonster_Test;
+    friend class CombatTest_MonsterDies_Test;
+    friend class SwarmPerformanceTest_StressTest500Monsters_Test;
 public:
     Room(
         int roomId, std::shared_ptr<System::ITimer> timer, std::shared_ptr<System::IStrand> strand,

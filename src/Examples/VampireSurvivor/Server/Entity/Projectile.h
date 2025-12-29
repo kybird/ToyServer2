@@ -22,6 +22,7 @@ public:
         _lifetime = 5.0f;
         _vx = _vy = 0;
         _x = _y = 0;
+        _isHit = false;
     }
 
     void Reset() {
@@ -30,6 +31,7 @@ public:
         _skillId = 0;
         _damage = 0;
         _lifetime = 0;
+        _isHit = false;
     }
 
     int32_t GetOwnerId() const { return _ownerId; }
@@ -46,14 +48,18 @@ public:
         _lifetime -= dt;
     }
 
-    bool IsExpired() const { return _lifetime <= 0; }
+    bool IsExpired() const { return _lifetime <= 0 || _isHit; }
     void SetLifetime(float life) { _lifetime = life; }
+
+    void SetHit() { _isHit = true; }
+    bool IsHit() const { return _isHit; }
 
 private:
     int32_t _ownerId = 0;
     int32_t _skillId = 0;
     int32_t _damage = 0;
     float _lifetime = 5.0f;
+    bool _isHit = false;
 };
 
 } // namespace SimpleGame

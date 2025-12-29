@@ -8,6 +8,7 @@ project(HGSF VERSION 0.1.0 LANGUAGES CXX)
 
 if(MSVC)
     add_compile_definitions(_WIN32_WINNT=0x0A00) # Windows 10
+    add_compile_options(/FS)
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -201,8 +202,13 @@ install(DIRECTORY src/Share DESTINATION dist/include
 # Force CMake Re-scan
 
 # UnitTests (Consolidated Test Suite)
-file(GLOB_RECURSE TEST_SOURCES "tests/*.cpp")
-add_executable(UnitTests ${TEST_SOURCES} ${GAME_SOURCES})
+set(VS_TEST_SOURCES
+    src/Examples/VampireSurvivor/tests/main_test.cpp
+    src/Examples/VampireSurvivor/tests/TestRoom.cpp
+    src/Examples/VampireSurvivor/tests/TestCombat.cpp
+    src/Examples/VampireSurvivor/tests/TestSwarmPerformance.cpp
+)
+add_executable(UnitTests ${VS_TEST_SOURCES} ${GAME_SOURCES})
 target_include_directories(UnitTests PRIVATE 
     src
     src/Examples/VampireSurvivor/Server
