@@ -23,6 +23,7 @@ public:
 
     // Main Loop processing (Called by Worker Threads)
     bool Process() override;
+    void Wait(int timeoutMs) override;
 
     size_t GetQueueSize() const override;
     bool IsOverloaded() const override;

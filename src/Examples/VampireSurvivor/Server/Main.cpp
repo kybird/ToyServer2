@@ -32,7 +32,7 @@ int main()
     if (!SimpleGame::DataManager::Instance().LoadMonsterData("MonsterData.json") ||
         !SimpleGame::DataManager::Instance().LoadWaveData("WaveData.json"))
     {
-        LOG_WARN("Failed to load game data (Mocking might be used or files missing).");
+        LOG_WARN("Failed to load game data. Server may not function correctly without MonsterData.json and WaveData.json.");
     }
 
     // Init with Config File and Handler

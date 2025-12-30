@@ -172,6 +172,23 @@ target_include_directories(VampireSurvivorServer PRIVATE
 
 target_link_libraries(VampireSurvivorServer PRIVATE System Share protobuf::libprotobuf)
 
+# Copy Config and Data Files to Output Directory
+add_custom_command(TARGET VampireSurvivorServer POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_SOURCE_DIR}/simple_game_config.json"
+    "$<TARGET_FILE_DIR:VampireSurvivorServer>/simple_game_config.json"
+)
+add_custom_command(TARGET VampireSurvivorServer POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_SOURCE_DIR}/MonsterData.json"
+    "$<TARGET_FILE_DIR:VampireSurvivorServer>/MonsterData.json"
+)
+add_custom_command(TARGET VampireSurvivorServer POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_SOURCE_DIR}/WaveData.json"
+    "$<TARGET_FILE_DIR:VampireSurvivorServer>/WaveData.json"
+)
+
 # Vampire Survivor Console Client
 add_executable(VampireSurvivorClient src/Examples/VampireSurvivor/Client/ConsoleClient.cpp ${PROTO_SRCS} ${PROTO_HDRS})
 target_include_directories(VampireSurvivorClient PRIVATE src/Examples/VampireSurvivor src src/Examples/VampireSurvivor/Common)

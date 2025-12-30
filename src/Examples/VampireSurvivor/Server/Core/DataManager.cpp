@@ -12,7 +12,10 @@ bool DataManager::LoadMonsterData(const std::string &path)
     {
         std::ifstream file(path);
         if (!file.is_open())
+        {
+            LOG_ERROR("Could not open monster data file: {}", path);
             return false;
+        }
 
         nlohmann::json j;
         file >> j;
@@ -39,7 +42,7 @@ bool DataManager::LoadMonsterData(const std::string &path)
         return true;
     } catch (const std::exception &e)
     {
-        LOG_ERROR("Failed to load monster data: {}", e.what());
+        LOG_ERROR("Failed to load monster data {}: {}", path, e.what());
         return false;
     }
 }
@@ -58,7 +61,10 @@ bool DataManager::LoadWaveData(const std::string &path)
     {
         std::ifstream file(path);
         if (!file.is_open())
+        {
+            LOG_ERROR("Could not open wave data file: {}", path);
             return false;
+        }
 
         nlohmann::json j;
         file >> j;
@@ -88,7 +94,7 @@ bool DataManager::LoadWaveData(const std::string &path)
         return true;
     } catch (const std::exception &e)
     {
-        LOG_ERROR("Failed to load wave data: {}", e.what());
+        LOG_ERROR("Failed to load wave data {}: {}", path, e.what());
         return false;
     }
 }

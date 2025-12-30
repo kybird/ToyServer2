@@ -202,8 +202,7 @@ void Framework::Run()
         }
         else
         {
-            // std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            std::this_thread::yield();
+            _dispatcher->Wait(10); // Wait up to 10ms for new messages
         }
     }
 }
