@@ -9,6 +9,7 @@ set PROTOC=..\..\..\..\vcpkg_installed\x64-windows\tools\protobuf\protoc.exe
 set PROTO_FILE=game.proto
 set CPP_OUT_DIR=.
 set CSHARP_OUT_DIR=D:\Project\ToySurvival_Unity\Assets\Scripts\Protocol
+set CSHARP_OUT_DIR_INTERNAL=..\Client\Assets\Scripts\Protocol
 
 :: Check Protoc
 if not exist "%PROTOC%" (
@@ -42,4 +43,17 @@ if %errorlevel% neq 0 (
 )
 
 echo [SUCCESS] C# files generated in %CSHARP_OUT_DIR%
+
+:: Generate C# (for Internal Client)
+if not exist "%CSHARP_OUT_DIR_INTERNAL%" mkdir "%CSHARP_OUT_DIR_INTERNAL%"
+echo [INFO] Generating C# for internal client...
+"%PROTOC%" --proto_path=. --csharp_out="%CSHARP_OUT_DIR_INTERNAL%" "%PROTO_FILE%"
+
+if %errorlevel% neq 0 (
+    echo [ERROR] C# Internal Protobuf generation failed.
+    pause
+    exit /b 1
+)
+
+echo [SUCCESS] C# files generated in %CSHARP_OUT_DIR_INTERNAL%
 pause

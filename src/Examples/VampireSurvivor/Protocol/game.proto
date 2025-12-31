@@ -21,6 +21,7 @@ enum MsgId {
   S_ENTER_LOBBY = 111;
   C_LEAVE_ROOM = 112;
   S_LEAVE_ROOM = 113;
+  C_GAME_READY = 114;
 
   // Chat (120-129)
   C_CHAT = 120;
@@ -47,6 +48,10 @@ enum MsgId {
   // System (500-599)
   S_GAME_WIN = 500;
   S_GAME_OVER = 501;
+
+  // Heartbeat (900-999)
+  S_PING = 900;
+  C_PONG = 901;
 }
 
 // ==========================================================
@@ -68,6 +73,7 @@ message S_Login {
 
 message C_CreateRoom {
     int32 wave_pattern_id = 1;
+    string room_title = 2;
 }
 
 message S_CreateRoom {
@@ -104,6 +110,7 @@ message RoomInfo {
     int32 current_players = 2;
     int32 max_players = 3;
     bool is_playing = 4;
+    string room_title = 5;
 }
 
 message C_GetRoomList {
@@ -121,6 +128,10 @@ message C_Chat {
 message S_Chat {
     int32 player_id = 1;
     string msg = 2;
+}
+
+message C_GameReady {
+    // Empty - just a ready signal
 }
 
 // ==========================================================
@@ -249,3 +260,16 @@ message S_GameWin {
 message S_GameOver {
     int64 survived_time_ms = 1;
 }
+
+// ==========================================================
+// Heartbeat
+// ==========================================================
+
+message S_Ping {
+    int64 timestamp = 1;
+}
+
+message C_Pong {
+    int64 timestamp = 1;
+}
+

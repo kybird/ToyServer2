@@ -64,6 +64,10 @@ public:
     // Encryption
     void SetEncryption(std::unique_ptr<IPacketEncryption> encryption);
 
+    // Heartbeat (Ping/Pong)
+    void ConfigHeartbeat(uint32_t intervalMs, uint32_t timeoutMs, std::function<void(Session *)> pingFunc);
+    void OnPong(); // Call this when C_PONG received
+
     // Lifetime safety
     void IncRef()
     {
@@ -110,6 +114,16 @@ private:
     uint64_t _id = 0;
     IDispatcher *_dispatcher = nullptr;
     std::unique_ptr<IPacketEncryption> _encryption; // Added
+
+    // Heartbeat State
+    std::unique_ptr<boost::asio::steady_timer> _heartbeatTimer;
+    std::chrono::steady_clock::time_point _lastRecvTime;
+    std::chrono::steady_clock::time_point _lastPingTime;
+    uint32_t _hbInterval = 0;
+    uint32_t _hbTimeout = 0;
+    std::function<void(Session *)> _hbPingFunc;
+    void StartHeartbeat();
+    void OnHeartbeatTimer(const boost::system::error_code &ec);
 
     std::thread::id _dispatcherThreadId;
 

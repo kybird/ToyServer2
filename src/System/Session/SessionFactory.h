@@ -33,11 +33,19 @@ public:
         return _rateBurst;
     }
 
+    // [Heartbeat Config]
+    static void SetHeartbeatConfig(uint32_t intervalMs, uint32_t timeoutMs, std::function<void(Session *)> pingFunc);
+
 private:
     static std::atomic<uint64_t> _nextSessionId;
     static std::function<std::unique_ptr<IPacketEncryption>()> _encryptionFactory;
     static double _rateLimit;
     static double _rateBurst;
+
+    // Heartbeat
+    static uint32_t _hbInterval;
+    static uint32_t _hbTimeout;
+    static std::function<void(Session *)> _hbPingFunc;
 };
 
 } // namespace System

@@ -1,8 +1,11 @@
+#include "Common/GamePackets.h"
 #include "Core/DataManager.h"
 #include "Core/GamePacketHandler.h"
 #include "Core/LoginController.h"
 #include "Core/UserDB.h"
 #include "Game/RoomManager.h"
+#include "Protocol/game.pb.h"
+#include "System/Session/SessionFactory.h"
 #include "System/ToyServerSystem.h"
 #include <iostream>
 
@@ -32,7 +35,9 @@ int main()
     if (!SimpleGame::DataManager::Instance().LoadMonsterData("MonsterData.json") ||
         !SimpleGame::DataManager::Instance().LoadWaveData("WaveData.json"))
     {
-        LOG_WARN("Failed to load game data. Server may not function correctly without MonsterData.json and WaveData.json.");
+        LOG_WARN(
+            "Failed to load game data. Server may not function correctly without MonsterData.json and WaveData.json."
+        );
     }
 
     // Init with Config File and Handler
@@ -41,6 +46,25 @@ int main()
         LOG_ERROR("Failed to initialize framework.");
         return 1;
     }
+
+    // [Heartbeat] Configure Ping (5s Interval, 15s Timeout)
+    System::SessionFactory::SetHeartbeatConfig(
+        5000,
+        15000,
+        [](System::Session *session)
+        {
+            Protocol::S_Ping msg;
+            msg.set_timestamp(
+                std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::system_clock::now().time_since_epoch()
+                )
+                    .count()
+            );
+
+            SimpleGame::S_PingPacket packet(msg);
+            session->SendPacket(packet);
+        }
+    );
 
     // Initialize Database (SQLite)
     auto db = System::IDatabase::Create("sqlite", "game.db", 2);

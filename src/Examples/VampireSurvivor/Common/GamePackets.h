@@ -4,7 +4,6 @@
 #include "Protocol/game.pb.h"
 #include "System/Packet.h"
 
-
 namespace SimpleGame {
 
 // --- S_LOGIN ---
@@ -28,6 +27,14 @@ class S_JoinRoomPacket : public System::ProtobufPacketBase<S_JoinRoomPacket, Pac
 {
 public:
     static constexpr uint16_t ID = PacketID::S_JOIN_ROOM;
+    using ProtobufPacketBase::ProtobufPacketBase;
+};
+
+// --- S_ROOM_LIST ---
+class S_RoomListPacket : public System::ProtobufPacketBase<S_RoomListPacket, PacketHeader, Protocol::S_RoomList>
+{
+public:
+    static constexpr uint16_t ID = PacketID::S_ROOM_LIST;
     using ProtobufPacketBase::ProtobufPacketBase;
 };
 
@@ -91,6 +98,14 @@ public:
     using ProtobufPacketBase::ProtobufPacketBase;
 };
 
+// --- S_PING ---
+class S_PingPacket : public System::ProtobufPacketBase<S_PingPacket, PacketHeader, Protocol::S_Ping>
+{
+public:
+    static constexpr uint16_t ID = PacketID::S_PING;
+    using ProtobufPacketBase::ProtobufPacketBase;
+};
+
 // --- CLIENT PACKETS (For Client Use) ---
 
 // --- C_LOGIN ---
@@ -117,6 +132,15 @@ public:
     using ProtobufPacketBase::ProtobufPacketBase;
 };
 
+// --- C_GET_ROOM_LIST ---
+class C_GetRoomListPacket
+    : public System::ProtobufPacketBase<C_GetRoomListPacket, PacketHeader, Protocol::C_GetRoomList>
+{
+public:
+    static constexpr uint16_t ID = PacketID::C_GET_ROOM_LIST;
+    using ProtobufPacketBase::ProtobufPacketBase;
+};
+
 // --- C_LEAVE_ROOM ---
 class C_LeaveRoomPacket : public System::ProtobufPacketBase<C_LeaveRoomPacket, PacketHeader, Protocol::C_LeaveRoom>
 {
@@ -130,6 +154,22 @@ class C_ChatPacket : public System::ProtobufPacketBase<C_ChatPacket, PacketHeade
 {
 public:
     static constexpr uint16_t ID = PacketID::C_CHAT;
+    using ProtobufPacketBase::ProtobufPacketBase;
+};
+
+// --- C_PONG ---
+class C_PongPacket : public System::ProtobufPacketBase<C_PongPacket, PacketHeader, Protocol::C_Pong>
+{
+public:
+    static constexpr uint16_t ID = PacketID::C_PONG;
+    using ProtobufPacketBase::ProtobufPacketBase;
+};
+
+// --- C_GAME_READY ---
+class C_GameReadyPacket : public System::ProtobufPacketBase<C_GameReadyPacket, PacketHeader, Protocol::C_GameReady>
+{
+public:
+    static constexpr uint16_t ID = PacketID::C_GAME_READY;
     using ProtobufPacketBase::ProtobufPacketBase;
 };
 

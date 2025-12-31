@@ -86,6 +86,13 @@ void Session::Reset(std::shared_ptr<boost::asio::ip::tcp::socket> socket, uint64
     // [RateLimiter] Apply config from SessionFactory
     _ingressLimiter.UpdateConfig(SessionFactory::GetRateLimit(), SessionFactory::GetRateBurst());
     _violationCount = 0;
+
+    // [Heartbeat] Init
+    _lastRecvTime = std::chrono::steady_clock::now();
+    if (_socket && _socket->is_open())
+    {
+        _heartbeatTimer = std::make_unique<boost::asio::steady_timer>(_socket->get_executor());
+    }
 }
 
 void Session::GracefulClose()
@@ -538,6 +545,70 @@ std::string Session::GetRemoteAddress() const
 void Session::SetEncryption(std::unique_ptr<IPacketEncryption> encryption)
 {
     _encryption = std::move(encryption);
+}
+
+void Session::ConfigHeartbeat(uint32_t intervalMs, uint32_t timeoutMs, std::function<void(Session *)> pingFunc)
+{
+    _hbInterval = intervalMs;
+    _hbTimeout = timeoutMs;
+    _hbPingFunc = pingFunc;
+
+    if (_hbInterval > 0 && _heartbeatTimer)
+    {
+        StartHeartbeat();
+    }
+}
+
+void Session::OnPong()
+{
+    _lastRecvTime = std::chrono::steady_clock::now();
+}
+
+void Session::StartHeartbeat()
+{
+    if (!_heartbeatTimer || _hbInterval == 0)
+        return;
+
+    _heartbeatTimer->expires_after(std::chrono::milliseconds(1000)); // Check every second (or interval)
+    IncRef();
+    _heartbeatTimer->async_wait(
+        [this](const boost::system::error_code &ec)
+        {
+            OnHeartbeatTimer(ec);
+            DecRef();
+        }
+    );
+}
+
+void Session::OnHeartbeatTimer(const boost::system::error_code &ec)
+{
+    if (ec || !_connected.load(std::memory_order_relaxed))
+        return;
+
+    auto now = std::chrono::steady_clock::now();
+
+    // 1. Check Timeout
+    auto inactiveDuration = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastRecvTime).count();
+    if (inactiveDuration > _hbTimeout)
+    {
+        LOG_WARN("Session {} Heartbeat Timeout ({}ms inactive). Disconnecting.", _id, inactiveDuration);
+        Close();
+        return;
+    }
+
+    // 2. Send Ping
+    auto timeSinceLastPing = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastPingTime).count();
+    if (timeSinceLastPing >= _hbInterval)
+    {
+        if (_hbPingFunc)
+        {
+            _hbPingFunc(this);
+            _lastPingTime = now;
+        }
+    }
+
+    // Reschedule
+    StartHeartbeat(); // Keep running
 }
 
 } // namespace System

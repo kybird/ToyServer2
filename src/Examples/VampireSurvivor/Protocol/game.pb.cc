@@ -106,6 +106,31 @@ struct S_PlayerDownedDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
     PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_PlayerDownedDefaultTypeInternal _S_PlayerDowned_default_instance_;
 
+inline constexpr S_Ping::Impl_::Impl_(
+    ::_pbi::ConstantInitialized) noexcept
+      : timestamp_{::int64_t{0}},
+        _cached_size_{0} {}
+
+template <typename>
+PROTOBUF_CONSTEXPR S_Ping::S_Ping(::_pbi::ConstantInitialized)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(_class_data_.base()),
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(),
+#endif  // PROTOBUF_CUSTOM_VTABLE
+      _impl_(::_pbi::ConstantInitialized()) {
+}
+struct S_PingDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR S_PingDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
+  ~S_PingDefaultTypeInternal() {}
+  union {
+    S_Ping _instance;
+  };
+};
+
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_PingDefaultTypeInternal _S_Ping_default_instance_;
+
 inline constexpr S_Login::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
       : success_{false},
@@ -398,7 +423,10 @@ PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
 
 inline constexpr RoomInfo::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
-      : room_id_{0},
+      : room_title_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        room_id_{0},
         current_players_{0},
         max_players_{0},
         is_playing_{false},
@@ -571,6 +599,31 @@ struct C_SelectLevelUpDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
     PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 C_SelectLevelUpDefaultTypeInternal _C_SelectLevelUp_default_instance_;
 
+inline constexpr C_Pong::Impl_::Impl_(
+    ::_pbi::ConstantInitialized) noexcept
+      : timestamp_{::int64_t{0}},
+        _cached_size_{0} {}
+
+template <typename>
+PROTOBUF_CONSTEXPR C_Pong::C_Pong(::_pbi::ConstantInitialized)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(_class_data_.base()),
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(),
+#endif  // PROTOBUF_CUSTOM_VTABLE
+      _impl_(::_pbi::ConstantInitialized()) {
+}
+struct C_PongDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR C_PongDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
+  ~C_PongDefaultTypeInternal() {}
+  union {
+    C_Pong _instance;
+  };
+};
+
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 C_PongDefaultTypeInternal _C_Pong_default_instance_;
+
 inline constexpr C_Move::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
       : dir_x_{0},
@@ -698,6 +751,24 @@ struct C_GetRoomListDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
     PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 C_GetRoomListDefaultTypeInternal _C_GetRoomList_default_instance_;
               template <typename>
+PROTOBUF_CONSTEXPR C_GameReady::C_GameReady(::_pbi::ConstantInitialized)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::internal::ZeroFieldsBase(_class_data_.base()){}
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::internal::ZeroFieldsBase() {
+}
+#endif  // PROTOBUF_CUSTOM_VTABLE
+struct C_GameReadyDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR C_GameReadyDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
+  ~C_GameReadyDefaultTypeInternal() {}
+  union {
+    C_GameReady _instance;
+  };
+};
+
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 C_GameReadyDefaultTypeInternal _C_GameReady_default_instance_;
+              template <typename>
 PROTOBUF_CONSTEXPR C_EnterLobby::C_EnterLobby(::_pbi::ConstantInitialized)
 #if defined(PROTOBUF_CUSTOM_VTABLE)
     : ::google::protobuf::internal::ZeroFieldsBase(_class_data_.base()){}
@@ -718,7 +789,10 @@ PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
 
 inline constexpr C_CreateRoom::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
-      : wave_pattern_id_{0},
+      : room_title_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
+        wave_pattern_id_{0},
         _cached_size_{0} {}
 
 template <typename>
@@ -906,6 +980,7 @@ const ::uint32_t
         ~0u,  // no _split_
         ~0u,  // no sizeof(Split)
         PROTOBUF_FIELD_OFFSET(::Protocol::C_CreateRoom, _impl_.wave_pattern_id_),
+        PROTOBUF_FIELD_OFFSET(::Protocol::C_CreateRoom, _impl_.room_title_),
         ~0u,  // no _has_bits_
         PROTOBUF_FIELD_OFFSET(::Protocol::S_CreateRoom, _internal_metadata_),
         ~0u,  // no _extensions_
@@ -981,6 +1056,7 @@ const ::uint32_t
         PROTOBUF_FIELD_OFFSET(::Protocol::RoomInfo, _impl_.current_players_),
         PROTOBUF_FIELD_OFFSET(::Protocol::RoomInfo, _impl_.max_players_),
         PROTOBUF_FIELD_OFFSET(::Protocol::RoomInfo, _impl_.is_playing_),
+        PROTOBUF_FIELD_OFFSET(::Protocol::RoomInfo, _impl_.room_title_),
         ~0u,  // no _has_bits_
         PROTOBUF_FIELD_OFFSET(::Protocol::C_GetRoomList, _internal_metadata_),
         ~0u,  // no _extensions_
@@ -1018,6 +1094,14 @@ const ::uint32_t
         ~0u,  // no sizeof(Split)
         PROTOBUF_FIELD_OFFSET(::Protocol::S_Chat, _impl_.player_id_),
         PROTOBUF_FIELD_OFFSET(::Protocol::S_Chat, _impl_.msg_),
+        ~0u,  // no _has_bits_
+        PROTOBUF_FIELD_OFFSET(::Protocol::C_GameReady, _internal_metadata_),
+        ~0u,  // no _extensions_
+        ~0u,  // no _oneof_case_
+        ~0u,  // no _weak_field_map_
+        ~0u,  // no _inlined_string_donated_
+        ~0u,  // no _split_
+        ~0u,  // no sizeof(Split)
         ~0u,  // no _has_bits_
         PROTOBUF_FIELD_OFFSET(::Protocol::ObjectInfo, _internal_metadata_),
         ~0u,  // no _extensions_
@@ -1198,6 +1282,24 @@ const ::uint32_t
         ~0u,  // no _split_
         ~0u,  // no sizeof(Split)
         PROTOBUF_FIELD_OFFSET(::Protocol::S_GameOver, _impl_.survived_time_ms_),
+        ~0u,  // no _has_bits_
+        PROTOBUF_FIELD_OFFSET(::Protocol::S_Ping, _internal_metadata_),
+        ~0u,  // no _extensions_
+        ~0u,  // no _oneof_case_
+        ~0u,  // no _weak_field_map_
+        ~0u,  // no _inlined_string_donated_
+        ~0u,  // no _split_
+        ~0u,  // no sizeof(Split)
+        PROTOBUF_FIELD_OFFSET(::Protocol::S_Ping, _impl_.timestamp_),
+        ~0u,  // no _has_bits_
+        PROTOBUF_FIELD_OFFSET(::Protocol::C_Pong, _internal_metadata_),
+        ~0u,  // no _extensions_
+        ~0u,  // no _oneof_case_
+        ~0u,  // no _weak_field_map_
+        ~0u,  // no _inlined_string_donated_
+        ~0u,  // no _split_
+        ~0u,  // no sizeof(Split)
+        PROTOBUF_FIELD_OFFSET(::Protocol::C_Pong, _impl_.timestamp_),
 };
 
 static const ::_pbi::MigrationSchema
@@ -1205,35 +1307,38 @@ static const ::_pbi::MigrationSchema
         {0, -1, -1, sizeof(::Protocol::C_Login)},
         {11, -1, -1, sizeof(::Protocol::S_Login)},
         {23, -1, -1, sizeof(::Protocol::C_CreateRoom)},
-        {32, -1, -1, sizeof(::Protocol::S_CreateRoom)},
-        {42, -1, -1, sizeof(::Protocol::C_JoinRoom)},
-        {51, -1, -1, sizeof(::Protocol::S_JoinRoom)},
-        {61, -1, -1, sizeof(::Protocol::C_EnterLobby)},
-        {69, -1, -1, sizeof(::Protocol::S_EnterLobby)},
-        {78, -1, -1, sizeof(::Protocol::C_LeaveRoom)},
-        {86, -1, -1, sizeof(::Protocol::S_LeaveRoom)},
-        {95, -1, -1, sizeof(::Protocol::RoomInfo)},
-        {107, -1, -1, sizeof(::Protocol::C_GetRoomList)},
-        {116, -1, -1, sizeof(::Protocol::S_RoomList)},
-        {125, -1, -1, sizeof(::Protocol::C_Chat)},
-        {134, -1, -1, sizeof(::Protocol::S_Chat)},
-        {144, -1, -1, sizeof(::Protocol::ObjectInfo)},
-        {161, -1, -1, sizeof(::Protocol::S_SpawnObject)},
-        {170, -1, -1, sizeof(::Protocol::S_DespawnObject)},
-        {179, -1, -1, sizeof(::Protocol::ObjectPos)},
-        {192, -1, -1, sizeof(::Protocol::S_MoveObjectBatch)},
-        {201, -1, -1, sizeof(::Protocol::C_Move)},
-        {211, -1, -1, sizeof(::Protocol::C_UseSkill)},
-        {222, -1, -1, sizeof(::Protocol::S_SkillEffect)},
-        {235, -1, -1, sizeof(::Protocol::S_DamageEffect)},
-        {245, -1, -1, sizeof(::Protocol::S_PlayerDowned)},
-        {254, -1, -1, sizeof(::Protocol::S_PlayerRevive)},
-        {263, -1, -1, sizeof(::Protocol::S_ExpChange)},
-        {274, -1, -1, sizeof(::Protocol::LevelUpOption)},
-        {287, -1, -1, sizeof(::Protocol::S_LevelUpOption)},
-        {296, -1, -1, sizeof(::Protocol::C_SelectLevelUp)},
-        {305, -1, -1, sizeof(::Protocol::S_GameWin)},
-        {315, -1, -1, sizeof(::Protocol::S_GameOver)},
+        {33, -1, -1, sizeof(::Protocol::S_CreateRoom)},
+        {43, -1, -1, sizeof(::Protocol::C_JoinRoom)},
+        {52, -1, -1, sizeof(::Protocol::S_JoinRoom)},
+        {62, -1, -1, sizeof(::Protocol::C_EnterLobby)},
+        {70, -1, -1, sizeof(::Protocol::S_EnterLobby)},
+        {79, -1, -1, sizeof(::Protocol::C_LeaveRoom)},
+        {87, -1, -1, sizeof(::Protocol::S_LeaveRoom)},
+        {96, -1, -1, sizeof(::Protocol::RoomInfo)},
+        {109, -1, -1, sizeof(::Protocol::C_GetRoomList)},
+        {118, -1, -1, sizeof(::Protocol::S_RoomList)},
+        {127, -1, -1, sizeof(::Protocol::C_Chat)},
+        {136, -1, -1, sizeof(::Protocol::S_Chat)},
+        {146, -1, -1, sizeof(::Protocol::C_GameReady)},
+        {154, -1, -1, sizeof(::Protocol::ObjectInfo)},
+        {171, -1, -1, sizeof(::Protocol::S_SpawnObject)},
+        {180, -1, -1, sizeof(::Protocol::S_DespawnObject)},
+        {189, -1, -1, sizeof(::Protocol::ObjectPos)},
+        {202, -1, -1, sizeof(::Protocol::S_MoveObjectBatch)},
+        {211, -1, -1, sizeof(::Protocol::C_Move)},
+        {221, -1, -1, sizeof(::Protocol::C_UseSkill)},
+        {232, -1, -1, sizeof(::Protocol::S_SkillEffect)},
+        {245, -1, -1, sizeof(::Protocol::S_DamageEffect)},
+        {255, -1, -1, sizeof(::Protocol::S_PlayerDowned)},
+        {264, -1, -1, sizeof(::Protocol::S_PlayerRevive)},
+        {273, -1, -1, sizeof(::Protocol::S_ExpChange)},
+        {284, -1, -1, sizeof(::Protocol::LevelUpOption)},
+        {297, -1, -1, sizeof(::Protocol::S_LevelUpOption)},
+        {306, -1, -1, sizeof(::Protocol::C_SelectLevelUp)},
+        {315, -1, -1, sizeof(::Protocol::S_GameWin)},
+        {325, -1, -1, sizeof(::Protocol::S_GameOver)},
+        {334, -1, -1, sizeof(::Protocol::S_Ping)},
+        {343, -1, -1, sizeof(::Protocol::C_Pong)},
 };
 static const ::_pb::Message* const file_default_instances[] = {
     &::Protocol::_C_Login_default_instance_._instance,
@@ -1251,6 +1356,7 @@ static const ::_pb::Message* const file_default_instances[] = {
     &::Protocol::_S_RoomList_default_instance_._instance,
     &::Protocol::_C_Chat_default_instance_._instance,
     &::Protocol::_S_Chat_default_instance_._instance,
+    &::Protocol::_C_GameReady_default_instance_._instance,
     &::Protocol::_ObjectInfo_default_instance_._instance,
     &::Protocol::_S_SpawnObject_default_instance_._instance,
     &::Protocol::_S_DespawnObject_default_instance_._instance,
@@ -1268,6 +1374,8 @@ static const ::_pb::Message* const file_default_instances[] = {
     &::Protocol::_C_SelectLevelUp_default_instance_._instance,
     &::Protocol::_S_GameWin_default_instance_._instance,
     &::Protocol::_S_GameOver_default_instance_._instance,
+    &::Protocol::_S_Ping_default_instance_._instance,
+    &::Protocol::_C_Pong_default_instance_._instance,
 };
 const char descriptor_table_protodef_game_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIABLE(
     protodesc_cold) = {
@@ -1275,78 +1383,82 @@ const char descriptor_table_protodef_game_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIA
     "rname\030\001 \001(\t\022\020\n\010password\030\002 \001(\t\022\030\n\020config_"
     "file_path\030\003 \001(\t\"W\n\007S_Login\022\017\n\007success\030\001 "
     "\001(\010\022\024\n\014my_player_id\030\002 \001(\005\022\021\n\tmap_width\030\003"
-    " \001(\002\022\022\n\nmap_height\030\004 \001(\002\"\'\n\014C_CreateRoom"
-    "\022\027\n\017wave_pattern_id\030\001 \001(\005\"0\n\014S_CreateRoo"
-    "m\022\017\n\007success\030\001 \001(\010\022\017\n\007room_id\030\002 \001(\005\"\035\n\nC"
-    "_JoinRoom\022\017\n\007room_id\030\001 \001(\005\".\n\nS_JoinRoom"
-    "\022\017\n\007success\030\001 \001(\010\022\017\n\007room_id\030\002 \001(\005\"\016\n\014C_"
-    "EnterLobby\"\037\n\014S_EnterLobby\022\017\n\007success\030\001 "
-    "\001(\010\"\r\n\013C_LeaveRoom\"\036\n\013S_LeaveRoom\022\017\n\007suc"
-    "cess\030\001 \001(\010\"]\n\010RoomInfo\022\017\n\007room_id\030\001 \001(\005\022"
-    "\027\n\017current_players\030\002 \001(\005\022\023\n\013max_players\030"
-    "\003 \001(\005\022\022\n\nis_playing\030\004 \001(\010\"&\n\rC_GetRoomLi"
+    " \001(\002\022\022\n\nmap_height\030\004 \001(\002\";\n\014C_CreateRoom"
+    "\022\027\n\017wave_pattern_id\030\001 \001(\005\022\022\n\nroom_title\030"
+    "\002 \001(\t\"0\n\014S_CreateRoom\022\017\n\007success\030\001 \001(\010\022\017"
+    "\n\007room_id\030\002 \001(\005\"\035\n\nC_JoinRoom\022\017\n\007room_id"
+    "\030\001 \001(\005\".\n\nS_JoinRoom\022\017\n\007success\030\001 \001(\010\022\017\n"
+    "\007room_id\030\002 \001(\005\"\016\n\014C_EnterLobby\"\037\n\014S_Ente"
+    "rLobby\022\017\n\007success\030\001 \001(\010\"\r\n\013C_LeaveRoom\"\036"
+    "\n\013S_LeaveRoom\022\017\n\007success\030\001 \001(\010\"q\n\010RoomIn"
+    "fo\022\017\n\007room_id\030\001 \001(\005\022\027\n\017current_players\030\002"
+    " \001(\005\022\023\n\013max_players\030\003 \001(\005\022\022\n\nis_playing\030"
+    "\004 \001(\010\022\022\n\nroom_title\030\005 \001(\t\"&\n\rC_GetRoomLi"
     "st\022\025\n\ronly_joinable\030\001 \001(\010\"/\n\nS_RoomList\022"
     "!\n\005rooms\030\001 \003(\0132\022.Protocol.RoomInfo\"\025\n\006C_"
     "Chat\022\013\n\003msg\030\001 \001(\t\"(\n\006S_Chat\022\021\n\tplayer_id"
-    "\030\001 \001(\005\022\013\n\003msg\030\002 \001(\t\"\276\001\n\nObjectInfo\022\021\n\tob"
-    "ject_id\030\001 \001(\005\022\"\n\004type\030\002 \001(\0162\024.Protocol.O"
-    "bjectType\022\017\n\007type_id\030\003 \001(\005\022\t\n\001x\030\004 \001(\002\022\t\n"
-    "\001y\030\005 \001(\002\022\n\n\002hp\030\006 \001(\005\022\016\n\006max_hp\030\007 \001(\005\022$\n\005"
-    "state\030\010 \001(\0162\025.Protocol.ObjectState\022\020\n\010ow"
-    "ner_id\030\t \001(\005\"6\n\rS_SpawnObject\022%\n\007objects"
-    "\030\001 \003(\0132\024.Protocol.ObjectInfo\"%\n\017S_Despaw"
-    "nObject\022\022\n\nobject_ids\030\001 \003(\005\"L\n\tObjectPos"
-    "\022\021\n\tobject_id\030\001 \001(\005\022\t\n\001x\030\002 \001(\002\022\t\n\001y\030\003 \001("
-    "\002\022\n\n\002vx\030\004 \001(\002\022\n\n\002vy\030\005 \001(\002\"7\n\021S_MoveObjec"
-    "tBatch\022\"\n\005moves\030\001 \003(\0132\023.Protocol.ObjectP"
-    "os\"&\n\006C_Move\022\r\n\005dir_x\030\001 \001(\002\022\r\n\005dir_y\030\002 \001"
-    "(\002\"B\n\nC_UseSkill\022\020\n\010skill_id\030\001 \001(\005\022\020\n\010ta"
-    "rget_x\030\002 \001(\002\022\020\n\010target_y\030\003 \001(\002\"^\n\rS_Skil"
-    "lEffect\022\021\n\tcaster_id\030\001 \001(\005\022\020\n\010skill_id\030\002"
-    " \001(\005\022\t\n\001x\030\003 \001(\002\022\t\n\001y\030\004 \001(\002\022\022\n\ntarget_ids"
-    "\030\005 \003(\005\";\n\016S_DamageEffect\022\022\n\ntarget_ids\030\001"
-    " \003(\005\022\025\n\rdamage_values\030\002 \003(\005\"#\n\016S_PlayerD"
-    "owned\022\021\n\tplayer_id\030\001 \001(\005\"#\n\016S_PlayerRevi"
-    "ve\022\021\n\tplayer_id\030\001 \001(\005\"B\n\013S_ExpChange\022\023\n\013"
-    "current_exp\030\001 \001(\005\022\017\n\007max_exp\030\002 \001(\005\022\r\n\005le"
-    "vel\030\003 \001(\005\"`\n\rLevelUpOption\022\021\n\toption_id\030"
-    "\001 \001(\005\022\020\n\010skill_id\030\002 \001(\005\022\014\n\004name\030\003 \001(\t\022\014\n"
-    "\004desc\030\004 \001(\t\022\016\n\006is_new\030\005 \001(\010\";\n\017S_LevelUp"
-    "Option\022(\n\007options\030\001 \003(\0132\027.Protocol.Level"
-    "UpOption\"\'\n\017C_SelectLevelUp\022\024\n\014option_in"
-    "dex\030\001 \001(\005\"6\n\tS_GameWin\022\025\n\rtotal_time_ms\030"
-    "\001 \001(\003\022\022\n\nkill_count\030\002 \001(\005\"&\n\nS_GameOver\022"
-    "\030\n\020survived_time_ms\030\001 \001(\003*\235\004\n\005MsgId\022\010\n\004N"
-    "ONE\020\000\022\013\n\007C_LOGIN\020d\022\013\n\007S_LOGIN\020e\022\021\n\rC_CRE"
-    "ATE_ROOM\020f\022\021\n\rS_CREATE_ROOM\020g\022\017\n\013C_JOIN_"
-    "ROOM\020h\022\017\n\013S_JOIN_ROOM\020i\022\023\n\017C_GET_ROOM_LI"
-    "ST\020j\022\017\n\013S_ROOM_LIST\020k\022\021\n\rC_ENTER_LOBBY\020n"
-    "\022\021\n\rS_ENTER_LOBBY\020o\022\020\n\014C_LEAVE_ROOM\020p\022\020\n"
-    "\014S_LEAVE_ROOM\020q\022\n\n\006C_CHAT\020x\022\n\n\006S_CHAT\020y\022"
-    "\023\n\016S_SPAWN_OBJECT\020\310\001\022\025\n\020S_DESPAWN_OBJECT"
-    "\020\311\001\022\030\n\023S_MOVE_OBJECT_BATCH\020\312\001\022\013\n\006C_MOVE\020"
-    "\313\001\022\020\n\013C_USE_SKILL\020\254\002\022\023\n\016S_SKILL_EFFECT\020\255"
-    "\002\022\024\n\017S_DAMAGE_EFFECT\020\256\002\022\024\n\017S_PLAYER_DOWN"
-    "ED\020\257\002\022\024\n\017S_PLAYER_REVIVE\020\260\002\022\021\n\014S_EXP_CHA"
-    "NGE\020\220\003\022\026\n\021S_LEVEL_UP_OPTION\020\221\003\022\026\n\021C_SELE"
-    "CT_LEVEL_UP\020\222\003\022\017\n\nS_GAME_WIN\020\364\003\022\020\n\013S_GAM"
-    "E_OVER\020\365\003*L\n\nObjectType\022\013\n\007UNKNOWN\020\000\022\n\n\006"
-    "PLAYER\020\001\022\013\n\007MONSTER\020\002\022\016\n\nPROJECTILE\020\003\022\010\n"
-    "\004ITEM\020\004*H\n\013ObjectState\022\010\n\004IDLE\020\000\022\n\n\006MOVI"
-    "NG\020\001\022\r\n\tATTACKING\020\002\022\010\n\004DEAD\020\003\022\n\n\006DOWNED\020"
-    "\004b\006proto3"
+    "\030\001 \001(\005\022\013\n\003msg\030\002 \001(\t\"\r\n\013C_GameReady\"\276\001\n\nO"
+    "bjectInfo\022\021\n\tobject_id\030\001 \001(\005\022\"\n\004type\030\002 \001"
+    "(\0162\024.Protocol.ObjectType\022\017\n\007type_id\030\003 \001("
+    "\005\022\t\n\001x\030\004 \001(\002\022\t\n\001y\030\005 \001(\002\022\n\n\002hp\030\006 \001(\005\022\016\n\006m"
+    "ax_hp\030\007 \001(\005\022$\n\005state\030\010 \001(\0162\025.Protocol.Ob"
+    "jectState\022\020\n\010owner_id\030\t \001(\005\"6\n\rS_SpawnOb"
+    "ject\022%\n\007objects\030\001 \003(\0132\024.Protocol.ObjectI"
+    "nfo\"%\n\017S_DespawnObject\022\022\n\nobject_ids\030\001 \003"
+    "(\005\"L\n\tObjectPos\022\021\n\tobject_id\030\001 \001(\005\022\t\n\001x\030"
+    "\002 \001(\002\022\t\n\001y\030\003 \001(\002\022\n\n\002vx\030\004 \001(\002\022\n\n\002vy\030\005 \001(\002"
+    "\"7\n\021S_MoveObjectBatch\022\"\n\005moves\030\001 \003(\0132\023.P"
+    "rotocol.ObjectPos\"&\n\006C_Move\022\r\n\005dir_x\030\001 \001"
+    "(\002\022\r\n\005dir_y\030\002 \001(\002\"B\n\nC_UseSkill\022\020\n\010skill"
+    "_id\030\001 \001(\005\022\020\n\010target_x\030\002 \001(\002\022\020\n\010target_y\030"
+    "\003 \001(\002\"^\n\rS_SkillEffect\022\021\n\tcaster_id\030\001 \001("
+    "\005\022\020\n\010skill_id\030\002 \001(\005\022\t\n\001x\030\003 \001(\002\022\t\n\001y\030\004 \001("
+    "\002\022\022\n\ntarget_ids\030\005 \003(\005\";\n\016S_DamageEffect\022"
+    "\022\n\ntarget_ids\030\001 \003(\005\022\025\n\rdamage_values\030\002 \003"
+    "(\005\"#\n\016S_PlayerDowned\022\021\n\tplayer_id\030\001 \001(\005\""
+    "#\n\016S_PlayerRevive\022\021\n\tplayer_id\030\001 \001(\005\"B\n\013"
+    "S_ExpChange\022\023\n\013current_exp\030\001 \001(\005\022\017\n\007max_"
+    "exp\030\002 \001(\005\022\r\n\005level\030\003 \001(\005\"`\n\rLevelUpOptio"
+    "n\022\021\n\toption_id\030\001 \001(\005\022\020\n\010skill_id\030\002 \001(\005\022\014"
+    "\n\004name\030\003 \001(\t\022\014\n\004desc\030\004 \001(\t\022\016\n\006is_new\030\005 \001"
+    "(\010\";\n\017S_LevelUpOption\022(\n\007options\030\001 \003(\0132\027"
+    ".Protocol.LevelUpOption\"\'\n\017C_SelectLevel"
+    "Up\022\024\n\014option_index\030\001 \001(\005\"6\n\tS_GameWin\022\025\n"
+    "\rtotal_time_ms\030\001 \001(\003\022\022\n\nkill_count\030\002 \001(\005"
+    "\"&\n\nS_GameOver\022\030\n\020survived_time_ms\030\001 \001(\003"
+    "\"\033\n\006S_Ping\022\021\n\ttimestamp\030\001 \001(\003\"\033\n\006C_Pong\022"
+    "\021\n\ttimestamp\030\001 \001(\003*\311\004\n\005MsgId\022\010\n\004NONE\020\000\022\013"
+    "\n\007C_LOGIN\020d\022\013\n\007S_LOGIN\020e\022\021\n\rC_CREATE_ROO"
+    "M\020f\022\021\n\rS_CREATE_ROOM\020g\022\017\n\013C_JOIN_ROOM\020h\022"
+    "\017\n\013S_JOIN_ROOM\020i\022\023\n\017C_GET_ROOM_LIST\020j\022\017\n"
+    "\013S_ROOM_LIST\020k\022\021\n\rC_ENTER_LOBBY\020n\022\021\n\rS_E"
+    "NTER_LOBBY\020o\022\020\n\014C_LEAVE_ROOM\020p\022\020\n\014S_LEAV"
+    "E_ROOM\020q\022\020\n\014C_GAME_READY\020r\022\n\n\006C_CHAT\020x\022\n"
+    "\n\006S_CHAT\020y\022\023\n\016S_SPAWN_OBJECT\020\310\001\022\025\n\020S_DES"
+    "PAWN_OBJECT\020\311\001\022\030\n\023S_MOVE_OBJECT_BATCH\020\312\001"
+    "\022\013\n\006C_MOVE\020\313\001\022\020\n\013C_USE_SKILL\020\254\002\022\023\n\016S_SKI"
+    "LL_EFFECT\020\255\002\022\024\n\017S_DAMAGE_EFFECT\020\256\002\022\024\n\017S_"
+    "PLAYER_DOWNED\020\257\002\022\024\n\017S_PLAYER_REVIVE\020\260\002\022\021"
+    "\n\014S_EXP_CHANGE\020\220\003\022\026\n\021S_LEVEL_UP_OPTION\020\221"
+    "\003\022\026\n\021C_SELECT_LEVEL_UP\020\222\003\022\017\n\nS_GAME_WIN\020"
+    "\364\003\022\020\n\013S_GAME_OVER\020\365\003\022\013\n\006S_PING\020\204\007\022\013\n\006C_P"
+    "ONG\020\205\007*L\n\nObjectType\022\013\n\007UNKNOWN\020\000\022\n\n\006PLA"
+    "YER\020\001\022\013\n\007MONSTER\020\002\022\016\n\nPROJECTILE\020\003\022\010\n\004IT"
+    "EM\020\004*H\n\013ObjectState\022\010\n\004IDLE\020\000\022\n\n\006MOVING\020"
+    "\001\022\r\n\tATTACKING\020\002\022\010\n\004DEAD\020\003\022\n\n\006DOWNED\020\004b\006"
+    "proto3"
 };
 static ::absl::once_flag descriptor_table_game_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_game_2eproto = {
     false,
     false,
-    2529,
+    2686,
     descriptor_table_protodef_game_2eproto,
     "game.proto",
     &descriptor_table_game_2eproto_once,
     nullptr,
     0,
-    32,
+    35,
     schemas,
     file_default_instances,
     TableStruct_game_2eproto::offsets,
@@ -1359,7 +1471,7 @@ const ::google::protobuf::EnumDescriptor* MsgId_descriptor() {
   return file_level_enum_descriptors_game_2eproto[0];
 }
 PROTOBUF_CONSTINIT const uint32_t MsgId_internal_data_[] = {
-    65536u, 131488u, 0u, 0u, 0u, 25290744u, 0u, 0u, 1920u, 0u, 0u, 63488u, 0u, 0u, 229376u, 501u, 500u, };
+    65536u, 262560u, 0u, 0u, 0u, 25421816u, 0u, 0u, 1920u, 0u, 0u, 63488u, 0u, 0u, 229376u, 900u, 501u, 901u, 500u, };
 bool MsgId_IsValid(int value) {
   return ::_pbi::ValidateEnum(value, MsgId_internal_data_);
 }
@@ -1965,15 +2077,34 @@ C_CreateRoom::C_CreateRoom(::google::protobuf::Arena* arena)
   SharedCtor(arena);
   // @@protoc_insertion_point(arena_constructor:Protocol.C_CreateRoom)
 }
+inline PROTOBUF_NDEBUG_INLINE C_CreateRoom::Impl_::Impl_(
+    ::google::protobuf::internal::InternalVisibility visibility, ::google::protobuf::Arena* arena,
+    const Impl_& from, const ::Protocol::C_CreateRoom& from_msg)
+      : room_title_(arena, from.room_title_),
+        _cached_size_{0} {}
+
 C_CreateRoom::C_CreateRoom(
-    ::google::protobuf::Arena* arena, const C_CreateRoom& from)
-    : C_CreateRoom(arena) {
-  MergeFrom(from);
+    ::google::protobuf::Arena* arena,
+    const C_CreateRoom& from)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, _class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  C_CreateRoom* const _this = this;
+  (void)_this;
+  _internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+  new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
+  _impl_.wave_pattern_id_ = from._impl_.wave_pattern_id_;
+
+  // @@protoc_insertion_point(copy_constructor:Protocol.C_CreateRoom)
 }
 inline PROTOBUF_NDEBUG_INLINE C_CreateRoom::Impl_::Impl_(
     ::google::protobuf::internal::InternalVisibility visibility,
     ::google::protobuf::Arena* arena)
-      : _cached_size_{0} {}
+      : room_title_(arena),
+        _cached_size_{0} {}
 
 inline void C_CreateRoom::SharedCtor(::_pb::Arena* arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
@@ -1987,6 +2118,7 @@ inline void C_CreateRoom::SharedDtor(MessageLite& self) {
   C_CreateRoom& this_ = static_cast<C_CreateRoom&>(self);
   this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
   ABSL_DCHECK(this_.GetArena() == nullptr);
+  this_._impl_.room_title_.Destroy();
   this_._impl_.~Impl_();
 }
 
@@ -1995,7 +2127,7 @@ inline void* C_CreateRoom::PlacementNew_(const void*, void* mem,
   return ::new (mem) C_CreateRoom(arena);
 }
 constexpr auto C_CreateRoom::InternalNewImpl_() {
-  return ::google::protobuf::internal::MessageCreator::ZeroInit(sizeof(C_CreateRoom),
+  return ::google::protobuf::internal::MessageCreator::CopyInit(sizeof(C_CreateRoom),
                                             alignof(C_CreateRoom));
 }
 PROTOBUF_CONSTINIT
@@ -2026,15 +2158,15 @@ const ::google::protobuf::internal::ClassData* C_CreateRoom::GetClassData() cons
   return _class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<0, 1, 0, 0, 2> C_CreateRoom::_table_ = {
+const ::_pbi::TcParseTable<1, 2, 0, 40, 2> C_CreateRoom::_table_ = {
   {
     0,  // no _has_bits_
     0, // no _extensions_
-    1, 0,  // max_field_number, fast_idx_mask
+    2, 8,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967294,  // skipmap
+    4294967292,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    1,  // num_field_entries
+    2,  // num_field_entries
     0,  // num_aux_entries
     offsetof(decltype(_table_), field_names),  // no aux_entries
     _class_data_.base(),
@@ -2044,6 +2176,9 @@ const ::_pbi::TcParseTable<0, 1, 0, 0, 2> C_CreateRoom::_table_ = {
     ::_pbi::TcParser::GetTable<::Protocol::C_CreateRoom>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
+    // string room_title = 2;
+    {::_pbi::TcParser::FastUS1,
+     {18, 63, 0, PROTOBUF_FIELD_OFFSET(C_CreateRoom, _impl_.room_title_)}},
     // int32 wave_pattern_id = 1;
     {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(C_CreateRoom, _impl_.wave_pattern_id_), 63>(),
      {8, 63, 0, PROTOBUF_FIELD_OFFSET(C_CreateRoom, _impl_.wave_pattern_id_)}},
@@ -2053,9 +2188,15 @@ const ::_pbi::TcParseTable<0, 1, 0, 0, 2> C_CreateRoom::_table_ = {
     // int32 wave_pattern_id = 1;
     {PROTOBUF_FIELD_OFFSET(C_CreateRoom, _impl_.wave_pattern_id_), 0, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kInt32)},
+    // string room_title = 2;
+    {PROTOBUF_FIELD_OFFSET(C_CreateRoom, _impl_.room_title_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kUtf8String | ::_fl::kRepAString)},
   }},
   // no aux_entries
   {{
+    "\25\0\12\0\0\0\0\0"
+    "Protocol.C_CreateRoom"
+    "room_title"
   }},
 };
 
@@ -2066,6 +2207,7 @@ PROTOBUF_NOINLINE void C_CreateRoom::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  _impl_.room_title_.ClearToEmpty();
   _impl_.wave_pattern_id_ = 0;
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
 }
@@ -2092,6 +2234,14 @@ PROTOBUF_NOINLINE void C_CreateRoom::Clear() {
                     stream, this_._internal_wave_pattern_id(), target);
           }
 
+          // string room_title = 2;
+          if (!this_._internal_room_title().empty()) {
+            const std::string& _s = this_._internal_room_title();
+            ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "Protocol.C_CreateRoom.room_title");
+            target = stream->WriteStringMaybeAliased(2, _s, target);
+          }
+
           if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
             target =
                 ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
@@ -2115,7 +2265,13 @@ PROTOBUF_NOINLINE void C_CreateRoom::Clear() {
           // Prevent compiler warnings about cached_has_bits being unused
           (void)cached_has_bits;
 
+          ::_pbi::Prefetch5LinesFrom7Lines(&this_);
            {
+            // string room_title = 2;
+            if (!this_._internal_room_title().empty()) {
+              total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                              this_._internal_room_title());
+            }
             // int32 wave_pattern_id = 1;
             if (this_._internal_wave_pattern_id() != 0) {
               total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
@@ -2134,6 +2290,9 @@ void C_CreateRoom::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::go
   ::uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (!from._internal_room_title().empty()) {
+    _this->_internal_set_room_title(from._internal_room_title());
+  }
   if (from._internal_wave_pattern_id() != 0) {
     _this->_impl_.wave_pattern_id_ = from._impl_.wave_pattern_id_;
   }
@@ -2150,7 +2309,10 @@ void C_CreateRoom::CopyFrom(const C_CreateRoom& from) {
 
 void C_CreateRoom::InternalSwap(C_CreateRoom* PROTOBUF_RESTRICT other) {
   using std::swap;
+  auto* arena = GetArena();
+  ABSL_DCHECK_EQ(arena, other->GetArena());
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.room_title_, &other->_impl_.room_title_, arena);
         swap(_impl_.wave_pattern_id_, other->_impl_.wave_pattern_id_);
 }
 
@@ -3477,15 +3639,40 @@ RoomInfo::RoomInfo(::google::protobuf::Arena* arena)
   SharedCtor(arena);
   // @@protoc_insertion_point(arena_constructor:Protocol.RoomInfo)
 }
+inline PROTOBUF_NDEBUG_INLINE RoomInfo::Impl_::Impl_(
+    ::google::protobuf::internal::InternalVisibility visibility, ::google::protobuf::Arena* arena,
+    const Impl_& from, const ::Protocol::RoomInfo& from_msg)
+      : room_title_(arena, from.room_title_),
+        _cached_size_{0} {}
+
 RoomInfo::RoomInfo(
-    ::google::protobuf::Arena* arena, const RoomInfo& from)
-    : RoomInfo(arena) {
-  MergeFrom(from);
+    ::google::protobuf::Arena* arena,
+    const RoomInfo& from)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, _class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  RoomInfo* const _this = this;
+  (void)_this;
+  _internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+  new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
+  ::memcpy(reinterpret_cast<char *>(&_impl_) +
+               offsetof(Impl_, room_id_),
+           reinterpret_cast<const char *>(&from._impl_) +
+               offsetof(Impl_, room_id_),
+           offsetof(Impl_, is_playing_) -
+               offsetof(Impl_, room_id_) +
+               sizeof(Impl_::is_playing_));
+
+  // @@protoc_insertion_point(copy_constructor:Protocol.RoomInfo)
 }
 inline PROTOBUF_NDEBUG_INLINE RoomInfo::Impl_::Impl_(
     ::google::protobuf::internal::InternalVisibility visibility,
     ::google::protobuf::Arena* arena)
-      : _cached_size_{0} {}
+      : room_title_(arena),
+        _cached_size_{0} {}
 
 inline void RoomInfo::SharedCtor(::_pb::Arena* arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
@@ -3504,6 +3691,7 @@ inline void RoomInfo::SharedDtor(MessageLite& self) {
   RoomInfo& this_ = static_cast<RoomInfo&>(self);
   this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
   ABSL_DCHECK(this_.GetArena() == nullptr);
+  this_._impl_.room_title_.Destroy();
   this_._impl_.~Impl_();
 }
 
@@ -3512,7 +3700,7 @@ inline void* RoomInfo::PlacementNew_(const void*, void* mem,
   return ::new (mem) RoomInfo(arena);
 }
 constexpr auto RoomInfo::InternalNewImpl_() {
-  return ::google::protobuf::internal::MessageCreator::ZeroInit(sizeof(RoomInfo),
+  return ::google::protobuf::internal::MessageCreator::CopyInit(sizeof(RoomInfo),
                                             alignof(RoomInfo));
 }
 PROTOBUF_CONSTINIT
@@ -3543,15 +3731,15 @@ const ::google::protobuf::internal::ClassData* RoomInfo::GetClassData() const {
   return _class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<2, 4, 0, 0, 2> RoomInfo::_table_ = {
+const ::_pbi::TcParseTable<3, 5, 0, 36, 2> RoomInfo::_table_ = {
   {
     0,  // no _has_bits_
     0, // no _extensions_
-    4, 24,  // max_field_number, fast_idx_mask
+    5, 56,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967280,  // skipmap
+    4294967264,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    4,  // num_field_entries
+    5,  // num_field_entries
     0,  // num_aux_entries
     offsetof(decltype(_table_), field_names),  // no aux_entries
     _class_data_.base(),
@@ -3561,9 +3749,7 @@ const ::_pbi::TcParseTable<2, 4, 0, 0, 2> RoomInfo::_table_ = {
     ::_pbi::TcParser::GetTable<::Protocol::RoomInfo>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
-    // bool is_playing = 4;
-    {::_pbi::TcParser::SingularVarintNoZag1<bool, offsetof(RoomInfo, _impl_.is_playing_), 63>(),
-     {32, 63, 0, PROTOBUF_FIELD_OFFSET(RoomInfo, _impl_.is_playing_)}},
+    {::_pbi::TcParser::MiniParse, {}},
     // int32 room_id = 1;
     {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(RoomInfo, _impl_.room_id_), 63>(),
      {8, 63, 0, PROTOBUF_FIELD_OFFSET(RoomInfo, _impl_.room_id_)}},
@@ -3573,6 +3759,14 @@ const ::_pbi::TcParseTable<2, 4, 0, 0, 2> RoomInfo::_table_ = {
     // int32 max_players = 3;
     {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(RoomInfo, _impl_.max_players_), 63>(),
      {24, 63, 0, PROTOBUF_FIELD_OFFSET(RoomInfo, _impl_.max_players_)}},
+    // bool is_playing = 4;
+    {::_pbi::TcParser::SingularVarintNoZag1<bool, offsetof(RoomInfo, _impl_.is_playing_), 63>(),
+     {32, 63, 0, PROTOBUF_FIELD_OFFSET(RoomInfo, _impl_.is_playing_)}},
+    // string room_title = 5;
+    {::_pbi::TcParser::FastUS1,
+     {42, 63, 0, PROTOBUF_FIELD_OFFSET(RoomInfo, _impl_.room_title_)}},
+    {::_pbi::TcParser::MiniParse, {}},
+    {::_pbi::TcParser::MiniParse, {}},
   }}, {{
     65535, 65535
   }}, {{
@@ -3588,9 +3782,15 @@ const ::_pbi::TcParseTable<2, 4, 0, 0, 2> RoomInfo::_table_ = {
     // bool is_playing = 4;
     {PROTOBUF_FIELD_OFFSET(RoomInfo, _impl_.is_playing_), 0, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kBool)},
+    // string room_title = 5;
+    {PROTOBUF_FIELD_OFFSET(RoomInfo, _impl_.room_title_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kUtf8String | ::_fl::kRepAString)},
   }},
   // no aux_entries
   {{
+    "\21\0\0\0\0\12\0\0"
+    "Protocol.RoomInfo"
+    "room_title"
   }},
 };
 
@@ -3601,6 +3801,7 @@ PROTOBUF_NOINLINE void RoomInfo::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  _impl_.room_title_.ClearToEmpty();
   ::memset(&_impl_.room_id_, 0, static_cast<::size_t>(
       reinterpret_cast<char*>(&_impl_.is_playing_) -
       reinterpret_cast<char*>(&_impl_.room_id_)) + sizeof(_impl_.is_playing_));
@@ -3650,6 +3851,14 @@ PROTOBUF_NOINLINE void RoomInfo::Clear() {
                 4, this_._internal_is_playing(), target);
           }
 
+          // string room_title = 5;
+          if (!this_._internal_room_title().empty()) {
+            const std::string& _s = this_._internal_room_title();
+            ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+                _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "Protocol.RoomInfo.room_title");
+            target = stream->WriteStringMaybeAliased(5, _s, target);
+          }
+
           if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
             target =
                 ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
@@ -3675,6 +3884,11 @@ PROTOBUF_NOINLINE void RoomInfo::Clear() {
 
           ::_pbi::Prefetch5LinesFrom7Lines(&this_);
            {
+            // string room_title = 5;
+            if (!this_._internal_room_title().empty()) {
+              total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                              this_._internal_room_title());
+            }
             // int32 room_id = 1;
             if (this_._internal_room_id() != 0) {
               total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
@@ -3707,6 +3921,9 @@ void RoomInfo::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google
   ::uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (!from._internal_room_title().empty()) {
+    _this->_internal_set_room_title(from._internal_room_title());
+  }
   if (from._internal_room_id() != 0) {
     _this->_impl_.room_id_ = from._impl_.room_id_;
   }
@@ -3732,7 +3949,10 @@ void RoomInfo::CopyFrom(const RoomInfo& from) {
 
 void RoomInfo::InternalSwap(RoomInfo* PROTOBUF_RESTRICT other) {
   using std::swap;
+  auto* arena = GetArena();
+  ABSL_DCHECK_EQ(arena, other->GetArena());
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.room_title_, &other->_impl_.room_title_, arena);
   ::google::protobuf::internal::memswap<
       PROTOBUF_FIELD_OFFSET(RoomInfo, _impl_.is_playing_)
       + sizeof(RoomInfo::_impl_.is_playing_)
@@ -4679,6 +4899,109 @@ void S_Chat::InternalSwap(S_Chat* PROTOBUF_RESTRICT other) {
 
 ::google::protobuf::Metadata S_Chat::GetMetadata() const {
   return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
+}
+// ===================================================================
+
+class C_GameReady::_Internal {
+ public:
+};
+
+C_GameReady::C_GameReady(::google::protobuf::Arena* arena)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::internal::ZeroFieldsBase(arena, _class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::internal::ZeroFieldsBase(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  // @@protoc_insertion_point(arena_constructor:Protocol.C_GameReady)
+}
+C_GameReady::C_GameReady(
+    ::google::protobuf::Arena* arena,
+    const C_GameReady& from)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::internal::ZeroFieldsBase(arena, _class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::internal::ZeroFieldsBase(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  C_GameReady* const _this = this;
+  (void)_this;
+  _internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
+      from._internal_metadata_);
+
+  // @@protoc_insertion_point(copy_constructor:Protocol.C_GameReady)
+}
+
+inline void* C_GameReady::PlacementNew_(const void*, void* mem,
+                                        ::google::protobuf::Arena* arena) {
+  return ::new (mem) C_GameReady(arena);
+}
+constexpr auto C_GameReady::InternalNewImpl_() {
+  return ::google::protobuf::internal::MessageCreator::ZeroInit(sizeof(C_GameReady),
+                                            alignof(C_GameReady));
+}
+PROTOBUF_CONSTINIT
+PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::google::protobuf::internal::ClassDataFull C_GameReady::_class_data_ = {
+    ::google::protobuf::internal::ClassData{
+        &_C_GameReady_default_instance_._instance,
+        &_table_.header,
+        nullptr,  // OnDemandRegisterArenaDtor
+        nullptr,  // IsInitialized
+        &C_GameReady::MergeImpl,
+        ::google::protobuf::internal::ZeroFieldsBase::GetNewImpl<C_GameReady>(),
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        &C_GameReady::SharedDtor,
+        ::google::protobuf::internal::ZeroFieldsBase::GetClearImpl<C_GameReady>(), &C_GameReady::ByteSizeLong,
+            &C_GameReady::_InternalSerialize,
+#endif  // PROTOBUF_CUSTOM_VTABLE
+        PROTOBUF_FIELD_OFFSET(C_GameReady, _impl_._cached_size_),
+        false,
+    },
+    &C_GameReady::kDescriptorMethods,
+    &descriptor_table_game_2eproto,
+    nullptr,  // tracker
+};
+const ::google::protobuf::internal::ClassData* C_GameReady::GetClassData() const {
+  ::google::protobuf::internal::PrefetchToLocalCache(&_class_data_);
+  ::google::protobuf::internal::PrefetchToLocalCache(_class_data_.tc_table);
+  return _class_data_.base();
+}
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::_pbi::TcParseTable<0, 0, 0, 0, 2> C_GameReady::_table_ = {
+  {
+    0,  // no _has_bits_
+    0, // no _extensions_
+    0, 0,  // max_field_number, fast_idx_mask
+    offsetof(decltype(_table_), field_lookup_table),
+    4294967295,  // skipmap
+    offsetof(decltype(_table_), field_names),  // no field_entries
+    0,  // num_field_entries
+    0,  // num_aux_entries
+    offsetof(decltype(_table_), field_names),  // no aux_entries
+    _class_data_.base(),
+    nullptr,  // post_loop_handler
+    ::_pbi::TcParser::GenericFallback,  // fallback
+    #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
+    ::_pbi::TcParser::GetTable<::Protocol::C_GameReady>(),  // to_prefetch
+    #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
+  }, {{
+    {::_pbi::TcParser::MiniParse, {}},
+  }}, {{
+    65535, 65535
+  }},
+  // no field_entries, or aux_entries
+  {{
+  }},
+};
+
+
+
+
+
+
+
+
+::google::protobuf::Metadata C_GameReady::GetMetadata() const {
+  return ::google::protobuf::internal::ZeroFieldsBase::GetMetadataImpl(GetClassData()->full());
 }
 // ===================================================================
 
@@ -9144,6 +9467,420 @@ void S_GameOver::InternalSwap(S_GameOver* PROTOBUF_RESTRICT other) {
 }
 
 ::google::protobuf::Metadata S_GameOver::GetMetadata() const {
+  return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
+}
+// ===================================================================
+
+class S_Ping::_Internal {
+ public:
+};
+
+S_Ping::S_Ping(::google::protobuf::Arena* arena)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, _class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  SharedCtor(arena);
+  // @@protoc_insertion_point(arena_constructor:Protocol.S_Ping)
+}
+S_Ping::S_Ping(
+    ::google::protobuf::Arena* arena, const S_Ping& from)
+    : S_Ping(arena) {
+  MergeFrom(from);
+}
+inline PROTOBUF_NDEBUG_INLINE S_Ping::Impl_::Impl_(
+    ::google::protobuf::internal::InternalVisibility visibility,
+    ::google::protobuf::Arena* arena)
+      : _cached_size_{0} {}
+
+inline void S_Ping::SharedCtor(::_pb::Arena* arena) {
+  new (&_impl_) Impl_(internal_visibility(), arena);
+  _impl_.timestamp_ = {};
+}
+S_Ping::~S_Ping() {
+  // @@protoc_insertion_point(destructor:Protocol.S_Ping)
+  SharedDtor(*this);
+}
+inline void S_Ping::SharedDtor(MessageLite& self) {
+  S_Ping& this_ = static_cast<S_Ping&>(self);
+  this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
+  ABSL_DCHECK(this_.GetArena() == nullptr);
+  this_._impl_.~Impl_();
+}
+
+inline void* S_Ping::PlacementNew_(const void*, void* mem,
+                                        ::google::protobuf::Arena* arena) {
+  return ::new (mem) S_Ping(arena);
+}
+constexpr auto S_Ping::InternalNewImpl_() {
+  return ::google::protobuf::internal::MessageCreator::ZeroInit(sizeof(S_Ping),
+                                            alignof(S_Ping));
+}
+PROTOBUF_CONSTINIT
+PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::google::protobuf::internal::ClassDataFull S_Ping::_class_data_ = {
+    ::google::protobuf::internal::ClassData{
+        &_S_Ping_default_instance_._instance,
+        &_table_.header,
+        nullptr,  // OnDemandRegisterArenaDtor
+        nullptr,  // IsInitialized
+        &S_Ping::MergeImpl,
+        ::google::protobuf::Message::GetNewImpl<S_Ping>(),
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        &S_Ping::SharedDtor,
+        ::google::protobuf::Message::GetClearImpl<S_Ping>(), &S_Ping::ByteSizeLong,
+            &S_Ping::_InternalSerialize,
+#endif  // PROTOBUF_CUSTOM_VTABLE
+        PROTOBUF_FIELD_OFFSET(S_Ping, _impl_._cached_size_),
+        false,
+    },
+    &S_Ping::kDescriptorMethods,
+    &descriptor_table_game_2eproto,
+    nullptr,  // tracker
+};
+const ::google::protobuf::internal::ClassData* S_Ping::GetClassData() const {
+  ::google::protobuf::internal::PrefetchToLocalCache(&_class_data_);
+  ::google::protobuf::internal::PrefetchToLocalCache(_class_data_.tc_table);
+  return _class_data_.base();
+}
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::_pbi::TcParseTable<0, 1, 0, 0, 2> S_Ping::_table_ = {
+  {
+    0,  // no _has_bits_
+    0, // no _extensions_
+    1, 0,  // max_field_number, fast_idx_mask
+    offsetof(decltype(_table_), field_lookup_table),
+    4294967294,  // skipmap
+    offsetof(decltype(_table_), field_entries),
+    1,  // num_field_entries
+    0,  // num_aux_entries
+    offsetof(decltype(_table_), field_names),  // no aux_entries
+    _class_data_.base(),
+    nullptr,  // post_loop_handler
+    ::_pbi::TcParser::GenericFallback,  // fallback
+    #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
+    ::_pbi::TcParser::GetTable<::Protocol::S_Ping>(),  // to_prefetch
+    #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
+  }, {{
+    // int64 timestamp = 1;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint64_t, offsetof(S_Ping, _impl_.timestamp_), 63>(),
+     {8, 63, 0, PROTOBUF_FIELD_OFFSET(S_Ping, _impl_.timestamp_)}},
+  }}, {{
+    65535, 65535
+  }}, {{
+    // int64 timestamp = 1;
+    {PROTOBUF_FIELD_OFFSET(S_Ping, _impl_.timestamp_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kInt64)},
+  }},
+  // no aux_entries
+  {{
+  }},
+};
+
+PROTOBUF_NOINLINE void S_Ping::Clear() {
+// @@protoc_insertion_point(message_clear_start:Protocol.S_Ping)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _impl_.timestamp_ = ::int64_t{0};
+  _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        ::uint8_t* S_Ping::_InternalSerialize(
+            const MessageLite& base, ::uint8_t* target,
+            ::google::protobuf::io::EpsCopyOutputStream* stream) {
+          const S_Ping& this_ = static_cast<const S_Ping&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+        ::uint8_t* S_Ping::_InternalSerialize(
+            ::uint8_t* target,
+            ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+          const S_Ping& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          // @@protoc_insertion_point(serialize_to_array_start:Protocol.S_Ping)
+          ::uint32_t cached_has_bits = 0;
+          (void)cached_has_bits;
+
+          // int64 timestamp = 1;
+          if (this_._internal_timestamp() != 0) {
+            target = ::google::protobuf::internal::WireFormatLite::
+                WriteInt64ToArrayWithField<1>(
+                    stream, this_._internal_timestamp(), target);
+          }
+
+          if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
+            target =
+                ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+                    this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
+          }
+          // @@protoc_insertion_point(serialize_to_array_end:Protocol.S_Ping)
+          return target;
+        }
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        ::size_t S_Ping::ByteSizeLong(const MessageLite& base) {
+          const S_Ping& this_ = static_cast<const S_Ping&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+        ::size_t S_Ping::ByteSizeLong() const {
+          const S_Ping& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          // @@protoc_insertion_point(message_byte_size_start:Protocol.S_Ping)
+          ::size_t total_size = 0;
+
+          ::uint32_t cached_has_bits = 0;
+          // Prevent compiler warnings about cached_has_bits being unused
+          (void)cached_has_bits;
+
+           {
+            // int64 timestamp = 1;
+            if (this_._internal_timestamp() != 0) {
+              total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(
+                  this_._internal_timestamp());
+            }
+          }
+          return this_.MaybeComputeUnknownFieldsSize(total_size,
+                                                     &this_._impl_._cached_size_);
+        }
+
+void S_Ping::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google::protobuf::MessageLite& from_msg) {
+  auto* const _this = static_cast<S_Ping*>(&to_msg);
+  auto& from = static_cast<const S_Ping&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:Protocol.S_Ping)
+  ABSL_DCHECK_NE(&from, _this);
+  ::uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from._internal_timestamp() != 0) {
+    _this->_impl_.timestamp_ = from._impl_.timestamp_;
+  }
+  _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void S_Ping::CopyFrom(const S_Ping& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:Protocol.S_Ping)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+
+void S_Ping::InternalSwap(S_Ping* PROTOBUF_RESTRICT other) {
+  using std::swap;
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+        swap(_impl_.timestamp_, other->_impl_.timestamp_);
+}
+
+::google::protobuf::Metadata S_Ping::GetMetadata() const {
+  return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
+}
+// ===================================================================
+
+class C_Pong::_Internal {
+ public:
+};
+
+C_Pong::C_Pong(::google::protobuf::Arena* arena)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, _class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  SharedCtor(arena);
+  // @@protoc_insertion_point(arena_constructor:Protocol.C_Pong)
+}
+C_Pong::C_Pong(
+    ::google::protobuf::Arena* arena, const C_Pong& from)
+    : C_Pong(arena) {
+  MergeFrom(from);
+}
+inline PROTOBUF_NDEBUG_INLINE C_Pong::Impl_::Impl_(
+    ::google::protobuf::internal::InternalVisibility visibility,
+    ::google::protobuf::Arena* arena)
+      : _cached_size_{0} {}
+
+inline void C_Pong::SharedCtor(::_pb::Arena* arena) {
+  new (&_impl_) Impl_(internal_visibility(), arena);
+  _impl_.timestamp_ = {};
+}
+C_Pong::~C_Pong() {
+  // @@protoc_insertion_point(destructor:Protocol.C_Pong)
+  SharedDtor(*this);
+}
+inline void C_Pong::SharedDtor(MessageLite& self) {
+  C_Pong& this_ = static_cast<C_Pong&>(self);
+  this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
+  ABSL_DCHECK(this_.GetArena() == nullptr);
+  this_._impl_.~Impl_();
+}
+
+inline void* C_Pong::PlacementNew_(const void*, void* mem,
+                                        ::google::protobuf::Arena* arena) {
+  return ::new (mem) C_Pong(arena);
+}
+constexpr auto C_Pong::InternalNewImpl_() {
+  return ::google::protobuf::internal::MessageCreator::ZeroInit(sizeof(C_Pong),
+                                            alignof(C_Pong));
+}
+PROTOBUF_CONSTINIT
+PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::google::protobuf::internal::ClassDataFull C_Pong::_class_data_ = {
+    ::google::protobuf::internal::ClassData{
+        &_C_Pong_default_instance_._instance,
+        &_table_.header,
+        nullptr,  // OnDemandRegisterArenaDtor
+        nullptr,  // IsInitialized
+        &C_Pong::MergeImpl,
+        ::google::protobuf::Message::GetNewImpl<C_Pong>(),
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        &C_Pong::SharedDtor,
+        ::google::protobuf::Message::GetClearImpl<C_Pong>(), &C_Pong::ByteSizeLong,
+            &C_Pong::_InternalSerialize,
+#endif  // PROTOBUF_CUSTOM_VTABLE
+        PROTOBUF_FIELD_OFFSET(C_Pong, _impl_._cached_size_),
+        false,
+    },
+    &C_Pong::kDescriptorMethods,
+    &descriptor_table_game_2eproto,
+    nullptr,  // tracker
+};
+const ::google::protobuf::internal::ClassData* C_Pong::GetClassData() const {
+  ::google::protobuf::internal::PrefetchToLocalCache(&_class_data_);
+  ::google::protobuf::internal::PrefetchToLocalCache(_class_data_.tc_table);
+  return _class_data_.base();
+}
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::_pbi::TcParseTable<0, 1, 0, 0, 2> C_Pong::_table_ = {
+  {
+    0,  // no _has_bits_
+    0, // no _extensions_
+    1, 0,  // max_field_number, fast_idx_mask
+    offsetof(decltype(_table_), field_lookup_table),
+    4294967294,  // skipmap
+    offsetof(decltype(_table_), field_entries),
+    1,  // num_field_entries
+    0,  // num_aux_entries
+    offsetof(decltype(_table_), field_names),  // no aux_entries
+    _class_data_.base(),
+    nullptr,  // post_loop_handler
+    ::_pbi::TcParser::GenericFallback,  // fallback
+    #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
+    ::_pbi::TcParser::GetTable<::Protocol::C_Pong>(),  // to_prefetch
+    #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
+  }, {{
+    // int64 timestamp = 1;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint64_t, offsetof(C_Pong, _impl_.timestamp_), 63>(),
+     {8, 63, 0, PROTOBUF_FIELD_OFFSET(C_Pong, _impl_.timestamp_)}},
+  }}, {{
+    65535, 65535
+  }}, {{
+    // int64 timestamp = 1;
+    {PROTOBUF_FIELD_OFFSET(C_Pong, _impl_.timestamp_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kInt64)},
+  }},
+  // no aux_entries
+  {{
+  }},
+};
+
+PROTOBUF_NOINLINE void C_Pong::Clear() {
+// @@protoc_insertion_point(message_clear_start:Protocol.C_Pong)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _impl_.timestamp_ = ::int64_t{0};
+  _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        ::uint8_t* C_Pong::_InternalSerialize(
+            const MessageLite& base, ::uint8_t* target,
+            ::google::protobuf::io::EpsCopyOutputStream* stream) {
+          const C_Pong& this_ = static_cast<const C_Pong&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+        ::uint8_t* C_Pong::_InternalSerialize(
+            ::uint8_t* target,
+            ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+          const C_Pong& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          // @@protoc_insertion_point(serialize_to_array_start:Protocol.C_Pong)
+          ::uint32_t cached_has_bits = 0;
+          (void)cached_has_bits;
+
+          // int64 timestamp = 1;
+          if (this_._internal_timestamp() != 0) {
+            target = ::google::protobuf::internal::WireFormatLite::
+                WriteInt64ToArrayWithField<1>(
+                    stream, this_._internal_timestamp(), target);
+          }
+
+          if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
+            target =
+                ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+                    this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
+          }
+          // @@protoc_insertion_point(serialize_to_array_end:Protocol.C_Pong)
+          return target;
+        }
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        ::size_t C_Pong::ByteSizeLong(const MessageLite& base) {
+          const C_Pong& this_ = static_cast<const C_Pong&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+        ::size_t C_Pong::ByteSizeLong() const {
+          const C_Pong& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          // @@protoc_insertion_point(message_byte_size_start:Protocol.C_Pong)
+          ::size_t total_size = 0;
+
+          ::uint32_t cached_has_bits = 0;
+          // Prevent compiler warnings about cached_has_bits being unused
+          (void)cached_has_bits;
+
+           {
+            // int64 timestamp = 1;
+            if (this_._internal_timestamp() != 0) {
+              total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(
+                  this_._internal_timestamp());
+            }
+          }
+          return this_.MaybeComputeUnknownFieldsSize(total_size,
+                                                     &this_._impl_._cached_size_);
+        }
+
+void C_Pong::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google::protobuf::MessageLite& from_msg) {
+  auto* const _this = static_cast<C_Pong*>(&to_msg);
+  auto& from = static_cast<const C_Pong&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:Protocol.C_Pong)
+  ABSL_DCHECK_NE(&from, _this);
+  ::uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from._internal_timestamp() != 0) {
+    _this->_impl_.timestamp_ = from._impl_.timestamp_;
+  }
+  _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void C_Pong::CopyFrom(const C_Pong& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:Protocol.C_Pong)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+
+void C_Pong::InternalSwap(C_Pong* PROTOBUF_RESTRICT other) {
+  using std::swap;
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+        swap(_impl_.timestamp_, other->_impl_.timestamp_);
+}
+
+::google::protobuf::Metadata C_Pong::GetMetadata() const {
   return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
 }
 // @@protoc_insertion_point(namespace_scope)

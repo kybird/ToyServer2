@@ -12,7 +12,6 @@
 #include "Game/SpatialGrid.h"
 #include "Game/WaveManager.h"
 
-
 namespace System {
 class IPacket;
 class IStrand;
@@ -26,6 +25,7 @@ class Room : public System::ITimerListener, public std::enable_shared_from_this<
     friend class CombatTest_ProjectileHitsMonster_Test;
     friend class CombatTest_MonsterDies_Test;
     friend class SwarmPerformanceTest_StressTest500Monsters_Test;
+
 public:
     Room(
         int roomId, std::shared_ptr<System::ITimer> timer, std::shared_ptr<System::IStrand> strand,
@@ -35,6 +35,7 @@ public:
 
     void Enter(std::shared_ptr<Player> player);
     void Leave(uint64_t sessionId);
+    void OnPlayerReady(uint64_t sessionId); // Called when client finishes loading
     void BroadcastPacket(const System::IPacket &pkt);
     void BroadcastSpawn(const std::vector<std::shared_ptr<GameObject>> &objects);
     void BroadcastDespawn(const std::vector<int32_t> &objectIds);
@@ -69,8 +70,18 @@ public:
     void StartGame(); // Start wave manager when first player enters
     void Reset();     // Reset room state when all players leave
 
+    void SetTitle(const std::string &title)
+    {
+        _title = title;
+    }
+    std::string GetTitle() const
+    {
+        return _title;
+    }
+
 private:
     int _roomId;
+    std::string _title;
     std::unordered_map<uint64_t, std::shared_ptr<Player>> _players; // SessionID -> Player
     std::recursive_mutex _mutex;
 

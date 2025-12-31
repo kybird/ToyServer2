@@ -106,7 +106,11 @@ void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketVi
             static int nextRoomId = 2; // Simple auto-increment
             int newRoomId = nextRoomId++;
 
-            auto room = RoomManager::Instance().CreateRoom(newRoomId);
+            std::string title = req.room_title();
+            if (title.empty())
+                title = "Room " + std::to_string(newRoomId);
+
+            auto room = RoomManager::Instance().CreateRoom(newRoomId, title);
 
             Protocol::S_CreateRoom res;
             res.set_success(true);
@@ -136,6 +140,7 @@ void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketVi
                 roomInfo->set_current_players(room->GetPlayerCount());
                 roomInfo->set_max_players(room->GetMaxPlayers());
                 roomInfo->set_is_playing(room->IsPlaying());
+                roomInfo->set_room_title(room->GetTitle());
             }
 
             S_RoomListPacket respPacket(res);
@@ -275,6 +280,24 @@ void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketVi
         }
         break;
     }
+    case PacketID::C_PONG: {
+        // [Heartbeat] Client responded. Update timeout logic.
+        session->OnPong();
+        break;
+    }
+    case PacketID::C_GAME_READY: {
+        // [Game Ready] Client finished loading, send spawn packets
+        auto player = RoomManager::Instance().GetPlayer(session->GetId());
+        if (player)
+        {
+            auto room = RoomManager::Instance().GetRoom(player->GetRoomId());
+            if (room)
+            {
+                room->OnPlayerReady(session->GetId());
+            }
+        }
+        break;
+    }
     default:
         LOG_ERROR("Unknown Packet ID: {}", packet.GetId());
         break;
@@ -296,8 +319,15 @@ void GamePacketHandler::OnSessionDisconnect(System::ISession *session)
     auto player = RoomManager::Instance().GetPlayer(session->GetId());
     if (player)
     {
-        // TODO: Notify Room to remove player object safely (Strand)
-        // For now, just unregister from global map to prevent lookups
+        // Safe to call Room::Leave as it is thread-safe (internal mutex)
+        int roomId = player->GetRoomId();
+        auto room = RoomManager::Instance().GetRoom(roomId);
+        if (room)
+        {
+            room->Leave(session->GetId());
+        }
+
+        // Unregister from global map
         RoomManager::Instance().UnregisterPlayer(session->GetId());
         LOG_INFO("Session {} unregistered from Player Map.", session->GetId());
     }

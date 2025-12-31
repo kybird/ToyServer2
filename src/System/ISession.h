@@ -24,6 +24,11 @@ public:
     {
     }
 
+    // Heartbeat Support
+    virtual void OnPong()
+    {
+    }
+
     // [Lifetime] Reference counting for async message queue safety
     virtual void DecRef() = 0;
 };

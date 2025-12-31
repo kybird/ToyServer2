@@ -1,11 +1,10 @@
 #include "Game/Room.h"
 #include "Core/UserDB.h"
 #include "Entity/Monster.h"
+#include "Entity/Projectile.h"
 #include "Game/RoomManager.h"
 #include "GamePackets.h"
 #include "Protocol/game.pb.h"
-#include "Entity/Monster.h"
-#include "Entity/Projectile.h"
 #include "System/Packet/IPacket.h"
 #include "System/Packet/PacketBroadcast.h"
 #include "System/Thread/IStrand.h"
@@ -191,11 +190,27 @@ void Room::Enter(std::shared_ptr<Player> player)
 
     LOG_INFO("Player {} entered Room {}. Total Players: {}", player->GetSessionId(), _roomId, _players.size());
 
-    // Start game when first player enters
     if (_players.size() == 1 && !_gameStarted)
     {
         StartGame();
     }
+
+    LOG_INFO("Player {} entered Room {}. Waiting for C_GAME_READY.", player->GetSessionId(), _roomId);
+}
+
+void Room::OnPlayerReady(uint64_t sessionId)
+{
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+
+    auto it = _players.find(sessionId);
+    if (it == _players.end())
+    {
+        LOG_WARN("OnPlayerReady: Player {} not found in room {}", sessionId, _roomId);
+        return;
+    }
+
+    auto player = it->second;
+    LOG_INFO("Player {} is ready in Room {}", sessionId, _roomId);
 
     // ===== Send Initial State to New Player =====
     // 1. Send all existing objects in the room to the newly joined player
@@ -234,9 +249,7 @@ void Room::Enter(std::shared_ptr<Player> player)
         {
             S_SpawnObjectPacket packet(existingObjects);
             player->GetSession()->SendPacket(packet);
-            LOG_INFO(
-                "Sent {} existing objects to new player {}", existingObjects.objects_size(), player->GetSessionId()
-            );
+            LOG_INFO("Sent {} existing objects to ready player {}", existingObjects.objects_size(), sessionId);
         }
     }
 
@@ -252,7 +265,7 @@ void Room::Enter(std::shared_ptr<Player> player)
     info->set_state(Protocol::ObjectState::IDLE);
 
     BroadcastProto(this, newPlayerSpawn);
-    LOG_INFO("Broadcasted new player {} spawn to all players in room", player->GetSessionId());
+    LOG_INFO("Broadcasted ready player {} spawn to all players in room", sessionId);
 }
 
 void Room::Leave(uint64_t sessionId)
@@ -389,19 +402,23 @@ void Room::Update(float deltaTime)
         if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
         {
             auto proj = std::static_pointer_cast<Projectile>(obj);
-            if (proj->IsExpired()) continue;
+            if (proj->IsExpired())
+                continue;
 
             // Query nearby objects (Projectiles usually have small radius, e.g. 0.5m)
             auto nearby = _grid.QueryRange(proj->GetX(), proj->GetY(), proj->GetRadius() + 0.5f);
             for (auto &target : nearby)
             {
-                if (target->GetId() == proj->GetId()) continue;
-                if (target->GetId() == proj->GetOwnerId()) continue; // Don't hit owner
+                if (target->GetId() == proj->GetId())
+                    continue;
+                if (target->GetId() == proj->GetOwnerId())
+                    continue; // Don't hit owner
 
                 if (target->GetType() == Protocol::ObjectType::MONSTER)
                 {
                     auto monster = std::static_pointer_cast<Monster>(target);
-                    if (monster->IsDead()) continue;
+                    if (monster->IsDead())
+                        continue;
 
                     // Simple Circular Collision
                     float dx = proj->GetX() - monster->GetX();
