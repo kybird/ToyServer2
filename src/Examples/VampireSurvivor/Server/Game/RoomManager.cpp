@@ -81,6 +81,20 @@ std::shared_ptr<Room> RoomManager::GetRoom(int roomId)
     return nullptr;
 }
 
+std::vector<std::shared_ptr<Room>> RoomManager::GetAllRooms()
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    std::vector<std::shared_ptr<Room>> rooms;
+    rooms.reserve(_rooms.size());
+
+    for (auto &pair : _rooms)
+    {
+        rooms.push_back(pair.second);
+    }
+
+    return rooms;
+}
+
 void RoomManager::RegisterPlayer(uint64_t sessionId, std::shared_ptr<Player> player)
 {
     std::lock_guard<std::mutex> lock(_mutex);

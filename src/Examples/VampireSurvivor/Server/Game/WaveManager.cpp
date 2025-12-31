@@ -14,6 +14,15 @@ void WaveManager::Start()
     LOG_INFO("WaveManager Started for Room {}", _roomId);
 }
 
+void WaveManager::Reset()
+{
+    _currentTime = 0.0f;
+    _currentWaveIndex = 0;
+    _nextSpawnTime = 0.0f;
+    _activeSpawners.clear();
+    LOG_INFO("WaveManager reset for Room {}", _roomId);
+}
+
 void WaveManager::Update(float dt, Room *room)
 {
     _currentTime += dt;

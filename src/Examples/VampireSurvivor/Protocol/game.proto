@@ -3,6 +3,53 @@ syntax = "proto3";
 package Protocol;
 
 // ==========================================================
+// Packet IDs (MsgId)
+// ==========================================================
+enum MsgId {
+  NONE = 0;
+  
+  // Auth & Room (100-199)
+  C_LOGIN = 100;
+  S_LOGIN = 101;
+  C_CREATE_ROOM = 102;
+  S_CREATE_ROOM = 103;
+  C_JOIN_ROOM = 104;
+  S_JOIN_ROOM = 105;
+  C_GET_ROOM_LIST = 106;
+  S_ROOM_LIST = 107;
+  C_ENTER_LOBBY = 110;
+  S_ENTER_LOBBY = 111;
+  C_LEAVE_ROOM = 112;
+  S_LEAVE_ROOM = 113;
+
+  // Chat (120-129)
+  C_CHAT = 120;
+  S_CHAT = 121;
+
+  // In-Game Logic (200-299)
+  S_SPAWN_OBJECT = 200;
+  S_DESPAWN_OBJECT = 201;
+  S_MOVE_OBJECT_BATCH = 202;
+  C_MOVE = 203;
+
+  // Combat & Skills (300-399)
+  C_USE_SKILL = 300;
+  S_SKILL_EFFECT = 301;
+  S_DAMAGE_EFFECT = 302;
+  S_PLAYER_DOWNED = 303;
+  S_PLAYER_REVIVE = 304;
+
+  // Progression (400-499)
+  S_EXP_CHANGE = 400;
+  S_LEVEL_UP_OPTION = 401;
+  C_SELECT_LEVEL_UP = 402;
+
+  // System (500-599)
+  S_GAME_WIN = 500;
+  S_GAME_OVER = 501;
+}
+
+// ==========================================================
 // Meta & Login
 // ==========================================================
 
@@ -49,6 +96,22 @@ message C_LeaveRoom {
 
 message S_LeaveRoom {
     bool success = 1;
+}
+
+// Room Info
+message RoomInfo {
+    int32 room_id = 1;
+    int32 current_players = 2;
+    int32 max_players = 3;
+    bool is_playing = 4;
+}
+
+message C_GetRoomList {
+    bool only_joinable = 1;  // true면 입장 가능한 방만
+}
+
+message S_RoomList {
+    repeated RoomInfo rooms = 1;
 }
 
 message C_Chat {

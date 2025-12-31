@@ -1,5 +1,6 @@
 #include "Game/Room.h"
 #include "Core/UserDB.h"
+#include "Entity/Monster.h"
 #include "Game/RoomManager.h"
 #include "GamePackets.h"
 #include "Protocol/game.pb.h"
@@ -37,9 +38,8 @@ void Room::Start()
     {
         std::cerr << "[ERROR] Room " << _roomId << " has NO TIMER!" << std::endl;
     }
-    std::cout << "[DEBUG] Starting WaveManager..." << std::endl;
-    _waveMgr.Start();
-    std::cout << "[DEBUG] WaveManager Started." << std::endl;
+    // WaveManager will be started when first player enters
+    LOG_INFO("Room {} created. Waiting for players...", _roomId);
 }
 
 void Room::Stop()
@@ -49,6 +49,41 @@ void Room::Stop()
         _timer->CancelTimer(_timerHandle);
         _timerHandle = 0;
     }
+}
+
+void Room::StartGame()
+{
+    if (_gameStarted)
+        return; // Already started
+
+    _gameStarted = true;
+    _waveMgr.Start();
+    LOG_INFO("Game started in Room {}! Wave spawning begins.", _roomId);
+}
+
+void Room::Reset()
+{
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+
+    // 1. Clear all objects (monsters, projectiles, etc.) except players
+    auto allObjects = _objMgr.GetAllObjects();
+    for (const auto &obj : allObjects)
+    {
+        if (obj->GetType() != Protocol::ObjectType::PLAYER)
+        {
+            _grid.Remove(obj);
+            _objMgr.RemoveObject(obj->GetId());
+        }
+    }
+
+    // 2. Reset WaveManager
+    _waveMgr.Reset();
+
+    // 3. Reset game state
+    _gameStarted = false;
+    _totalRunTime = 0.0f;
+
+    LOG_INFO("Room {} has been reset. Ready for new game.", _roomId);
 }
 
 void Room::OnTimer(uint32_t timerId, void *pParam)
@@ -154,19 +189,68 @@ void Room::Enter(std::shared_ptr<Player> player)
 
     LOG_INFO("Player {} entered Room {}. Total Players: {}", player->GetSessionId(), _roomId, _players.size());
 
-    // Send Initial State (S_CREATE_ROOM or S_JOIN_ROOM success handled by caller usually, but here we spawn objects)
-    // S_SPAWN_OBJECT for this player
-    Protocol::S_SpawnObject spawnSelf;
-    auto *info = spawnSelf.add_objects();
+    // Start game when first player enters
+    if (_players.size() == 1 && !_gameStarted)
+    {
+        StartGame();
+    }
+
+    // ===== Send Initial State to New Player =====
+    // 1. Send all existing objects in the room to the newly joined player
+    auto allObjects = _objMgr.GetAllObjects();
+    if (!allObjects.empty())
+    {
+        Protocol::S_SpawnObject existingObjects;
+        for (const auto &obj : allObjects)
+        {
+            // Skip self (the new player was just added, but client already knows about itself)
+            if (obj->GetId() == player->GetId())
+                continue;
+
+            auto *info = existingObjects.add_objects();
+            info->set_object_id(obj->GetId());
+            info->set_type(obj->GetType());
+            info->set_x(obj->GetX());
+            info->set_y(obj->GetY());
+            info->set_hp(obj->GetHp());
+            info->set_max_hp(obj->GetMaxHp());
+            info->set_state(obj->GetState());
+
+            // Set type_id for monsters
+            if (obj->GetType() == Protocol::ObjectType::MONSTER)
+            {
+                auto monster = std::dynamic_pointer_cast<Monster>(obj);
+                if (monster)
+                {
+                    info->set_type_id(monster->GetMonsterTypeId());
+                }
+            }
+        }
+
+        // Send to the new player only
+        if (existingObjects.objects_size() > 0)
+        {
+            S_SpawnObjectPacket packet(existingObjects);
+            player->GetSession()->SendPacket(packet);
+            LOG_INFO(
+                "Sent {} existing objects to new player {}", existingObjects.objects_size(), player->GetSessionId()
+            );
+        }
+    }
+
+    // 2. Broadcast the new player's spawn to all other players
+    Protocol::S_SpawnObject newPlayerSpawn;
+    auto *info = newPlayerSpawn.add_objects();
     info->set_object_id(player->GetId());
     info->set_type(Protocol::ObjectType::PLAYER);
     info->set_x(player->GetX());
     info->set_y(player->GetY());
-    info->set_hp(player->GetHp()); // Updated HP
+    info->set_hp(player->GetHp());
     info->set_max_hp(player->GetMaxHp());
+    info->set_state(Protocol::ObjectState::IDLE);
 
-    // Broadcast spawn to others
-    BroadcastProto(this, spawnSelf);
+    BroadcastProto(this, newPlayerSpawn);
+    LOG_INFO("Broadcasted new player {} spawn to all players in room", player->GetSessionId());
 }
 
 void Room::Leave(uint64_t sessionId)
@@ -191,16 +275,14 @@ void Room::Leave(uint64_t sessionId)
         _players.erase(it);
         LOG_INFO("Player {} left Room {}", sessionId, _roomId);
 
-        // [CPU Optimization] Stop timer and destroy room if it's empty
+        // Reset room when all players leave
         if (_players.empty())
         {
             Stop();
             LOG_INFO("Room {} is empty. Stopping game loop timer.", _roomId);
 
-            if (_roomId != 1)
-            {
-                RoomManager::Instance().DestroyRoom(_roomId);
-            }
+            // Reset room state for next game
+            Reset();
         }
     }
 }

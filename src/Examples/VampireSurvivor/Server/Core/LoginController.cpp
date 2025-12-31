@@ -29,34 +29,67 @@ void LoginController::OnLogin(const LoginRequestEvent &evt)
 {
     LOG_INFO("Processing Login Request for User: {}", evt.username);
 
-    // Real Verification using SQL
-    std::string query = fmt::format("SELECT password FROM users WHERE username = '{}';", evt.username);
-    auto res = _db->Query(query);
+    // 1. Check if user exists
+    std::string selectQuery = fmt::format("SELECT password FROM users WHERE username = '{}';", evt.username);
+    auto res = _db->Query(selectQuery);
 
     bool success = false;
+    bool needsRegistration = false;
+
     if (res.status.IsOk() && res.value.has_value())
     {
-        auto rs = std::move(*res.value); // 소유권 이전 (RAII)
+        auto rs = std::move(*res.value);
         if (rs->Next())
         {
+            // User exists, verify password
             std::string dbPass = rs->GetString(0);
             if (dbPass == evt.password)
             {
                 success = true;
             }
         }
+        else
+        {
+            // User does not exist, trigger auto-registration
+            needsRegistration = true;
+        }
+    }
+    else
+    {
+        // Query failed (e.g., table doesn't exist yet, but in many cases we should just fail)
+        LOG_ERROR("Database query failed: {}", res.status.message);
     }
 
+    // 2. Auto-Registration
+    if (needsRegistration)
+    {
+        LOG_INFO("User not found. Registering new user: {}", evt.username);
+        std::string insertQuery =
+            fmt::format("INSERT INTO users (username, password) VALUES ('{}', '{}');", evt.username, evt.password);
+        auto insertStatus = _db->Execute(insertQuery);
+
+        if (insertStatus.IsOk())
+        {
+            LOG_INFO("Auto-Registration Success: {}", evt.username);
+            success = true;
+        }
+        else
+        {
+            LOG_ERROR("Auto-Registration Failed for {}: {}", evt.username, insertStatus.message);
+        }
+    }
+
+    // 3. Send Response
     if (success)
     {
         // Send S_LOGIN Response (Auth Success)
-        Protocol::S_Login res;
-        res.set_success(true);
-        res.set_my_player_id(0); // Not spawned yet
-        res.set_map_width(0);
-        res.set_map_height(0);
+        Protocol::S_Login resMsg;
+        resMsg.set_success(true);
+        resMsg.set_my_player_id(0); // Not spawned yet
+        resMsg.set_map_width(0);
+        resMsg.set_map_height(0);
 
-        S_LoginPacket packet(res);
+        S_LoginPacket packet(resMsg);
         evt.session->SendPacket(packet);
 
         LOG_INFO("Login Auth Success: {} (Session: {})", evt.username, evt.sessionId);

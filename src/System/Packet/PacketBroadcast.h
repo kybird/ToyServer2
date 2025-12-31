@@ -14,7 +14,7 @@ class PacketBroadcast
 public:
     static void Broadcast(const IPacket &pkt, std::span<Session *> sessions)
     {
-        LOG_INFO("Packet::Broadcast");
+        // LOG_INFO("Packet::Broadcast");
         if (sessions.empty())
             return;
 
@@ -34,7 +34,7 @@ public:
 
         // 3. Free Template
         System::MessagePool::Free(msg);
-        LOG_INFO("Packet::Broadcast done");
+        // LOG_INFO("Packet::Broadcast done");
     }
 
     // Helper for shared_ptr

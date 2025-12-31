@@ -118,6 +118,32 @@ void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketVi
         }
         break;
     }
+    case PacketID::C_GET_ROOM_LIST: {
+        Protocol::C_GetRoomList req;
+        if (packet.Parse(req))
+        {
+            auto rooms = RoomManager::Instance().GetAllRooms();
+
+            Protocol::S_RoomList res;
+            for (const auto &room : rooms)
+            {
+                // 필터링: only_joinable이면 게임 진행 중인 방 제외
+                if (req.only_joinable() && room->IsPlaying())
+                    continue;
+
+                auto *roomInfo = res.add_rooms();
+                roomInfo->set_room_id(room->GetId());
+                roomInfo->set_current_players(room->GetPlayerCount());
+                roomInfo->set_max_players(room->GetMaxPlayers());
+                roomInfo->set_is_playing(room->IsPlaying());
+            }
+
+            S_RoomListPacket respPacket(res);
+            session->SendPacket(respPacket);
+            LOG_INFO("Sent room list to session {}: {} rooms", session->GetId(), res.rooms_size());
+        }
+        break;
+    }
     case PacketID::C_JOIN_ROOM: {
         Protocol::C_JoinRoom req;
         if (packet.Parse(req))
@@ -139,13 +165,7 @@ void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketVi
                 auto player = PlayerFactory::Instance().CreatePlayer(gameId, session);
                 player->SetName("Survivor_" + std::to_string(gameId));
 
-                // 3. Enter Room
-                room->Enter(player);
-                // Remove from lobby if there
-                RoomManager::Instance().LeaveLobby(session->GetId());
-                RoomManager::Instance().RegisterPlayer(session->GetId(), player);
-
-                // 4. Send Response
+                // 3. Send Response FIRST (before entering room)
                 Protocol::S_JoinRoom res;
                 res.set_success(true);
                 res.set_room_id(roomId);
@@ -153,6 +173,12 @@ void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketVi
                 S_JoinRoomPacket respPacket(res);
                 session->SendPacket(respPacket);
                 LOG_INFO("Player joined Room {}", roomId);
+
+                // 4. Enter Room (this will send existing objects to the player)
+                room->Enter(player);
+                // Remove from lobby if there
+                RoomManager::Instance().LeaveLobby(session->GetId());
+                RoomManager::Instance().RegisterPlayer(session->GetId(), player);
             }
             else
             {

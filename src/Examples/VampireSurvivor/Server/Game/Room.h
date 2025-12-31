@@ -50,6 +50,14 @@ public:
         return _roomId;
     }
     size_t GetPlayerCount();
+    size_t GetMaxPlayers() const
+    {
+        return 4;
+    } // TODO: Make configurable
+    bool IsPlaying() const
+    {
+        return _gameStarted;
+    }
 
     std::shared_ptr<Player> GetNearestPlayer(float x, float y);
 
@@ -57,6 +65,9 @@ public:
     {
         return _strand;
     }
+
+    void StartGame(); // Start wave manager when first player enters
+    void Reset();     // Reset room state when all players leave
 
 private:
     int _roomId;
@@ -73,6 +84,7 @@ private:
     WaveManager _waveMgr;
     std::shared_ptr<UserDB> _userDB;
     float _totalRunTime = 0.0f;
+    bool _gameStarted = false; // Track if game has started
 };
 
 } // namespace SimpleGame

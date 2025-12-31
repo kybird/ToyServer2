@@ -8,6 +8,7 @@ project(HGSF VERSION 0.1.0 LANGUAGES CXX)
 
 if(MSVC)
     add_compile_definitions(_WIN32_WINNT=0x0A00) # Windows 10
+    add_compile_options(/FS) # Enable synchronous PDB access to fix C1041
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -171,10 +172,10 @@ target_include_directories(VampireSurvivorServer PRIVATE
 
 target_link_libraries(VampireSurvivorServer PRIVATE System Share protobuf::libprotobuf)
 
-# Vampire Survivor Console Client
-add_executable(VampireSurvivorClient src/Examples/VampireSurvivor/Client/ConsoleClient.cpp ${PROTO_SRCS} ${PROTO_HDRS})
-target_include_directories(VampireSurvivorClient PRIVATE src/Examples/VampireSurvivor src src/Examples/VampireSurvivor/Common)
-target_link_libraries(VampireSurvivorClient PRIVATE System Share protobuf::libprotobuf)
+# Vampire Survivor Console Client (DEPRECATED - Use Unity Client)
+# add_executable(VampireSurvivorClient src/Examples/VampireSurvivor/Client/ConsoleClient.cpp ${PROTO_SRCS} ${PROTO_HDRS})
+# target_include_directories(VampireSurvivorClient PRIVATE src/Examples/VampireSurvivor src src/Examples/VampireSurvivor/Common)
+# target_link_libraries(VampireSurvivorClient PRIVATE System Share protobuf::libprotobuf)
 
 
 

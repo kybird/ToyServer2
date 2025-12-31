@@ -33,6 +33,7 @@ public:
     std::shared_ptr<Room> CreateRoom(int roomId);
     void DestroyRoom(int roomId);
     std::shared_ptr<Room> GetRoom(int roomId);
+    std::vector<std::shared_ptr<Room>> GetAllRooms(); // Get all rooms for listing
 
     void RegisterPlayer(uint64_t sessionId, std::shared_ptr<Player> player);
     void UnregisterPlayer(uint64_t sessionId);

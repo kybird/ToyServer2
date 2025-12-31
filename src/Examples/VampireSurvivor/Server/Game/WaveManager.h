@@ -18,6 +18,7 @@ public:
 
     void Start();
     void Update(float dt, Room *room);
+    void Reset(); // Reset wave manager state
 
 private:
     struct PeriodicSpawner
