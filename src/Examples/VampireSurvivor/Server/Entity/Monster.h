@@ -55,6 +55,9 @@ public:
     // Called by Room::Update
     void Update(float dt, Room *room) override;
 
+    void TakeDamage(int32_t damage, Room *room);
+    bool IsDead() const { return _state == Protocol::ObjectState::DEAD; }
+
     // Pool reset
     void Reset()
     {

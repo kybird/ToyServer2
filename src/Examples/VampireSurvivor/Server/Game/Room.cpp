@@ -4,6 +4,8 @@
 #include "Game/RoomManager.h"
 #include "GamePackets.h"
 #include "Protocol/game.pb.h"
+#include "Entity/Monster.h"
+#include "Entity/Projectile.h"
 #include "System/Packet/IPacket.h"
 #include "System/Packet/PacketBroadcast.h"
 #include "System/Thread/IStrand.h"
@@ -376,6 +378,92 @@ void Room::Update(float deltaTime)
     if (moveBatch.moves_size() > 0)
     {
         BroadcastProto(this, moveBatch);
+    }
+
+    // 3. Collision Detection & Combat Logic
+    std::vector<int32_t> deadObjectIds;
+    Protocol::S_DamageEffect damageEffect;
+
+    for (auto &obj : objects)
+    {
+        if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
+        {
+            auto proj = std::static_pointer_cast<Projectile>(obj);
+            if (proj->IsExpired()) continue;
+
+            // Query nearby objects (Projectiles usually have small radius, e.g. 0.5m)
+            auto nearby = _grid.QueryRange(proj->GetX(), proj->GetY(), proj->GetRadius() + 0.5f);
+            for (auto &target : nearby)
+            {
+                if (target->GetId() == proj->GetId()) continue;
+                if (target->GetId() == proj->GetOwnerId()) continue; // Don't hit owner
+
+                if (target->GetType() == Protocol::ObjectType::MONSTER)
+                {
+                    auto monster = std::static_pointer_cast<Monster>(target);
+                    if (monster->IsDead()) continue;
+
+                    // Simple Circular Collision
+                    float dx = proj->GetX() - monster->GetX();
+                    float dy = proj->GetY() - monster->GetY();
+                    float distSq = dx * dx + dy * dy;
+                    float sumRad = proj->GetRadius() + monster->GetRadius();
+
+                    if (distSq <= sumRad * sumRad)
+                    {
+                        // HIT!
+                        monster->TakeDamage(proj->GetDamage(), this);
+                        proj->SetHit();
+
+                        // Record effect
+                        damageEffect.add_target_ids(monster->GetId());
+                        damageEffect.add_damage_values(proj->GetDamage());
+
+                        if (monster->IsDead())
+                        {
+                            deadObjectIds.push_back(monster->GetId());
+                        }
+                        break; // Projectile hit one target and disappeared
+                    }
+                }
+            }
+        }
+    }
+
+    // 4. Post-Update: Cleanup & Broadcast Effects
+    if (damageEffect.target_ids_size() > 0)
+    {
+        S_DamageEffectPacket damagePkt(damageEffect);
+        BroadcastPacket(damagePkt);
+    }
+
+    // Cleanup expired/dead objects
+    std::vector<int32_t> despawnIds;
+    for (auto &obj : objects)
+    {
+        bool shouldRemove = false;
+        if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
+        {
+            if (std::static_pointer_cast<Projectile>(obj)->IsExpired())
+                shouldRemove = true;
+        }
+        else if (obj->GetType() == Protocol::ObjectType::MONSTER)
+        {
+            if (std::static_pointer_cast<Monster>(obj)->IsDead())
+                shouldRemove = true;
+        }
+
+        if (shouldRemove)
+        {
+            despawnIds.push_back(obj->GetId());
+            _grid.Remove(obj);
+            _objMgr.RemoveObject(obj->GetId());
+        }
+    }
+
+    if (!despawnIds.empty())
+    {
+        BroadcastDespawn(despawnIds);
     }
 }
 

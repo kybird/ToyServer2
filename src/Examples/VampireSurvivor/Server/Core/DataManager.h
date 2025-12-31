@@ -44,6 +44,12 @@ public:
         return _waves;
     }
 
+    // For Testing
+    void AddMonsterTemplate(const MonsterTemplate &tmpl)
+    {
+        _monsters[tmpl.id] = tmpl;
+    }
+
 private:
     std::unordered_map<int32_t, MonsterTemplate> _monsters;
     std::vector<WaveData> _waves;

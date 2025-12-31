@@ -24,6 +24,7 @@ DispatcherImpl::~DispatcherImpl()
 void DispatcherImpl::Post(IMessage *message)
 {
     _messageQueue.enqueue(message);
+    _cv.notify_one();
 }
 
 bool DispatcherImpl::Process()
@@ -174,6 +175,12 @@ bool DispatcherImpl::Process()
     ProcessPendingDestroys();
 
     return count > 0;
+}
+
+void DispatcherImpl::Wait(int timeoutMs)
+{
+    std::unique_lock<std::mutex> lock(_mutex);
+    _cv.wait_for(lock, std::chrono::milliseconds(timeoutMs), [this] { return GetQueueSize() > 0; });
 }
 
 void DispatcherImpl::ProcessPendingDestroys()

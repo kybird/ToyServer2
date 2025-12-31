@@ -8,7 +8,7 @@ cd /d "%~dp0"
 set PROTOC=..\..\..\..\vcpkg_installed\x64-windows\tools\protobuf\protoc.exe
 set PROTO_FILE=game.proto
 set CPP_OUT_DIR=.
-set CSHARP_OUT_DIR=..\Client\Assets\Scripts\Protocol
+set CSHARP_OUT_DIR=D:\Project\ToySurvival_Unity\Assets\Scripts\Protocol
 
 :: Check Protoc
 if not exist "%PROTOC%" (

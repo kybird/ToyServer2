@@ -12,6 +12,7 @@ public:
     virtual ~IDispatcher() = default;
     virtual void Post(IMessage *message) = 0;
     virtual bool Process() = 0;
+    virtual void Wait(int timeoutMs) = 0;
     virtual size_t GetQueueSize() const = 0;
     virtual bool IsOverloaded() const = 0;
     virtual bool IsRecovered() const = 0;

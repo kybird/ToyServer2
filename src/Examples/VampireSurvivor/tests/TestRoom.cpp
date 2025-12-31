@@ -1,9 +1,14 @@
 #include "Entity/Player.h"
 #include "Entity/PlayerFactory.h"
 #include "Game/Room.h"
-#include "System/ObjectManager.h"
+#include "Game/ObjectManager.h"
 #include <gtest/gtest.h>
 #include <memory>
+#include <cstring>
+#include "System/Packet/IPacket.h"
+#include "System/ISession.h"
+
+namespace SimpleGame {
 
 // Mock Session to use with Player
 class MockSession : public System::ISession
@@ -43,8 +48,8 @@ private:
 
 TEST(RoomTest, EnterAndLeave)
 {
-    // Fix: Room ctor needs 3 args
-    Room room(1, nullptr, nullptr);
+    // Fix: Room ctor needs 4 args
+    Room room(1, nullptr, nullptr, nullptr);
     EXPECT_EQ(room.GetId(), 1);
     EXPECT_EQ(room.GetPlayerCount(), 0);
 
@@ -70,7 +75,7 @@ TEST(RoomTest, EnterAndLeave)
 
 TEST(RoomTest, MultiplePlayers)
 {
-    Room room(2, nullptr, nullptr);
+    Room room(2, nullptr, nullptr, nullptr);
 
     MockSession s1(101);
     MockSession s2(102);
@@ -212,7 +217,7 @@ TEST(SendPacketTest, MockSessionSendPacketNoCrash)
  */
 TEST(SendPacketTest, BroadcastPacketToEmptyRoomNoCrash)
 {
-    Room room(999, nullptr, nullptr);
+    Room room(999, nullptr, nullptr, nullptr);
     MockPacket packet;
 
     // ACT: 빈 Room에 브로드캐스트
@@ -239,7 +244,7 @@ TEST(SendPacketTest, BroadcastPacketToEmptyRoomNoCrash)
  */
 TEST(SendPacketTest, BroadcastPacketToRoomWithPlayers)
 {
-    Room room(998, nullptr, nullptr);
+    Room room(998, nullptr, nullptr, nullptr);
 
     TrackingMockSession s1(201);
     TrackingMockSession s2(202);
@@ -261,6 +266,7 @@ TEST(SendPacketTest, BroadcastPacketToRoomWithPlayers)
     EXPECT_EQ(s1.lastPacketId, 9999);
     EXPECT_EQ(s2.lastPacketId, 9999);
 
-    room.Leave(201);
     room.Leave(202);
 }
+
+} // namespace SimpleGame
