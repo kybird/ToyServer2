@@ -30,9 +30,9 @@ void Room::Start()
     std::cout << "[DEBUG] Room::Start(" << _roomId << ")" << std::endl;
     if (_timer)
     {
-        // 50ms = 20 FPS
-        _timerHandle = _timer->SetInterval(1, 50, this);
-        std::cout << "[DEBUG] Room " << _roomId << " Game Loop Started (20 FPS). TimerHandle: " << _timerHandle
+        // 33ms = 30 TPS
+        _timerHandle = _timer->SetInterval(1, 33, this);
+        std::cout << "[DEBUG] Room " << _roomId << " Game Loop Started (30 TPS). TimerHandle: " << _timerHandle
                   << std::endl;
     }
     else
@@ -58,6 +58,13 @@ void Room::StartGame()
         return; // Already started
 
     _gameStarted = true;
+
+    // Restart Timer if it was stopped
+    if (_timerHandle == 0)
+    {
+        Start();
+    }
+
     _waveMgr.Start();
     LOG_INFO("Game started in Room {}! Wave spawning begins.", _roomId);
 }
@@ -100,15 +107,15 @@ void Room::OnTimer(uint32_t timerId, void *pParam)
         _strand->Post(
             [this]()
             {
-                // Fixed Delta Time = 0.05f
-                this->Update(0.05f);
+                // Fixed Delta Time = 1/30 = 0.0333f
+                this->Update(1.0f / 30.0f);
             }
         );
     }
     else
     {
         // Fallback or Error
-        Update(0.05f);
+        Update(1.0f / 30.0f);
     }
 }
 
@@ -308,15 +315,16 @@ void Room::Update(float deltaTime)
 
     // 0. Wave & Spawning Update
     // LOG_DEBUG("Room {} Update Tick", _roomId); // Too spammy? Maybe only for Room 1
+    _serverTick++;
     _waveMgr.Update(deltaTime, this);
     _totalRunTime += deltaTime;
 
     // 1. Physics & Logic Update
     auto objects = _objMgr.GetAllObjects();
-    Protocol::S_MoveObjectBatch moveBatch;
-    size_t currentBatchSize = 0;
-    const size_t MAX_PAYLOAD_BYTES = 10000;
-    const size_t PACKET_OVERHEAD = 64;
+
+    // Separate updates for batching
+    std::vector<Protocol::ObjectPos> monsterMoves;
+    std::vector<Protocol::ObjectPos> playerMoves;
 
     for (auto &obj : objects)
     {
@@ -327,8 +335,7 @@ void Room::Update(float deltaTime)
         float oldY = obj->GetY();
 
         // Simple Euler Integration
-        // TODO: Server-side validation of input?
-        // For now, assume Velocity is set by Input Packet (C_MOVE)
+        // Server uses input-based velocity (from C_MOVE_INPUT)
         if (obj->GetVX() != 0 || obj->GetVY() != 0)
         {
             float newX = oldX + obj->GetVX() * deltaTime;
@@ -353,44 +360,113 @@ void Room::Update(float deltaTime)
         if ((dvx * dvx + dvy * dvy) > 0.01f)
             isDirty = true; // > 0.1 difference
 
-        // C. Hard Sync (Drift Correction) - Every 1.0s
-        if (_totalRunTime - obj->GetLastSentTime() > 1.0f)
+        // C. Prediction Error & Tick Threshold
+        static constexpr float SERVER_DT = 1.0f / 30.0f;  // 33.33ms per tick
+        static constexpr int MAX_EXTRAPOLATION_TICKS = 5; // ~166ms max extrapolation
+
+        int dtTicks = static_cast<int>(_serverTick - obj->GetLastSentServerTick());
+        dtTicks = std::min(dtTicks, MAX_EXTRAPOLATION_TICKS); // Clamp extrapolation
+
+        // Tick Threshold (Hard Sync every 30 ticks = 1.0s)
+        if (dtTicks > 30)
             isDirty = true;
+
+        // Prediction Error Guard
+        // Predicted = LastSentPos + LastSentVel * (dtTicks * SERVER_DT)
+        if (!isDirty)
+        {
+            float dt = dtTicks * SERVER_DT;
+            float predX = obj->GetLastSentX() + obj->GetLastSentVX() * dt;
+            float predY = obj->GetLastSentY() + obj->GetLastSentVY() * dt;
+            float errX = obj->GetX() - predX;
+            float errY = obj->GetY() - predY;
+            float errSq = errX * errX + errY * errY;
+
+            // Max Prediction Error: 0.2 units (0.04 sq)
+            if (errSq > 0.04f)
+                isDirty = true;
+        }
 
         if (isDirty)
         {
             // Update Sync State
-            obj->UpdateLastSentState(_totalRunTime);
+            obj->UpdateLastSentState(_totalRunTime, _serverTick);
 
-            // Create Proto Message (temp to check size)
-            Protocol::ObjectPos move; // Create temporary to check size
+            Protocol::ObjectPos move;
             move.set_object_id(obj->GetId());
             move.set_x(obj->GetX());
             move.set_y(obj->GetY());
             move.set_vx(obj->GetVX());
             move.set_vy(obj->GetVY());
 
-            size_t msgSize = move.ByteSizeLong();
-
-            // Packet Splitting Check
-            if (currentBatchSize + msgSize > MAX_PAYLOAD_BYTES - PACKET_OVERHEAD)
+            if (obj->GetType() == Protocol::ObjectType::PLAYER)
             {
-                BroadcastProto(this, moveBatch);
-                moveBatch.Clear();
-                currentBatchSize = 0;
+                playerMoves.push_back(move);
             }
-
-            // Add to Batch
-            auto *added = moveBatch.add_moves();
-            *added = move; // Copy
-            currentBatchSize += msgSize;
+            else
+            {
+                monsterMoves.push_back(move);
+            }
         }
     }
 
-    // 2. Broadcast Batched Movement (Remaining)
-    if (moveBatch.moves_size() > 0)
+    // 2. Broadcast Batched Movement
+    const size_t MAX_PAYLOAD_BYTES = 10000;
+    const size_t PACKET_OVERHEAD = 64;
+
+    // A. Broadcast Non-Player Objects (Monsters, Projectiles) to ALL
+    if (!monsterMoves.empty())
     {
-        BroadcastProto(this, moveBatch);
+        Protocol::S_MoveObjectBatch batch;
+        batch.set_server_tick(_serverTick);
+        size_t currentSize = 0;
+
+        for (const auto &move : monsterMoves)
+        {
+            size_t msgSize = move.ByteSizeLong();
+            if (currentSize + msgSize > MAX_PAYLOAD_BYTES - PACKET_OVERHEAD)
+            {
+                BroadcastProto(this, batch);
+                batch.Clear();
+                batch.set_server_tick(_serverTick);
+                currentSize = 0;
+            }
+            *batch.add_moves() = move;
+            currentSize += msgSize;
+        }
+        if (batch.moves_size() > 0)
+            BroadcastProto(this, batch);
+    }
+
+    // B. Send Player Updates (Filtering Self)
+    // iterate players and send customized batch
+    if (!playerMoves.empty())
+    {
+        for (auto &pair : _players)
+        {
+            auto viewer = pair.second;
+            if (!viewer->GetSession())
+                continue;
+
+            Protocol::S_MoveObjectBatch batch;
+            batch.set_server_tick(_serverTick);
+
+            for (const auto &move : playerMoves)
+            {
+                // CRITICAL: Calculate batch for 'viewer'.
+                // Do NOT include viewer's own movement.
+                if (move.object_id() != viewer->GetId())
+                {
+                    *batch.add_moves() = move;
+                }
+            }
+
+            if (batch.moves_size() > 0)
+            {
+                S_MoveObjectBatchPacket pkt(batch);
+                viewer->GetSession()->SendPacket(pkt);
+            }
+        }
     }
 
     // 3. Collision Detection & Combat Logic

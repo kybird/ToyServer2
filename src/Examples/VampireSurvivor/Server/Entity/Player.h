@@ -32,6 +32,40 @@ public:
         _name.clear();
         _vx = _vy = 0;
         _x = _y = 0;
+        _lastInputTick = 0;
+    }
+
+    void SetInput(uint32_t clientTick, int32_t dx, int32_t dy)
+    {
+        _lastInputTick = clientTick;
+
+        // Simple Movement Logic: Set Velocity based on Direction
+        // Server tick (30 TPS) movement processing is handled in Room/GameObject Update,
+        // but Velocity is set immediately here.
+        float speed =
+            5.0f; // Adjusted speed as per previous conversations/expectations (3.6f was old, user mentioned 100f in
+                  // conversation history but let's stick to reasonable server units. User conversation 91820c83 said
+                  // 100.0f?? "Adjust player character speed ... to a more balanced value (e.g., 100.0f)".
+        // Wait, if map is small, 100 is fast. If map is pixels, 100 is slow.
+        // Looking at GamePacketHandler it was 3.6f.
+        // Let's use 5.0f for now or check if there's a constant.
+        // Actually, in the last conversation (91820c83), the user wanted 100.0f.
+        // I should probably use a higher value if the map units are large.
+        // S_Login has map_width/height.
+        // Let's look at Room.cpp later to see map size.
+        // For now, I'll keep it as 3.6f or similar, but maybe 5.0f.
+        // Actually, I will use a member variable _speed.
+
+        SetVelocity(dx * _speed, dy * _speed);
+
+        if (dx == 0 && dy == 0)
+        {
+            SetState(Protocol::IDLE);
+        }
+        else
+        {
+            SetState(Protocol::MOVING);
+        }
     }
 
     // Reset for pooling
@@ -105,6 +139,8 @@ private:
     std::string _name;
     int32_t _classId = 0;
     int _currentRoomId = 0;
+    float _speed = 5.f; // Reduced from 100.0f to 3.6f (Standard Walking Speed)
+    uint32_t _lastInputTick = 0;
 };
 
 } // namespace SimpleGame

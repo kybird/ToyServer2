@@ -31,7 +31,8 @@ enum MsgId {
   S_SPAWN_OBJECT = 200;
   S_DESPAWN_OBJECT = 201;
   S_MOVE_OBJECT_BATCH = 202;
-  C_MOVE = 203;
+  C_MOVE_INPUT = 203;
+  S_PLAYER_STATE_ACK = 204;
 
   // Combat & Skills (300-399)
   C_USE_SKILL = 300;
@@ -69,6 +70,8 @@ message S_Login {
   int32 my_player_id = 2;
   float map_width = 3;
   float map_height = 4;
+  uint32 server_tick_rate = 5;      // 서버 tick rate (초당 tick 수, 예: 30)
+  float server_tick_interval = 6;   // 서버 tick 간격 (초 단위, 예: 0.0333)
 }
 
 message C_CreateRoom {
@@ -186,13 +189,19 @@ message ObjectPos {
 
 message S_MoveObjectBatch {
   repeated ObjectPos moves = 1;
+  uint32 server_tick = 2;
 }
 
-message C_Move {
-  // Client only sends its own input or position
-  // In Server-Authoritative, client sends input direction
-  float dir_x = 1;
-  float dir_y = 2;
+message C_MoveInput {
+  uint32 client_tick = 1;
+  int32 dir_x = 2; // -1, 0, 1
+  int32 dir_y = 3; // -1, 0, 1
+}
+
+message S_PlayerStateAck {
+  uint32 server_tick = 1;
+  float x = 2;
+  float y = 3;
 }
 
 // ==========================================================

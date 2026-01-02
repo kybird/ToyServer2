@@ -95,6 +95,15 @@ private:
     WaveManager _waveMgr;
     std::shared_ptr<UserDB> _userDB;
     float _totalRunTime = 0.0f;
+    uint32_t _serverTick = 0;
+
+public:
+    uint32_t GetServerTick() const
+    {
+        return _serverTick;
+    }
+
+private:
     bool _gameStarted = false; // Track if game has started
 };
 

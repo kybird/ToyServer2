@@ -97,20 +97,35 @@ public:
     {
         return _lastSentVY;
     }
+    float GetLastSentX() const
+    {
+        return _lastSentX;
+    }
+    float GetLastSentY() const
+    {
+        return _lastSentY;
+    }
     float GetLastSentTime() const
     {
         return _lastSentTime;
+    }
+    uint32_t GetLastSentServerTick() const
+    {
+        return _lastSentServerTick;
     }
     Protocol::ObjectState GetLastSentState() const
     {
         return _lastSentState;
     }
 
-    void UpdateLastSentState(float time)
+    void UpdateLastSentState(float time, uint32_t serverTick)
     {
         _lastSentVX = _vx;
         _lastSentVY = _vy;
+        _lastSentX = _x;
+        _lastSentY = _y;
         _lastSentTime = time;
+        _lastSentServerTick = serverTick;
         _lastSentState = _state;
     }
 
@@ -131,7 +146,10 @@ protected:
     // Delta Sync
     float _lastSentVX = -999.0f;
     float _lastSentVY = -999.0f;
+    float _lastSentX = -999.0f;
+    float _lastSentY = -999.0f;
     float _lastSentTime = 0.0f;
+    uint32_t _lastSentServerTick = 0;
     Protocol::ObjectState _lastSentState = Protocol::ObjectState::IDLE;
 };
 

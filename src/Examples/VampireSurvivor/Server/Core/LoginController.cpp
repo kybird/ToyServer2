@@ -85,9 +85,11 @@ void LoginController::OnLogin(const LoginRequestEvent &evt)
         // Send S_LOGIN Response (Auth Success)
         Protocol::S_Login resMsg;
         resMsg.set_success(true);
-        resMsg.set_my_player_id(0); // Not spawned yet
+        resMsg.set_my_player_id((int32_t)evt.sessionId); // Use SessionID as PlayerID
         resMsg.set_map_width(0);
         resMsg.set_map_height(0);
+        resMsg.set_server_tick_rate(30);               // 30 TPS
+        resMsg.set_server_tick_interval(1.0f / 30.0f); // 0.0333 seconds
 
         S_LoginPacket packet(resMsg);
         evt.session->SendPacket(packet);

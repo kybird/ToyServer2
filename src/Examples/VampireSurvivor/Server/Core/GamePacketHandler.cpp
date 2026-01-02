@@ -38,8 +38,8 @@ void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketVi
         }
         break;
     }
-    case PacketID::C_MOVE: {
-        Protocol::C_Move req;
+    case PacketID::C_MOVE_INPUT: {
+        Protocol::C_MoveInput req;
         if (packet.Parse(req))
         {
             // Find Player using Global Map
@@ -51,47 +51,45 @@ void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketVi
                 if (room && room->GetStrand())
                 {
                     // Capture by value for thread safety
-                    float dx = req.dir_x();
-                    float dy = req.dir_y();
+                    uint32_t clientTick = req.client_tick();
+                    int32_t dx = req.dir_x();
+                    int32_t dy = req.dir_y();
 
                     room->GetStrand()->Post(
-                        [player, dx, dy]()
+                        [player, clientTick, dx, dy, room]()
                         {
-                            // Simple Movement Logic: Set Velocity based on Direction
-                            float speed = 200.0f;
-                            player->SetVelocity(dx * speed, dy * speed);
+                            // 1. Update Input
+                            player->SetInput(clientTick, dx, dy);
 
-                            // Update state
-                            if (dx == 0 && dy == 0)
+                            // 2. Send Ack Immediately
+                            Protocol::S_PlayerStateAck ack;
+                            ack.set_server_tick(room->GetServerTick());
+                            ack.set_x(player->GetX());
+                            ack.set_y(player->GetY());
+
+                            S_PlayerStateAckPacket ackPkt(ack);
+                            if (player->GetSession())
                             {
-                                player->SetState(Protocol::IDLE);
-                            }
-                            else
-                            {
-                                player->SetState(Protocol::MOVING);
+                                player->GetSession()->SendPacket(ackPkt);
+                                LOG_INFO(
+                                    "Sent S_PLAYER_STATE_ACK to Player {}: ServerTick={}, Pos=({:.2f}, {:.2f})",
+                                    player->GetId(),
+                                    ack.server_tick(),
+                                    ack.x(),
+                                    ack.y()
+                                );
                             }
                         }
                     );
                 }
                 else
                 {
-                    // Fallback (Main Thread)
-                    float speed = 200.0f;
-                    player->SetVelocity(req.dir_x() * speed, req.dir_y() * speed);
-
-                    if (req.dir_x() == 0 && req.dir_y() == 0)
-                    {
-                        player->SetState(Protocol::IDLE);
-                    }
-                    else
-                    {
-                        player->SetState(Protocol::MOVING);
-                    }
+                    LOG_WARN("Room/Strand not found for C_MOVE_INPUT");
                 }
             }
             else
             {
-                LOG_WARN("C_MOVE from unknown session {}", session->GetId());
+                LOG_WARN("C_MOVE_INPUT from unknown session {}", session->GetId());
             }
         }
         break;

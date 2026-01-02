@@ -106,6 +106,15 @@ public:
     using ProtobufPacketBase::ProtobufPacketBase;
 };
 
+// --- S_PLAYER_STATE_ACK ---
+class S_PlayerStateAckPacket
+    : public System::ProtobufPacketBase<S_PlayerStateAckPacket, PacketHeader, Protocol::S_PlayerStateAck>
+{
+public:
+    static constexpr uint16_t ID = PacketID::S_PLAYER_STATE_ACK;
+    using ProtobufPacketBase::ProtobufPacketBase;
+};
+
 // --- CLIENT PACKETS (For Client Use) ---
 
 // --- C_LOGIN ---
