@@ -53,6 +53,9 @@ enum MsgId {
   // Heartbeat (900-999)
   S_PING = 900;
   C_PONG = 901;
+  C_PING = 902;
+  S_PONG = 903;
+  S_DEBUG_SERVER_TICK = 904;
 }
 
 // ==========================================================
@@ -72,6 +75,7 @@ message S_Login {
   float map_height = 4;
   uint32 server_tick_rate = 5;      // 서버 tick rate (초당 tick 수, 예: 30)
   float server_tick_interval = 6;   // 서버 tick 간격 (초 단위, 예: 0.0333)
+  uint32 server_tick = 7;           // 현재 서버 Tick (Room 1 기준)
 }
 
 message C_CreateRoom {
@@ -171,6 +175,7 @@ message ObjectInfo {
 
 message S_SpawnObject {
   repeated ObjectInfo objects = 1;
+  uint32 server_tick = 2; // For initial sync
 }
 
 message S_DespawnObject {
@@ -200,8 +205,8 @@ message C_MoveInput {
 
 message S_PlayerStateAck {
   uint32 server_tick = 1;
-  float x = 2;
-  float y = 3;
+  float x = 3;
+  float y = 4;
 }
 
 // ==========================================================
@@ -280,5 +285,17 @@ message S_Ping {
 
 message C_Pong {
     int64 timestamp = 1;
+}
+
+message C_Ping {
+    int64 timestamp = 1;
+}
+
+message S_Pong {
+    int64 timestamp = 1;
+}
+
+message S_DebugServerTick {
+    uint32 server_tick = 1;
 }
 

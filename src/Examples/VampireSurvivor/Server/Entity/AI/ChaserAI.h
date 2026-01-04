@@ -31,8 +31,7 @@ private:
     float _thinkInterval;
     float _nextThinkTime = 0;
     bool _hasTarget = false;
-    float _targetX = 0;
-    float _targetY = 0;
+    Room *_room = nullptr;
 };
 
 } // namespace SimpleGame

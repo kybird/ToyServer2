@@ -1,5 +1,8 @@
 #include "Core/LoginController.h"
 #include "Core/GameEvents.h"
+#include "Game/GameConfig.h"
+#include "Game/Room.h"
+#include "Game/RoomManager.h"
 #include "GamePackets.h"
 #include "Protocol.h"
 #include "Protocol/game.pb.h"
@@ -88,8 +91,17 @@ void LoginController::OnLogin(const LoginRequestEvent &evt)
         resMsg.set_my_player_id((int32_t)evt.sessionId); // Use SessionID as PlayerID
         resMsg.set_map_width(0);
         resMsg.set_map_height(0);
-        resMsg.set_server_tick_rate(30);               // 30 TPS
-        resMsg.set_server_tick_interval(1.0f / 30.0f); // 0.0333 seconds
+        resMsg.set_server_tick_rate(GameConfig::TPS);
+        resMsg.set_server_tick_interval(GameConfig::TICK_INTERVAL_SEC);
+
+        // [Modified] Send current server tick from Default Room (1)
+        uint32_t currentTick = 0;
+        auto room = RoomManager::Instance().GetRoom(1);
+        if (room)
+        {
+            currentTick = room->GetServerTick();
+        }
+        resMsg.set_server_tick(currentTick);
 
         S_LoginPacket packet(resMsg);
         evt.session->SendPacket(packet);

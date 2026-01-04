@@ -2,6 +2,7 @@
 #include "Core/UserDB.h"
 #include "Entity/Monster.h"
 #include "Entity/Projectile.h"
+#include "Game/GameConfig.h"
 #include "Game/RoomManager.h"
 #include "GamePackets.h"
 #include "Protocol/game.pb.h"
@@ -30,10 +31,10 @@ void Room::Start()
     std::cout << "[DEBUG] Room::Start(" << _roomId << ")" << std::endl;
     if (_timer)
     {
-        // 33ms = 30 TPS
-        _timerHandle = _timer->SetInterval(1, 33, this);
-        std::cout << "[DEBUG] Room " << _roomId << " Game Loop Started (30 TPS). TimerHandle: " << _timerHandle
-                  << std::endl;
+        // Use constants for TPS and interval
+        _timerHandle = _timer->SetInterval(1, GameConfig::TICK_INTERVAL_MS, this);
+        std::cout << "[DEBUG] Room " << _roomId << " Game Loop Started (" << GameConfig::TPS << " TPS, "
+                  << GameConfig::TICK_INTERVAL_MS << "ms). TimerHandle: " << _timerHandle << std::endl;
     }
     else
     {
@@ -101,21 +102,22 @@ void Room::OnTimer(uint32_t timerId, void *pParam)
     // However, safest pattern is capturing shared_from_this() if we want to be 100% sure,
     // but OnTimer is called by Timer which we manage.
     // Let's use 'this' for now as Timer is cancelled in Stop/Destructor.
-
+    _serverTick++;
     if (_strand)
     {
         _strand->Post(
             [this]()
             {
-                // Fixed Delta Time = 1/30 = 0.0333f
-                this->Update(1.0f / 30.0f);
+                // Use constant deltaTime
+
+                this->Update(GameConfig::TICK_INTERVAL_SEC);
             }
         );
     }
     else
     {
         // Fallback or Error
-        Update(1.0f / 30.0f);
+        Update(GameConfig::TICK_INTERVAL_SEC);
     }
 }
 
@@ -197,11 +199,6 @@ void Room::Enter(std::shared_ptr<Player> player)
 
     LOG_INFO("Player {} entered Room {}. Total Players: {}", player->GetSessionId(), _roomId, _players.size());
 
-    if (_players.size() == 1 && !_gameStarted)
-    {
-        StartGame();
-    }
-
     LOG_INFO("Player {} entered Room {}. Waiting for C_GAME_READY.", player->GetSessionId(), _roomId);
 }
 
@@ -219,12 +216,19 @@ void Room::OnPlayerReady(uint64_t sessionId)
     auto player = it->second;
     LOG_INFO("Player {} is ready in Room {}", sessionId, _roomId);
 
+    // [New] Start game loop only when at least one player is fully ready
+    if (!_gameStarted)
+    {
+        StartGame();
+    }
+
     // ===== Send Initial State to New Player =====
     // 1. Send all existing objects in the room to the newly joined player
     auto allObjects = _objMgr.GetAllObjects();
     if (!allObjects.empty())
     {
         Protocol::S_SpawnObject existingObjects;
+        existingObjects.set_server_tick(_serverTick); // Anchor for Tick Sync
         for (const auto &obj : allObjects)
         {
             // Skip self (the new player was just added, but client already knows about itself)
@@ -313,9 +317,27 @@ void Room::Update(float deltaTime)
 {
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
-    // 0. Wave & Spawning Update
-    // LOG_DEBUG("Room {} Update Tick", _roomId); // Too spammy? Maybe only for Room 1
-    _serverTick++;
+    // [Stage 0 Verification] Broadcast S_DEBUG_SERVER_TICK every 1s (Real Time Accumulator)
+    _debugBroadcastTimer += deltaTime;
+    if (_debugBroadcastTimer >= 1.0f)
+    {
+        _debugBroadcastTimer -= 1.0f;
+
+        Protocol::S_DebugServerTick dbgMsg;
+        dbgMsg.set_server_tick(_serverTick);
+        S_DebugServerTickPacket dbgPkt(dbgMsg);
+        BroadcastPacket(dbgPkt);
+
+        LOG_INFO("[DebugTick] serverTick = {}", _serverTick);
+    }
+
+    /* Removed old tick log
+    if (_serverTick % 30 == 0)
+    {
+        LOG_INFO("Room {} Server Tick: {}", _roomId, _serverTick);
+    }
+    */
+
     _waveMgr.Update(deltaTime, this);
     _totalRunTime += deltaTime;
 
@@ -348,44 +370,44 @@ void Room::Update(float deltaTime)
         }
 
         // 2. Network Optimization (Delta Sync)
-        bool isDirty = false;
+        bool isDirty = true;
 
         // A. State Changed (Idle <-> Moving)
-        if (obj->GetState() != obj->GetLastSentState())
-            isDirty = true;
+        // if (obj->GetState() != obj->GetLastSentState())
+        //     isDirty = true;
 
-        // B. Velocity Changed (Threshold)
-        float dvx = obj->GetVX() - obj->GetLastSentVX();
-        float dvy = obj->GetVY() - obj->GetLastSentVY();
-        if ((dvx * dvx + dvy * dvy) > 0.01f)
-            isDirty = true; // > 0.1 difference
+        // // B. Velocity Changed (Threshold)
+        // float dvx = obj->GetVX() - obj->GetLastSentVX();
+        // float dvy = obj->GetVY() - obj->GetLastSentVY();
+        // if ((dvx * dvx + dvy * dvy) > 0.01f)
+        //     isDirty = true; // > 0.1 difference
 
-        // C. Prediction Error & Tick Threshold
-        static constexpr float SERVER_DT = 1.0f / 30.0f;  // 33.33ms per tick
-        static constexpr int MAX_EXTRAPOLATION_TICKS = 5; // ~166ms max extrapolation
+        // // C. Prediction Error & Tick Threshold
+        // static constexpr float SERVER_DT = GameConfig::TICK_INTERVAL_SEC;
+        // static constexpr int MAX_EXTRAPOLATION_TICKS = 5; // ~200ms max extrapolation (5 * 40ms)
 
-        int dtTicks = static_cast<int>(_serverTick - obj->GetLastSentServerTick());
-        dtTicks = std::min(dtTicks, MAX_EXTRAPOLATION_TICKS); // Clamp extrapolation
+        // int dtTicks = static_cast<int>(_serverTick - obj->GetLastSentServerTick());
+        // dtTicks = std::min(dtTicks, MAX_EXTRAPOLATION_TICKS); // Clamp extrapolation
 
-        // Tick Threshold (Hard Sync every 30 ticks = 1.0s)
-        if (dtTicks > 30)
-            isDirty = true;
+        // // Tick Threshold (Hard Sync every 30 ticks = 1.0s)
+        // if (dtTicks > 30)
+        //     isDirty = true;
 
-        // Prediction Error Guard
-        // Predicted = LastSentPos + LastSentVel * (dtTicks * SERVER_DT)
-        if (!isDirty)
-        {
-            float dt = dtTicks * SERVER_DT;
-            float predX = obj->GetLastSentX() + obj->GetLastSentVX() * dt;
-            float predY = obj->GetLastSentY() + obj->GetLastSentVY() * dt;
-            float errX = obj->GetX() - predX;
-            float errY = obj->GetY() - predY;
-            float errSq = errX * errX + errY * errY;
+        // // Prediction Error Guard
+        // // Predicted = LastSentPos + LastSentVel * (dtTicks * SERVER_DT)
+        // if (!isDirty)
+        // {
+        //     float dt = dtTicks * SERVER_DT;
+        //     float predX = obj->GetLastSentX() + obj->GetLastSentVX() * dt;
+        //     float predY = obj->GetLastSentY() + obj->GetLastSentVY() * dt;
+        //     float errX = obj->GetX() - predX;
+        //     float errY = obj->GetY() - predY;
+        //     float errSq = errX * errX + errY * errY;
 
-            // Max Prediction Error: 0.2 units (0.04 sq)
-            if (errSq > 0.04f)
-                isDirty = true;
-        }
+        //     // Max Prediction Error: 0.2 units (0.04 sq)
+        //     if (errSq > 0.04f)
+        //         isDirty = true;
+        // }
 
         if (isDirty)
         {

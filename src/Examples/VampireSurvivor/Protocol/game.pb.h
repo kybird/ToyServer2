@@ -81,6 +81,9 @@ extern C_LoginDefaultTypeInternal _C_Login_default_instance_;
 class C_MoveInput;
 struct C_MoveInputDefaultTypeInternal;
 extern C_MoveInputDefaultTypeInternal _C_MoveInput_default_instance_;
+class C_Ping;
+struct C_PingDefaultTypeInternal;
+extern C_PingDefaultTypeInternal _C_Ping_default_instance_;
 class C_Pong;
 struct C_PongDefaultTypeInternal;
 extern C_PongDefaultTypeInternal _C_Pong_default_instance_;
@@ -111,6 +114,9 @@ extern S_CreateRoomDefaultTypeInternal _S_CreateRoom_default_instance_;
 class S_DamageEffect;
 struct S_DamageEffectDefaultTypeInternal;
 extern S_DamageEffectDefaultTypeInternal _S_DamageEffect_default_instance_;
+class S_DebugServerTick;
+struct S_DebugServerTickDefaultTypeInternal;
+extern S_DebugServerTickDefaultTypeInternal _S_DebugServerTick_default_instance_;
 class S_DespawnObject;
 struct S_DespawnObjectDefaultTypeInternal;
 extern S_DespawnObjectDefaultTypeInternal _S_DespawnObject_default_instance_;
@@ -153,6 +159,9 @@ extern S_PlayerReviveDefaultTypeInternal _S_PlayerRevive_default_instance_;
 class S_PlayerStateAck;
 struct S_PlayerStateAckDefaultTypeInternal;
 extern S_PlayerStateAckDefaultTypeInternal _S_PlayerStateAck_default_instance_;
+class S_Pong;
+struct S_PongDefaultTypeInternal;
+extern S_PongDefaultTypeInternal _S_Pong_default_instance_;
 class S_RoomList;
 struct S_RoomListDefaultTypeInternal;
 extern S_RoomListDefaultTypeInternal _S_RoomList_default_instance_;
@@ -203,6 +212,9 @@ enum MsgId : int {
   S_GAME_OVER = 501,
   S_PING = 900,
   C_PONG = 901,
+  C_PING = 902,
+  S_PONG = 903,
+  S_DEBUG_SERVER_TICK = 904,
   MsgId_INT_MIN_SENTINEL_DO_NOT_USE_ =
       std::numeric_limits<::int32_t>::min(),
   MsgId_INT_MAX_SENTINEL_DO_NOT_USE_ =
@@ -212,8 +224,8 @@ enum MsgId : int {
 bool MsgId_IsValid(int value);
 extern const uint32_t MsgId_internal_data_[];
 constexpr MsgId MsgId_MIN = static_cast<MsgId>(0);
-constexpr MsgId MsgId_MAX = static_cast<MsgId>(901);
-constexpr int MsgId_ARRAYSIZE = 901 + 1;
+constexpr MsgId MsgId_MAX = static_cast<MsgId>(904);
+constexpr int MsgId_ARRAYSIZE = 904 + 1;
 const ::google::protobuf::EnumDescriptor*
 MsgId_descriptor();
 template <typename T>
@@ -552,6 +564,196 @@ class S_SkillEffect final : public ::google::protobuf::Message
 };
 // -------------------------------------------------------------------
 
+class S_Pong final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:Protocol.S_Pong) */ {
+ public:
+  inline S_Pong() : S_Pong(nullptr) {}
+  ~S_Pong() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(S_Pong* msg, std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(S_Pong));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR S_Pong(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline S_Pong(const S_Pong& from) : S_Pong(nullptr, from) {}
+  inline S_Pong(S_Pong&& from) noexcept
+      : S_Pong(nullptr, std::move(from)) {}
+  inline S_Pong& operator=(const S_Pong& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline S_Pong& operator=(S_Pong&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const S_Pong& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const S_Pong* internal_default_instance() {
+    return reinterpret_cast<const S_Pong*>(
+        &_S_Pong_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 37;
+  friend void swap(S_Pong& a, S_Pong& b) { a.Swap(&b); }
+  inline void Swap(S_Pong* other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(S_Pong* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  S_Pong* New(::google::protobuf::Arena* arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<S_Pong>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const S_Pong& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const S_Pong& from) { S_Pong::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(S_Pong* other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(
+      ::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "Protocol.S_Pong"; }
+
+ protected:
+  explicit S_Pong(::google::protobuf::Arena* arena);
+  S_Pong(::google::protobuf::Arena* arena, const S_Pong& from);
+  S_Pong(::google::protobuf::Arena* arena, S_Pong&& from) noexcept
+      : S_Pong(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static void* PlacementNew_(const void*, void* mem,
+                             ::google::protobuf::Arena* arena);
+  static constexpr auto InternalNewImpl_();
+  static const ::google::protobuf::internal::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kTimestampFieldNumber = 1,
+  };
+  // int64 timestamp = 1;
+  void clear_timestamp() ;
+  ::int64_t timestamp() const;
+  void set_timestamp(::int64_t value);
+
+  private:
+  ::int64_t _internal_timestamp() const;
+  void _internal_set_timestamp(::int64_t value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:Protocol.S_Pong)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      0, 1, 0,
+      0, 2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const S_Pong& from_msg);
+    ::int64_t timestamp_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_game_2eproto;
+};
+// -------------------------------------------------------------------
+
 class S_PlayerStateAck final : public ::google::protobuf::Message
 /* @@protoc_insertion_point(class_definition:Protocol.S_PlayerStateAck) */ {
  public:
@@ -699,8 +901,8 @@ class S_PlayerStateAck final : public ::google::protobuf::Message
   // accessors -------------------------------------------------------
   enum : int {
     kServerTickFieldNumber = 1,
-    kXFieldNumber = 2,
-    kYFieldNumber = 3,
+    kXFieldNumber = 3,
+    kYFieldNumber = 4,
   };
   // uint32 server_tick = 1;
   void clear_server_tick() ;
@@ -712,7 +914,7 @@ class S_PlayerStateAck final : public ::google::protobuf::Message
   void _internal_set_server_tick(::uint32_t value);
 
   public:
-  // float x = 2;
+  // float x = 3;
   void clear_x() ;
   float x() const;
   void set_x(float value);
@@ -722,7 +924,7 @@ class S_PlayerStateAck final : public ::google::protobuf::Message
   void _internal_set_x(float value);
 
   public:
-  // float y = 3;
+  // float y = 4;
   void clear_y() ;
   float y() const;
   void set_y(float value);
@@ -1488,6 +1690,7 @@ class S_Login final : public ::google::protobuf::Message
     kMapHeightFieldNumber = 4,
     kServerTickRateFieldNumber = 5,
     kServerTickIntervalFieldNumber = 6,
+    kServerTickFieldNumber = 7,
   };
   // bool success = 1;
   void clear_success() ;
@@ -1549,12 +1752,22 @@ class S_Login final : public ::google::protobuf::Message
   void _internal_set_server_tick_interval(float value);
 
   public:
+  // uint32 server_tick = 7;
+  void clear_server_tick() ;
+  ::uint32_t server_tick() const;
+  void set_server_tick(::uint32_t value);
+
+  private:
+  ::uint32_t _internal_server_tick() const;
+  void _internal_set_server_tick(::uint32_t value);
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.S_Login)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      3, 6, 0,
+      3, 7, 0,
       0, 2>
       _table_;
 
@@ -1578,6 +1791,7 @@ class S_Login final : public ::google::protobuf::Message
     float map_height_;
     ::uint32_t server_tick_rate_;
     float server_tick_interval_;
+    ::uint32_t server_tick_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -2965,6 +3179,196 @@ class S_DespawnObject final : public ::google::protobuf::Message
                           const S_DespawnObject& from_msg);
     ::google::protobuf::RepeatedField<::int32_t> object_ids_;
     ::google::protobuf::internal::CachedSize _object_ids_cached_byte_size_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_game_2eproto;
+};
+// -------------------------------------------------------------------
+
+class S_DebugServerTick final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:Protocol.S_DebugServerTick) */ {
+ public:
+  inline S_DebugServerTick() : S_DebugServerTick(nullptr) {}
+  ~S_DebugServerTick() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(S_DebugServerTick* msg, std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(S_DebugServerTick));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR S_DebugServerTick(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline S_DebugServerTick(const S_DebugServerTick& from) : S_DebugServerTick(nullptr, from) {}
+  inline S_DebugServerTick(S_DebugServerTick&& from) noexcept
+      : S_DebugServerTick(nullptr, std::move(from)) {}
+  inline S_DebugServerTick& operator=(const S_DebugServerTick& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline S_DebugServerTick& operator=(S_DebugServerTick&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const S_DebugServerTick& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const S_DebugServerTick* internal_default_instance() {
+    return reinterpret_cast<const S_DebugServerTick*>(
+        &_S_DebugServerTick_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 38;
+  friend void swap(S_DebugServerTick& a, S_DebugServerTick& b) { a.Swap(&b); }
+  inline void Swap(S_DebugServerTick* other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(S_DebugServerTick* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  S_DebugServerTick* New(::google::protobuf::Arena* arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<S_DebugServerTick>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const S_DebugServerTick& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const S_DebugServerTick& from) { S_DebugServerTick::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(S_DebugServerTick* other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(
+      ::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "Protocol.S_DebugServerTick"; }
+
+ protected:
+  explicit S_DebugServerTick(::google::protobuf::Arena* arena);
+  S_DebugServerTick(::google::protobuf::Arena* arena, const S_DebugServerTick& from);
+  S_DebugServerTick(::google::protobuf::Arena* arena, S_DebugServerTick&& from) noexcept
+      : S_DebugServerTick(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static void* PlacementNew_(const void*, void* mem,
+                             ::google::protobuf::Arena* arena);
+  static constexpr auto InternalNewImpl_();
+  static const ::google::protobuf::internal::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kServerTickFieldNumber = 1,
+  };
+  // uint32 server_tick = 1;
+  void clear_server_tick() ;
+  ::uint32_t server_tick() const;
+  void set_server_tick(::uint32_t value);
+
+  private:
+  ::uint32_t _internal_server_tick() const;
+  void _internal_set_server_tick(::uint32_t value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:Protocol.S_DebugServerTick)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      0, 1, 0,
+      0, 2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const S_DebugServerTick& from_msg);
+    ::uint32_t server_tick_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -5215,6 +5619,196 @@ class C_Pong final : public ::google::protobuf::Message
 };
 // -------------------------------------------------------------------
 
+class C_Ping final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:Protocol.C_Ping) */ {
+ public:
+  inline C_Ping() : C_Ping(nullptr) {}
+  ~C_Ping() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(C_Ping* msg, std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(C_Ping));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR C_Ping(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline C_Ping(const C_Ping& from) : C_Ping(nullptr, from) {}
+  inline C_Ping(C_Ping&& from) noexcept
+      : C_Ping(nullptr, std::move(from)) {}
+  inline C_Ping& operator=(const C_Ping& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline C_Ping& operator=(C_Ping&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const C_Ping& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const C_Ping* internal_default_instance() {
+    return reinterpret_cast<const C_Ping*>(
+        &_C_Ping_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 36;
+  friend void swap(C_Ping& a, C_Ping& b) { a.Swap(&b); }
+  inline void Swap(C_Ping* other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(C_Ping* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  C_Ping* New(::google::protobuf::Arena* arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<C_Ping>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const C_Ping& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const C_Ping& from) { C_Ping::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(C_Ping* other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(
+      ::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "Protocol.C_Ping"; }
+
+ protected:
+  explicit C_Ping(::google::protobuf::Arena* arena);
+  C_Ping(::google::protobuf::Arena* arena, const C_Ping& from);
+  C_Ping(::google::protobuf::Arena* arena, C_Ping&& from) noexcept
+      : C_Ping(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static void* PlacementNew_(const void*, void* mem,
+                             ::google::protobuf::Arena* arena);
+  static constexpr auto InternalNewImpl_();
+  static const ::google::protobuf::internal::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kTimestampFieldNumber = 1,
+  };
+  // int64 timestamp = 1;
+  void clear_timestamp() ;
+  ::int64_t timestamp() const;
+  void set_timestamp(::int64_t value);
+
+  private:
+  ::int64_t _internal_timestamp() const;
+  void _internal_set_timestamp(::int64_t value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:Protocol.C_Ping)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      0, 1, 0,
+      0, 2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const C_Ping& from_msg);
+    ::int64_t timestamp_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_game_2eproto;
+};
+// -------------------------------------------------------------------
+
 class C_MoveInput final : public ::google::protobuf::Message
 /* @@protoc_insertion_point(class_definition:Protocol.C_MoveInput) */ {
  public:
@@ -7027,6 +7621,7 @@ class S_SpawnObject final : public ::google::protobuf::Message
   // accessors -------------------------------------------------------
   enum : int {
     kObjectsFieldNumber = 1,
+    kServerTickFieldNumber = 2,
   };
   // repeated .Protocol.ObjectInfo objects = 1;
   int objects_size() const;
@@ -7045,12 +7640,22 @@ class S_SpawnObject final : public ::google::protobuf::Message
   const ::Protocol::ObjectInfo& objects(int index) const;
   ::Protocol::ObjectInfo* add_objects();
   const ::google::protobuf::RepeatedPtrField<::Protocol::ObjectInfo>& objects() const;
+  // uint32 server_tick = 2;
+  void clear_server_tick() ;
+  ::uint32_t server_tick() const;
+  void set_server_tick(::uint32_t value);
+
+  private:
+  ::uint32_t _internal_server_tick() const;
+  void _internal_set_server_tick(::uint32_t value);
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.S_SpawnObject)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      0, 1, 1,
+      1, 2, 1,
       0, 2>
       _table_;
 
@@ -7069,6 +7674,7 @@ class S_SpawnObject final : public ::google::protobuf::Message
                           ::google::protobuf::Arena* arena, const Impl_& from,
                           const S_SpawnObject& from_msg);
     ::google::protobuf::RepeatedPtrField< ::Protocol::ObjectInfo > objects_;
+    ::uint32_t server_tick_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -7975,6 +8581,28 @@ inline void S_Login::_internal_set_server_tick_interval(float value) {
   _impl_.server_tick_interval_ = value;
 }
 
+// uint32 server_tick = 7;
+inline void S_Login::clear_server_tick() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.server_tick_ = 0u;
+}
+inline ::uint32_t S_Login::server_tick() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_Login.server_tick)
+  return _internal_server_tick();
+}
+inline void S_Login::set_server_tick(::uint32_t value) {
+  _internal_set_server_tick(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_Login.server_tick)
+}
+inline ::uint32_t S_Login::_internal_server_tick() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.server_tick_;
+}
+inline void S_Login::_internal_set_server_tick(::uint32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.server_tick_ = value;
+}
+
 // -------------------------------------------------------------------
 
 // C_CreateRoom
@@ -8835,6 +9463,28 @@ S_SpawnObject::_internal_mutable_objects() {
   return &_impl_.objects_;
 }
 
+// uint32 server_tick = 2;
+inline void S_SpawnObject::clear_server_tick() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.server_tick_ = 0u;
+}
+inline ::uint32_t S_SpawnObject::server_tick() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_SpawnObject.server_tick)
+  return _internal_server_tick();
+}
+inline void S_SpawnObject::set_server_tick(::uint32_t value) {
+  _internal_set_server_tick(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_SpawnObject.server_tick)
+}
+inline ::uint32_t S_SpawnObject::_internal_server_tick() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.server_tick_;
+}
+inline void S_SpawnObject::_internal_set_server_tick(::uint32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.server_tick_ = value;
+}
+
 // -------------------------------------------------------------------
 
 // S_DespawnObject
@@ -9169,7 +9819,7 @@ inline void S_PlayerStateAck::_internal_set_server_tick(::uint32_t value) {
   _impl_.server_tick_ = value;
 }
 
-// float x = 2;
+// float x = 3;
 inline void S_PlayerStateAck::clear_x() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.x_ = 0;
@@ -9191,7 +9841,7 @@ inline void S_PlayerStateAck::_internal_set_x(float value) {
   _impl_.x_ = value;
 }
 
-// float y = 3;
+// float y = 4;
 inline void S_PlayerStateAck::clear_y() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.y_ = 0;
@@ -10005,6 +10655,84 @@ inline ::int64_t C_Pong::_internal_timestamp() const {
 inline void C_Pong::_internal_set_timestamp(::int64_t value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.timestamp_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// C_Ping
+
+// int64 timestamp = 1;
+inline void C_Ping::clear_timestamp() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.timestamp_ = ::int64_t{0};
+}
+inline ::int64_t C_Ping::timestamp() const {
+  // @@protoc_insertion_point(field_get:Protocol.C_Ping.timestamp)
+  return _internal_timestamp();
+}
+inline void C_Ping::set_timestamp(::int64_t value) {
+  _internal_set_timestamp(value);
+  // @@protoc_insertion_point(field_set:Protocol.C_Ping.timestamp)
+}
+inline ::int64_t C_Ping::_internal_timestamp() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.timestamp_;
+}
+inline void C_Ping::_internal_set_timestamp(::int64_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.timestamp_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// S_Pong
+
+// int64 timestamp = 1;
+inline void S_Pong::clear_timestamp() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.timestamp_ = ::int64_t{0};
+}
+inline ::int64_t S_Pong::timestamp() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_Pong.timestamp)
+  return _internal_timestamp();
+}
+inline void S_Pong::set_timestamp(::int64_t value) {
+  _internal_set_timestamp(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_Pong.timestamp)
+}
+inline ::int64_t S_Pong::_internal_timestamp() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.timestamp_;
+}
+inline void S_Pong::_internal_set_timestamp(::int64_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.timestamp_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// S_DebugServerTick
+
+// uint32 server_tick = 1;
+inline void S_DebugServerTick::clear_server_tick() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.server_tick_ = 0u;
+}
+inline ::uint32_t S_DebugServerTick::server_tick() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_DebugServerTick.server_tick)
+  return _internal_server_tick();
+}
+inline void S_DebugServerTick::set_server_tick(::uint32_t value) {
+  _internal_set_server_tick(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_DebugServerTick.server_tick)
+}
+inline ::uint32_t S_DebugServerTick::_internal_server_tick() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.server_tick_;
+}
+inline void S_DebugServerTick::_internal_set_server_tick(::uint32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.server_tick_ = value;
 }
 
 #ifdef __GNUC__

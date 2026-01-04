@@ -10,34 +10,38 @@ void ChaserAI::Think(Monster *monster, Room *room, float currentTime)
         return;
     _nextThinkTime = currentTime + _thinkInterval;
 
-    // Find nearest player
+    // Store room pointer for Execute to use
+    _room = room;
+
+    // Check if there's any player in the room
     auto target = room->GetNearestPlayer(monster->GetX(), monster->GetY());
-    if (target)
-    {
-        _targetX = target->GetX();
-        _targetY = target->GetY();
-        _hasTarget = true;
-    }
-    else
-    {
-        _hasTarget = false;
-    }
+    _hasTarget = (target != nullptr);
 }
 
 void ChaserAI::Execute(Monster *monster, float dt)
 {
     (void)dt;
-    if (!_hasTarget)
+    if (!_hasTarget || !_room)
     {
         monster->SetVelocity(0, 0);
         return;
     }
 
-    float dx = _targetX - monster->GetX();
-    float dy = _targetY - monster->GetY();
+    // Find nearest player EVERY tick for accurate tracking
+    auto target = _room->GetNearestPlayer(monster->GetX(), monster->GetY());
+    if (!target)
+    {
+        monster->SetVelocity(0, 0);
+        return;
+    }
+
+    // Calculate direction to current player position
+    float dx = target->GetX() - monster->GetX();
+    float dy = target->GetY() - monster->GetY();
     float distSq = dx * dx + dy * dy;
 
-    if (distSq > 0.1f)
+    // Move towards player if not too close
+    if (distSq > 0.001f)
     {
         float dist = std::sqrt(distSq);
         float nx = dx / dist;
@@ -53,8 +57,7 @@ void ChaserAI::Execute(Monster *monster, float dt)
 void ChaserAI::Reset()
 {
     _hasTarget = false;
-    _targetX = 0;
-    _targetY = 0;
+    _room = nullptr;
     // Load Balancing: Randomize initial think time [0, interval]
     float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
     _nextThinkTime = r * _thinkInterval;

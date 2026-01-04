@@ -177,6 +177,12 @@ target_link_libraries(VampireSurvivorServer PRIVATE System Share protobuf::libpr
 # target_include_directories(VampireSurvivorClient PRIVATE src/Examples/VampireSurvivor src src/Examples/VampireSurvivor/Common)
 # target_link_libraries(VampireSurvivorClient PRIVATE System Share protobuf::libprotobuf)
 
+# TickSyncClient Executable
+add_executable(TickSyncClient src/TickSyncClient/main.cpp ${PROTO_SRCS} ${PROTO_HDRS})
+target_include_directories(TickSyncClient PRIVATE src/TickSyncClient src ${CMAKE_CURRENT_BINARY_DIR} src/Examples/VampireSurvivor)
+target_precompile_headers(TickSyncClient PRIVATE src/System/Pch.h)
+target_link_libraries(TickSyncClient PRIVATE System Share protobuf::libprotobuf)
+
 
 
 

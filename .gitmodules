@@ -1,0 +1,3 @@
+[submodule "src/Examples/VampireSurvivor/ToySurvival"]
+	path = src/Examples/VampireSurvivor/ToySurvival
+	url = https://github.com/kybird/ToySurvival.git

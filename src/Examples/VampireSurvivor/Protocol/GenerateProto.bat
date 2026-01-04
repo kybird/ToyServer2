@@ -8,7 +8,7 @@ cd /d "%~dp0"
 set PROTOC=..\..\..\..\vcpkg_installed\x64-windows\tools\protobuf\protoc.exe
 set PROTO_FILE=game.proto
 set CPP_OUT_DIR=.
-set CSHARP_OUT_DIR=D:\Project\ToySurvival_Unity\Assets\Scripts\Protocol
+set CSHARP_OUT_DIR=..\ToySurvival\Assets\_Project\Scripts\Protocol
 set CSHARP_OUT_DIR_INTERNAL=..\Client\Assets\Scripts\Protocol
 
 :: Check Protoc
@@ -54,6 +54,9 @@ if %errorlevel% neq 0 (
     pause
     exit /b 1
 )
+
+:: Rename Game.cs to Protocol.cs (User Request)
+move /Y "%CSHARP_OUT_DIR_INTERNAL%\Game.cs" "%CSHARP_OUT_DIR_INTERNAL%\Protocol.cs"
 
 echo [SUCCESS] C# files generated in %CSHARP_OUT_DIR_INTERNAL%
 pause

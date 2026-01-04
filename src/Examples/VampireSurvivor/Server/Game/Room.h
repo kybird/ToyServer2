@@ -96,6 +96,7 @@ private:
     std::shared_ptr<UserDB> _userDB;
     float _totalRunTime = 0.0f;
     uint32_t _serverTick = 0;
+    float _debugBroadcastTimer = 0.0f; // Stage 0 Verification Timer
 
 public:
     uint32_t GetServerTick() const

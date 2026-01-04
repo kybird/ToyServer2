@@ -1,6 +1,7 @@
 #include "Core/GamePacketHandler.h"
 #include "Entity/Player.h"
 #include "Entity/PlayerFactory.h"
+#include "Game/GameConfig.h"
 #include "Game/Room.h"
 #include "Game/RoomManager.h"
 #include "GameEvents.h"
@@ -58,25 +59,41 @@ void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketVi
                     room->GetStrand()->Post(
                         [player, clientTick, dx, dy, room]()
                         {
-                            // 1. Update Input
+                            // 1. Get current server tick
+                            uint32_t serverTick = room->GetServerTick();
+
+                            // 2. Calculate tick difference (server is ahead of client)
+                            int32_t tickDiff = (int32_t)serverTick - (int32_t)clientTick;
+                            if (tickDiff < 0)
+                                tickDiff = 0; // Client sent future tick
+
+                            // 3. Set input (updates velocity)
                             player->SetInput(clientTick, dx, dy);
 
-                            // 2. Send Ack Immediately
+                            // 4. clientTick 시점의 위치 계산 (입력 적용 후 1틱 이동)
+                            float tickInterval = GameConfig::TICK_INTERVAL_SEC;
+                            float deltaTime = 1 * tickInterval; // clientTick 시점의 1틱만 이동
+
+                            float predictedX = player->GetX() + player->GetVX() * deltaTime;
+                            float predictedY = player->GetY() + player->GetVY() * deltaTime;
+
+                            // 5. Send immediate Ack with predicted position
                             Protocol::S_PlayerStateAck ack;
-                            ack.set_server_tick(room->GetServerTick());
-                            ack.set_x(player->GetX());
-                            ack.set_y(player->GetY());
+                            ack.set_server_tick(serverTick);
+                            ack.set_x(predictedX);
+                            ack.set_y(predictedY);
 
                             S_PlayerStateAckPacket ackPkt(ack);
                             if (player->GetSession())
                             {
                                 player->GetSession()->SendPacket(ackPkt);
                                 LOG_INFO(
-                                    "Sent S_PLAYER_STATE_ACK to Player {}: ServerTick={}, Pos=({:.2f}, {:.2f})",
-                                    player->GetId(),
-                                    ack.server_tick(),
-                                    ack.x(),
-                                    ack.y()
+                                    "S_PlayerStateAck: ClientTick={}, ServerTick={}, Diff={}, Pos=({:.2f}, {:.2f})",
+                                    clientTick,
+                                    serverTick,
+                                    tickDiff,
+                                    predictedX,
+                                    predictedY
                                 );
                             }
                         }
@@ -281,6 +298,18 @@ void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketVi
     case PacketID::C_PONG: {
         // [Heartbeat] Client responded. Update timeout logic.
         session->OnPong();
+        break;
+    }
+    case PacketID::C_PING: {
+        // [Latency Check] Echo timestamp back to client
+        Protocol::C_Ping req;
+        if (packet.Parse(req))
+        {
+            Protocol::S_Pong res;
+            res.set_timestamp(req.timestamp());
+            S_PongPacket respPacket(res);
+            session->SendPacket(respPacket);
+        }
         break;
     }
     case PacketID::C_GAME_READY: {

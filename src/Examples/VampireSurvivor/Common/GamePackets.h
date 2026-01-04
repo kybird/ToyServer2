@@ -174,11 +174,36 @@ public:
     using ProtobufPacketBase::ProtobufPacketBase;
 };
 
+// --- C_PING ---
+class C_PingPacket : public System::ProtobufPacketBase<C_PingPacket, PacketHeader, Protocol::C_Ping>
+{
+public:
+    static constexpr uint16_t ID = PacketID::C_PING;
+    using ProtobufPacketBase::ProtobufPacketBase;
+};
+
+// --- S_PONG ---
+class S_PongPacket : public System::ProtobufPacketBase<S_PongPacket, PacketHeader, Protocol::S_Pong>
+{
+public:
+    static constexpr uint16_t ID = PacketID::S_PONG;
+    using ProtobufPacketBase::ProtobufPacketBase;
+};
+
 // --- C_GAME_READY ---
 class C_GameReadyPacket : public System::ProtobufPacketBase<C_GameReadyPacket, PacketHeader, Protocol::C_GameReady>
 {
 public:
     static constexpr uint16_t ID = PacketID::C_GAME_READY;
+    using ProtobufPacketBase::ProtobufPacketBase;
+};
+
+// --- S_DEBUG_SERVER_TICK ---
+class S_DebugServerTickPacket
+    : public System::ProtobufPacketBase<S_DebugServerTickPacket, PacketHeader, Protocol::S_DebugServerTick>
+{
+public:
+    static constexpr uint16_t ID = PacketID::S_DEBUG_SERVER_TICK;
     using ProtobufPacketBase::ProtobufPacketBase;
 };
 

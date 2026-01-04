@@ -340,18 +340,25 @@ void TimerImpl::OnTick(TimerTickMessage *msg)
 
 void TimerImpl::ScheduleTick()
 {
-    // [Fix Drift] Interval Schedule: Previous Expiry + Interval
-    // If first run, expiry is now + interval.
-    // If subsequent, expiry is expiry() + interval.
+    // [Fix Drift] Proper initialization and drift prevention.
+    // First call: expiry is epoch (uninitialized), use expires_after to set initial time.
+    // Subsequent calls: use expires_at(expiry + interval) to prevent cumulative drift.
+    // If processing is slow and expiry < now, timer fires immediately to catch up.
 
-    // Check if expiry is in past (initial)
-    if (_tickTimer->expiry() < std::chrono::steady_clock::now())
+    auto now = std::chrono::steady_clock::now();
+    auto expiry = _tickTimer->expiry();
+
+    // Check if this is first call (expiry is epoch or way in the past)
+    // steady_clock epoch is typically system boot time, so expiry < (now - 1 hour) means uninitialized
+    if (expiry < now - std::chrono::hours(1))
     {
+        // First time: initialize relative to now
         _tickTimer->expires_after(std::chrono::milliseconds(TICK_INTERVAL_MS));
     }
     else
     {
-        _tickTimer->expires_at(_tickTimer->expiry() + std::chrono::milliseconds(TICK_INTERVAL_MS));
+        // Subsequent: use expiry + interval to prevent drift
+        _tickTimer->expires_at(expiry + std::chrono::milliseconds(TICK_INTERVAL_MS));
     }
 
     IDispatcher *dispatch = _dispatcher;
