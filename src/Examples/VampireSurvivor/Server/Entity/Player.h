@@ -56,7 +56,19 @@ public:
         // For now, I'll keep it as 3.6f or similar, but maybe 5.0f.
         // Actually, I will use a member variable _speed.
 
-        SetVelocity(dx * _speed, dy * _speed);
+        float magSq = dx * dx + dy * dy;
+        float finalVX = dx * _speed;
+        float finalVY = dy * _speed;
+
+        if (magSq > 1.0f)
+        {
+            float mag = std::sqrt(magSq);
+            finalVX = (dx / mag) * _speed;
+            finalVY = (dy / mag) * _speed;
+        }
+
+        SetVelocity(finalVX, finalVY);
+
 
         if (dx == 0 && dy == 0)
         {

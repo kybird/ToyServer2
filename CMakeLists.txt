@@ -142,6 +142,17 @@ protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
 set(GAME_SOURCES
     src/Examples/VampireSurvivor/Server/Core/LoginController.cpp
     src/Examples/VampireSurvivor/Server/Core/GamePacketHandler.cpp
+    src/Examples/VampireSurvivor/Server/Core/Handlers/Auth/LoginHandler.cpp
+    src/Examples/VampireSurvivor/Server/Core/Handlers/Lobby/EnterLobbyHandler.cpp
+    src/Examples/VampireSurvivor/Server/Core/Handlers/Room/CreateRoomHandler.cpp
+    src/Examples/VampireSurvivor/Server/Core/Handlers/Room/GetRoomListHandler.cpp
+    src/Examples/VampireSurvivor/Server/Core/Handlers/Room/JoinRoomHandler.cpp
+    src/Examples/VampireSurvivor/Server/Core/Handlers/Room/LeaveRoomHandler.cpp
+    src/Examples/VampireSurvivor/Server/Core/Handlers/Game/MoveInputHandler.cpp
+    src/Examples/VampireSurvivor/Server/Core/Handlers/Game/GameReadyHandler.cpp
+    src/Examples/VampireSurvivor/Server/Core/Handlers/Game/ChatHandler.cpp
+    src/Examples/VampireSurvivor/Server/Core/Handlers/System/PingHandler.cpp
+    src/Examples/VampireSurvivor/Server/Core/Handlers/System/PongHandler.cpp
     src/Examples/VampireSurvivor/Server/Core/DataManager.cpp
     src/Examples/VampireSurvivor/Server/Game/Room.cpp
     src/Examples/VampireSurvivor/Server/Game/RoomManager.cpp
@@ -168,6 +179,7 @@ target_include_directories(VampireSurvivorServer PRIVATE
     src/Examples/VampireSurvivor/Server
     src/Examples/VampireSurvivor
     src/Examples/VampireSurvivor/Common
+    src/Examples/VampireSurvivor/Server/Core
 )
 
 target_link_libraries(VampireSurvivorServer PRIVATE System Share protobuf::libprotobuf)
@@ -221,6 +233,7 @@ target_include_directories(UnitTests PRIVATE
     src/Examples/VampireSurvivor/Server
     src/Examples/VampireSurvivor
     src/Examples/VampireSurvivor/Common
+    src/Examples/VampireSurvivor/Server/Core
 )
 target_precompile_headers(UnitTests PRIVATE src/System/Pch.h)
 target_link_libraries(UnitTests PRIVATE System Share GTest::gtest GTest::gmock protobuf::libprotobuf unofficial::sqlite3::sqlite3)

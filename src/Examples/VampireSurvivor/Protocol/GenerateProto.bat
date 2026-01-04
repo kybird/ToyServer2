@@ -60,6 +60,6 @@ move /Y "%CSHARP_OUT_DIR_INTERNAL%\Game.cs" "%CSHARP_OUT_DIR_INTERNAL%\Protocol.
 
 echo [SUCCESS] C# files generated in %CSHARP_OUT_DIR_INTERNAL%
 pause
-+
+
 
 
