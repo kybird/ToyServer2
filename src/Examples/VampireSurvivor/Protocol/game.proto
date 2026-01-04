@@ -205,6 +205,7 @@ message C_MoveInput {
 
 message S_PlayerStateAck {
   uint32 server_tick = 1;
+  uint32 client_tick = 2;
   float x = 3;
   float y = 4;
 }

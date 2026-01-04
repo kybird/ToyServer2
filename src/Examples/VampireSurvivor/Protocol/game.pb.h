@@ -901,6 +901,7 @@ class S_PlayerStateAck final : public ::google::protobuf::Message
   // accessors -------------------------------------------------------
   enum : int {
     kServerTickFieldNumber = 1,
+    kClientTickFieldNumber = 2,
     kXFieldNumber = 3,
     kYFieldNumber = 4,
   };
@@ -912,6 +913,16 @@ class S_PlayerStateAck final : public ::google::protobuf::Message
   private:
   ::uint32_t _internal_server_tick() const;
   void _internal_set_server_tick(::uint32_t value);
+
+  public:
+  // uint32 client_tick = 2;
+  void clear_client_tick() ;
+  ::uint32_t client_tick() const;
+  void set_client_tick(::uint32_t value);
+
+  private:
+  ::uint32_t _internal_client_tick() const;
+  void _internal_set_client_tick(::uint32_t value);
 
   public:
   // float x = 3;
@@ -939,7 +950,7 @@ class S_PlayerStateAck final : public ::google::protobuf::Message
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      2, 3, 0,
+      2, 4, 0,
       0, 2>
       _table_;
 
@@ -958,6 +969,7 @@ class S_PlayerStateAck final : public ::google::protobuf::Message
                           ::google::protobuf::Arena* arena, const Impl_& from,
                           const S_PlayerStateAck& from_msg);
     ::uint32_t server_tick_;
+    ::uint32_t client_tick_;
     float x_;
     float y_;
     ::google::protobuf::internal::CachedSize _cached_size_;
@@ -9817,6 +9829,28 @@ inline ::uint32_t S_PlayerStateAck::_internal_server_tick() const {
 inline void S_PlayerStateAck::_internal_set_server_tick(::uint32_t value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.server_tick_ = value;
+}
+
+// uint32 client_tick = 2;
+inline void S_PlayerStateAck::clear_client_tick() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.client_tick_ = 0u;
+}
+inline ::uint32_t S_PlayerStateAck::client_tick() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_PlayerStateAck.client_tick)
+  return _internal_client_tick();
+}
+inline void S_PlayerStateAck::set_client_tick(::uint32_t value) {
+  _internal_set_client_tick(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_PlayerStateAck.client_tick)
+}
+inline ::uint32_t S_PlayerStateAck::_internal_client_tick() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.client_tick_;
+}
+inline void S_PlayerStateAck::_internal_set_client_tick(::uint32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.client_tick_ = value;
 }
 
 // float x = 3;
