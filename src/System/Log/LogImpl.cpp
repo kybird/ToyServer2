@@ -9,7 +9,7 @@ namespace System {
 class LogImpl : public ILog
 {
 public:
-    void Init() override
+    void Init(const std::string &level) override
     {
         try
         {
@@ -17,10 +17,7 @@ public:
             spdlog::init_thread_pool(8192, 1);
 
             // Use simple stdout sink (No Color for stability)
-            // auto console_sink =
-            // std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
             auto console_sink = std::make_shared<spdlog::sinks::stdout_sink_mt>();
-
             auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/server.log", true);
 
             std::vector<spdlog::sink_ptr> sinks{console_sink, file_sink};
@@ -31,8 +28,9 @@ public:
 
             spdlog::register_logger(logger);
             spdlog::set_default_logger(logger);
-            // Removed colors from pattern: [%^%l%$] -> [%l]
             spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] %v");
+
+            SetLogLevel(level);
 
             // Setup File-Only Logger
             _fileLogger = std::make_shared<spdlog::async_logger>(
@@ -43,7 +41,7 @@ public:
 
             spdlog::flush_on(spdlog::level::err);
             spdlog::flush_every(std::chrono::seconds(1));
-            spdlog::info("Logger Initialized");
+            spdlog::info("Logger Initialized (Level: {})", level);
             logger->flush();
         } catch (const std::exception &e)
         {
@@ -52,6 +50,11 @@ public:
         {
             std::cerr << "Logger Init Failed: Unknown Error" << std::endl;
         }
+    }
+
+    void SetLogLevel(const std::string &level) override
+    {
+        spdlog::set_level(GetSpdLevel(level));
     }
 
     void Info(const std::string &msg) override
@@ -83,6 +86,25 @@ public:
     }
 
 private:
+    spdlog::level::level_enum GetSpdLevel(const std::string &level)
+    {
+        if (level == "trace")
+            return spdlog::level::trace;
+        if (level == "debug")
+            return spdlog::level::debug;
+        if (level == "info")
+            return spdlog::level::info;
+        if (level == "warn")
+            return spdlog::level::warn;
+        if (level == "err")
+            return spdlog::level::err;
+        if (level == "critical")
+            return spdlog::level::critical;
+        if (level == "off")
+            return spdlog::level::off;
+        return spdlog::level::info;
+    }
+
     std::shared_ptr<spdlog::logger> _fileLogger;
 };
 

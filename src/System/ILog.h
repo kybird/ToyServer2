@@ -11,7 +11,8 @@ class ILog
 {
 public:
     virtual ~ILog() = default;
-    virtual void Init() = 0;
+    virtual void Init(const std::string &level = "info") = 0;
+    virtual void SetLogLevel(const std::string &level) = 0;
     virtual void Info(const std::string &msg) = 0;
     virtual void Warn(const std::string &msg) = 0;
     virtual void Error(const std::string &msg) = 0;

@@ -103,6 +103,8 @@ void Room::OnTimer(uint32_t timerId, void *pParam)
     // but OnTimer is called by Timer which we manage.
     // Let's use 'this' for now as Timer is cancelled in Stop/Destructor.
     _serverTick++;
+
+    // LOG_DEBUG("[ServerTick] {}", _serverTick);
     if (_strand)
     {
         _strand->Post(
@@ -318,25 +320,18 @@ void Room::Update(float deltaTime)
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     // [Stage 0 Verification] Broadcast S_DEBUG_SERVER_TICK every 1s (Real Time Accumulator)
-    _debugBroadcastTimer += deltaTime;
-    if (_debugBroadcastTimer >= 1.0f)
-    {
-        _debugBroadcastTimer -= 1.0f;
+    // _debugBroadcastTimer += deltaTime;
+    // if (_debugBroadcastTimer >= 1.0f)
+    // {
+    //     _debugBroadcastTimer -= 1.0f;
 
-        Protocol::S_DebugServerTick dbgMsg;
-        dbgMsg.set_server_tick(_serverTick);
-        S_DebugServerTickPacket dbgPkt(dbgMsg);
-        BroadcastPacket(dbgPkt);
+    //     Protocol::S_DebugServerTick dbgMsg;
+    //     dbgMsg.set_server_tick(_serverTick);
+    //     S_DebugServerTickPacket dbgPkt(dbgMsg);
+    //     BroadcastPacket(dbgPkt);
 
-        LOG_INFO("[DebugTick] serverTick = {}", _serverTick);
-    }
-
-    /* Removed old tick log
-    if (_serverTick % 30 == 0)
-    {
-        LOG_INFO("Room {} Server Tick: {}", _roomId, _serverTick);
-    }
-    */
+    //     LOG_INFO("[DebugTick] serverTick = {}", _serverTick);
+    // }
 
     _waveMgr.Update(deltaTime, this);
     _totalRunTime += deltaTime;
@@ -366,102 +361,55 @@ void Room::Update(float deltaTime)
             // Map Bounds Check (TODO)
 
             obj->SetPos(newX, newY);
-            _grid.Update(obj, oldX, oldY);
-        }
-
-        // 2. Network Optimization (Delta Sync)
-        bool isDirty = true;
-
-        // A. State Changed (Idle <-> Moving)
-        // if (obj->GetState() != obj->GetLastSentState())
-        //     isDirty = true;
-
-        // // B. Velocity Changed (Threshold)
-        // float dvx = obj->GetVX() - obj->GetLastSentVX();
-        // float dvy = obj->GetVY() - obj->GetLastSentVY();
-        // if ((dvx * dvx + dvy * dvy) > 0.01f)
-        //     isDirty = true; // > 0.1 difference
-
-        // // C. Prediction Error & Tick Threshold
-        // static constexpr float SERVER_DT = GameConfig::TICK_INTERVAL_SEC;
-        // static constexpr int MAX_EXTRAPOLATION_TICKS = 5; // ~200ms max extrapolation (5 * 40ms)
-
-        // int dtTicks = static_cast<int>(_serverTick - obj->GetLastSentServerTick());
-        // dtTicks = std::min(dtTicks, MAX_EXTRAPOLATION_TICKS); // Clamp extrapolation
-
-        // // Tick Threshold (Hard Sync every 30 ticks = 1.0s)
-        // if (dtTicks > 30)
-        //     isDirty = true;
-
-        // // Prediction Error Guard
-        // // Predicted = LastSentPos + LastSentVel * (dtTicks * SERVER_DT)
-        // if (!isDirty)
-        // {
-        //     float dt = dtTicks * SERVER_DT;
-        //     float predX = obj->GetLastSentX() + obj->GetLastSentVX() * dt;
-        //     float predY = obj->GetLastSentY() + obj->GetLastSentVY() * dt;
-        //     float errX = obj->GetX() - predX;
-        //     float errY = obj->GetY() - predY;
-        //     float errSq = errX * errX + errY * errY;
-
-        //     // Max Prediction Error: 0.2 units (0.04 sq)
-        //     if (errSq > 0.04f)
-        //         isDirty = true;
-        // }
-
-        if (isDirty)
-        {
-            // Update Sync State
-            obj->UpdateLastSentState(_totalRunTime, _serverTick);
-
-            Protocol::ObjectPos move;
-            move.set_object_id(obj->GetId());
-            move.set_x(obj->GetX());
-            move.set_y(obj->GetY());
-            move.set_vx(obj->GetVX());
-            move.set_vy(obj->GetVY());
 
             if (obj->GetType() == Protocol::ObjectType::PLAYER)
             {
-                playerMoves.push_back(move);
+                LOG_DEBUG(
+                    "[UpdateTick] Tick={} Obj={} Pos=({:.2f},{:.2f}) -> ({:.2f},{:.2f}) Vel=({:.2f},{:.2f})",
+                    _serverTick,
+                    obj->GetId(),
+                    oldX,
+                    oldY,
+                    newX,
+                    newY,
+                    obj->GetVX(),
+                    obj->GetVY()
+                );
             }
-            else
-            {
-                monsterMoves.push_back(move);
-            }
+
+            _grid.Update(obj, oldX, oldY);
+        }
+
+        Protocol::ObjectPos move;
+        move.set_object_id(obj->GetId());
+        move.set_x(obj->GetX());
+        move.set_y(obj->GetY());
+        move.set_vx(obj->GetVX());
+        move.set_vy(obj->GetVY());
+
+        if (obj->GetType() == Protocol::ObjectType::PLAYER)
+        {
+            playerMoves.push_back(move);
+        }
+        else
+        {
+            monsterMoves.push_back(move);
         }
     }
 
-    // 2. Broadcast Batched Movement
-    const size_t MAX_PAYLOAD_BYTES = 10000;
-    const size_t PACKET_OVERHEAD = 64;
-
-    // A. Broadcast Non-Player Objects (Monsters, Projectiles) to ALL
+    // === 2. Broadcast Monsters ===
     if (!monsterMoves.empty())
     {
         Protocol::S_MoveObjectBatch batch;
         batch.set_server_tick(_serverTick);
-        size_t currentSize = 0;
 
-        for (const auto &move : monsterMoves)
-        {
-            size_t msgSize = move.ByteSizeLong();
-            if (currentSize + msgSize > MAX_PAYLOAD_BYTES - PACKET_OVERHEAD)
-            {
-                BroadcastProto(this, batch);
-                batch.Clear();
-                batch.set_server_tick(_serverTick);
-                currentSize = 0;
-            }
+        for (auto &move : monsterMoves)
             *batch.add_moves() = move;
-            currentSize += msgSize;
-        }
-        if (batch.moves_size() > 0)
-            BroadcastProto(this, batch);
+
+        BroadcastProto(this, batch);
     }
 
-    // B. Send Player Updates (Filtering Self)
-    // iterate players and send customized batch
+    // === 3. Broadcast Players (filter self) ===
     if (!playerMoves.empty())
     {
         for (auto &pair : _players)
@@ -473,14 +421,10 @@ void Room::Update(float deltaTime)
             Protocol::S_MoveObjectBatch batch;
             batch.set_server_tick(_serverTick);
 
-            for (const auto &move : playerMoves)
+            for (auto &move : playerMoves)
             {
-                // CRITICAL: Calculate batch for 'viewer'.
-                // Do NOT include viewer's own movement.
                 if (move.object_id() != viewer->GetId())
-                {
                     *batch.add_moves() = move;
-                }
             }
 
             if (batch.moves_size() > 0)
@@ -489,6 +433,32 @@ void Room::Update(float deltaTime)
                 viewer->GetSession()->SendPacket(pkt);
             }
         }
+    }
+
+    // === 4. Send Player Ack (authoritative snapshot) ===
+    for (auto &pair : _players)
+    {
+        auto player = pair.second;
+        if (!player->GetSession())
+            continue;
+
+        Protocol::S_PlayerStateAck ack;
+        ack.set_server_tick(_serverTick);
+        ack.set_client_tick(player->GetLastProcessedClientTick());
+        ack.set_x(player->GetX());
+        ack.set_y(player->GetY());
+
+        S_PlayerStateAckPacket pkt(ack);
+        player->GetSession()->SendPacket(pkt);
+
+        LOG_DEBUG(
+            "[Ack] Player={} ServerTick={} ClientTick={} Pos=({:.2f},{:.2f})",
+            player->GetId(),
+            _serverTick,
+            player->GetLastProcessedClientTick(),
+            player->GetX(),
+            player->GetY()
+        );
     }
 
     // 3. Collision Detection & Combat Logic

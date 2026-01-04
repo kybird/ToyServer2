@@ -52,6 +52,7 @@ bool JsonConfigLoader::Load(const std::string &filePath)
             _config.encryption = server.value("encryption", "none");
             _config.encryptionKey = server.value("encryption_key", server.value("encryptionKey", ""));
             _config.encryptionIV = server.value("encryption_iv", server.value("encryptionIV", ""));
+            _config.logLevel = server.value("log_level", "info");
         }
 
         LOG_INFO(

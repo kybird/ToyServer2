@@ -1,5 +1,7 @@
 #pragma once
 #include "Entity/GameObject.h"
+#include "Math/Vector2.h"
+#include "System/ILog.h"
 #include "System/ISession.h"
 #include <string>
 
@@ -35,49 +37,31 @@ public:
         _lastInputTick = 0;
     }
 
-    void SetInput(uint32_t clientTick, int32_t dx, int32_t dy)
+    void ApplyInput(uint32_t clientTick, int32_t dx, int32_t dy)
     {
         _lastInputTick = clientTick;
 
-        // Simple Movement Logic: Set Velocity based on Direction
-        // Server tick (30 TPS) movement processing is handled in Room/GameObject Update,
-        // but Velocity is set immediately here.
-        float speed =
-            5.0f; // Adjusted speed as per previous conversations/expectations (3.6f was old, user mentioned 100f in
-                  // conversation history but let's stick to reasonable server units. User conversation 91820c83 said
-                  // 100.0f?? "Adjust player character speed ... to a more balanced value (e.g., 100.0f)".
-        // Wait, if map is small, 100 is fast. If map is pixels, 100 is slow.
-        // Looking at GamePacketHandler it was 3.6f.
-        // Let's use 5.0f for now or check if there's a constant.
-        // Actually, in the last conversation (91820c83), the user wanted 100.0f.
-        // I should probably use a higher value if the map units are large.
-        // S_Login has map_width/height.
-        // Let's look at Room.cpp later to see map size.
-        // For now, I'll keep it as 3.6f or similar, but maybe 5.0f.
-        // Actually, I will use a member variable _speed.
+        Vector2 dir(dx, dy);
 
-        float magSq = dx * dx + dy * dy;
-        float finalVX = dx * _speed;
-        float finalVY = dy * _speed;
-
-        if (magSq > 1.0f)
+        if (dir.IsZero())
         {
-            float mag = std::sqrt(magSq);
-            finalVX = (dx / mag) * _speed;
-            finalVY = (dy / mag) * _speed;
-        }
-
-        SetVelocity(finalVX, finalVY);
-
-
-        if (dx == 0 && dy == 0)
-        {
+            SetVelocity(0, 0);
             SetState(Protocol::IDLE);
+            return;
         }
-        else
-        {
-            SetState(Protocol::MOVING);
-        }
+
+        dir.Normalize();
+        SetVelocity(dir.x * _speed, dir.y * _speed);
+        SetState(Protocol::MOVING);
+        LOG_DEBUG(
+            "[SetInput] Player={} ClientTick={} Dir=({}, {}) Vel=({:.2f},{:.2f})",
+            GetId(),
+            clientTick,
+            dx,
+            dy,
+            GetVX(),
+            GetVY()
+        );
     }
 
     // Reset for pooling
@@ -144,6 +128,11 @@ public:
             }
             // Add more skills here
         }
+    }
+
+    uint32_t GetLastProcessedClientTick() const
+    {
+        return _lastInputTick;
     }
 
 private:

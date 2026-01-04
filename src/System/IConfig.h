@@ -20,6 +20,7 @@ struct ServerConfig
     std::string encryption = "none";
     std::string encryptionKey = "";
     std::string encryptionIV = "";
+    std::string logLevel = "info";
 };
 
 class IConfig

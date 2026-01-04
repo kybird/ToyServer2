@@ -31,6 +31,9 @@ int main()
         return 1;
     }
 
+    // Set Log Level from Config
+    System::GetLog().SetLogLevel(config->GetConfig().logLevel);
+
     // Load Game Data
     if (!SimpleGame::DataManager::Instance().LoadMonsterData("MonsterData.json") ||
         !SimpleGame::DataManager::Instance().LoadWaveData("WaveData.json"))
