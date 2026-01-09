@@ -1,5 +1,6 @@
 #include "System/Database/DatabaseImpl.h"
 #include "System/ILog.h"
+#include "System/Thread/ThreadPool.h"
 #include <chrono>
 #include <thread>
 
@@ -36,10 +37,14 @@ IDatabase::Create(const std::string &driverType, const std::string &connStr, int
 DatabaseImpl::DatabaseImpl(const std::string &connStr, int poolSize, int defaultTimeoutMs, ConnectionFactory factory)
     : _connectionString(connStr), _poolMax(poolSize), _defaultTimeoutMs(defaultTimeoutMs), _factory(factory)
 {
+    _workerPool = std::make_shared<ThreadPool>(poolSize);
 }
 
 DatabaseImpl::~DatabaseImpl()
 {
+    if (_workerPool)
+        _workerPool->Stop();
+
     IConnection *conn = nullptr;
     while (_pool.try_dequeue(conn))
     {
@@ -53,6 +58,9 @@ DatabaseImpl::~DatabaseImpl()
 
 void DatabaseImpl::Init()
 {
+    if (_workerPool)
+        _workerPool->Start();
+
     // 초기 커넥션 생성 (선택 사항이나 권장)
     // 여기서는 최소 1개는 생성해보고 성공 여부 확인
     auto conn = Acquire(0);
@@ -60,6 +68,151 @@ void DatabaseImpl::Init()
     {
         LOG_ERROR("DatabaseImpl: Failed to create initial connection.");
     }
+}
+
+void DatabaseImpl::QueryAsync(
+    const std::string &sql, std::function<void(DbResult<std::unique_ptr<IResultSet>>)> callback, int timeoutMs
+)
+{
+    if (!_dispatcher)
+    {
+        LOG_ERROR("DatabaseImpl::QueryAsync: Dispatcher not set!");
+        return;
+    }
+
+    _workerPool->Submit(
+        [this, sql, callback, timeoutMs]() mutable
+        {
+            auto result = std::make_shared<DbResult<std::unique_ptr<IResultSet>>>(this->Query(sql));
+            _dispatcher->Push(
+                [callback, result]() mutable
+                {
+                    callback(std::move(*result));
+                }
+            );
+        }
+    );
+}
+
+void DatabaseImpl::ExecuteAsync(const std::string &sql, std::function<void(DbStatus)> callback, int timeoutMs)
+{
+    if (!_dispatcher)
+    {
+        LOG_ERROR("DatabaseImpl::ExecuteAsync: Dispatcher not set!");
+        return;
+    }
+
+    _workerPool->Submit(
+        [this, sql, callback, timeoutMs]()
+        {
+            auto status = this->Execute(sql);
+            _dispatcher->Push(
+                [callback, status]()
+                {
+                    callback(status);
+                }
+            );
+        }
+    );
+}
+
+// Connection-pinned Database Proxy for transactions
+class DatabaseConnectionProxy : public IDatabase
+{
+public:
+    DatabaseConnectionProxy(DatabaseImpl *owner, std::shared_ptr<IConnection> conn) : _owner(owner), _conn(conn)
+    {
+    }
+
+    DbResult<std::unique_ptr<IResultSet>> Query(const std::string &sql) override
+    {
+        auto res = _conn->Query(sql);
+        if (res.status.IsOk() && res.value.has_value())
+        {
+            auto wrapper = std::make_unique<ResultSetWrapper>(_conn, std::move(*res.value));
+            return DbResult<std::unique_ptr<IResultSet>>::Success(std::move(wrapper));
+        }
+        return res;
+    }
+
+    DbStatus Execute(const std::string &sql) override
+    {
+        return _conn->Execute(sql);
+    }
+
+    DbResult<std::unique_ptr<IPreparedStatement>> Prepare(const std::string &sql) override
+    {
+        auto innerResult = _conn->Prepare(sql);
+        if (!innerResult.status.IsOk())
+            return innerResult;
+        auto wrapper = std::make_unique<PreparedStatementWrapper>(_conn, std::move(*innerResult.value));
+        return DbResult<std::unique_ptr<IPreparedStatement>>::Success(std::move(wrapper));
+    }
+
+    DbResult<std::unique_ptr<ITransaction>> BeginTransaction() override
+    {
+        auto status = _conn->BeginTransaction();
+        if (!status.IsOk())
+            return DbResult<std::unique_ptr<ITransaction>>::Fail(status.code, status.message);
+        auto wrapper = std::make_unique<TransactionWrapper>(_conn);
+        return DbResult<std::unique_ptr<ITransaction>>::Success(std::move(wrapper));
+    }
+
+    void SetDispatcher(std::shared_ptr<IDispatcher> dispatcher) override
+    {
+        _owner->SetDispatcher(dispatcher);
+    }
+
+    void QueryAsync(const std::string &, std::function<void(DbResult<std::unique_ptr<IResultSet>>)> , int ) override
+    {
+        // Not supported/needed inside transaction-pinned proxy for now
+    }
+    void ExecuteAsync(const std::string &, std::function<void(DbStatus)> , int ) override
+    {
+        // Not supported
+    }
+    void RunInTransaction(std::function<bool(IDatabase *)> , std::function<void(bool)> ) override
+    {
+        // Not supported (Nested RunInTransaction)
+    }
+
+private:
+    DatabaseImpl *_owner;
+    std::shared_ptr<IConnection> _conn;
+};
+
+void DatabaseImpl::RunInTransaction(std::function<bool(IDatabase *)> transactionFunc, std::function<void(bool)> callback)
+{
+    if (!_dispatcher)
+    {
+        LOG_ERROR("DatabaseImpl::RunInTransaction: Dispatcher not set!");
+        return;
+    }
+
+    _workerPool->Submit(
+        [this, transactionFunc, callback]()
+        {
+            auto conn = this->Acquire(_defaultTimeoutMs);
+            bool success = false;
+            if (conn)
+            {
+                DatabaseConnectionProxy proxy(this, conn);
+                success = transactionFunc(&proxy);
+            }
+            else
+            {
+                LOG_ERROR("DatabaseImpl::RunInTransaction: Failed to acquire connection.");
+            }
+
+            _dispatcher->Push(
+                [callback, success]()
+                {
+                    if (callback)
+                        callback(success);
+                }
+            );
+        }
+    );
 }
 
 std::shared_ptr<IConnection> DatabaseImpl::Acquire(int timeoutMs)

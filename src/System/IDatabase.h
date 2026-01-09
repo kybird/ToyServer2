@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -7,6 +8,8 @@
 #include <vector>
 
 namespace System {
+
+class IDispatcher;
 
 /**
  * 데이터베이스 작업 상태 코드
@@ -162,8 +165,19 @@ public:
     // Prepared Statement 생성
     virtual DbResult<std::unique_ptr<IPreparedStatement>> Prepare(const std::string &sql) = 0;
 
+    // 디스패처 설정 (비동기 콜백용)
+    virtual void SetDispatcher(std::shared_ptr<IDispatcher> dispatcher) = 0;
+
     // 트랜잭션 시작 (RAII)
     virtual DbResult<std::unique_ptr<ITransaction>> BeginTransaction() = 0;
+
+    // 비동기 쿼리/실행 (콜백은 메인 스레드에서 실행됨)
+    virtual void
+    QueryAsync(const std::string &sql, std::function<void(DbResult<std::unique_ptr<IResultSet>>)> callback, int timeoutMs = -1) = 0;
+    virtual void ExecuteAsync(const std::string &sql, std::function<void(DbStatus)> callback, int timeoutMs = -1) = 0;
+
+    // 비동기 트랜잭션/복합 작업 (작업 스레드에서 실행됨)
+    virtual void RunInTransaction(std::function<bool(IDatabase *)> transactionFunc, std::function<void(bool)> callback) = 0;
 
 protected:
     IDatabase() = default;

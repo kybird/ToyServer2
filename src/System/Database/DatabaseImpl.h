@@ -1,7 +1,9 @@
 #pragma once
 
 #include "System/Database/IConnection.h"
+#include "System/Dispatcher/IDispatcher.h"
 #include "System/IDatabase.h"
+#include "System/Thread/IThreadPool.h"
 #include <atomic>
 #include <concurrentqueue/moodycamel/concurrentqueue.h>
 #include <condition_variable>
@@ -28,6 +30,19 @@ public:
     DbResult<std::unique_ptr<IPreparedStatement>> Prepare(const std::string &sql) override;
     DbResult<std::unique_ptr<ITransaction>> BeginTransaction() override;
 
+    void SetDispatcher(std::shared_ptr<IDispatcher> dispatcher) override
+    {
+        _dispatcher = std::move(dispatcher);
+    }
+
+    void QueryAsync(
+        const std::string &sql, std::function<void(DbResult<std::unique_ptr<IResultSet>>)> callback,
+        int timeoutMs = -1
+    ) override;
+    void ExecuteAsync(const std::string &sql, std::function<void(DbStatus)> callback, int timeoutMs = -1) override;
+
+    void RunInTransaction(std::function<bool(IDatabase *)> transactionFunc, std::function<void(bool)> callback) override;
+
     // 내부용
     std::shared_ptr<IConnection> Acquire(int timeoutMs);
     void Release(IConnection *conn);
@@ -37,6 +52,9 @@ private:
     int _poolMax;
     int _defaultTimeoutMs;
     ConnectionFactory _factory;
+
+    std::shared_ptr<IDispatcher> _dispatcher;
+    std::shared_ptr<IThreadPool> _workerPool;
 
     moodycamel::ConcurrentQueue<IConnection *> _pool;
     std::atomic<int> _currentSize{0};

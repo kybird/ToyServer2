@@ -10,7 +10,7 @@
 
 namespace SimpleGame {
 
-LoginController::LoginController(std::shared_ptr<System::IAsyncDatabase> db, System::IFramework *framework)
+LoginController::LoginController(std::shared_ptr<System::IDatabase> db, System::IFramework *framework)
     : _db(db), _framework(framework)
 {
 }

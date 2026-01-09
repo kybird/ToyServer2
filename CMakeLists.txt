@@ -226,6 +226,7 @@ set(VS_TEST_SOURCES
     src/Examples/VampireSurvivor/tests/TestCombat.cpp
     src/Examples/VampireSurvivor/tests/TestSwarmPerformance.cpp
     src/Examples/VampireSurvivor/tests/TestDeadReckoningCorrection.cpp
+    src/Examples/VampireSurvivor/tests/TestDatabaseAsync.cpp
 )
 add_executable(UnitTests ${VS_TEST_SOURCES} ${GAME_SOURCES})
 target_include_directories(UnitTests PRIVATE 

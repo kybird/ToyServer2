@@ -77,6 +77,9 @@ int main()
         return 1;
     }
 
+    // Set Dispatcher for Asynchronous Database Tasks
+    db->SetDispatcher(framework->GetDispatcher());
+
     // Ensure Tables Exist
     {
         db->Execute(
@@ -94,19 +97,11 @@ int main()
         LOG_INFO("Database Initialized (game.db).");
     }
 
-    // Create Async Adapter
-    auto asyncDb = framework->CreateAsyncDatabase(db);
-    if (!asyncDb)
-    {
-        LOG_ERROR("Failed to create Async Database adapter.");
-        return 1;
-    }
-
     // Initialize UserDB (Persistent Data Access)
-    auto userDB = std::make_shared<SimpleGame::UserDB>(asyncDb);
+    auto userDB = std::make_shared<SimpleGame::UserDB>(db);
 
     // Initialize Login Controller
-    auto loginController = std::make_shared<SimpleGame::LoginController>(asyncDb, framework.get());
+    auto loginController = std::make_shared<SimpleGame::LoginController>(db, framework.get());
     loginController->Init();
 
     // Initialize RoomManager

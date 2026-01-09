@@ -30,6 +30,7 @@ public:
     virtual std::shared_ptr<ITimer> GetTimer() const = 0;
     virtual std::shared_ptr<IStrand> CreateStrand() = 0;
     virtual size_t GetDispatcherQueueSize() const = 0;
+    virtual std::shared_ptr<IDispatcher> GetDispatcher() const = 0;
 
     // Event Subscription Helper (Hides IDispatcher)
     template <typename EventType, typename CallbackType> void Subscribe(CallbackType callback)
@@ -37,10 +38,6 @@ public:
         // Default: Subscribe to Main Logic Dispatcher
         System::EventBus::Instance().Subscribe<EventType>(GetDispatcher().get(), callback);
     }
-
-protected:
-    // Internal access only (Plugins/Internal modules might need it, but App Logic shouldn't)
-    virtual std::shared_ptr<IDispatcher> GetDispatcher() const = 0;
 };
 
 } // namespace System

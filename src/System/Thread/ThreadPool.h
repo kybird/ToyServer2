@@ -1,5 +1,5 @@
 #pragma once
-
+#include "System/Thread/IThreadPool.h"
 #include <atomic>
 #include <concurrentqueue/moodycamel/concurrentqueue.h>
 #include <functional>
@@ -12,20 +12,28 @@
 
 namespace System {
 
-class ThreadPool
+class ThreadPool : public IThreadPool
 {
 public:
     // Constructor
     ThreadPool(int threadCount);
-    ~ThreadPool();
+    ~ThreadPool() override;
 
-    // Initialize and start workers
-    void Start();
+    // IThreadPool implementation
+    void Start() override;
+    void Stop() override;
+    void Submit(std::function<void()> task) override
+    {
+        if (_stop.load(std::memory_order_acquire))
+            return;
 
-    // Stop the thread pool.
-    // Drains any remaining tasks in the queue before exiting.
-    // New tasks will be rejected.
-    void Stop();
+        _tasks.enqueue(std::move(task));
+        _taskSemaphore.release();
+    }
+    size_t GetThreadCount() const override
+    {
+        return _threads.size();
+    }
 
     // Enqueue a generic callable task. Returns a std::future.
     template <typename Func, typename... Args>
@@ -61,11 +69,6 @@ public:
         return res;
     }
 
-    // Access specific thread count info
-    size_t GetThreadCount() const
-    {
-        return _threads.size();
-    }
 
 private:
     int _threadCount;
