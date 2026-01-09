@@ -8,14 +8,14 @@ namespace SimpleGame {
 class LoginController
 {
 public:
-    LoginController(std::shared_ptr<System::IDatabase> db, System::IFramework *framework);
+    LoginController(std::shared_ptr<System::IAsyncDatabase> db, System::IFramework *framework);
 
     void Init();
 
 private:
     void OnLogin(const LoginRequestEvent &evt);
 
-    std::shared_ptr<System::IDatabase> _db;
+    std::shared_ptr<System::IAsyncDatabase> _db;
     System::IFramework *_framework;
 };
 

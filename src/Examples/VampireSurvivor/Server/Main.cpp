@@ -94,11 +94,19 @@ int main()
         LOG_INFO("Database Initialized (game.db).");
     }
 
+    // Create Async Adapter
+    auto asyncDb = framework->CreateAsyncDatabase(db);
+    if (!asyncDb)
+    {
+        LOG_ERROR("Failed to create Async Database adapter.");
+        return 1;
+    }
+
     // Initialize UserDB (Persistent Data Access)
-    auto userDB = std::make_shared<SimpleGame::UserDB>(db);
+    auto userDB = std::make_shared<SimpleGame::UserDB>(asyncDb);
 
     // Initialize Login Controller
-    auto loginController = std::make_shared<SimpleGame::LoginController>(db, framework.get());
+    auto loginController = std::make_shared<SimpleGame::LoginController>(asyncDb, framework.get());
     loginController->Init();
 
     // Initialize RoomManager

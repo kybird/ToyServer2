@@ -1,12 +1,12 @@
 #include "Entity/Player.h"
 #include "Entity/PlayerFactory.h"
-#include "Game/Room.h"
 #include "Game/ObjectManager.h"
+#include "Game/Room.h"
+#include "System/ISession.h"
+#include "System/Packet/IPacket.h"
+#include <cstring>
 #include <gtest/gtest.h>
 #include <memory>
-#include <cstring>
-#include "System/Packet/IPacket.h"
-#include "System/ISession.h"
 
 namespace SimpleGame {
 
@@ -37,6 +37,9 @@ public:
     bool CanDestroy() const override
     {
         return true;
+    }
+    void IncRef() override
+    {
     }
     void DecRef() override
     {
@@ -162,6 +165,9 @@ public:
     bool CanDestroy() const override
     {
         return true;
+    }
+    void IncRef() override
+    {
     }
     void DecRef() override
     {

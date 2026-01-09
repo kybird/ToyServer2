@@ -179,29 +179,67 @@ void Room::BroadcastDespawn(const std::vector<int32_t> &objectIds)
 
 void Room::Enter(std::shared_ptr<Player> player)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-    _players[player->GetSessionId()] = player;
-    player->SetRoomId(_roomId);
-
-    // Load Persistent Data
-    // TODO: Need UserId properly. Assuming SessionId maps to UserId for now or passed separately.
-    // In real app, Player object should store UserId from Login.
-    // For now, cast SessionId to int (Warning: data loss if big)
-    int userId = (int)player->GetSessionId();
-    if (_userDB)
+    // [Async Loading Flow]
+    // 1. Register Session in Room (So networking works)
     {
-        auto skills = _userDB->GetUserSkills(userId);
-        player->ApplySkills(skills);
-        LOG_INFO("Applied {} skills to Player {}", skills.size(), userId);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        _players[player->GetSessionId()] = player;
+        player->SetRoomId(_roomId);
+        // Do NOT add to _objMgr or _grid yet. Player is "Loading".
     }
 
-    // Add to Game Systems
-    _objMgr.AddObject(player);
-    _grid.Add(player);
+    LOG_INFO("Player {} connecting to Room {}. Loading Data...", player->GetSessionId(), _roomId);
 
-    LOG_INFO("Player {} entered Room {}. Total Players: {}", player->GetSessionId(), _roomId, _players.size());
+    // 2. Async Load Data
+    // We must keep player alive.
+    // We assume _userDB is valid.
+    int userId = (int)player->GetSessionId(); // TODO: Use real UserId
+    auto self = shared_from_this();           // Keep Room alive during DB call
 
-    LOG_INFO("Player {} entered Room {}. Waiting for C_GAME_READY.", player->GetSessionId(), _roomId);
+    if (_userDB)
+    {
+        _userDB->GetUserSkills(
+            userId,
+            [self, player](std::vector<std::pair<int, int>> skills)
+            {
+                // [Main Thread] Callback
+                // 3. Finalize Entry
+                std::lock_guard<std::recursive_mutex> lock(self->_mutex);
+
+                // Check if player is still in the room (might have disconnected during load)
+                auto it = self->_players.find(player->GetSessionId());
+                if (it == self->_players.end() || it->second != player)
+                {
+                    LOG_WARN("Player {} disconnected while loading.", player->GetSessionId());
+                    return;
+                }
+
+                // Apply Data
+                player->ApplySkills(skills);
+                LOG_INFO("Applied {} skills to Player {}", skills.size(), player->GetSessionId());
+
+                // Add to Game Systems (Now visible)
+                self->_objMgr.AddObject(player);
+                self->_grid.Add(player);
+
+                LOG_INFO(
+                    "Player {} entered Room {}. Total Players: {}",
+                    player->GetSessionId(),
+                    self->_roomId,
+                    self->_players.size()
+                );
+                LOG_INFO("Player {} entered Room {}. Waiting for C_GAME_READY.", player->GetSessionId(), self->_roomId);
+            }
+        );
+    }
+    else
+    {
+        // No DB? Just enter immediately
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        _objMgr.AddObject(player);
+        _grid.Add(player);
+        LOG_INFO("Player {} entered Room {} (No DB).", player->GetSessionId(), _roomId);
+    }
 }
 
 void Room::OnPlayerReady(uint64_t sessionId)
