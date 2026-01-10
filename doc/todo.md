@@ -43,6 +43,11 @@
 - **설명**: Global Singleton 제거 및 DI(Dependency Injection) 적용
 - **이유**: 테스트 용이성 확보
 
+### 데이터베이스 비동기화 (Async DB)
+- [ ] 비동기 쿼리 API (`QueryAsync`, `ExecuteAsync`) 구현
+- [ ] DB Worker Thread Pool 연동
+- [ ] `UserDB` 및 메인 로직 비동기 호출 전환
+
 ---
 
 ## 🔵 P4: 콘텐츠 확장 (spec.md P3)

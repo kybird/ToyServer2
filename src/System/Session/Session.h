@@ -69,7 +69,7 @@ public:
     void OnPong(); // Call this when C_PONG received
 
     // Lifetime safety
-    void IncRef()
+    void IncRef() override
     {
         _ioRef.fetch_add(1, std::memory_order_relaxed);
     }
