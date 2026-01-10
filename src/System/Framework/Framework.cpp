@@ -1,9 +1,11 @@
 #include "System/Framework/Framework.h"
 #include "System/Console/CommandConsole.h"
+
 #include "System/Debug/CrashHandler.h"
 #include "System/Dispatcher/DISPATCHER/DispatcherImpl.h"
 #include "System/Dispatcher/MessagePool.h"
 #include "System/IConfig.h"
+#include "System/IDatabase.h"
 #include "System/ILog.h"
 #include "System/ITimer.h"
 #include "System/Metrics/IMetrics.h"
@@ -145,6 +147,12 @@ bool Framework::Init(std::shared_ptr<IConfig> config, std::shared_ptr<IPacketHan
     }
     _threadPool = std::make_shared<ThreadPool>(taskThreads);
 
+    // 4.5 DB ThreadPool
+    int dbThreads = serverConfig.dbWorkerCount;
+    if (dbThreads <= 0)
+        dbThreads = 1;
+    _dbThreadPool = std::make_shared<ThreadPool>(dbThreads, "DB Thread");
+
     // 5. Init Network
     int port = serverConfig.port;
     if (!_network->Start(port))
@@ -191,6 +199,8 @@ void Framework::Run()
 
     // 2. Start Task Pool
     _threadPool->Start();
+    if (_dbThreadPool)
+        _dbThreadPool->Start();
 
     // 3. Main Thread Logic Loop
     while (_running)
@@ -216,6 +226,8 @@ void Framework::Stop()
 
     if (_threadPool)
         _threadPool->Stop();
+    if (_dbThreadPool)
+        _dbThreadPool->Stop();
     if (_network)
         _network->Stop();
 
@@ -226,6 +238,15 @@ void Framework::Stop()
             t.join();
     }
     _ioThreads.clear();
+}
+
+std::shared_ptr<IDatabase> Framework::CreateAsyncDatabase(std::shared_ptr<IDatabase> db)
+{
+    if (!_dbThreadPool || !db)
+        return nullptr;
+
+    db->ConfigureAsync(_dbThreadPool, _dispatcher);
+    return db;
 }
 
 } // namespace System

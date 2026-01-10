@@ -313,6 +313,129 @@ DbResult<std::unique_ptr<ITransaction>> DatabaseImpl::BeginTransaction()
     }
 }
 
+// --------------------------------------------------------------------------
+// Async Implementations
+// --------------------------------------------------------------------------
+
+void DatabaseImpl::ConfigureAsync(std::shared_ptr<ThreadPool> threadPool, std::shared_ptr<IDispatcher> dispatcher)
+{
+    _threadPool = threadPool;
+    _dispatcher = dispatcher;
+}
+
+void DatabaseImpl::AsyncQuery(const std::string &sql, AsyncQueryCallback callback)
+{
+    if (!_threadPool)
+    {
+        if (callback && _dispatcher)
+        {
+            _dispatcher->Push(
+                [callback]()
+                {
+                    callback(
+                        DbResult<std::unique_ptr<IResultSet>>::Fail(
+                            DbStatusCode::DB_ERROR, "Async Context Not Configured"
+                        )
+                    );
+                }
+            );
+        }
+        return;
+    }
+
+    // Capture shared_from_this() to ensure lifetime
+    _threadPool->Enqueue(
+        [self = shared_from_this(), sql, callback, dispatcher = _dispatcher]()
+        {
+            // [Worker Thread] Blocking Call
+            auto result = self->Query(sql);
+
+            // Wrap move-only result in shared_ptr
+            auto sharedResult = std::make_shared<DbResult<std::unique_ptr<IResultSet>>>(std::move(result));
+
+            dispatcher->Push(
+                [callback, sharedResult]()
+                {
+                    // [Main Thread]
+                    callback(std::move(*sharedResult));
+                }
+            );
+        }
+    );
+}
+
+void DatabaseImpl::AsyncExecute(const std::string &sql, AsyncExecCallback callback)
+{
+    if (!_threadPool)
+    {
+        if (callback && _dispatcher)
+        {
+            _dispatcher->Push(
+                [callback]()
+                {
+                    callback(DbStatus::Error("Async Context Not Configured"));
+                }
+            );
+        }
+        return;
+    }
+
+    _threadPool->Enqueue(
+        [self = shared_from_this(), sql, callback, dispatcher = _dispatcher]()
+        {
+            auto status = self->Execute(sql);
+
+            dispatcher->Push(
+                [callback, status]()
+                {
+                    callback(status);
+                }
+            );
+        }
+    );
+}
+
+void DatabaseImpl::AsyncRunInTransaction(std::function<bool(IDatabase *)> txLogic, std::function<void(bool)> callback)
+{
+    if (!_threadPool)
+    {
+        if (callback && _dispatcher)
+        {
+            _dispatcher->Push(
+                [callback]()
+                {
+                    callback(false);
+                }
+            );
+        }
+        return;
+    }
+
+    _threadPool->Enqueue(
+        [self = shared_from_this(), txLogic, callback, dispatcher = _dispatcher]()
+        {
+            // [Worker Thread]
+            bool success = false;
+            try
+            {
+                // Pass 'this' (self) as the Sync Database pointer
+                success = txLogic(self.get());
+            } catch (...)
+            {
+                success = false;
+            }
+
+            dispatcher->Push(
+                [callback, success]()
+                {
+                    // [Main Thread]
+                    callback(success);
+                }
+            );
+        }
+    );
+}
+
 } // namespace System
 
 // --------------------------------------------------------------------------

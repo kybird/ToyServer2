@@ -40,7 +40,7 @@ void MoveInputHandler::Handle(System::ISession *session, System::PacketView pack
     room->GetStrand()->Post(
         [player, clientTick, dx, dy]()
         {
-            LOG_DEBUG("[C_MoveInput] Player={} ClientTick={} Dir=({}, {})", player->GetId(), clientTick, dx, dy);
+            // LOG_DEBUG("[C_MoveInput] Player={} ClientTick={} Dir=({}, {})", player->GetId(), clientTick, dx, dy);
 
             player->ApplyInput(clientTick, dx, dy);
         }

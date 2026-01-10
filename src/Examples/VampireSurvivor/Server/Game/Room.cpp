@@ -402,17 +402,17 @@ void Room::Update(float deltaTime)
 
             if (obj->GetType() == Protocol::ObjectType::PLAYER)
             {
-                LOG_DEBUG(
-                    "[UpdateTick] Tick={} Obj={} Pos=({:.2f},{:.2f}) -> ({:.2f},{:.2f}) Vel=({:.2f},{:.2f})",
-                    _serverTick,
-                    obj->GetId(),
-                    oldX,
-                    oldY,
-                    newX,
-                    newY,
-                    obj->GetVX(),
-                    obj->GetVY()
-                );
+                // LOG_DEBUG(
+                //     "[UpdateTick] Tick={} Obj={} Pos=({:.2f},{:.2f}) -> ({:.2f},{:.2f}) Vel=({:.2f},{:.2f})",
+                //     _serverTick,
+                //     obj->GetId(),
+                //     oldX,
+                //     oldY,
+                //     newX,
+                //     newY,
+                //     obj->GetVX(),
+                //     obj->GetVY()
+                // );
             }
 
             _grid.Update(obj, oldX, oldY);
@@ -489,14 +489,17 @@ void Room::Update(float deltaTime)
         S_PlayerStateAckPacket pkt(ack);
         player->GetSession()->SendPacket(pkt);
 
-        LOG_DEBUG(
-            "[Ack] Player={} ServerTick={} ClientTick={} Pos=({:.2f},{:.2f})",
-            player->GetId(),
-            _serverTick,
-            player->GetLastProcessedClientTick(),
-            player->GetX(),
-            player->GetY()
-        );
+        // Update Internal LastSent State to prevent resending if nothing changes
+        player->UpdateLastSentState(_totalRunTime, _serverTick);
+
+        // LOG_DEBUG(
+        //     "[Ack] Player={} ServerTick={} ClientTick={} Pos=({:.2f},{:.2f})",
+        //     player->GetId(),
+        //     _serverTick,
+        //     player->GetLastProcessedClientTick(),
+        //     player->GetX(),
+        //     player->GetY()
+        // );
     }
 
     // 3. Collision Detection & Combat Logic

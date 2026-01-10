@@ -46,6 +46,13 @@ bool JsonConfigLoader::Load(const std::string &filePath)
             else
                 _config.taskWorkerCount = (int)std::thread::hardware_concurrency();
 
+            if (server.contains("db_worker_threads"))
+                _config.dbWorkerCount = server["db_worker_threads"].get<int>();
+            else if (server.contains("dbWorkerCount"))
+                _config.dbWorkerCount = server["dbWorkerCount"].get<int>();
+            else
+                _config.dbWorkerCount = 2; // Default
+
             _config.dbAddress = server.value("db_info", server.value("dbAddress", ""));
             _config.rateLimit = server.value("rate_limit", server.value("rateLimit", 50.0));
             _config.rateBurst = server.value("rate_burst", server.value("rateBurst", 100.0));

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -7,6 +8,9 @@
 #include <vector>
 
 namespace System {
+
+class ThreadPool;
+class IDispatcher;
 
 /**
  * 데이터베이스 작업 상태 코드
@@ -164,6 +168,39 @@ public:
 
     // 트랜잭션 시작 (RAII)
     virtual DbResult<std::unique_ptr<ITransaction>> BeginTransaction() = 0;
+
+    // 비동기 실행을 위한 컨텍스트 설정 (Dispatcher, ThreadPool)
+    virtual void
+    ConfigureAsync(std::shared_ptr<class ThreadPool> threadPool, std::shared_ptr<class IDispatcher> dispatcher)
+    {
+    }
+
+    // ========================================================================================
+    // Asynchronous Methods (Default: Not Supported)
+    // Driver 구현체는 이를 구현할 필요 없으며, AsyncWrapper 만 이를 구현한다.
+    // ========================================================================================
+
+    using AsyncQueryCallback = std::function<void(DbResult<std::unique_ptr<IResultSet>>)>;
+    using AsyncExecCallback = std::function<void(DbStatus)>;
+
+    virtual void AsyncQuery(const std::string &sql, AsyncQueryCallback callback)
+    {
+        // Default: Not Implemented log or error
+        if (callback)
+            callback(DbResult<std::unique_ptr<IResultSet>>::Fail(DbStatusCode::DB_ERROR, "Async Not Implemented"));
+    }
+
+    virtual void AsyncExecute(const std::string &sql, AsyncExecCallback callback)
+    {
+        if (callback)
+            callback(DbStatus::Error("Async Not Implemented"));
+    }
+
+    virtual void AsyncRunInTransaction(std::function<bool(IDatabase *)> txLogic, std::function<void(bool)> callback)
+    {
+        if (callback)
+            callback(false);
+    }
 
 protected:
     IDatabase() = default;

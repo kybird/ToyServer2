@@ -9,14 +9,14 @@ namespace SimpleGame {
 class UserDB
 {
 public:
-    UserDB(std::shared_ptr<System::IAsyncDatabase> db) : _db(db)
+    UserDB(std::shared_ptr<System::IDatabase> db) : _db(db)
     {
     }
 
     void GetUserPoints(int userId, std::function<void(int)> callback)
     {
         std::string sql = std::format("SELECT points FROM user_game_data WHERE user_id = {};", userId);
-        _db->Query(
+        _db->AsyncQuery(
             sql,
             [callback](System::DbResult<std::unique_ptr<System::IResultSet>> res)
             {
@@ -44,7 +44,7 @@ public:
             amount
         );
 
-        _db->Execute(
+        _db->AsyncExecute(
             sql,
             [userId, callback](System::DbStatus status)
             {
@@ -66,7 +66,7 @@ public:
     void GetUserSkills(int userId, std::function<void(std::vector<std::pair<int, int>>)> callback)
     {
         std::string sql = std::format("SELECT skill_id, level FROM user_skills WHERE user_id = {};", userId);
-        _db->Query(
+        _db->AsyncQuery(
             sql,
             [callback](System::DbResult<std::unique_ptr<System::IResultSet>> res)
             {
@@ -86,7 +86,7 @@ public:
 
     void UnlockSkill(int userId, int skillId, int cost, std::function<void(bool)> callback)
     {
-        _db->RunInTransaction(
+        _db->AsyncRunInTransaction(
             [this, userId, skillId, cost](System::IDatabase *db) -> bool
             {
                 // Synchronous Logic running on Worker Thread
@@ -145,7 +145,7 @@ private:
     }
 
 private:
-    std::shared_ptr<System::IAsyncDatabase> _db;
+    std::shared_ptr<System::IDatabase> _db;
 };
 
 } // namespace SimpleGame

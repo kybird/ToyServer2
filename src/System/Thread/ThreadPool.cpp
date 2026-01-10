@@ -4,7 +4,7 @@
 
 namespace System {
 
-ThreadPool::ThreadPool(int threadCount) : _threadCount(threadCount), _stop(false)
+ThreadPool::ThreadPool(int threadCount, std::string name) : _threadCount(threadCount), _name(name), _stop(false)
 {
     if (threadCount <= 0)
     {
@@ -26,7 +26,7 @@ void ThreadPool::Start()
 
     _stop = false;
 
-    LOG_INFO("ThreadPool (Task) Starting with {} threads...", _threadCount);
+    LOG_INFO("{} Starting with {} threads...", _name, _threadCount);
     _threads.reserve(_threadCount);
 
     for (int i = 0; i < _threadCount; ++i)
@@ -81,7 +81,7 @@ void ThreadPool::Stop()
             t.join();
     }
     _threads.clear();
-    LOG_INFO("ThreadPool Stopped.");
+    LOG_INFO("{} Stopped.", _name);
 }
 
 } // namespace System

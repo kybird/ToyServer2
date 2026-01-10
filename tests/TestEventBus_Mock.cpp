@@ -15,6 +15,7 @@ public:
     MOCK_METHOD(bool, IsOverloaded, (), (const, override));
     MOCK_METHOD(bool, IsRecovered, (), (const, override));
     MOCK_METHOD(void, RegisterTimerHandler, (System::ITimerHandler *), (override));
+    MOCK_METHOD(void, Wait, (int), (override));
 
     // Target Method
     MOCK_METHOD(void, Push, (std::function<void()>), (override));
@@ -79,5 +80,3 @@ TEST(EventBusTest, MultipleSubscribers)
 
     System::EventBus::Instance().Publish(TestLoginEvent{200});
 }
-
-

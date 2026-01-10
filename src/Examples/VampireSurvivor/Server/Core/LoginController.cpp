@@ -10,7 +10,7 @@
 
 namespace SimpleGame {
 
-LoginController::LoginController(std::shared_ptr<System::IAsyncDatabase> db, System::IFramework *framework)
+LoginController::LoginController(std::shared_ptr<System::IDatabase> db, System::IFramework *framework)
     : _db(db), _framework(framework)
 {
 }
@@ -50,7 +50,7 @@ void LoginController::OnLogin(const LoginRequestEvent &evt)
     std::string password = evt.password;
     uint64_t sessionId = evt.sessionId;
 
-    _db->RunInTransaction(
+    _db->AsyncRunInTransaction(
         [username, password](System::IDatabase *db) -> bool
         {
             // 1. Check if user exists

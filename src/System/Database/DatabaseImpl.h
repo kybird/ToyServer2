@@ -1,7 +1,9 @@
 #pragma once
 
 #include "System/Database/IConnection.h"
+#include "System/Dispatcher/IDispatcher.h"
 #include "System/IDatabase.h"
+#include "System/Thread/ThreadPool.h"
 #include <atomic>
 #include <concurrentqueue/moodycamel/concurrentqueue.h>
 #include <condition_variable>
@@ -9,6 +11,7 @@
 #include <memory>
 #include <mutex>
 #include <string>
+
 
 namespace System {
 
@@ -28,6 +31,12 @@ public:
     DbResult<std::unique_ptr<IPreparedStatement>> Prepare(const std::string &sql) override;
     DbResult<std::unique_ptr<ITransaction>> BeginTransaction() override;
 
+    // IDatabase Async 구현
+    void ConfigureAsync(std::shared_ptr<ThreadPool> threadPool, std::shared_ptr<IDispatcher> dispatcher) override;
+    void AsyncQuery(const std::string &sql, AsyncQueryCallback callback) override;
+    void AsyncExecute(const std::string &sql, AsyncExecCallback callback) override;
+    void AsyncRunInTransaction(std::function<bool(IDatabase *)> txLogic, std::function<void(bool)> callback) override;
+
     // 내부용
     std::shared_ptr<IConnection> Acquire(int timeoutMs);
     void Release(IConnection *conn);
@@ -37,6 +46,9 @@ private:
     int _poolMax;
     int _defaultTimeoutMs;
     ConnectionFactory _factory;
+
+    std::shared_ptr<ThreadPool> _threadPool;
+    std::shared_ptr<IDispatcher> _dispatcher;
 
     moodycamel::ConcurrentQueue<IConnection *> _pool;
     std::atomic<int> _currentSize{0};

@@ -145,8 +145,8 @@ int main(int argc, char *argv[])
                 // Perfect.
 
                 framework->GetTimer()->SetInterval(
-                    100,  // ID
-                    1000, // 1 sec
+                    100,   // ID
+                    10000, // 10 sec
                     statsListener.get()
                 );
 #endif

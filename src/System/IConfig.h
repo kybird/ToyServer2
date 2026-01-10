@@ -10,6 +10,7 @@ struct ServerConfig
     int port = 0;
     int workerThreadCount = 0;
     int taskWorkerCount = 0;
+    int dbWorkerCount = 2; // Default for Async DB Workers
     std::string dbAddress;
 
     // Rate Limiter

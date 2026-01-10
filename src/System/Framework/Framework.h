@@ -13,6 +13,7 @@ class IMetrics; // Forward Decl
 class ThreadPool;
 class IPacketHandler;
 class CommandConsole; // Forward Decl
+class IDatabase;      // Forward Decl
 
 class Framework : public IFramework
 {
@@ -27,6 +28,7 @@ public:
 
     std::shared_ptr<ITimer> GetTimer() const override;
     std::shared_ptr<IStrand> CreateStrand() override;
+    std::shared_ptr<IDatabase> CreateAsyncDatabase(std::shared_ptr<IDatabase> db) override;
     size_t GetDispatcherQueueSize() const override
     {
         return _dispatcher ? _dispatcher->GetQueueSize() : 0;
@@ -40,6 +42,7 @@ private:
     std::shared_ptr<ITimer> _timer;
     std::shared_ptr<IDispatcher> _dispatcher;
     std::shared_ptr<ThreadPool> _threadPool;
+    std::shared_ptr<ThreadPool> _dbThreadPool;
     std::vector<std::jthread> _ioThreads;
     std::atomic<bool> _running{false};
 

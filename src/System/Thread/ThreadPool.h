@@ -16,7 +16,7 @@ class ThreadPool
 {
 public:
     // Constructor
-    ThreadPool(int threadCount);
+    ThreadPool(int threadCount, std::string name = "ThreadPool (Task)");
     ~ThreadPool();
 
     // Initialize and start workers
@@ -69,6 +69,7 @@ public:
 
 private:
     int _threadCount;
+    std::string _name;
     std::vector<std::jthread> _threads;
     std::atomic<bool> _stop{false};
 

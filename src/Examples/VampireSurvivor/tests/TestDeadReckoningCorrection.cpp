@@ -6,6 +6,43 @@
 
 using namespace SimpleGame;
 
+class MockSession : public System::ISession
+{
+public:
+    MockSession(uint64_t id) : _id(id)
+    {
+    }
+    uint64_t GetId() const override
+    {
+        return _id;
+    }
+    void SendPacket(const System::IPacket &pkt) override
+    {
+    }
+    void Close() override
+    {
+    }
+    void Reset() override
+    {
+    }
+    bool CanDestroy() const override
+    {
+        return true;
+    }
+    void IncRef() override
+    {
+    }
+    void DecRef() override
+    {
+    }
+    void OnPong() override
+    {
+    }
+
+private:
+    uint64_t _id;
+};
+
 class VerificationTest : public ::testing::Test
 {
 protected:
@@ -16,8 +53,9 @@ protected:
         room->Start();
 
         // Setup Player
-        player = std::make_shared<Player>(1, nullptr);
-        player->Initialize(1, nullptr);
+        session = std::make_shared<MockSession>(100);
+        player = std::make_shared<Player>(1, session.get());
+        player->Initialize(1, session.get());
         room->Enter(player);
     }
 
@@ -28,6 +66,7 @@ protected:
 
     std::shared_ptr<Room> room;
     std::shared_ptr<Player> player;
+    std::shared_ptr<MockSession> session;
 };
 
 // 1. Normal Movement

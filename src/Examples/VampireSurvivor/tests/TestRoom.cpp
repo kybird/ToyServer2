@@ -52,9 +52,9 @@ private:
 TEST(RoomTest, EnterAndLeave)
 {
     // Fix: Room ctor needs 4 args
-    Room room(1, nullptr, nullptr, nullptr);
-    EXPECT_EQ(room.GetId(), 1);
-    EXPECT_EQ(room.GetPlayerCount(), 0);
+    auto room = std::make_shared<Room>(1, nullptr, nullptr, nullptr);
+    EXPECT_EQ(room->GetId(), 1);
+    EXPECT_EQ(room->GetPlayerCount(), 0);
 
     // Create a player
     MockSession session1(100);
@@ -63,12 +63,12 @@ TEST(RoomTest, EnterAndLeave)
     auto player1 = PlayerFactory::Instance().CreatePlayer(1, &session1);
 
     // Enter
-    room.Enter(player1);
-    EXPECT_EQ(room.GetPlayerCount(), 1);
+    room->Enter(player1);
+    EXPECT_EQ(room->GetPlayerCount(), 1);
 
     // Leave
-    room.Leave(100);
-    EXPECT_EQ(room.GetPlayerCount(), 0);
+    room->Leave(100);
+    EXPECT_EQ(room->GetPlayerCount(), 0);
 
     // Release back to factory (room calls leave but doesn't release shared_ptr held here)
     // Custom deleter in factory logic handles release when shared_ptr dies?
@@ -78,7 +78,7 @@ TEST(RoomTest, EnterAndLeave)
 
 TEST(RoomTest, MultiplePlayers)
 {
-    Room room(2, nullptr, nullptr, nullptr);
+    auto room = std::make_shared<Room>(2, nullptr, nullptr, nullptr);
 
     MockSession s1(101);
     MockSession s2(102);
@@ -86,16 +86,16 @@ TEST(RoomTest, MultiplePlayers)
     auto p1 = PlayerFactory::Instance().CreatePlayer(101, &s1);
     auto p2 = PlayerFactory::Instance().CreatePlayer(102, &s2); // Use diff GameIDs
 
-    room.Enter(p1);
-    room.Enter(p2);
+    room->Enter(p1);
+    room->Enter(p2);
 
-    EXPECT_EQ(room.GetPlayerCount(), 2);
+    EXPECT_EQ(room->GetPlayerCount(), 2);
 
-    room.Leave(101);
-    EXPECT_EQ(room.GetPlayerCount(), 1);
+    room->Leave(101);
+    EXPECT_EQ(room->GetPlayerCount(), 1);
 
-    room.Leave(102);
-    EXPECT_EQ(room.GetPlayerCount(), 0);
+    room->Leave(102);
+    EXPECT_EQ(room->GetPlayerCount(), 0);
 }
 
 // =============================================================================
@@ -223,14 +223,14 @@ TEST(SendPacketTest, MockSessionSendPacketNoCrash)
  */
 TEST(SendPacketTest, BroadcastPacketToEmptyRoomNoCrash)
 {
-    Room room(999, nullptr, nullptr, nullptr);
+    auto room = std::make_shared<Room>(999, nullptr, nullptr, nullptr);
     MockPacket packet;
 
     // ACT: 빈 Room에 브로드캐스트
-    room.BroadcastPacket(packet);
+    room->BroadcastPacket(packet);
 
     // ASSERT: 크래시 없이 완료
-    EXPECT_EQ(room.GetPlayerCount(), 0);
+    EXPECT_EQ(room->GetPlayerCount(), 0);
 }
 
 /**
@@ -250,7 +250,7 @@ TEST(SendPacketTest, BroadcastPacketToEmptyRoomNoCrash)
  */
 TEST(SendPacketTest, BroadcastPacketToRoomWithPlayers)
 {
-    Room room(998, nullptr, nullptr, nullptr);
+    auto room = std::make_shared<Room>(998, nullptr, nullptr, nullptr);
 
     TrackingMockSession s1(201);
     TrackingMockSession s2(202);
@@ -258,13 +258,13 @@ TEST(SendPacketTest, BroadcastPacketToRoomWithPlayers)
     auto p1 = PlayerFactory::Instance().CreatePlayer(201, &s1);
     auto p2 = PlayerFactory::Instance().CreatePlayer(202, &s2);
 
-    room.Enter(p1);
-    room.Enter(p2);
+    room->Enter(p1);
+    room->Enter(p2);
 
     MockPacket packet;
 
     // ACT: 브로드캐스트
-    room.BroadcastPacket(packet);
+    room->BroadcastPacket(packet);
 
     // ASSERT: 두 세션 모두 SendPacket 수신
     EXPECT_TRUE(s1.sendPacketCalled);
@@ -272,7 +272,7 @@ TEST(SendPacketTest, BroadcastPacketToRoomWithPlayers)
     EXPECT_EQ(s1.lastPacketId, 9999);
     EXPECT_EQ(s2.lastPacketId, 9999);
 
-    room.Leave(202);
+    room->Leave(202);
 }
 
 } // namespace SimpleGame
