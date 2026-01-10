@@ -28,7 +28,6 @@ public:
 
     std::shared_ptr<ITimer> GetTimer() const override;
     std::shared_ptr<IStrand> CreateStrand() override;
-    std::shared_ptr<IDatabase> CreateAsyncDatabase(std::shared_ptr<IDatabase> db) override;
     size_t GetDispatcherQueueSize() const override
     {
         return _dispatcher ? _dispatcher->GetQueueSize() : 0;

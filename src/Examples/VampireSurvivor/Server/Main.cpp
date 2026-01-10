@@ -6,6 +6,7 @@
 #include "Game/RoomManager.h"
 #include "Protocol/game.pb.h"
 #include "System/Session/SessionFactory.h"
+#include "System/Thread/ThreadPool.h"
 #include "System/ToyServerSystem.h"
 #include <iostream>
 
@@ -69,16 +70,17 @@ int main()
         }
     );
 
-    // Initialize Database (SQLite)
-    auto db = System::IDatabase::Create("sqlite", "game.db", 2);
+    // Initialize Thread Pool for Database
+    auto dbThreadPool = std::make_shared<System::ThreadPool>(4);
+    dbThreadPool->Start();
+
+    // Initialize Database (SQLite) with dependencies
+    auto db = System::IDatabase::Create("sqlite", "game.db", 2, dbThreadPool, framework->GetDispatcher());
     if (!db)
     {
         LOG_ERROR("Failed to create database system.");
         return 1;
     }
-
-    // Set Dispatcher for Asynchronous Database Tasks
-    db->SetDispatcher(framework->GetDispatcher());
 
     // Ensure Tables Exist
     {

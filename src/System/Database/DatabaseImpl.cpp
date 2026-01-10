@@ -10,8 +10,10 @@ namespace System {
 // 이 부분은 드라이버 구현 후에 구체화되거나 IDatabase::Create에서 처리됨.
 IConnection *CreateSQLiteConnection();
 
-std::shared_ptr<IDatabase>
-IDatabase::Create(const std::string &driverType, const std::string &connStr, int poolSize, int defaultTimeoutMs)
+std::shared_ptr<IDatabase> IDatabase::Create(
+    const std::string &driverType, const std::string &connStr, int poolSize, std::shared_ptr<ThreadPool> threadPool,
+    std::shared_ptr<IDispatcher> dispatcher, int defaultTimeoutMs
+)
 {
     DatabaseImpl::ConnectionFactory factory;
 
@@ -29,21 +31,25 @@ IDatabase::Create(const std::string &driverType, const std::string &connStr, int
         return nullptr;
     }
 
-    auto db = std::make_shared<DatabaseImpl>(connStr, poolSize, defaultTimeoutMs, factory);
+    auto db = std::make_shared<DatabaseImpl>(connStr, poolSize, defaultTimeoutMs, factory, threadPool, dispatcher);
     db->Init();
     return db;
 }
 
-DatabaseImpl::DatabaseImpl(const std::string &connStr, int poolSize, int defaultTimeoutMs, ConnectionFactory factory)
-    : _connectionString(connStr), _poolMax(poolSize), _defaultTimeoutMs(defaultTimeoutMs), _factory(factory)
+DatabaseImpl::DatabaseImpl(
+    const std::string &connStr, int poolSize, int defaultTimeoutMs, ConnectionFactory factory,
+    std::shared_ptr<ThreadPool> threadPool, std::shared_ptr<IDispatcher> dispatcher
+)
+    : _connectionString(connStr), _poolMax(poolSize), _defaultTimeoutMs(defaultTimeoutMs), _factory(factory),
+      _threadPool(threadPool), _dispatcher(dispatcher)
 {
-    _workerPool = std::make_shared<ThreadPool>(poolSize);
 }
 
 DatabaseImpl::~DatabaseImpl()
 {
-    if (_workerPool)
-        _workerPool->Stop();
+    // ThreadPool is shared, we don't Stop() it here unless we own it unique.
+    // But since it's shared_ptr, we just let it go.
+    // Assuming lifecycle managed elsewhere or by shared_ptr count.
 
     IConnection *conn = nullptr;
     while (_pool.try_dequeue(conn))
@@ -58,8 +64,7 @@ DatabaseImpl::~DatabaseImpl()
 
 void DatabaseImpl::Init()
 {
-    if (_workerPool)
-        _workerPool->Start();
+    // No explicit start needed if injected.
 
     // 초기 커넥션 생성 (선택 사항이나 권장)
     // 여기서는 최소 1개는 생성해보고 성공 여부 확인
@@ -70,52 +75,7 @@ void DatabaseImpl::Init()
     }
 }
 
-void DatabaseImpl::QueryAsync(
-    const std::string &sql, std::function<void(DbResult<std::unique_ptr<IResultSet>>)> callback, int timeoutMs
-)
-{
-    if (!_dispatcher)
-    {
-        LOG_ERROR("DatabaseImpl::QueryAsync: Dispatcher not set!");
-        return;
-    }
-
-    _workerPool->Submit(
-        [this, sql, callback, timeoutMs]() mutable
-        {
-            auto result = std::make_shared<DbResult<std::unique_ptr<IResultSet>>>(this->Query(sql));
-            _dispatcher->Push(
-                [callback, result]() mutable
-                {
-                    callback(std::move(*result));
-                }
-            );
-        }
-    );
-}
-
-void DatabaseImpl::ExecuteAsync(const std::string &sql, std::function<void(DbStatus)> callback, int timeoutMs)
-{
-    if (!_dispatcher)
-    {
-        LOG_ERROR("DatabaseImpl::ExecuteAsync: Dispatcher not set!");
-        return;
-    }
-
-    _workerPool->Submit(
-        [this, sql, callback, timeoutMs]()
-        {
-            auto status = this->Execute(sql);
-            _dispatcher->Push(
-                [callback, status]()
-                {
-                    callback(status);
-                }
-            );
-        }
-    );
-}
-
+// Connection-pinned Database Proxy for transactions
 // Connection-pinned Database Proxy for transactions
 class DatabaseConnectionProxy : public IDatabase
 {
@@ -151,6 +111,8 @@ public:
 
     DbResult<std::unique_ptr<ITransaction>> BeginTransaction() override
     {
+        // Nested transactions not supported widely, but we allow creating wrapper for same conn
+        // However, usually one transaction per scope.
         auto status = _conn->BeginTransaction();
         if (!status.IsOk())
             return DbResult<std::unique_ptr<ITransaction>>::Fail(status.code, status.message);
@@ -158,22 +120,26 @@ public:
         return DbResult<std::unique_ptr<ITransaction>>::Success(std::move(wrapper));
     }
 
-    void SetDispatcher(std::shared_ptr<IDispatcher> dispatcher) override
+    void AsyncQuery(const std::string &, AsyncQueryCallback callback) override
     {
-        _owner->SetDispatcher(dispatcher);
+        if (callback)
+            callback(
+                DbResult<std::unique_ptr<IResultSet>>::Fail(
+                    DbStatusCode::DB_ERROR, "Async Not Supported in Transaction"
+                )
+            );
     }
 
-    void QueryAsync(const std::string &, std::function<void(DbResult<std::unique_ptr<IResultSet>>)> , int ) override
+    void AsyncExecute(const std::string &, AsyncExecCallback callback) override
     {
-        // Not supported/needed inside transaction-pinned proxy for now
+        if (callback)
+            callback(DbStatus::Error("Async Not Supported in Transaction"));
     }
-    void ExecuteAsync(const std::string &, std::function<void(DbStatus)> , int ) override
+
+    void AsyncRunInTransaction(std::function<bool(IDatabase *)>, std::function<void(bool)> callback) override
     {
-        // Not supported
-    }
-    void RunInTransaction(std::function<bool(IDatabase *)> , std::function<void(bool)> ) override
-    {
-        // Not supported (Nested RunInTransaction)
+        if (callback)
+            callback(false); // Nested Async Transaction Not Supported
     }
 
 private:
@@ -181,30 +147,47 @@ private:
     std::shared_ptr<IConnection> _conn;
 };
 
-void DatabaseImpl::RunInTransaction(std::function<bool(IDatabase *)> transactionFunc, std::function<void(bool)> callback)
+void DatabaseImpl::AsyncRunInTransaction(std::function<bool(IDatabase *)> txLogic, std::function<void(bool)> callback)
 {
-    if (!_dispatcher)
+    if (!_threadPool)
     {
-        LOG_ERROR("DatabaseImpl::RunInTransaction: Dispatcher not set!");
+        if (callback && _dispatcher)
+        {
+            _dispatcher->Push(
+                [callback]()
+                {
+                    callback(false);
+                }
+            );
+        }
         return;
     }
 
-    _workerPool->Submit(
-        [this, transactionFunc, callback]()
+    _threadPool->Enqueue(
+        [self = shared_from_this(), txLogic, callback, dispatcher = _dispatcher]()
         {
-            auto conn = this->Acquire(_defaultTimeoutMs);
+            // Acquire connection for this transaction
+            auto conn = self->Acquire(self->_defaultTimeoutMs);
             bool success = false;
+
             if (conn)
             {
-                DatabaseConnectionProxy proxy(this, conn);
-                success = transactionFunc(&proxy);
+                // Use Proxy to force usage of this specific connection
+                DatabaseConnectionProxy proxy(self.get(), conn);
+                try
+                {
+                    success = txLogic(&proxy);
+                } catch (...)
+                {
+                    success = false;
+                }
             }
             else
             {
-                LOG_ERROR("DatabaseImpl::RunInTransaction: Failed to acquire connection.");
+                LOG_ERROR("DatabaseImpl::AsyncRunInTransaction: Failed to acquire connection.");
             }
 
-            _dispatcher->Push(
+            dispatcher->Push(
                 [callback, success]()
                 {
                     if (callback)
@@ -466,16 +449,6 @@ DbResult<std::unique_ptr<ITransaction>> DatabaseImpl::BeginTransaction()
     }
 }
 
-// --------------------------------------------------------------------------
-// Async Implementations
-// --------------------------------------------------------------------------
-
-void DatabaseImpl::ConfigureAsync(std::shared_ptr<ThreadPool> threadPool, std::shared_ptr<IDispatcher> dispatcher)
-{
-    _threadPool = threadPool;
-    _dispatcher = dispatcher;
-}
-
 void DatabaseImpl::AsyncQuery(const std::string &sql, AsyncQueryCallback callback)
 {
     if (!_threadPool)
@@ -542,47 +515,6 @@ void DatabaseImpl::AsyncExecute(const std::string &sql, AsyncExecCallback callba
                 [callback, status]()
                 {
                     callback(status);
-                }
-            );
-        }
-    );
-}
-
-void DatabaseImpl::AsyncRunInTransaction(std::function<bool(IDatabase *)> txLogic, std::function<void(bool)> callback)
-{
-    if (!_threadPool)
-    {
-        if (callback && _dispatcher)
-        {
-            _dispatcher->Push(
-                [callback]()
-                {
-                    callback(false);
-                }
-            );
-        }
-        return;
-    }
-
-    _threadPool->Enqueue(
-        [self = shared_from_this(), txLogic, callback, dispatcher = _dispatcher]()
-        {
-            // [Worker Thread]
-            bool success = false;
-            try
-            {
-                // Pass 'this' (self) as the Sync Database pointer
-                success = txLogic(self.get());
-            } catch (...)
-            {
-                success = false;
-            }
-
-            dispatcher->Push(
-                [callback, success]()
-                {
-                    // [Main Thread]
-                    callback(success);
                 }
             );
         }

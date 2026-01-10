@@ -154,10 +154,16 @@ public:
      * Database 시스템 생성 팩토리
      * @param driverType "sqlite", "mysql" 등
      * @param connStr 연결 문자열
+     * @param poolSize 커넥션 풀 크기
+     * @param threadPool 비동기 작업용 스레드 풀
+     * @param dispatcher 메인 스레드 디스패처
      * @param defaultTimeoutMs 기본 타임아웃 (ms), 기본값 5000
      */
-    static std::shared_ptr<IDatabase>
-    Create(const std::string &driverType, const std::string &connStr, int poolSize, int defaultTimeoutMs = 5000);
+    static std::shared_ptr<IDatabase> Create(
+        const std::string &driverType, const std::string &connStr, int poolSize,
+        std::shared_ptr<class ThreadPool> threadPool, std::shared_ptr<class IDispatcher> dispatcher,
+        int defaultTimeoutMs = 5000
+    );
 
     // 단순 쿼리/실행 (내부에서 커넥션 획득 및 반환 자동 수행)
     virtual DbResult<std::unique_ptr<IResultSet>> Query(const std::string &sql) = 0;
@@ -168,12 +174,6 @@ public:
 
     // 트랜잭션 시작 (RAII)
     virtual DbResult<std::unique_ptr<ITransaction>> BeginTransaction() = 0;
-
-    // 비동기 실행을 위한 컨텍스트 설정 (Dispatcher, ThreadPool)
-    virtual void
-    ConfigureAsync(std::shared_ptr<class ThreadPool> threadPool, std::shared_ptr<class IDispatcher> dispatcher)
-    {
-    }
 
     // ========================================================================================
     // Asynchronous Methods (Default: Not Supported)

@@ -76,22 +76,19 @@ class AsyncDatabaseTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        // 1. Setup In-Memory DB (Synchronous Base)
-        _db = System::IDatabase::Create("sqlite", ":memory:", 1);
-        ASSERT_TRUE(_db);
-        _db->Execute("CREATE TABLE test (id INTEGER PRIMARY KEY, value TEXT);");
-
-        // 2. Setup ThreadPool
+        // 1. Setup ThreadPool
         _threadPool = std::make_shared<System::ThreadPool>(2);
         _threadPool->Start();
 
-        // 3. Setup Mock Dispatcher
+        // 2. Setup Mock Dispatcher
         _dispatcher = std::make_shared<DbTestMockDispatcher>();
 
-        // 4. Configure Async Context on the SAME DB instance
-        _db->ConfigureAsync(_threadPool, _dispatcher);
+        // 3. Create Database with dependencies injected
+        _db = System::IDatabase::Create("sqlite", ":memory:", 1, _threadPool, _dispatcher);
+        ASSERT_TRUE(_db);
+        _db->Execute("CREATE TABLE test (id INTEGER PRIMARY KEY, value TEXT);");
 
-        // Use the same pointer or copy it to _asyncDb for compatibility with existing test code variable
+        // Use the same pointer for compatibility with existing test code variable
         _asyncDb = _db;
     }
 

@@ -240,13 +240,4 @@ void Framework::Stop()
     _ioThreads.clear();
 }
 
-std::shared_ptr<IDatabase> Framework::CreateAsyncDatabase(std::shared_ptr<IDatabase> db)
-{
-    if (!_dbThreadPool || !db)
-        return nullptr;
-
-    db->ConfigureAsync(_dbThreadPool, _dispatcher);
-    return db;
-}
-
 } // namespace System

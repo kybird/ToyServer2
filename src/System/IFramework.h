@@ -30,7 +30,6 @@ public:
     // Accessors
     virtual std::shared_ptr<ITimer> GetTimer() const = 0;
     virtual std::shared_ptr<IStrand> CreateStrand() = 0;
-    virtual std::shared_ptr<IDatabase> CreateAsyncDatabase(std::shared_ptr<IDatabase> db) = 0;
     virtual size_t GetDispatcherQueueSize() const = 0;
     virtual std::shared_ptr<IDispatcher> GetDispatcher() const = 0;
 

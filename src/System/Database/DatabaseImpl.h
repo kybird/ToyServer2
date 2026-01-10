@@ -12,7 +12,6 @@
 #include <mutex>
 #include <string>
 
-
 namespace System {
 
 class DatabaseImpl : public IDatabase, public std::enable_shared_from_this<DatabaseImpl>
@@ -20,7 +19,10 @@ class DatabaseImpl : public IDatabase, public std::enable_shared_from_this<Datab
 public:
     using ConnectionFactory = std::function<IConnection *()>;
 
-    DatabaseImpl(const std::string &connStr, int poolSize, int defaultTimeoutMs, ConnectionFactory factory);
+    DatabaseImpl(
+        const std::string &connStr, int poolSize, int defaultTimeoutMs, ConnectionFactory factory,
+        std::shared_ptr<ThreadPool> threadPool, std::shared_ptr<IDispatcher> dispatcher
+    );
     ~DatabaseImpl() override;
 
     void Init();
@@ -32,7 +34,6 @@ public:
     DbResult<std::unique_ptr<ITransaction>> BeginTransaction() override;
 
     // IDatabase Async 구현
-    void ConfigureAsync(std::shared_ptr<ThreadPool> threadPool, std::shared_ptr<IDispatcher> dispatcher) override;
     void AsyncQuery(const std::string &sql, AsyncQueryCallback callback) override;
     void AsyncExecute(const std::string &sql, AsyncExecCallback callback) override;
     void AsyncRunInTransaction(std::function<bool(IDatabase *)> txLogic, std::function<void(bool)> callback) override;
