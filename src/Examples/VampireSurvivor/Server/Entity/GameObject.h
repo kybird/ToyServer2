@@ -147,11 +147,14 @@ protected:
     int32_t _hp = 100;
     int32_t _maxHp = 100;
 
-    // Delta Sync
-    float _lastSentVX = -999.0f;
-    float _lastSentVY = -999.0f;
-    float _lastSentX = -999.0f;
-    float _lastSentY = -999.0f;
+    float _lastSentX = 0.0f;
+    float _lastSentY = 0.0f;
+    float _lastSentVX = 0.0f;
+    float _lastSentVY = 0.0f;
+
+    // Default to IDLE (1) or NONE (0)?
+    // Usually 0 is NONE, 1 is IDLE. Let's safe-guard with IDLE or ensure handled.
+    // game.proto: IDLE = 1 (likely)
     float _lastSentTime = 0.0f;
     uint32_t _lastSentServerTick = 0;
     Protocol::ObjectState _lastSentState = Protocol::ObjectState::IDLE;

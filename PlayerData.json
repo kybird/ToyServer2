@@ -1,8 +1,0 @@
-{
-    "characterId": 1,
-    "name": "player_basic",
-    "hp": 100,
-    "speed": 5.0,
-    "defense": 0.0,
-    "pickupRadius": 2.5
-}

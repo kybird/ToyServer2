@@ -106,11 +106,11 @@ target_include_directories(GameServer PRIVATE src/GameServer src)
 target_precompile_headers(GameServer PRIVATE src/System/Pch.h)
 target_link_libraries(GameServer PRIVATE System Share)
 
-# Copy Config File to Output Directory
+# Copy Data Directory to Output Directory
 add_custom_command(TARGET GameServer POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    "${CMAKE_SOURCE_DIR}/server_config.json"
-    "$<TARGET_FILE_DIR:GameServer>/server_config.json"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_SOURCE_DIR}/data"
+    "$<TARGET_FILE_DIR:GameServer>/data"
 )
 
 # DummyClient Executable
@@ -157,6 +157,7 @@ set(GAME_SOURCES
     src/Examples/VampireSurvivor/Server/Game/Room.cpp
     src/Examples/VampireSurvivor/Server/Game/RoomManager.cpp
     src/Examples/VampireSurvivor/Server/Game/WaveManager.cpp
+    src/Examples/VampireSurvivor/Server/Game/DamageEmitter.cpp
     src/Examples/VampireSurvivor/Server/Entity/Monster.cpp
     src/Examples/VampireSurvivor/Server/Entity/MonsterFactory.cpp
     src/Examples/VampireSurvivor/Server/Entity/PlayerFactory.cpp
@@ -183,6 +184,13 @@ target_include_directories(VampireSurvivorServer PRIVATE
 )
 
 target_link_libraries(VampireSurvivorServer PRIVATE System Share protobuf::libprotobuf)
+
+# Copy Data Directory to Output Directory for VampireSurvivorServer
+add_custom_command(TARGET VampireSurvivorServer POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_SOURCE_DIR}/data"
+    "$<TARGET_FILE_DIR:VampireSurvivorServer>/data"
+)
 
 # Vampire Survivor Console Client (DEPRECATED - Use Unity Client)
 # add_executable(VampireSurvivorClient src/Examples/VampireSurvivor/Client/ConsoleClient.cpp ${PROTO_SRCS} ${PROTO_HDRS})
@@ -239,6 +247,13 @@ target_include_directories(UnitTests PRIVATE
 )
 target_precompile_headers(UnitTests PRIVATE src/System/Pch.h)
 target_link_libraries(UnitTests PRIVATE System Share GTest::gtest GTest::gmock protobuf::libprotobuf unofficial::sqlite3::sqlite3)
+
+# Copy Data Directory to Output Directory for UnitTests
+add_custom_command(TARGET UnitTests POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_SOURCE_DIR}/data"
+    "$<TARGET_FILE_DIR:UnitTests>/data"
+)
 
 enable_testing()
 include(GoogleTest)

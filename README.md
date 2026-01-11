@@ -65,6 +65,8 @@
 *   `src/System`: 핵심 프레임워크 컴포넌트 (Network, Thread, Timer, Memory).
 *   `src/GameServer`: 메인 게임 서버 애플리케이션 로직.
 *   `src/DummyClient`: 스트레스 테스트용 더미 클라이언트 툴.
+*   `data/`: 게임 설정 및 데이터 파일 (JSON, SQLite DB).
+*   `logs/`: 서버 실행 및 빌드 로그 파일.
 *   `doc/`: 개발자 문서 및 코딩 컨벤션.
 
 ## License

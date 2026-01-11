@@ -83,7 +83,7 @@ void CommandConsole::HandleStatus()
 void CommandConsole::HandleReload()
 {
     LOG_INFO("Reloading Config...");
-    if (_config->Load("server_config.json"))
+    if (_config->Load("data/server_config.json"))
     {
         LOG_INFO("Config Reloaded.");
     }

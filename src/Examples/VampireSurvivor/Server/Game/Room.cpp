@@ -1,6 +1,7 @@
 #include "Game/Room.h"
 #include "Core/UserDB.h"
 #include "Entity/Monster.h"
+#include "Entity/Player.h"
 #include "Entity/Projectile.h"
 #include "Game/DamageEmitter.h"
 #include "Game/GameConfig.h"
@@ -125,7 +126,6 @@ void Room::OnTimer(uint32_t timerId, void *pParam)
     }
 }
 
-// Helper to broadcast Protobuf message
 // Helper to broadcast Protobuf message - Overloaded for specific packets
 void BroadcastProto(Room *room, const Protocol::S_SpawnObject &msg)
 {
@@ -595,6 +595,12 @@ void Room::Update(float deltaTime)
 
                         if (monster->IsDead())
                         {
+                            // Give exp to projectile owner
+                            auto it = _players.find(proj->GetOwnerId());
+                            if (it != _players.end())
+                            {
+                                it->second->AddExp(10, this);
+                            }
                             deadObjectIds.push_back(monster->GetId());
                         }
                         break; // Projectile hit one target and disappeared
@@ -677,10 +683,27 @@ void Room::Update(float deltaTime)
 
             if (distSq <= sumRad * sumRad)
             {
+                // Skip collision if player is already dead
+                if (player->IsDead())
+                    continue;
+
                 if (monster->CanAttack(_totalRunTime))
                 {
                     player->TakeDamage(monster->GetContactDamage(), this);
                     monster->ResetAttackCooldown(_totalRunTime);
+
+                    // Send HP Change Packet
+                    {
+                        Protocol::S_HpChange hpMsg;
+                        hpMsg.set_object_id(player->GetId());
+                        hpMsg.set_current_hp(player->GetHp());
+                        hpMsg.set_max_hp(player->GetMaxHp());
+
+                        S_HpChangePacket hpPkt(std::move(hpMsg));
+                        // Send to everyone (so others can see HP bar updates if implemented) or just owner
+                        // For now, let's broadcast to sync state (or change to unicast if optimized)
+                        BroadcastPacket(hpPkt);
+                    }
 
                     // Broadcast damage to player? (Optional: Damage Effect packet)
                     LOG_DEBUG("Monster {} hit Player {}. HP={}", monster->GetId(), player->GetId(), player->GetHp());
@@ -810,17 +833,22 @@ void Room::BroadcastPacket(const System::IPacket &pkt)
     {
         auto *isess = pair.second->GetSession();
         if (!isess)
+        {
+            LOG_WARN("BroadcastPacket: Player {} has NO SESSION. Skipping.", pair.first);
             continue;
+        }
 
         // Dynamic cast to check if it's a real Session (vs MockSession)
         // This overhead is acceptable compared to serialization savings for many players.
         auto *sess = dynamic_cast<System::Session *>(isess);
         if (sess)
         {
+            // LOG_DEBUG("BroadcastPacket: Player {} is Real Session.", pair.first);
             realSessions.push_back(sess);
         }
         else
         {
+            LOG_WARN("BroadcastPacket: Player {} is MockSession/Other. Fallback SendPacket.", pair.first);
             // Fallback for MockSession (e.g. Unit Tests)
             isess->SendPacket(pkt);
         }
@@ -836,6 +864,32 @@ size_t Room::GetPlayerCount()
 {
     std::lock_guard<std::recursive_mutex> lock(_mutex);
     return _players.size();
+}
+
+void Player::AddExp(int32_t amount, Room *room)
+{
+    _exp += amount;
+
+    // Level up check
+    while (_exp >= _maxExp)
+    {
+        _exp -= _maxExp;
+        _level++;
+        _maxExp = 100 + (_level - 1) * 50; // Increase required exp per level
+        LOG_INFO("Player {} leveled up to {}!", GetId(), _level);
+    }
+
+    // Send exp change to client
+    if (_session && room)
+    {
+        Protocol::S_ExpChange expMsg;
+        expMsg.set_current_exp(_exp);
+        expMsg.set_max_exp(_maxExp);
+        expMsg.set_level(_level);
+
+        S_ExpChangePacket pkt(std::move(expMsg));
+        _session->SendPacket(pkt);
+    }
 }
 
 } // namespace SimpleGame

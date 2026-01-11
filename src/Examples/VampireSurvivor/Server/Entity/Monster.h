@@ -71,7 +71,10 @@ public:
     void Update(float dt, Room *room) override;
 
     void TakeDamage(int32_t damage, Room *room) override;
-    bool IsDead() const { return _state == Protocol::ObjectState::DEAD; }
+    bool IsDead() const
+    {
+        return _state == Protocol::ObjectState::DEAD;
+    }
 
     // Pool reset
     void Reset()
@@ -82,7 +85,7 @@ public:
         _x = _y = _vx = _vy = 0;
         _hp = _maxHp = 100;
         _aliveTime = 0.0f;
-        _radius = 0.5f;
+        _radius = 0.2f;
         _damageOnContact = 10;
         _attackCooldown = 1.0f;
         _lastAttackTime = -100.0f;
@@ -96,7 +99,8 @@ public:
         _id = id;
         _monsterTypeId = monsterTypeId;
         _hp = _maxHp = hp;
-        _radius = radius;
+        _radius = 0.2f; // Lag Compensation for Body Attack
+        // _radius = radius; // Original Visual Size is 0.5
         _damageOnContact = damage;
         _attackCooldown = cooldown;
         _lastAttackTime = -100.0f;

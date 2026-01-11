@@ -45,6 +45,7 @@ enum MsgId {
   S_EXP_CHANGE = 400;
   S_LEVEL_UP_OPTION = 401;
   C_SELECT_LEVEL_UP = 402;
+  S_HP_CHANGE = 403;
 
   // System (500-599)
   S_GAME_WIN = 500;
@@ -250,6 +251,12 @@ message S_ExpChange {
     int32 current_exp = 1;
     int32 max_exp = 2;
     int32 level = 3;
+}
+
+message S_HpChange {
+    int32 object_id = 1;
+    float current_hp = 2;
+    float max_hp = 3;
 }
 
 message LevelUpOption {

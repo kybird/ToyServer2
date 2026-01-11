@@ -26,7 +26,7 @@ int main()
 
     // Config
     auto config = System::IConfig::Create();
-    if (!config->Load("simple_game_config.json"))
+    if (!config->Load("data/simple_game_config.json"))
     {
         LOG_ERROR("Failed to load config.");
         return 1;
@@ -36,12 +36,12 @@ int main()
     System::GetLog().SetLogLevel(config->GetConfig().logLevel);
 
     // Load Game Data
-    if (!SimpleGame::DataManager::Instance().LoadMonsterData("MonsterData.json") ||
-        !SimpleGame::DataManager::Instance().LoadWaveData("WaveData.json"))
+    if (!SimpleGame::DataManager::Instance().LoadMonsterData("data/MonsterData.json") ||
+        !SimpleGame::DataManager::Instance().LoadWaveData("data/WaveData.json") ||
+        !SimpleGame::DataManager::Instance().LoadPlayerData("data/PlayerData.json") ||
+        !SimpleGame::DataManager::Instance().LoadSkillData("data/PlayerBaseSkill.json"))
     {
-        LOG_WARN(
-            "Failed to load game data. Server may not function correctly without MonsterData.json and WaveData.json."
-        );
+        LOG_WARN("Failed to load game data. Server may not function correctly without data files in data/ directory.");
     }
 
     // Init with Config File and Handler
@@ -75,7 +75,7 @@ int main()
     dbThreadPool->Start();
 
     // Initialize Database (SQLite) with dependencies
-    auto db = System::IDatabase::Create("sqlite", "game.db", 2, dbThreadPool, framework->GetDispatcher());
+    auto db = System::IDatabase::Create("sqlite", "data/game.db", 2, dbThreadPool, framework->GetDispatcher());
     if (!db)
     {
         LOG_ERROR("Failed to create database system.");

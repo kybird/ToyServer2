@@ -291,6 +291,33 @@ struct S_JoinRoomDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
     PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_JoinRoomDefaultTypeInternal _S_JoinRoom_default_instance_;
 
+inline constexpr S_HpChange::Impl_::Impl_(
+    ::_pbi::ConstantInitialized) noexcept
+      : object_id_{0},
+        current_hp_{0},
+        max_hp_{0},
+        _cached_size_{0} {}
+
+template <typename>
+PROTOBUF_CONSTEXPR S_HpChange::S_HpChange(::_pbi::ConstantInitialized)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(_class_data_.base()),
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(),
+#endif  // PROTOBUF_CUSTOM_VTABLE
+      _impl_(::_pbi::ConstantInitialized()) {
+}
+struct S_HpChangeDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR S_HpChangeDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
+  ~S_HpChangeDefaultTypeInternal() {}
+  union {
+    S_HpChange _instance;
+  };
+};
+
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_HpChangeDefaultTypeInternal _S_HpChange_default_instance_;
+
 inline constexpr S_GameWin::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
       : total_time_ms_{::int64_t{0}},
@@ -1386,6 +1413,17 @@ const ::uint32_t
         PROTOBUF_FIELD_OFFSET(::Protocol::S_ExpChange, _impl_.max_exp_),
         PROTOBUF_FIELD_OFFSET(::Protocol::S_ExpChange, _impl_.level_),
         ~0u,  // no _has_bits_
+        PROTOBUF_FIELD_OFFSET(::Protocol::S_HpChange, _internal_metadata_),
+        ~0u,  // no _extensions_
+        ~0u,  // no _oneof_case_
+        ~0u,  // no _weak_field_map_
+        ~0u,  // no _inlined_string_donated_
+        ~0u,  // no _split_
+        ~0u,  // no sizeof(Split)
+        PROTOBUF_FIELD_OFFSET(::Protocol::S_HpChange, _impl_.object_id_),
+        PROTOBUF_FIELD_OFFSET(::Protocol::S_HpChange, _impl_.current_hp_),
+        PROTOBUF_FIELD_OFFSET(::Protocol::S_HpChange, _impl_.max_hp_),
+        ~0u,  // no _has_bits_
         PROTOBUF_FIELD_OFFSET(::Protocol::LevelUpOption, _internal_metadata_),
         ~0u,  // no _extensions_
         ~0u,  // no _oneof_case_
@@ -1523,17 +1561,18 @@ static const ::_pbi::MigrationSchema
         {273, -1, -1, sizeof(::Protocol::S_PlayerDowned)},
         {282, -1, -1, sizeof(::Protocol::S_PlayerRevive)},
         {291, -1, -1, sizeof(::Protocol::S_ExpChange)},
-        {302, -1, -1, sizeof(::Protocol::LevelUpOption)},
-        {315, -1, -1, sizeof(::Protocol::S_LevelUpOption)},
-        {324, -1, -1, sizeof(::Protocol::C_SelectLevelUp)},
-        {333, -1, -1, sizeof(::Protocol::S_GameWin)},
-        {343, -1, -1, sizeof(::Protocol::S_GameOver)},
-        {353, -1, -1, sizeof(::Protocol::S_PlayerDead)},
-        {362, -1, -1, sizeof(::Protocol::S_Ping)},
-        {371, -1, -1, sizeof(::Protocol::C_Pong)},
-        {380, -1, -1, sizeof(::Protocol::C_Ping)},
-        {389, -1, -1, sizeof(::Protocol::S_Pong)},
-        {398, -1, -1, sizeof(::Protocol::S_DebugServerTick)},
+        {302, -1, -1, sizeof(::Protocol::S_HpChange)},
+        {313, -1, -1, sizeof(::Protocol::LevelUpOption)},
+        {326, -1, -1, sizeof(::Protocol::S_LevelUpOption)},
+        {335, -1, -1, sizeof(::Protocol::C_SelectLevelUp)},
+        {344, -1, -1, sizeof(::Protocol::S_GameWin)},
+        {354, -1, -1, sizeof(::Protocol::S_GameOver)},
+        {364, -1, -1, sizeof(::Protocol::S_PlayerDead)},
+        {373, -1, -1, sizeof(::Protocol::S_Ping)},
+        {382, -1, -1, sizeof(::Protocol::C_Pong)},
+        {391, -1, -1, sizeof(::Protocol::C_Ping)},
+        {400, -1, -1, sizeof(::Protocol::S_Pong)},
+        {409, -1, -1, sizeof(::Protocol::S_DebugServerTick)},
 };
 static const ::_pb::Message* const file_default_instances[] = {
     &::Protocol::_C_Login_default_instance_._instance,
@@ -1565,6 +1604,7 @@ static const ::_pb::Message* const file_default_instances[] = {
     &::Protocol::_S_PlayerDowned_default_instance_._instance,
     &::Protocol::_S_PlayerRevive_default_instance_._instance,
     &::Protocol::_S_ExpChange_default_instance_._instance,
+    &::Protocol::_S_HpChange_default_instance_._instance,
     &::Protocol::_LevelUpOption_default_instance_._instance,
     &::Protocol::_S_LevelUpOption_default_instance_._instance,
     &::Protocol::_C_SelectLevelUp_default_instance_._instance,
@@ -1624,53 +1664,55 @@ const char descriptor_table_protodef_game_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIA
     "ayerDowned\022\021\n\tplayer_id\030\001 \001(\005\"#\n\016S_Playe"
     "rRevive\022\021\n\tplayer_id\030\001 \001(\005\"B\n\013S_ExpChang"
     "e\022\023\n\013current_exp\030\001 \001(\005\022\017\n\007max_exp\030\002 \001(\005\022"
-    "\r\n\005level\030\003 \001(\005\"`\n\rLevelUpOption\022\021\n\toptio"
-    "n_id\030\001 \001(\005\022\020\n\010skill_id\030\002 \001(\005\022\014\n\004name\030\003 \001"
-    "(\t\022\014\n\004desc\030\004 \001(\t\022\016\n\006is_new\030\005 \001(\010\";\n\017S_Le"
-    "velUpOption\022(\n\007options\030\001 \003(\0132\027.Protocol."
-    "LevelUpOption\"\'\n\017C_SelectLevelUp\022\024\n\014opti"
-    "on_index\030\001 \001(\005\"6\n\tS_GameWin\022\025\n\rtotal_tim"
-    "e_ms\030\001 \001(\003\022\022\n\nkill_count\030\002 \001(\005\"6\n\nS_Game"
-    "Over\022\030\n\020survived_time_ms\030\001 \001(\003\022\016\n\006is_win"
-    "\030\002 \001(\010\"!\n\014S_PlayerDead\022\021\n\tplayer_id\030\001 \001("
-    "\005\"\033\n\006S_Ping\022\021\n\ttimestamp\030\001 \001(\003\"\033\n\006C_Pong"
-    "\022\021\n\ttimestamp\030\001 \001(\003\"\033\n\006C_Ping\022\021\n\ttimesta"
-    "mp\030\001 \001(\003\"\033\n\006S_Pong\022\021\n\ttimestamp\030\001 \001(\003\"(\n"
-    "\021S_DebugServerTick\022\023\n\013server_tick\030\001 \001(\r*"
-    "\260\005\n\005MsgId\022\010\n\004NONE\020\000\022\013\n\007C_LOGIN\020d\022\013\n\007S_LO"
-    "GIN\020e\022\021\n\rC_CREATE_ROOM\020f\022\021\n\rS_CREATE_ROO"
-    "M\020g\022\017\n\013C_JOIN_ROOM\020h\022\017\n\013S_JOIN_ROOM\020i\022\023\n"
-    "\017C_GET_ROOM_LIST\020j\022\017\n\013S_ROOM_LIST\020k\022\021\n\rC"
-    "_ENTER_LOBBY\020n\022\021\n\rS_ENTER_LOBBY\020o\022\020\n\014C_L"
-    "EAVE_ROOM\020p\022\020\n\014S_LEAVE_ROOM\020q\022\020\n\014C_GAME_"
-    "READY\020r\022\n\n\006C_CHAT\020x\022\n\n\006S_CHAT\020y\022\023\n\016S_SPA"
-    "WN_OBJECT\020\310\001\022\025\n\020S_DESPAWN_OBJECT\020\311\001\022\030\n\023S"
-    "_MOVE_OBJECT_BATCH\020\312\001\022\021\n\014C_MOVE_INPUT\020\313\001"
-    "\022\027\n\022S_PLAYER_STATE_ACK\020\314\001\022\020\n\013C_USE_SKILL"
-    "\020\254\002\022\023\n\016S_SKILL_EFFECT\020\255\002\022\024\n\017S_DAMAGE_EFF"
-    "ECT\020\256\002\022\024\n\017S_PLAYER_DOWNED\020\257\002\022\024\n\017S_PLAYER"
-    "_REVIVE\020\260\002\022\021\n\014S_EXP_CHANGE\020\220\003\022\026\n\021S_LEVEL"
-    "_UP_OPTION\020\221\003\022\026\n\021C_SELECT_LEVEL_UP\020\222\003\022\017\n"
-    "\nS_GAME_WIN\020\364\003\022\020\n\013S_GAME_OVER\020\365\003\022\022\n\rS_PL"
-    "AYER_DEAD\020\366\003\022\013\n\006S_PING\020\204\007\022\013\n\006C_PONG\020\205\007\022\013"
-    "\n\006C_PING\020\206\007\022\013\n\006S_PONG\020\207\007\022\030\n\023S_DEBUG_SERV"
-    "ER_TICK\020\210\007*L\n\nObjectType\022\013\n\007UNKNOWN\020\000\022\n\n"
-    "\006PLAYER\020\001\022\013\n\007MONSTER\020\002\022\016\n\nPROJECTILE\020\003\022\010"
-    "\n\004ITEM\020\004*H\n\013ObjectState\022\010\n\004IDLE\020\000\022\n\n\006MOV"
-    "ING\020\001\022\r\n\tATTACKING\020\002\022\010\n\004DEAD\020\003\022\n\n\006DOWNED"
-    "\020\004b\006proto3"
+    "\r\n\005level\030\003 \001(\005\"C\n\nS_HpChange\022\021\n\tobject_i"
+    "d\030\001 \001(\005\022\022\n\ncurrent_hp\030\002 \001(\002\022\016\n\006max_hp\030\003 "
+    "\001(\002\"`\n\rLevelUpOption\022\021\n\toption_id\030\001 \001(\005\022"
+    "\020\n\010skill_id\030\002 \001(\005\022\014\n\004name\030\003 \001(\t\022\014\n\004desc\030"
+    "\004 \001(\t\022\016\n\006is_new\030\005 \001(\010\";\n\017S_LevelUpOption"
+    "\022(\n\007options\030\001 \003(\0132\027.Protocol.LevelUpOpti"
+    "on\"\'\n\017C_SelectLevelUp\022\024\n\014option_index\030\001 "
+    "\001(\005\"6\n\tS_GameWin\022\025\n\rtotal_time_ms\030\001 \001(\003\022"
+    "\022\n\nkill_count\030\002 \001(\005\"6\n\nS_GameOver\022\030\n\020sur"
+    "vived_time_ms\030\001 \001(\003\022\016\n\006is_win\030\002 \001(\010\"!\n\014S"
+    "_PlayerDead\022\021\n\tplayer_id\030\001 \001(\005\"\033\n\006S_Ping"
+    "\022\021\n\ttimestamp\030\001 \001(\003\"\033\n\006C_Pong\022\021\n\ttimesta"
+    "mp\030\001 \001(\003\"\033\n\006C_Ping\022\021\n\ttimestamp\030\001 \001(\003\"\033\n"
+    "\006S_Pong\022\021\n\ttimestamp\030\001 \001(\003\"(\n\021S_DebugSer"
+    "verTick\022\023\n\013server_tick\030\001 \001(\r*\302\005\n\005MsgId\022\010"
+    "\n\004NONE\020\000\022\013\n\007C_LOGIN\020d\022\013\n\007S_LOGIN\020e\022\021\n\rC_"
+    "CREATE_ROOM\020f\022\021\n\rS_CREATE_ROOM\020g\022\017\n\013C_JO"
+    "IN_ROOM\020h\022\017\n\013S_JOIN_ROOM\020i\022\023\n\017C_GET_ROOM"
+    "_LIST\020j\022\017\n\013S_ROOM_LIST\020k\022\021\n\rC_ENTER_LOBB"
+    "Y\020n\022\021\n\rS_ENTER_LOBBY\020o\022\020\n\014C_LEAVE_ROOM\020p"
+    "\022\020\n\014S_LEAVE_ROOM\020q\022\020\n\014C_GAME_READY\020r\022\n\n\006"
+    "C_CHAT\020x\022\n\n\006S_CHAT\020y\022\023\n\016S_SPAWN_OBJECT\020\310"
+    "\001\022\025\n\020S_DESPAWN_OBJECT\020\311\001\022\030\n\023S_MOVE_OBJEC"
+    "T_BATCH\020\312\001\022\021\n\014C_MOVE_INPUT\020\313\001\022\027\n\022S_PLAYE"
+    "R_STATE_ACK\020\314\001\022\020\n\013C_USE_SKILL\020\254\002\022\023\n\016S_SK"
+    "ILL_EFFECT\020\255\002\022\024\n\017S_DAMAGE_EFFECT\020\256\002\022\024\n\017S"
+    "_PLAYER_DOWNED\020\257\002\022\024\n\017S_PLAYER_REVIVE\020\260\002\022"
+    "\021\n\014S_EXP_CHANGE\020\220\003\022\026\n\021S_LEVEL_UP_OPTION\020"
+    "\221\003\022\026\n\021C_SELECT_LEVEL_UP\020\222\003\022\020\n\013S_HP_CHANG"
+    "E\020\223\003\022\017\n\nS_GAME_WIN\020\364\003\022\020\n\013S_GAME_OVER\020\365\003\022"
+    "\022\n\rS_PLAYER_DEAD\020\366\003\022\013\n\006S_PING\020\204\007\022\013\n\006C_PO"
+    "NG\020\205\007\022\013\n\006C_PING\020\206\007\022\013\n\006S_PONG\020\207\007\022\030\n\023S_DEB"
+    "UG_SERVER_TICK\020\210\007*L\n\nObjectType\022\013\n\007UNKNO"
+    "WN\020\000\022\n\n\006PLAYER\020\001\022\013\n\007MONSTER\020\002\022\016\n\nPROJECT"
+    "ILE\020\003\022\010\n\004ITEM\020\004*H\n\013ObjectState\022\010\n\004IDLE\020\000"
+    "\022\n\n\006MOVING\020\001\022\r\n\tATTACKING\020\002\022\010\n\004DEAD\020\003\022\n\n"
+    "\006DOWNED\020\004b\006proto3"
 };
 static ::absl::once_flag descriptor_table_game_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_game_2eproto = {
     false,
     false,
-    3170,
+    3257,
     descriptor_table_protodef_game_2eproto,
     "game.proto",
     &descriptor_table_game_2eproto_once,
     nullptr,
     0,
-    40,
+    41,
     schemas,
     file_default_instances,
     TableStruct_game_2eproto::offsets,
@@ -1683,7 +1725,7 @@ const ::google::protobuf::EnumDescriptor* MsgId_descriptor() {
   return file_level_enum_descriptors_game_2eproto[0];
 }
 PROTOBUF_CONSTINIT const uint32_t MsgId_internal_data_[] = {
-    65536u, 328192u, 0u, 0u, 0u, 25421816u, 0u, 0u, 3968u, 0u, 0u, 63488u, 0u, 0u, 229376u, 0u, 0u, 3670016u, 903u, 901u, 904u, 900u, 902u, };
+    65536u, 328192u, 0u, 0u, 0u, 25421816u, 0u, 0u, 3968u, 0u, 0u, 63488u, 0u, 0u, 491520u, 0u, 0u, 3670016u, 903u, 901u, 904u, 900u, 902u, };
 bool MsgId_IsValid(int value) {
   return ::_pbi::ValidateEnum(value, MsgId_internal_data_);
 }
@@ -8857,6 +8899,267 @@ void S_ExpChange::InternalSwap(S_ExpChange* PROTOBUF_RESTRICT other) {
 }
 
 ::google::protobuf::Metadata S_ExpChange::GetMetadata() const {
+  return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
+}
+// ===================================================================
+
+class S_HpChange::_Internal {
+ public:
+};
+
+S_HpChange::S_HpChange(::google::protobuf::Arena* arena)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, _class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  SharedCtor(arena);
+  // @@protoc_insertion_point(arena_constructor:Protocol.S_HpChange)
+}
+S_HpChange::S_HpChange(
+    ::google::protobuf::Arena* arena, const S_HpChange& from)
+    : S_HpChange(arena) {
+  MergeFrom(from);
+}
+inline PROTOBUF_NDEBUG_INLINE S_HpChange::Impl_::Impl_(
+    ::google::protobuf::internal::InternalVisibility visibility,
+    ::google::protobuf::Arena* arena)
+      : _cached_size_{0} {}
+
+inline void S_HpChange::SharedCtor(::_pb::Arena* arena) {
+  new (&_impl_) Impl_(internal_visibility(), arena);
+  ::memset(reinterpret_cast<char *>(&_impl_) +
+               offsetof(Impl_, object_id_),
+           0,
+           offsetof(Impl_, max_hp_) -
+               offsetof(Impl_, object_id_) +
+               sizeof(Impl_::max_hp_));
+}
+S_HpChange::~S_HpChange() {
+  // @@protoc_insertion_point(destructor:Protocol.S_HpChange)
+  SharedDtor(*this);
+}
+inline void S_HpChange::SharedDtor(MessageLite& self) {
+  S_HpChange& this_ = static_cast<S_HpChange&>(self);
+  this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
+  ABSL_DCHECK(this_.GetArena() == nullptr);
+  this_._impl_.~Impl_();
+}
+
+inline void* S_HpChange::PlacementNew_(const void*, void* mem,
+                                        ::google::protobuf::Arena* arena) {
+  return ::new (mem) S_HpChange(arena);
+}
+constexpr auto S_HpChange::InternalNewImpl_() {
+  return ::google::protobuf::internal::MessageCreator::ZeroInit(sizeof(S_HpChange),
+                                            alignof(S_HpChange));
+}
+PROTOBUF_CONSTINIT
+PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::google::protobuf::internal::ClassDataFull S_HpChange::_class_data_ = {
+    ::google::protobuf::internal::ClassData{
+        &_S_HpChange_default_instance_._instance,
+        &_table_.header,
+        nullptr,  // OnDemandRegisterArenaDtor
+        nullptr,  // IsInitialized
+        &S_HpChange::MergeImpl,
+        ::google::protobuf::Message::GetNewImpl<S_HpChange>(),
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        &S_HpChange::SharedDtor,
+        ::google::protobuf::Message::GetClearImpl<S_HpChange>(), &S_HpChange::ByteSizeLong,
+            &S_HpChange::_InternalSerialize,
+#endif  // PROTOBUF_CUSTOM_VTABLE
+        PROTOBUF_FIELD_OFFSET(S_HpChange, _impl_._cached_size_),
+        false,
+    },
+    &S_HpChange::kDescriptorMethods,
+    &descriptor_table_game_2eproto,
+    nullptr,  // tracker
+};
+const ::google::protobuf::internal::ClassData* S_HpChange::GetClassData() const {
+  ::google::protobuf::internal::PrefetchToLocalCache(&_class_data_);
+  ::google::protobuf::internal::PrefetchToLocalCache(_class_data_.tc_table);
+  return _class_data_.base();
+}
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::_pbi::TcParseTable<2, 3, 0, 0, 2> S_HpChange::_table_ = {
+  {
+    0,  // no _has_bits_
+    0, // no _extensions_
+    3, 24,  // max_field_number, fast_idx_mask
+    offsetof(decltype(_table_), field_lookup_table),
+    4294967288,  // skipmap
+    offsetof(decltype(_table_), field_entries),
+    3,  // num_field_entries
+    0,  // num_aux_entries
+    offsetof(decltype(_table_), field_names),  // no aux_entries
+    _class_data_.base(),
+    nullptr,  // post_loop_handler
+    ::_pbi::TcParser::GenericFallback,  // fallback
+    #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
+    ::_pbi::TcParser::GetTable<::Protocol::S_HpChange>(),  // to_prefetch
+    #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
+  }, {{
+    {::_pbi::TcParser::MiniParse, {}},
+    // int32 object_id = 1;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(S_HpChange, _impl_.object_id_), 63>(),
+     {8, 63, 0, PROTOBUF_FIELD_OFFSET(S_HpChange, _impl_.object_id_)}},
+    // float current_hp = 2;
+    {::_pbi::TcParser::FastF32S1,
+     {21, 63, 0, PROTOBUF_FIELD_OFFSET(S_HpChange, _impl_.current_hp_)}},
+    // float max_hp = 3;
+    {::_pbi::TcParser::FastF32S1,
+     {29, 63, 0, PROTOBUF_FIELD_OFFSET(S_HpChange, _impl_.max_hp_)}},
+  }}, {{
+    65535, 65535
+  }}, {{
+    // int32 object_id = 1;
+    {PROTOBUF_FIELD_OFFSET(S_HpChange, _impl_.object_id_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kInt32)},
+    // float current_hp = 2;
+    {PROTOBUF_FIELD_OFFSET(S_HpChange, _impl_.current_hp_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
+    // float max_hp = 3;
+    {PROTOBUF_FIELD_OFFSET(S_HpChange, _impl_.max_hp_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
+  }},
+  // no aux_entries
+  {{
+  }},
+};
+
+PROTOBUF_NOINLINE void S_HpChange::Clear() {
+// @@protoc_insertion_point(message_clear_start:Protocol.S_HpChange)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  ::memset(&_impl_.object_id_, 0, static_cast<::size_t>(
+      reinterpret_cast<char*>(&_impl_.max_hp_) -
+      reinterpret_cast<char*>(&_impl_.object_id_)) + sizeof(_impl_.max_hp_));
+  _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        ::uint8_t* S_HpChange::_InternalSerialize(
+            const MessageLite& base, ::uint8_t* target,
+            ::google::protobuf::io::EpsCopyOutputStream* stream) {
+          const S_HpChange& this_ = static_cast<const S_HpChange&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+        ::uint8_t* S_HpChange::_InternalSerialize(
+            ::uint8_t* target,
+            ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+          const S_HpChange& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          // @@protoc_insertion_point(serialize_to_array_start:Protocol.S_HpChange)
+          ::uint32_t cached_has_bits = 0;
+          (void)cached_has_bits;
+
+          // int32 object_id = 1;
+          if (this_._internal_object_id() != 0) {
+            target = ::google::protobuf::internal::WireFormatLite::
+                WriteInt32ToArrayWithField<1>(
+                    stream, this_._internal_object_id(), target);
+          }
+
+          // float current_hp = 2;
+          if (::absl::bit_cast<::uint32_t>(this_._internal_current_hp()) != 0) {
+            target = stream->EnsureSpace(target);
+            target = ::_pbi::WireFormatLite::WriteFloatToArray(
+                2, this_._internal_current_hp(), target);
+          }
+
+          // float max_hp = 3;
+          if (::absl::bit_cast<::uint32_t>(this_._internal_max_hp()) != 0) {
+            target = stream->EnsureSpace(target);
+            target = ::_pbi::WireFormatLite::WriteFloatToArray(
+                3, this_._internal_max_hp(), target);
+          }
+
+          if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
+            target =
+                ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+                    this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
+          }
+          // @@protoc_insertion_point(serialize_to_array_end:Protocol.S_HpChange)
+          return target;
+        }
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        ::size_t S_HpChange::ByteSizeLong(const MessageLite& base) {
+          const S_HpChange& this_ = static_cast<const S_HpChange&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+        ::size_t S_HpChange::ByteSizeLong() const {
+          const S_HpChange& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          // @@protoc_insertion_point(message_byte_size_start:Protocol.S_HpChange)
+          ::size_t total_size = 0;
+
+          ::uint32_t cached_has_bits = 0;
+          // Prevent compiler warnings about cached_has_bits being unused
+          (void)cached_has_bits;
+
+          ::_pbi::Prefetch5LinesFrom7Lines(&this_);
+           {
+            // int32 object_id = 1;
+            if (this_._internal_object_id() != 0) {
+              total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
+                  this_._internal_object_id());
+            }
+            // float current_hp = 2;
+            if (::absl::bit_cast<::uint32_t>(this_._internal_current_hp()) != 0) {
+              total_size += 5;
+            }
+            // float max_hp = 3;
+            if (::absl::bit_cast<::uint32_t>(this_._internal_max_hp()) != 0) {
+              total_size += 5;
+            }
+          }
+          return this_.MaybeComputeUnknownFieldsSize(total_size,
+                                                     &this_._impl_._cached_size_);
+        }
+
+void S_HpChange::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google::protobuf::MessageLite& from_msg) {
+  auto* const _this = static_cast<S_HpChange*>(&to_msg);
+  auto& from = static_cast<const S_HpChange&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:Protocol.S_HpChange)
+  ABSL_DCHECK_NE(&from, _this);
+  ::uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from._internal_object_id() != 0) {
+    _this->_impl_.object_id_ = from._impl_.object_id_;
+  }
+  if (::absl::bit_cast<::uint32_t>(from._internal_current_hp()) != 0) {
+    _this->_impl_.current_hp_ = from._impl_.current_hp_;
+  }
+  if (::absl::bit_cast<::uint32_t>(from._internal_max_hp()) != 0) {
+    _this->_impl_.max_hp_ = from._impl_.max_hp_;
+  }
+  _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void S_HpChange::CopyFrom(const S_HpChange& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:Protocol.S_HpChange)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+
+void S_HpChange::InternalSwap(S_HpChange* PROTOBUF_RESTRICT other) {
+  using std::swap;
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+  ::google::protobuf::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(S_HpChange, _impl_.max_hp_)
+      + sizeof(S_HpChange::_impl_.max_hp_)
+      - PROTOBUF_FIELD_OFFSET(S_HpChange, _impl_.object_id_)>(
+          reinterpret_cast<char*>(&_impl_.object_id_),
+          reinterpret_cast<char*>(&other->_impl_.object_id_));
+}
+
+::google::protobuf::Metadata S_HpChange::GetMetadata() const {
   return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
 }
 // ===================================================================

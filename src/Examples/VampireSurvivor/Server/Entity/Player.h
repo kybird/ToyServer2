@@ -27,12 +27,16 @@ public:
         _session = session;
         _maxHp = hp;
         _hp = hp;
+        _radius = 0.2f; // Lag Compensation: Visual(0.5) - BufferDelay
         _speed = speed;
         _classId = 0;
         _name.clear();
         _vx = _vy = 0;
         _x = _y = 0;
         _lastInputTick = 0;
+        _exp = 0;
+        _maxExp = 100;
+        _level = 1;
     }
 
     void ApplyInput(uint32_t clientTick, int32_t dx, int32_t dy)
@@ -95,6 +99,9 @@ public:
         _state = Protocol::ObjectState::IDLE;
         _facingDirX = 1.0f;
         _facingDirY = 0.0f;
+        _exp = 0;
+        _maxExp = 100;
+        _level = 1;
     }
 
     uint64_t GetSessionId() const
@@ -162,6 +169,22 @@ public:
         return _lastInputTick;
     }
 
+    // Experience & Level
+    int32_t GetExp() const
+    {
+        return _exp;
+    }
+    int32_t GetMaxExp() const
+    {
+        return _maxExp;
+    }
+    int32_t GetLevel() const
+    {
+        return _level;
+    }
+
+    void AddExp(int32_t amount, Room *room);
+
 private:
     System::ISession *_session = nullptr;
     std::string _name;
@@ -171,6 +194,11 @@ private:
     uint32_t _lastInputTick = 0;
     float _facingDirX = 1.0f;
     float _facingDirY = 0.0f;
+
+    // Experience & Level
+    int32_t _exp = 0;
+    int32_t _maxExp = 100;
+    int32_t _level = 1;
 };
 
 } // namespace SimpleGame

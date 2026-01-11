@@ -66,9 +66,9 @@ int main(int argc, char *argv[])
 
             // 2.5 Load Config
             auto config = std::make_shared<System::JsonConfigLoader>();
-            if (!config->Load("server_config.json"))
+            if (!config->Load("data/server_config.json"))
             {
-                LOG_ERROR("Failed to load server_config.json");
+                LOG_ERROR("Failed to load data/server_config.json");
                 return 1;
             }
 

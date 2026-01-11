@@ -18,17 +18,17 @@ class SwarmPerformanceTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        // Ensure MonsterData.json exists or create dummy
-        std::ifstream f("MonsterData.json");
+        // Ensure data/MonsterData.json exists or create dummy
+        std::ifstream f("data/MonsterData.json");
         if (!f.good())
         {
-            std::ofstream out("MonsterData.json");
+            std::ofstream out("data/MonsterData.json");
             out << "[{\"id\":1, \"hp\":100, \"speed\":2.0, \"aiType\":0}]"; // 0 = Chaser
             out.close();
         }
 
         // Load Data
-        if (!DataManager::Instance().LoadMonsterData("MonsterData.json"))
+        if (!DataManager::Instance().LoadMonsterData("data/MonsterData.json"))
         {
             // If failed, manual load dummy?
             // DataManager doesn't allow manual injection easily.
