@@ -18,6 +18,10 @@ public:
     {
     } // AI/Logic Update
 
+    virtual void TakeDamage(int32_t damage, Room *room)
+    {
+    }
+
     int32_t GetId() const
     {
         return _id;

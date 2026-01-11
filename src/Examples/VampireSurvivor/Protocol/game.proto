@@ -49,6 +49,7 @@ enum MsgId {
   // System (500-599)
   S_GAME_WIN = 500;
   S_GAME_OVER = 501;
+  S_PLAYER_DEAD = 502;
 
   // Heartbeat (900-999)
   S_PING = 900;
@@ -274,6 +275,11 @@ message S_GameWin {
 
 message S_GameOver {
     int64 survived_time_ms = 1;
+    bool is_win = 2;
+}
+
+message S_PlayerDead {
+    int32 player_id = 1;
 }
 
 // ==========================================================

@@ -13,9 +13,6 @@ public:
     Player(int32_t gameId, System::ISession *session)
         : GameObject(gameId, Protocol::ObjectType::PLAYER), _session(session)
     {
-        // Default Stats
-        _maxHp = 100;
-        _hp = _maxHp;
     }
 
     // Default constructor for pooling
@@ -24,12 +21,13 @@ public:
     }
 
     // Init for pooling
-    void Initialize(int32_t gameId, System::ISession *session)
+    void Initialize(int32_t gameId, System::ISession *session, int32_t hp, float speed)
     {
         _id = gameId;
         _session = session;
-        _maxHp = 100;
-        _hp = _maxHp;
+        _maxHp = hp;
+        _hp = hp;
+        _speed = speed;
         _classId = 0;
         _name.clear();
         _vx = _vy = 0;
@@ -41,7 +39,7 @@ public:
     {
         _lastInputTick = clientTick;
 
-        Vector2 dir(dx, dy);
+        Vector2 dir(static_cast<float>(dx), static_cast<float>(dy));
 
         if (dir.IsZero())
         {
@@ -51,17 +49,38 @@ public:
         }
 
         dir.Normalize();
+        _facingDirX = dir.x;
+        _facingDirY = dir.y;
+
         SetVelocity(dir.x * _speed, dir.y * _speed);
         SetState(Protocol::MOVING);
         LOG_DEBUG(
-            "[SetInput] Player={} ClientTick={} Dir=({}, {}) Vel=({:.2f},{:.2f})",
+            "[SetInput] Player={} ClientTick={} Dir=({:.2f}, {:.2f}) Vel=({:.2f},{:.2f})",
             GetId(),
             clientTick,
-            dx,
-            dy,
+            dir.x,
+            dir.y,
             GetVX(),
             GetVY()
         );
+    }
+
+    void TakeDamage(int32_t damage, Room *room) override
+    {
+        if (IsDead())
+            return;
+
+        _hp -= damage;
+        if (_hp <= 0)
+        {
+            _hp = 0;
+            SetState(Protocol::ObjectState::DEAD);
+        }
+    }
+
+    bool IsDead() const
+    {
+        return _state == Protocol::ObjectState::DEAD;
     }
 
     // Reset for pooling
@@ -73,6 +92,9 @@ public:
         _hp = 0;
         _maxHp = 0;
         _id = 0;
+        _state = Protocol::ObjectState::IDLE;
+        _facingDirX = 1.0f;
+        _facingDirY = 0.0f;
     }
 
     uint64_t GetSessionId() const
@@ -112,6 +134,11 @@ public:
         return _currentRoomId;
     }
 
+    Vector2 GetFacingDirection() const
+    {
+        return Vector2(_facingDirX, _facingDirY);
+    }
+
     void ApplySkills(const std::vector<std::pair<int, int>> &skills)
     {
         // Example: Skill ID 101 = Max HP
@@ -140,8 +167,10 @@ private:
     std::string _name;
     int32_t _classId = 0;
     int _currentRoomId = 0;
-    float _speed = 5.f; // Reduced from 100.0f to 3.6f (Standard Walking Speed)
+    float _speed = 5.f;
     uint32_t _lastInputTick = 0;
+    float _facingDirX = 1.0f;
+    float _facingDirY = 0.0f;
 };
 
 } // namespace SimpleGame

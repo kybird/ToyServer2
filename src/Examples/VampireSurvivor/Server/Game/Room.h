@@ -19,12 +19,16 @@ class IStrand;
 
 namespace SimpleGame {
 class UserDB;
+class DamageEmitter;
 
 class Room : public System::ITimerListener, public std::enable_shared_from_this<Room>
 {
     friend class CombatTest_ProjectileHitsMonster_Test;
     friend class CombatTest_MonsterDies_Test;
+    friend class CombatTest_MonsterContactsPlayer_Test;
     friend class SwarmPerformanceTest_StressTest500Monsters_Test;
+    friend class CombatTest_LinearEmitterHitsNearestMonster_Test;
+    friend class CombatTest_LinearEmitterRespectsLifetime_Test;
 
 public:
     Room(
@@ -61,6 +65,7 @@ public:
     }
 
     std::shared_ptr<Player> GetNearestPlayer(float x, float y);
+    std::vector<std::shared_ptr<Monster>> GetMonstersInRange(float x, float y, float radius);
 
     std::shared_ptr<System::IStrand> GetStrand() const
     {
@@ -106,6 +111,7 @@ public:
 
 private:
     bool _gameStarted = false; // Track if game has started
+    std::vector<std::unique_ptr<DamageEmitter>> _emitters;
 };
 
 } // namespace SimpleGame

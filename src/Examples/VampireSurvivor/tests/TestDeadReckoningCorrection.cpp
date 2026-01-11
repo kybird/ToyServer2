@@ -55,7 +55,7 @@ protected:
         // Setup Player
         session = std::make_shared<MockSession>(100);
         player = std::make_shared<Player>(1, session.get());
-        player->Initialize(1, session.get());
+        player->Initialize(1, session.get(), 100, 5.0f);
         room->Enter(player);
     }
 

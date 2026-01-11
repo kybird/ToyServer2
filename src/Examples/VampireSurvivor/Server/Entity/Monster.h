@@ -7,6 +7,7 @@ namespace SimpleGame {
 
 // Forward declaration
 class IAIBehavior;
+class Room;
 
 /**
  * @brief Monster entity with pluggable AI behavior.
@@ -52,10 +53,24 @@ public:
         return _targetId;
     }
 
+    // Combat Stats
+    bool CanAttack(float currentTime) const
+    {
+        return (currentTime - _lastAttackTime) >= _attackCooldown;
+    }
+    void ResetAttackCooldown(float currentTime)
+    {
+        _lastAttackTime = currentTime;
+    }
+    int32_t GetContactDamage() const
+    {
+        return _damageOnContact;
+    }
+
     // Called by Room::Update
     void Update(float dt, Room *room) override;
 
-    void TakeDamage(int32_t damage, Room *room);
+    void TakeDamage(int32_t damage, Room *room) override;
     bool IsDead() const { return _state == Protocol::ObjectState::DEAD; }
 
     // Pool reset
@@ -67,15 +82,26 @@ public:
         _x = _y = _vx = _vy = 0;
         _hp = _maxHp = 100;
         _aliveTime = 0.0f;
+        _radius = 0.5f;
+        _damageOnContact = 10;
+        _attackCooldown = 1.0f;
+        _lastAttackTime = -100.0f;
+        _state = Protocol::ObjectState::IDLE;
         if (_ai)
             _ai->Reset();
     }
 
-    void Initialize(int32_t id, int32_t monsterTypeId)
+    void Initialize(int32_t id, int32_t monsterTypeId, int32_t hp, float radius, int32_t damage, float cooldown)
     {
         _id = id;
         _monsterTypeId = monsterTypeId;
+        _hp = _maxHp = hp;
+        _radius = radius;
+        _damageOnContact = damage;
+        _attackCooldown = cooldown;
+        _lastAttackTime = -100.0f;
         _aliveTime = 0.0f;
+        _state = Protocol::ObjectState::IDLE;
     }
 
 private:
@@ -83,6 +109,11 @@ private:
     int32_t _targetId = 0;
     float _aliveTime = 0.0f;
     std::unique_ptr<IAIBehavior> _ai;
+
+    // Extended Combat Stats
+    int32_t _damageOnContact = 10;
+    float _attackCooldown = 1.0f;
+    float _lastAttackTime = -100.0f;
 };
 
 } // namespace SimpleGame

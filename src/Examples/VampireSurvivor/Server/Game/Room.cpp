@@ -2,6 +2,7 @@
 #include "Core/UserDB.h"
 #include "Entity/Monster.h"
 #include "Entity/Projectile.h"
+#include "Game/DamageEmitter.h"
 #include "Game/GameConfig.h"
 #include "Game/RoomManager.h"
 #include "GamePackets.h"
@@ -9,6 +10,7 @@
 #include "System/Packet/IPacket.h"
 #include "System/Packet/PacketBroadcast.h"
 #include "System/Thread/IStrand.h"
+#include <algorithm>
 #include <limits>
 
 namespace SimpleGame {
@@ -131,15 +133,57 @@ void BroadcastProto(Room *room, const Protocol::S_SpawnObject &msg)
     room->BroadcastPacket(packet);
 }
 
+void BroadcastProto(Room *room, Protocol::S_SpawnObject &&msg)
+{
+    S_SpawnObjectPacket packet(std::move(msg));
+    room->BroadcastPacket(packet);
+}
+
 void BroadcastProto(Room *room, const Protocol::S_DespawnObject &msg)
 {
     S_DespawnObjectPacket packet(msg);
     room->BroadcastPacket(packet);
 }
 
+void BroadcastProto(Room *room, Protocol::S_DespawnObject &&msg)
+{
+    S_DespawnObjectPacket packet(std::move(msg));
+    room->BroadcastPacket(packet);
+}
+
 void BroadcastProto(Room *room, const Protocol::S_MoveObjectBatch &msg)
 {
     S_MoveObjectBatchPacket packet(msg);
+    room->BroadcastPacket(packet);
+}
+
+void BroadcastProto(Room *room, Protocol::S_MoveObjectBatch &&msg)
+{
+    S_MoveObjectBatchPacket packet(std::move(msg));
+    room->BroadcastPacket(packet);
+}
+
+void BroadcastProto(Room *room, const Protocol::S_GameOver &msg)
+{
+    S_GameOverPacket packet(msg);
+    room->BroadcastPacket(packet);
+}
+
+void BroadcastProto(Room *room, Protocol::S_GameOver &&msg)
+{
+    S_GameOverPacket packet(std::move(msg));
+    room->BroadcastPacket(packet);
+}
+
+void BroadcastProto(Room *room, const Protocol::S_PlayerDead &msg)
+{
+    S_PlayerDeadPacket packet(msg);
+    room->BroadcastPacket(packet);
+}
+
+void BroadcastProto(Room *room, Protocol::S_PlayerDead &&msg)
+{
+    S_PlayerDeadPacket packet(std::move(msg));
     room->BroadcastPacket(packet);
 }
 
@@ -161,7 +205,7 @@ void Room::BroadcastSpawn(const std::vector<std::shared_ptr<GameObject>> &object
         info->set_state(obj->GetState());
         // TypeId customization could be added here if needed
     }
-    BroadcastProto(this, msg);
+    BroadcastProto(this, std::move(msg));
 }
 
 void Room::BroadcastDespawn(const std::vector<int32_t> &objectIds)
@@ -174,7 +218,7 @@ void Room::BroadcastDespawn(const std::vector<int32_t> &objectIds)
     {
         msg.add_object_ids(id);
     }
-    BroadcastProto(this, msg);
+    BroadcastProto(this, std::move(msg));
 }
 
 void Room::Enter(std::shared_ptr<Player> player)
@@ -229,6 +273,10 @@ void Room::Enter(std::shared_ptr<Player> player)
                     self->_players.size()
                 );
                 LOG_INFO("Player {} entered Room {}. Waiting for C_GAME_READY.", player->GetSessionId(), self->_roomId);
+
+                // Create Default DamageEmitter for Player
+                // Use skillId 1 for base_linear
+                self->_emitters.push_back(std::make_unique<DamageEmitter>(1, player));
             }
         );
     }
@@ -315,7 +363,7 @@ void Room::OnPlayerReady(uint64_t sessionId)
     info->set_max_hp(player->GetMaxHp());
     info->set_state(Protocol::ObjectState::IDLE);
 
-    BroadcastProto(this, newPlayerSpawn);
+    BroadcastProto(this, std::move(newPlayerSpawn));
     LOG_INFO("Broadcasted ready player {} spawn to all players in room", sessionId);
 }
 
@@ -336,7 +384,7 @@ void Room::Leave(uint64_t sessionId)
         // Broadcast Despawn
         Protocol::S_DespawnObject despawn;
         despawn.add_object_ids(player->GetId());
-        BroadcastProto(this, despawn);
+        BroadcastProto(this, std::move(despawn));
 
         _players.erase(it);
         LOG_INFO("Player {} left Room {}", sessionId, _roomId);
@@ -444,7 +492,7 @@ void Room::Update(float deltaTime)
         for (auto &move : monsterMoves)
             *batch.add_moves() = move;
 
-        BroadcastProto(this, batch);
+        BroadcastProto(this, std::move(batch));
     }
 
     // === 3. Broadcast Players (filter self) ===
@@ -559,7 +607,7 @@ void Room::Update(float deltaTime)
     // 4. Post-Update: Cleanup & Broadcast Effects
     if (damageEffect.target_ids_size() > 0)
     {
-        S_DamageEffectPacket damagePkt(damageEffect);
+        S_DamageEffectPacket damagePkt(std::move(damageEffect));
         BroadcastPacket(damagePkt);
     }
 
@@ -587,6 +635,94 @@ void Room::Update(float deltaTime)
         }
     }
 
+    // 5. Update Damage Emitters (Player Attacks)
+    for (auto &emitter : _emitters)
+    {
+        emitter->Update(deltaTime, this);
+    }
+
+    _emitters.erase(
+        std::remove_if(
+            _emitters.begin(),
+            _emitters.end(),
+            [](const auto &e)
+            {
+                return e->IsExpired();
+            }
+        ),
+        _emitters.end()
+    );
+
+    auto allObjectsForDamage = _objMgr.GetAllObjects();
+    for (auto &obj : allObjectsForDamage)
+    {
+        if (obj->GetType() != Protocol::ObjectType::MONSTER)
+            continue;
+
+        auto monster = std::dynamic_pointer_cast<Monster>(obj);
+        if (!monster || monster->IsDead())
+            continue;
+
+        for (auto &playerPair : _players)
+        {
+            auto player = playerPair.second;
+            if (player->IsDead())
+                continue;
+
+            // Simple Circular Collision
+            float dx = monster->GetX() - player->GetX();
+            float dy = monster->GetY() - player->GetY();
+            float distSq = dx * dx + dy * dy;
+            float sumRad = monster->GetRadius() + player->GetRadius();
+
+            if (distSq <= sumRad * sumRad)
+            {
+                if (monster->CanAttack(_totalRunTime))
+                {
+                    player->TakeDamage(monster->GetContactDamage(), this);
+                    monster->ResetAttackCooldown(_totalRunTime);
+
+                    // Broadcast damage to player? (Optional: Damage Effect packet)
+                    LOG_DEBUG("Monster {} hit Player {}. HP={}", monster->GetId(), player->GetId(), player->GetHp());
+
+                    // Check if player died
+                    if (player->IsDead())
+                    {
+                        LOG_INFO("Player {} has died in Room {}", player->GetId(), _roomId);
+
+                        // 1. Notify everyone about player death
+                        Protocol::S_PlayerDead deadMsg;
+                        deadMsg.set_player_id(player->GetId());
+                        BroadcastProto(this, std::move(deadMsg));
+
+                        // 2. Check Game Over (Loss Condition)
+                        bool allDead = true;
+                        for (auto &pPair : _players)
+                        {
+                            if (!pPair.second->IsDead())
+                            {
+                                allDead = false;
+                                break;
+                            }
+                        }
+
+                        if (allDead)
+                        {
+                            LOG_INFO("All players died. Game Over in Room {}", _roomId);
+                            Protocol::S_GameOver gameOverMsg;
+                            gameOverMsg.set_survived_time_ms(static_cast<int64_t>(_totalRunTime * 1000));
+                            gameOverMsg.set_is_win(false);
+                            BroadcastProto(this, std::move(gameOverMsg));
+
+                            // Optional: Reset room or transition to lobby
+                            // For now, let's keep it in game-over state
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     if (!despawnIds.empty())
     {
         BroadcastDespawn(despawnIds);
@@ -595,12 +731,16 @@ void Room::Update(float deltaTime)
 
 std::shared_ptr<Player> Room::GetNearestPlayer(float x, float y)
 {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
     std::shared_ptr<Player> nearest = nullptr;
     float minDistSq = std::numeric_limits<float>::max();
 
     for (auto &pair : _players)
     {
         auto p = pair.second;
+        if (p->IsDead())
+            continue;
+
         float dx = p->GetX() - x;
         float dy = p->GetY() - y;
         float dSq = dx * dx + dy * dy;
@@ -611,6 +751,50 @@ std::shared_ptr<Player> Room::GetNearestPlayer(float x, float y)
         }
     }
     return nearest;
+}
+
+std::vector<std::shared_ptr<Monster>> Room::GetMonstersInRange(float x, float y, float radius)
+{
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    std::vector<std::shared_ptr<Monster>> found;
+
+    if (true) // SpatialGrid is direct member, always there.
+    {
+        auto objects = _grid.QueryRange(x, y, radius);
+        for (auto &obj : objects)
+        {
+            if (obj->GetType() == Protocol::ObjectType::MONSTER)
+            {
+                auto monster = std::dynamic_pointer_cast<Monster>(obj);
+                if (monster && !monster->IsDead())
+                {
+                    found.push_back(monster);
+                }
+            }
+        }
+    }
+    else
+    {
+        auto allObjectsInRange = _objMgr.GetAllObjects();
+        for (auto &obj : allObjectsInRange)
+        {
+            if (obj->GetType() != Protocol::ObjectType::MONSTER)
+                continue;
+
+            auto monster = std::dynamic_pointer_cast<Monster>(obj);
+            if (monster && !monster->IsDead())
+            {
+                float dx = monster->GetX() - x;
+                float dy = monster->GetY() - y;
+                float distSq = dx * dx + dy * dy;
+                if (distSq <= radius * radius)
+                {
+                    found.push_back(monster);
+                }
+            }
+        }
+    }
+    return found;
 }
 
 // [Phase 3] Broadcast Optimization

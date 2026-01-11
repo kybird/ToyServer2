@@ -159,6 +159,31 @@ struct S_PlayerDownedDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
     PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_PlayerDownedDefaultTypeInternal _S_PlayerDowned_default_instance_;
 
+inline constexpr S_PlayerDead::Impl_::Impl_(
+    ::_pbi::ConstantInitialized) noexcept
+      : player_id_{0},
+        _cached_size_{0} {}
+
+template <typename>
+PROTOBUF_CONSTEXPR S_PlayerDead::S_PlayerDead(::_pbi::ConstantInitialized)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(_class_data_.base()),
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(),
+#endif  // PROTOBUF_CUSTOM_VTABLE
+      _impl_(::_pbi::ConstantInitialized()) {
+}
+struct S_PlayerDeadDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR S_PlayerDeadDefaultTypeInternal() : _instance(::_pbi::ConstantInitialized{}) {}
+  ~S_PlayerDeadDefaultTypeInternal() {}
+  union {
+    S_PlayerDead _instance;
+  };
+};
+
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
+    PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_PlayerDeadDefaultTypeInternal _S_PlayerDead_default_instance_;
+
 inline constexpr S_Ping::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
       : timestamp_{::int64_t{0}},
@@ -295,6 +320,7 @@ PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
 inline constexpr S_GameOver::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
       : survived_time_ms_{::int64_t{0}},
+        is_win_{false},
         _cached_size_{0} {}
 
 template <typename>
@@ -1409,6 +1435,16 @@ const ::uint32_t
         ~0u,  // no _split_
         ~0u,  // no sizeof(Split)
         PROTOBUF_FIELD_OFFSET(::Protocol::S_GameOver, _impl_.survived_time_ms_),
+        PROTOBUF_FIELD_OFFSET(::Protocol::S_GameOver, _impl_.is_win_),
+        ~0u,  // no _has_bits_
+        PROTOBUF_FIELD_OFFSET(::Protocol::S_PlayerDead, _internal_metadata_),
+        ~0u,  // no _extensions_
+        ~0u,  // no _oneof_case_
+        ~0u,  // no _weak_field_map_
+        ~0u,  // no _inlined_string_donated_
+        ~0u,  // no _split_
+        ~0u,  // no sizeof(Split)
+        PROTOBUF_FIELD_OFFSET(::Protocol::S_PlayerDead, _impl_.player_id_),
         ~0u,  // no _has_bits_
         PROTOBUF_FIELD_OFFSET(::Protocol::S_Ping, _internal_metadata_),
         ~0u,  // no _extensions_
@@ -1492,11 +1528,12 @@ static const ::_pbi::MigrationSchema
         {324, -1, -1, sizeof(::Protocol::C_SelectLevelUp)},
         {333, -1, -1, sizeof(::Protocol::S_GameWin)},
         {343, -1, -1, sizeof(::Protocol::S_GameOver)},
-        {352, -1, -1, sizeof(::Protocol::S_Ping)},
-        {361, -1, -1, sizeof(::Protocol::C_Pong)},
-        {370, -1, -1, sizeof(::Protocol::C_Ping)},
-        {379, -1, -1, sizeof(::Protocol::S_Pong)},
-        {388, -1, -1, sizeof(::Protocol::S_DebugServerTick)},
+        {353, -1, -1, sizeof(::Protocol::S_PlayerDead)},
+        {362, -1, -1, sizeof(::Protocol::S_Ping)},
+        {371, -1, -1, sizeof(::Protocol::C_Pong)},
+        {380, -1, -1, sizeof(::Protocol::C_Ping)},
+        {389, -1, -1, sizeof(::Protocol::S_Pong)},
+        {398, -1, -1, sizeof(::Protocol::S_DebugServerTick)},
 };
 static const ::_pb::Message* const file_default_instances[] = {
     &::Protocol::_C_Login_default_instance_._instance,
@@ -1533,6 +1570,7 @@ static const ::_pb::Message* const file_default_instances[] = {
     &::Protocol::_C_SelectLevelUp_default_instance_._instance,
     &::Protocol::_S_GameWin_default_instance_._instance,
     &::Protocol::_S_GameOver_default_instance_._instance,
+    &::Protocol::_S_PlayerDead_default_instance_._instance,
     &::Protocol::_S_Ping_default_instance_._instance,
     &::Protocol::_C_Pong_default_instance_._instance,
     &::Protocol::_C_Ping_default_instance_._instance,
@@ -1592,45 +1630,47 @@ const char descriptor_table_protodef_game_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIA
     "velUpOption\022(\n\007options\030\001 \003(\0132\027.Protocol."
     "LevelUpOption\"\'\n\017C_SelectLevelUp\022\024\n\014opti"
     "on_index\030\001 \001(\005\"6\n\tS_GameWin\022\025\n\rtotal_tim"
-    "e_ms\030\001 \001(\003\022\022\n\nkill_count\030\002 \001(\005\"&\n\nS_Game"
-    "Over\022\030\n\020survived_time_ms\030\001 \001(\003\"\033\n\006S_Ping"
-    "\022\021\n\ttimestamp\030\001 \001(\003\"\033\n\006C_Pong\022\021\n\ttimesta"
-    "mp\030\001 \001(\003\"\033\n\006C_Ping\022\021\n\ttimestamp\030\001 \001(\003\"\033\n"
-    "\006S_Pong\022\021\n\ttimestamp\030\001 \001(\003\"(\n\021S_DebugSer"
-    "verTick\022\023\n\013server_tick\030\001 \001(\r*\234\005\n\005MsgId\022\010"
-    "\n\004NONE\020\000\022\013\n\007C_LOGIN\020d\022\013\n\007S_LOGIN\020e\022\021\n\rC_"
-    "CREATE_ROOM\020f\022\021\n\rS_CREATE_ROOM\020g\022\017\n\013C_JO"
-    "IN_ROOM\020h\022\017\n\013S_JOIN_ROOM\020i\022\023\n\017C_GET_ROOM"
-    "_LIST\020j\022\017\n\013S_ROOM_LIST\020k\022\021\n\rC_ENTER_LOBB"
-    "Y\020n\022\021\n\rS_ENTER_LOBBY\020o\022\020\n\014C_LEAVE_ROOM\020p"
-    "\022\020\n\014S_LEAVE_ROOM\020q\022\020\n\014C_GAME_READY\020r\022\n\n\006"
-    "C_CHAT\020x\022\n\n\006S_CHAT\020y\022\023\n\016S_SPAWN_OBJECT\020\310"
-    "\001\022\025\n\020S_DESPAWN_OBJECT\020\311\001\022\030\n\023S_MOVE_OBJEC"
-    "T_BATCH\020\312\001\022\021\n\014C_MOVE_INPUT\020\313\001\022\027\n\022S_PLAYE"
-    "R_STATE_ACK\020\314\001\022\020\n\013C_USE_SKILL\020\254\002\022\023\n\016S_SK"
-    "ILL_EFFECT\020\255\002\022\024\n\017S_DAMAGE_EFFECT\020\256\002\022\024\n\017S"
-    "_PLAYER_DOWNED\020\257\002\022\024\n\017S_PLAYER_REVIVE\020\260\002\022"
-    "\021\n\014S_EXP_CHANGE\020\220\003\022\026\n\021S_LEVEL_UP_OPTION\020"
-    "\221\003\022\026\n\021C_SELECT_LEVEL_UP\020\222\003\022\017\n\nS_GAME_WIN"
-    "\020\364\003\022\020\n\013S_GAME_OVER\020\365\003\022\013\n\006S_PING\020\204\007\022\013\n\006C_"
-    "PONG\020\205\007\022\013\n\006C_PING\020\206\007\022\013\n\006S_PONG\020\207\007\022\030\n\023S_D"
-    "EBUG_SERVER_TICK\020\210\007*L\n\nObjectType\022\013\n\007UNK"
-    "NOWN\020\000\022\n\n\006PLAYER\020\001\022\013\n\007MONSTER\020\002\022\016\n\nPROJE"
-    "CTILE\020\003\022\010\n\004ITEM\020\004*H\n\013ObjectState\022\010\n\004IDLE"
-    "\020\000\022\n\n\006MOVING\020\001\022\r\n\tATTACKING\020\002\022\010\n\004DEAD\020\003\022"
-    "\n\n\006DOWNED\020\004b\006proto3"
+    "e_ms\030\001 \001(\003\022\022\n\nkill_count\030\002 \001(\005\"6\n\nS_Game"
+    "Over\022\030\n\020survived_time_ms\030\001 \001(\003\022\016\n\006is_win"
+    "\030\002 \001(\010\"!\n\014S_PlayerDead\022\021\n\tplayer_id\030\001 \001("
+    "\005\"\033\n\006S_Ping\022\021\n\ttimestamp\030\001 \001(\003\"\033\n\006C_Pong"
+    "\022\021\n\ttimestamp\030\001 \001(\003\"\033\n\006C_Ping\022\021\n\ttimesta"
+    "mp\030\001 \001(\003\"\033\n\006S_Pong\022\021\n\ttimestamp\030\001 \001(\003\"(\n"
+    "\021S_DebugServerTick\022\023\n\013server_tick\030\001 \001(\r*"
+    "\260\005\n\005MsgId\022\010\n\004NONE\020\000\022\013\n\007C_LOGIN\020d\022\013\n\007S_LO"
+    "GIN\020e\022\021\n\rC_CREATE_ROOM\020f\022\021\n\rS_CREATE_ROO"
+    "M\020g\022\017\n\013C_JOIN_ROOM\020h\022\017\n\013S_JOIN_ROOM\020i\022\023\n"
+    "\017C_GET_ROOM_LIST\020j\022\017\n\013S_ROOM_LIST\020k\022\021\n\rC"
+    "_ENTER_LOBBY\020n\022\021\n\rS_ENTER_LOBBY\020o\022\020\n\014C_L"
+    "EAVE_ROOM\020p\022\020\n\014S_LEAVE_ROOM\020q\022\020\n\014C_GAME_"
+    "READY\020r\022\n\n\006C_CHAT\020x\022\n\n\006S_CHAT\020y\022\023\n\016S_SPA"
+    "WN_OBJECT\020\310\001\022\025\n\020S_DESPAWN_OBJECT\020\311\001\022\030\n\023S"
+    "_MOVE_OBJECT_BATCH\020\312\001\022\021\n\014C_MOVE_INPUT\020\313\001"
+    "\022\027\n\022S_PLAYER_STATE_ACK\020\314\001\022\020\n\013C_USE_SKILL"
+    "\020\254\002\022\023\n\016S_SKILL_EFFECT\020\255\002\022\024\n\017S_DAMAGE_EFF"
+    "ECT\020\256\002\022\024\n\017S_PLAYER_DOWNED\020\257\002\022\024\n\017S_PLAYER"
+    "_REVIVE\020\260\002\022\021\n\014S_EXP_CHANGE\020\220\003\022\026\n\021S_LEVEL"
+    "_UP_OPTION\020\221\003\022\026\n\021C_SELECT_LEVEL_UP\020\222\003\022\017\n"
+    "\nS_GAME_WIN\020\364\003\022\020\n\013S_GAME_OVER\020\365\003\022\022\n\rS_PL"
+    "AYER_DEAD\020\366\003\022\013\n\006S_PING\020\204\007\022\013\n\006C_PONG\020\205\007\022\013"
+    "\n\006C_PING\020\206\007\022\013\n\006S_PONG\020\207\007\022\030\n\023S_DEBUG_SERV"
+    "ER_TICK\020\210\007*L\n\nObjectType\022\013\n\007UNKNOWN\020\000\022\n\n"
+    "\006PLAYER\020\001\022\013\n\007MONSTER\020\002\022\016\n\nPROJECTILE\020\003\022\010"
+    "\n\004ITEM\020\004*H\n\013ObjectState\022\010\n\004IDLE\020\000\022\n\n\006MOV"
+    "ING\020\001\022\r\n\tATTACKING\020\002\022\010\n\004DEAD\020\003\022\n\n\006DOWNED"
+    "\020\004b\006proto3"
 };
 static ::absl::once_flag descriptor_table_game_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_game_2eproto = {
     false,
     false,
-    3099,
+    3170,
     descriptor_table_protodef_game_2eproto,
     "game.proto",
     &descriptor_table_game_2eproto_once,
     nullptr,
     0,
-    39,
+    40,
     schemas,
     file_default_instances,
     TableStruct_game_2eproto::offsets,
@@ -1643,7 +1683,7 @@ const ::google::protobuf::EnumDescriptor* MsgId_descriptor() {
   return file_level_enum_descriptors_game_2eproto[0];
 }
 PROTOBUF_CONSTINIT const uint32_t MsgId_internal_data_[] = {
-    65536u, 459168u, 0u, 0u, 0u, 25421816u, 0u, 0u, 3968u, 0u, 0u, 63488u, 0u, 0u, 229376u, 901u, 501u, 903u, 500u, 900u, 902u, 904u, };
+    65536u, 328192u, 0u, 0u, 0u, 25421816u, 0u, 0u, 3968u, 0u, 0u, 63488u, 0u, 0u, 229376u, 0u, 0u, 3670016u, 903u, 901u, 904u, 900u, 902u, };
 bool MsgId_IsValid(int value) {
   return ::_pbi::ValidateEnum(value, MsgId_internal_data_);
 }
@@ -9883,7 +9923,12 @@ inline PROTOBUF_NDEBUG_INLINE S_GameOver::Impl_::Impl_(
 
 inline void S_GameOver::SharedCtor(::_pb::Arena* arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
-  _impl_.survived_time_ms_ = {};
+  ::memset(reinterpret_cast<char *>(&_impl_) +
+               offsetof(Impl_, survived_time_ms_),
+           0,
+           offsetof(Impl_, is_win_) -
+               offsetof(Impl_, survived_time_ms_) +
+               sizeof(Impl_::is_win_));
 }
 S_GameOver::~S_GameOver() {
   // @@protoc_insertion_point(destructor:Protocol.S_GameOver)
@@ -9932,15 +9977,15 @@ const ::google::protobuf::internal::ClassData* S_GameOver::GetClassData() const 
   return _class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<0, 1, 0, 0, 2> S_GameOver::_table_ = {
+const ::_pbi::TcParseTable<1, 2, 0, 0, 2> S_GameOver::_table_ = {
   {
     0,  // no _has_bits_
     0, // no _extensions_
-    1, 0,  // max_field_number, fast_idx_mask
+    2, 8,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967294,  // skipmap
+    4294967292,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    1,  // num_field_entries
+    2,  // num_field_entries
     0,  // num_aux_entries
     offsetof(decltype(_table_), field_names),  // no aux_entries
     _class_data_.base(),
@@ -9950,6 +9995,9 @@ const ::_pbi::TcParseTable<0, 1, 0, 0, 2> S_GameOver::_table_ = {
     ::_pbi::TcParser::GetTable<::Protocol::S_GameOver>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
+    // bool is_win = 2;
+    {::_pbi::TcParser::SingularVarintNoZag1<bool, offsetof(S_GameOver, _impl_.is_win_), 63>(),
+     {16, 63, 0, PROTOBUF_FIELD_OFFSET(S_GameOver, _impl_.is_win_)}},
     // int64 survived_time_ms = 1;
     {::_pbi::TcParser::SingularVarintNoZag1<::uint64_t, offsetof(S_GameOver, _impl_.survived_time_ms_), 63>(),
      {8, 63, 0, PROTOBUF_FIELD_OFFSET(S_GameOver, _impl_.survived_time_ms_)}},
@@ -9959,6 +10007,9 @@ const ::_pbi::TcParseTable<0, 1, 0, 0, 2> S_GameOver::_table_ = {
     // int64 survived_time_ms = 1;
     {PROTOBUF_FIELD_OFFSET(S_GameOver, _impl_.survived_time_ms_), 0, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kInt64)},
+    // bool is_win = 2;
+    {PROTOBUF_FIELD_OFFSET(S_GameOver, _impl_.is_win_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kBool)},
   }},
   // no aux_entries
   {{
@@ -9972,7 +10023,9 @@ PROTOBUF_NOINLINE void S_GameOver::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  _impl_.survived_time_ms_ = ::int64_t{0};
+  ::memset(&_impl_.survived_time_ms_, 0, static_cast<::size_t>(
+      reinterpret_cast<char*>(&_impl_.is_win_) -
+      reinterpret_cast<char*>(&_impl_.survived_time_ms_)) + sizeof(_impl_.is_win_));
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
 }
 
@@ -9998,6 +10051,13 @@ PROTOBUF_NOINLINE void S_GameOver::Clear() {
                     stream, this_._internal_survived_time_ms(), target);
           }
 
+          // bool is_win = 2;
+          if (this_._internal_is_win() != 0) {
+            target = stream->EnsureSpace(target);
+            target = ::_pbi::WireFormatLite::WriteBoolToArray(
+                2, this_._internal_is_win(), target);
+          }
+
           if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
             target =
                 ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
@@ -10021,11 +10081,16 @@ PROTOBUF_NOINLINE void S_GameOver::Clear() {
           // Prevent compiler warnings about cached_has_bits being unused
           (void)cached_has_bits;
 
+          ::_pbi::Prefetch5LinesFrom7Lines(&this_);
            {
             // int64 survived_time_ms = 1;
             if (this_._internal_survived_time_ms() != 0) {
               total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(
                   this_._internal_survived_time_ms());
+            }
+            // bool is_win = 2;
+            if (this_._internal_is_win() != 0) {
+              total_size += 2;
             }
           }
           return this_.MaybeComputeUnknownFieldsSize(total_size,
@@ -10043,6 +10108,9 @@ void S_GameOver::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::goog
   if (from._internal_survived_time_ms() != 0) {
     _this->_impl_.survived_time_ms_ = from._impl_.survived_time_ms_;
   }
+  if (from._internal_is_win() != 0) {
+    _this->_impl_.is_win_ = from._impl_.is_win_;
+  }
   _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(from._internal_metadata_);
 }
 
@@ -10057,10 +10125,222 @@ void S_GameOver::CopyFrom(const S_GameOver& from) {
 void S_GameOver::InternalSwap(S_GameOver* PROTOBUF_RESTRICT other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
-        swap(_impl_.survived_time_ms_, other->_impl_.survived_time_ms_);
+  ::google::protobuf::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(S_GameOver, _impl_.is_win_)
+      + sizeof(S_GameOver::_impl_.is_win_)
+      - PROTOBUF_FIELD_OFFSET(S_GameOver, _impl_.survived_time_ms_)>(
+          reinterpret_cast<char*>(&_impl_.survived_time_ms_),
+          reinterpret_cast<char*>(&other->_impl_.survived_time_ms_));
 }
 
 ::google::protobuf::Metadata S_GameOver::GetMetadata() const {
+  return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
+}
+// ===================================================================
+
+class S_PlayerDead::_Internal {
+ public:
+};
+
+S_PlayerDead::S_PlayerDead(::google::protobuf::Arena* arena)
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+    : ::google::protobuf::Message(arena, _class_data_.base()) {
+#else   // PROTOBUF_CUSTOM_VTABLE
+    : ::google::protobuf::Message(arena) {
+#endif  // PROTOBUF_CUSTOM_VTABLE
+  SharedCtor(arena);
+  // @@protoc_insertion_point(arena_constructor:Protocol.S_PlayerDead)
+}
+S_PlayerDead::S_PlayerDead(
+    ::google::protobuf::Arena* arena, const S_PlayerDead& from)
+    : S_PlayerDead(arena) {
+  MergeFrom(from);
+}
+inline PROTOBUF_NDEBUG_INLINE S_PlayerDead::Impl_::Impl_(
+    ::google::protobuf::internal::InternalVisibility visibility,
+    ::google::protobuf::Arena* arena)
+      : _cached_size_{0} {}
+
+inline void S_PlayerDead::SharedCtor(::_pb::Arena* arena) {
+  new (&_impl_) Impl_(internal_visibility(), arena);
+  _impl_.player_id_ = {};
+}
+S_PlayerDead::~S_PlayerDead() {
+  // @@protoc_insertion_point(destructor:Protocol.S_PlayerDead)
+  SharedDtor(*this);
+}
+inline void S_PlayerDead::SharedDtor(MessageLite& self) {
+  S_PlayerDead& this_ = static_cast<S_PlayerDead&>(self);
+  this_._internal_metadata_.Delete<::google::protobuf::UnknownFieldSet>();
+  ABSL_DCHECK(this_.GetArena() == nullptr);
+  this_._impl_.~Impl_();
+}
+
+inline void* S_PlayerDead::PlacementNew_(const void*, void* mem,
+                                        ::google::protobuf::Arena* arena) {
+  return ::new (mem) S_PlayerDead(arena);
+}
+constexpr auto S_PlayerDead::InternalNewImpl_() {
+  return ::google::protobuf::internal::MessageCreator::ZeroInit(sizeof(S_PlayerDead),
+                                            alignof(S_PlayerDead));
+}
+PROTOBUF_CONSTINIT
+PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::google::protobuf::internal::ClassDataFull S_PlayerDead::_class_data_ = {
+    ::google::protobuf::internal::ClassData{
+        &_S_PlayerDead_default_instance_._instance,
+        &_table_.header,
+        nullptr,  // OnDemandRegisterArenaDtor
+        nullptr,  // IsInitialized
+        &S_PlayerDead::MergeImpl,
+        ::google::protobuf::Message::GetNewImpl<S_PlayerDead>(),
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        &S_PlayerDead::SharedDtor,
+        ::google::protobuf::Message::GetClearImpl<S_PlayerDead>(), &S_PlayerDead::ByteSizeLong,
+            &S_PlayerDead::_InternalSerialize,
+#endif  // PROTOBUF_CUSTOM_VTABLE
+        PROTOBUF_FIELD_OFFSET(S_PlayerDead, _impl_._cached_size_),
+        false,
+    },
+    &S_PlayerDead::kDescriptorMethods,
+    &descriptor_table_game_2eproto,
+    nullptr,  // tracker
+};
+const ::google::protobuf::internal::ClassData* S_PlayerDead::GetClassData() const {
+  ::google::protobuf::internal::PrefetchToLocalCache(&_class_data_);
+  ::google::protobuf::internal::PrefetchToLocalCache(_class_data_.tc_table);
+  return _class_data_.base();
+}
+PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
+const ::_pbi::TcParseTable<0, 1, 0, 0, 2> S_PlayerDead::_table_ = {
+  {
+    0,  // no _has_bits_
+    0, // no _extensions_
+    1, 0,  // max_field_number, fast_idx_mask
+    offsetof(decltype(_table_), field_lookup_table),
+    4294967294,  // skipmap
+    offsetof(decltype(_table_), field_entries),
+    1,  // num_field_entries
+    0,  // num_aux_entries
+    offsetof(decltype(_table_), field_names),  // no aux_entries
+    _class_data_.base(),
+    nullptr,  // post_loop_handler
+    ::_pbi::TcParser::GenericFallback,  // fallback
+    #ifdef PROTOBUF_PREFETCH_PARSE_TABLE
+    ::_pbi::TcParser::GetTable<::Protocol::S_PlayerDead>(),  // to_prefetch
+    #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
+  }, {{
+    // int32 player_id = 1;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(S_PlayerDead, _impl_.player_id_), 63>(),
+     {8, 63, 0, PROTOBUF_FIELD_OFFSET(S_PlayerDead, _impl_.player_id_)}},
+  }}, {{
+    65535, 65535
+  }}, {{
+    // int32 player_id = 1;
+    {PROTOBUF_FIELD_OFFSET(S_PlayerDead, _impl_.player_id_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kInt32)},
+  }},
+  // no aux_entries
+  {{
+  }},
+};
+
+PROTOBUF_NOINLINE void S_PlayerDead::Clear() {
+// @@protoc_insertion_point(message_clear_start:Protocol.S_PlayerDead)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  ::uint32_t cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _impl_.player_id_ = 0;
+  _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
+}
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        ::uint8_t* S_PlayerDead::_InternalSerialize(
+            const MessageLite& base, ::uint8_t* target,
+            ::google::protobuf::io::EpsCopyOutputStream* stream) {
+          const S_PlayerDead& this_ = static_cast<const S_PlayerDead&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+        ::uint8_t* S_PlayerDead::_InternalSerialize(
+            ::uint8_t* target,
+            ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+          const S_PlayerDead& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          // @@protoc_insertion_point(serialize_to_array_start:Protocol.S_PlayerDead)
+          ::uint32_t cached_has_bits = 0;
+          (void)cached_has_bits;
+
+          // int32 player_id = 1;
+          if (this_._internal_player_id() != 0) {
+            target = ::google::protobuf::internal::WireFormatLite::
+                WriteInt32ToArrayWithField<1>(
+                    stream, this_._internal_player_id(), target);
+          }
+
+          if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
+            target =
+                ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
+                    this_._internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance), target, stream);
+          }
+          // @@protoc_insertion_point(serialize_to_array_end:Protocol.S_PlayerDead)
+          return target;
+        }
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+        ::size_t S_PlayerDead::ByteSizeLong(const MessageLite& base) {
+          const S_PlayerDead& this_ = static_cast<const S_PlayerDead&>(base);
+#else   // PROTOBUF_CUSTOM_VTABLE
+        ::size_t S_PlayerDead::ByteSizeLong() const {
+          const S_PlayerDead& this_ = *this;
+#endif  // PROTOBUF_CUSTOM_VTABLE
+          // @@protoc_insertion_point(message_byte_size_start:Protocol.S_PlayerDead)
+          ::size_t total_size = 0;
+
+          ::uint32_t cached_has_bits = 0;
+          // Prevent compiler warnings about cached_has_bits being unused
+          (void)cached_has_bits;
+
+           {
+            // int32 player_id = 1;
+            if (this_._internal_player_id() != 0) {
+              total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
+                  this_._internal_player_id());
+            }
+          }
+          return this_.MaybeComputeUnknownFieldsSize(total_size,
+                                                     &this_._impl_._cached_size_);
+        }
+
+void S_PlayerDead::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::google::protobuf::MessageLite& from_msg) {
+  auto* const _this = static_cast<S_PlayerDead*>(&to_msg);
+  auto& from = static_cast<const S_PlayerDead&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:Protocol.S_PlayerDead)
+  ABSL_DCHECK_NE(&from, _this);
+  ::uint32_t cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from._internal_player_id() != 0) {
+    _this->_impl_.player_id_ = from._impl_.player_id_;
+  }
+  _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(from._internal_metadata_);
+}
+
+void S_PlayerDead::CopyFrom(const S_PlayerDead& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:Protocol.S_PlayerDead)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+
+void S_PlayerDead::InternalSwap(S_PlayerDead* PROTOBUF_RESTRICT other) {
+  using std::swap;
+  _internal_metadata_.InternalSwap(&other->_internal_metadata_);
+        swap(_impl_.player_id_, other->_impl_.player_id_);
+}
+
+::google::protobuf::Metadata S_PlayerDead::GetMetadata() const {
   return ::google::protobuf::Message::GetMetadataImpl(GetClassData()->full());
 }
 // ===================================================================

@@ -51,10 +51,9 @@ std::shared_ptr<Monster> MonsterFactory::CreateMonster(ObjectManager &objMgr, in
     );
 
     // Init
-    monster->Initialize(id, monsterTypeId);
+    monster->Initialize(id, monsterTypeId, tmpl->hp, tmpl->radius, tmpl->damageOnContact, tmpl->attackCooldown);
 
-    // Apply Template Stats
-    monster->SetHp(tmpl->hp);
+    // Apply Velocity/Pos
     monster->SetVelocity(0, 0);
     monster->SetPos(x, y);
 

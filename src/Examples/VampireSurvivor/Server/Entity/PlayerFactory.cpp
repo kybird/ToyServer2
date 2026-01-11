@@ -1,5 +1,6 @@
 #include "PlayerFactory.h"
 #include "System/Memory/SimplePool.h"
+#include "Core/DataManager.h"
 
 namespace SimpleGame {
 
@@ -25,7 +26,11 @@ std::shared_ptr<Player> PlayerFactory::CreatePlayer(int32_t gameId, System::ISes
         }
     );
 
-    player->Initialize(gameId, session);
+    const auto *tmpl = DataManager::Instance().GetPlayerTemplate(1);
+    int32_t hp = tmpl ? tmpl->hp : 100;
+    float speed = tmpl ? tmpl->speed : 5.0f;
+
+    player->Initialize(gameId, session, hp, speed);
     return player;
 }
 

@@ -13,7 +13,33 @@ struct MonsterTemplate
     std::string name;
     int32_t hp;
     float speed;
+    float radius;
+    int32_t damageOnContact;
+    float attackCooldown;
     MonsterAIType aiType;
+};
+
+struct PlayerTemplate
+{
+    int32_t id;
+    std::string name;
+    int32_t hp;
+    float speed;
+};
+
+struct SkillTemplate
+{
+    int32_t id;
+    std::string name;
+    int32_t damage;
+    float tickInterval;
+    float hitRadius;
+    float lifeTime;
+
+    std::string emitterType;   // "Linear", "Orbit", "AoE"
+    int32_t pierce;            // 관통 수
+    int32_t maxTargetsPerTick; // 틱당 최대 타겟
+    std::string targetRule;    // "Nearest", "Random", "LowestHp"
 };
 
 struct WaveData
@@ -38,6 +64,12 @@ public:
     bool LoadMonsterData(const std::string &path);
     const MonsterTemplate *GetMonsterTemplate(int32_t id);
 
+    bool LoadPlayerData(const std::string &path);
+    const PlayerTemplate *GetPlayerTemplate(int32_t id);
+
+    bool LoadSkillData(const std::string &path);
+    const SkillTemplate *GetSkillTemplate(int32_t id);
+
     bool LoadWaveData(const std::string &path);
     const std::vector<WaveData> &GetWaves() const
     {
@@ -49,9 +81,19 @@ public:
     {
         _monsters[tmpl.id] = tmpl;
     }
+    void AddPlayerTemplate(const PlayerTemplate &tmpl)
+    {
+        _players[tmpl.id] = tmpl;
+    }
+    void AddSkillTemplate(const SkillTemplate &tmpl)
+    {
+        _skills[tmpl.id] = tmpl;
+    }
 
 private:
     std::unordered_map<int32_t, MonsterTemplate> _monsters;
+    std::unordered_map<int32_t, PlayerTemplate> _players;
+    std::unordered_map<int32_t, SkillTemplate> _skills;
     std::vector<WaveData> _waves;
 };
 

@@ -150,6 +150,9 @@ extern S_MoveObjectBatchDefaultTypeInternal _S_MoveObjectBatch_default_instance_
 class S_Ping;
 struct S_PingDefaultTypeInternal;
 extern S_PingDefaultTypeInternal _S_Ping_default_instance_;
+class S_PlayerDead;
+struct S_PlayerDeadDefaultTypeInternal;
+extern S_PlayerDeadDefaultTypeInternal _S_PlayerDead_default_instance_;
 class S_PlayerDowned;
 struct S_PlayerDownedDefaultTypeInternal;
 extern S_PlayerDownedDefaultTypeInternal _S_PlayerDowned_default_instance_;
@@ -210,6 +213,7 @@ enum MsgId : int {
   C_SELECT_LEVEL_UP = 402,
   S_GAME_WIN = 500,
   S_GAME_OVER = 501,
+  S_PLAYER_DEAD = 502,
   S_PING = 900,
   C_PONG = 901,
   C_PING = 902,
@@ -623,7 +627,7 @@ class S_Pong final : public ::google::protobuf::Message
     return reinterpret_cast<const S_Pong*>(
         &_S_Pong_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 37;
+  static constexpr int kIndexInFileMessages = 38;
   friend void swap(S_Pong& a, S_Pong& b) { a.Swap(&b); }
   inline void Swap(S_Pong* other) {
     if (other == this) return;
@@ -1360,6 +1364,196 @@ class S_PlayerDowned final : public ::google::protobuf::Message
 };
 // -------------------------------------------------------------------
 
+class S_PlayerDead final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:Protocol.S_PlayerDead) */ {
+ public:
+  inline S_PlayerDead() : S_PlayerDead(nullptr) {}
+  ~S_PlayerDead() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(S_PlayerDead* msg, std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(S_PlayerDead));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR S_PlayerDead(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline S_PlayerDead(const S_PlayerDead& from) : S_PlayerDead(nullptr, from) {}
+  inline S_PlayerDead(S_PlayerDead&& from) noexcept
+      : S_PlayerDead(nullptr, std::move(from)) {}
+  inline S_PlayerDead& operator=(const S_PlayerDead& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline S_PlayerDead& operator=(S_PlayerDead&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const S_PlayerDead& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const S_PlayerDead* internal_default_instance() {
+    return reinterpret_cast<const S_PlayerDead*>(
+        &_S_PlayerDead_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 34;
+  friend void swap(S_PlayerDead& a, S_PlayerDead& b) { a.Swap(&b); }
+  inline void Swap(S_PlayerDead* other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(S_PlayerDead* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  S_PlayerDead* New(::google::protobuf::Arena* arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<S_PlayerDead>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const S_PlayerDead& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const S_PlayerDead& from) { S_PlayerDead::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(S_PlayerDead* other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(
+      ::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "Protocol.S_PlayerDead"; }
+
+ protected:
+  explicit S_PlayerDead(::google::protobuf::Arena* arena);
+  S_PlayerDead(::google::protobuf::Arena* arena, const S_PlayerDead& from);
+  S_PlayerDead(::google::protobuf::Arena* arena, S_PlayerDead&& from) noexcept
+      : S_PlayerDead(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static void* PlacementNew_(const void*, void* mem,
+                             ::google::protobuf::Arena* arena);
+  static constexpr auto InternalNewImpl_();
+  static const ::google::protobuf::internal::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kPlayerIdFieldNumber = 1,
+  };
+  // int32 player_id = 1;
+  void clear_player_id() ;
+  ::int32_t player_id() const;
+  void set_player_id(::int32_t value);
+
+  private:
+  ::int32_t _internal_player_id() const;
+  void _internal_set_player_id(::int32_t value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:Protocol.S_PlayerDead)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      0, 1, 0,
+      0, 2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const S_PlayerDead& from_msg);
+    ::int32_t player_id_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_game_2eproto;
+};
+// -------------------------------------------------------------------
+
 class S_Ping final : public ::google::protobuf::Message
 /* @@protoc_insertion_point(class_definition:Protocol.S_Ping) */ {
  public:
@@ -1419,7 +1613,7 @@ class S_Ping final : public ::google::protobuf::Message
     return reinterpret_cast<const S_Ping*>(
         &_S_Ping_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 34;
+  static constexpr int kIndexInFileMessages = 35;
   friend void swap(S_Ping& a, S_Ping& b) { a.Swap(&b); }
   inline void Swap(S_Ping* other) {
     if (other == this) return;
@@ -2553,6 +2747,7 @@ class S_GameOver final : public ::google::protobuf::Message
   // accessors -------------------------------------------------------
   enum : int {
     kSurvivedTimeMsFieldNumber = 1,
+    kIsWinFieldNumber = 2,
   };
   // int64 survived_time_ms = 1;
   void clear_survived_time_ms() ;
@@ -2564,12 +2759,22 @@ class S_GameOver final : public ::google::protobuf::Message
   void _internal_set_survived_time_ms(::int64_t value);
 
   public:
+  // bool is_win = 2;
+  void clear_is_win() ;
+  bool is_win() const;
+  void set_is_win(bool value);
+
+  private:
+  bool _internal_is_win() const;
+  void _internal_set_is_win(bool value);
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.S_GameOver)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      0, 1, 0,
+      1, 2, 0,
       0, 2>
       _table_;
 
@@ -2588,6 +2793,7 @@ class S_GameOver final : public ::google::protobuf::Message
                           ::google::protobuf::Arena* arena, const Impl_& from,
                           const S_GameOver& from_msg);
     ::int64_t survived_time_ms_;
+    bool is_win_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -3258,7 +3464,7 @@ class S_DebugServerTick final : public ::google::protobuf::Message
     return reinterpret_cast<const S_DebugServerTick*>(
         &_S_DebugServerTick_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 38;
+  static constexpr int kIndexInFileMessages = 39;
   friend void swap(S_DebugServerTick& a, S_DebugServerTick& b) { a.Swap(&b); }
   inline void Swap(S_DebugServerTick* other) {
     if (other == this) return;
@@ -5500,7 +5706,7 @@ class C_Pong final : public ::google::protobuf::Message
     return reinterpret_cast<const C_Pong*>(
         &_C_Pong_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 35;
+  static constexpr int kIndexInFileMessages = 36;
   friend void swap(C_Pong& a, C_Pong& b) { a.Swap(&b); }
   inline void Swap(C_Pong* other) {
     if (other == this) return;
@@ -5690,7 +5896,7 @@ class C_Ping final : public ::google::protobuf::Message
     return reinterpret_cast<const C_Ping*>(
         &_C_Ping_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 36;
+  static constexpr int kIndexInFileMessages = 37;
   friend void swap(C_Ping& a, C_Ping& b) { a.Swap(&b); }
   inline void Swap(C_Ping* other) {
     if (other == this) return;
@@ -10637,6 +10843,54 @@ inline ::int64_t S_GameOver::_internal_survived_time_ms() const {
 inline void S_GameOver::_internal_set_survived_time_ms(::int64_t value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.survived_time_ms_ = value;
+}
+
+// bool is_win = 2;
+inline void S_GameOver::clear_is_win() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.is_win_ = false;
+}
+inline bool S_GameOver::is_win() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_GameOver.is_win)
+  return _internal_is_win();
+}
+inline void S_GameOver::set_is_win(bool value) {
+  _internal_set_is_win(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_GameOver.is_win)
+}
+inline bool S_GameOver::_internal_is_win() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.is_win_;
+}
+inline void S_GameOver::_internal_set_is_win(bool value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.is_win_ = value;
+}
+
+// -------------------------------------------------------------------
+
+// S_PlayerDead
+
+// int32 player_id = 1;
+inline void S_PlayerDead::clear_player_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.player_id_ = 0;
+}
+inline ::int32_t S_PlayerDead::player_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_PlayerDead.player_id)
+  return _internal_player_id();
+}
+inline void S_PlayerDead::set_player_id(::int32_t value) {
+  _internal_set_player_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_PlayerDead.player_id)
+}
+inline ::int32_t S_PlayerDead::_internal_player_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.player_id_;
+}
+inline void S_PlayerDead::_internal_set_player_id(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.player_id_ = value;
 }
 
 // -------------------------------------------------------------------
