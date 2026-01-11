@@ -1,0 +1,14 @@
+[
+    {
+        "id": 1,
+        "name": "base_linear",
+        "emitter_type": "Linear",
+        "damage": 10,
+        "hit_radius": 0.5,
+        "tick_interval": 0.8,
+        "life_time": 0.1,
+        "pierce": 1,
+        "max_targets_per_tick": 1,
+        "target_rule": "Nearest"
+    }
+]
