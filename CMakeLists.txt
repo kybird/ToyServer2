@@ -158,8 +158,10 @@ set(GAME_SOURCES
     src/Examples/VampireSurvivor/Server/Game/RoomManager.cpp
     src/Examples/VampireSurvivor/Server/Game/WaveManager.cpp
     src/Examples/VampireSurvivor/Server/Game/DamageEmitter.cpp
+    src/Examples/VampireSurvivor/Server/Game/CombatManager.cpp
     src/Examples/VampireSurvivor/Server/Entity/Monster.cpp
     src/Examples/VampireSurvivor/Server/Entity/MonsterFactory.cpp
+    src/Examples/VampireSurvivor/Server/Entity/Player.cpp
     src/Examples/VampireSurvivor/Server/Entity/PlayerFactory.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/ChaserAI.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/WanderAI.cpp

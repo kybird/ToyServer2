@@ -79,6 +79,14 @@ bool DataManager::LoadPlayerData(const std::string &path)
             data.hp = item["hp"];
             data.speed = item.value("speed", 5.0f);
 
+            if (item.contains("defaultSkills"))
+            {
+                for (auto &skillId : item["defaultSkills"])
+                {
+                    data.defaultSkills.push_back(skillId);
+                }
+            }
+
             _players[data.id] = data;
         }
         LOG_INFO("Loaded {} players from {}", _players.size(), path);
@@ -123,11 +131,15 @@ bool DataManager::LoadSkillData(const std::string &path)
             data.lifeTime = item.value("life_time", 0.0f); // 0 = infinite
 
             data.emitterType = item.value("emitter_type", "AoE");
+            data.typeId = item.value("type_id", 0);
             data.pierce = item.value("pierce", 1);
             data.maxTargetsPerTick = item.value("max_targets_per_tick", 1);
             data.targetRule = item.value("target_rule", "Nearest");
 
             _skills[data.id] = data;
+            LOG_INFO(
+                "  - Skill ID: {} | Name: {} | Type: {} | typeId: {}", data.id, data.name, data.emitterType, data.typeId
+            );
         }
         LOG_INFO("Loaded {} skills from {}", _skills.size(), path);
         return true;

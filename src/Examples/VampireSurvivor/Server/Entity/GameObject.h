@@ -1,12 +1,13 @@
 #pragma once
 #include "Protocol/game.pb.h"
 #include <cstdint>
+#include <memory>
 
 namespace SimpleGame {
 
 class Room; // Forward declaration
 
-class GameObject
+class GameObject : public std::enable_shared_from_this<GameObject>
 {
 public:
     GameObject(int32_t id, Protocol::ObjectType type) : _id(id), _type(type)

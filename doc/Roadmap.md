@@ -1,70 +1,70 @@
-# Server Framework Roadmap
+# 서버 프레임워크 로드맵
 
-## 🔄 Remaining Tasks (Phase 2+)
+## 🔄 남은 작업 (2단계+)
 
-### Operation Tools (Phase 2 - Continued)
-- [x] **Structured Logger** (Context, Macros)
-    - **Goal**: Add Context fields to logs for better debugging.
-    - **Priority**: Done
-- [x] **Rate Limiter** (Token Bucket)
-    - **Goal**: Network protection against DDoS/Spam.
-    - **Method**: Token Bucket (Header-only).
-- [x] **Command Console**
-    - **Goal**: Runtime server control via stdin.
+### 운영 도구 (2단계 - 계속)
+- [x] **구조화된 로거** (컨텍스트, 매크로)
+    - **목표**: 더 나은 디버깅을 위해 로그에 컨텍스트 필드 추가.
+    - **우선순위**: 완료
+- [x] **속도 제한기** (토큰 버킷)
+    - **목표**: DDoS/스팸에 대한 네트워크 보호.
+    - **방법**: 토큰 버킷 (헤더 전용).
+- [x] **명령어 콘솔**
+    - **목표**: stdin을 통한 런타임 서버 제어.
 
-### Convenience Features (Phase 3)
-- [x] **Event Bus**
-    - **Goal**: Decouple modules using Publish/Subscribe pattern.
-- [x] **ByteBuffer**
-    - **Goal**: Serialization utility for packet payload construction.
-- [x] **Connection Pool (DB)**
-    - **Goal**: Database connection management.
+### 편의 기능 (3단계)
+- [x] **이벤트 버스**
+    - **목표**: 발행/구독 패턴을 사용하여 모듈 분리.
+- [x] **바이트 버퍼**
+    - **목표**: 패킷 페이로드 구성을 위한 직렬화 유틸리티.
+- [x] **커넥션 풀 (DB)**
+    - **목표**: 데이터베이스 연결 관리.
 
-### Game Server Basics (Phase 4)
-- [x] **Protocol & Packet Handling**
-    - **Goal**: Standardize Request/Response using ByteBuffer.
-- [x] **Authentication**
-    - **Goal**: Login flow using EventBus and DB Pool.
-- [x] **Room Management**
-    - **Goal**: Managing player sessions and game rooms.
+### 게임 서버 기초 (4단계)
+- [x] **프로토콜 & 패킷 처리**
+    - **목표**: ByteBuffer를 사용하여 요청/응답 표준화.
+- [x] **인증**
+    - **목표**: 이벤트 버스와 DB 풀을 사용한 로그인 흐름.
+- [x] **방 관리**
+    - **목표**: 플레이어 세션 및 게임 방 관리.
 
-### Advanced Features (Phase 5)
-- [x] **SQLite Integration**
-    - **Goal**: Lightweight, server-less DB for development.
-- [ ] **File Watcher** (Deferred)
-- [ ] **Metrics Dashboard** (Deferred)
+### 고급 기능 (5단계)
+- [x] **SQLite 통합**
+    - **목표**: 개발을 위한 경량, 서버리스 DB.
+- [ ] **파일 감시자** (보류됨)
+- [ ] **지표 대시보드** (보류됨)
 
-## 🎮 Final Project: Vampire Survivor Clone (Portfolio)
-- **Goal**: Create a complete multiplayer Vampire Survivor-like game.
-- **Client**: Unity or Unreal (TBD).
-- **Server**: Use current `System` framework.
-- **Features**:
-    - Real-time movement synchronization.
-    - Large number of enemy entities.
-    - Spatial Partitioning (Grid/Quadtree).
-    - Protobuf Integration (for efficient packet size).
+## 🎮 최종 프로젝트: 뱀파이어 서바이버 클론 (포트폴리오)
+- **목표**: 완전한 멀티플레이어 뱀파이어 서바이버류 게임 제작.
+- **클라이언트**: 유니티 또는 언리얼 (미정).
+- **서버**: 현재 `System` 프레임워크 사용.
+- **기능**:
+    - 실시간 움직임 동기화.
+    - 대규모 적 엔티티.
+    - 공간 분할 (그리드/쿼드트리).
+    - Protobuf 통합 (효율적인 패킷 크기를 위해).
 
-### Optional / Future
-- [ ] **File Watcher**
-    - **Goal**: Hot Reloading of config/data.
-- [x] **Crash Handler**
-    - **Goal**: Minidump generation on crash. Included Enhanced Dump Flags.
+### 선택 사항 / 미래
+- [ ] **파일 감시자**
+    - **목표**: 설정/데이터의 핫 리로딩.
+- [x] **크래시 핸들러**
+    - **목표**: 크래시 발생 시 미니덤프 생성. 향상된 덤프 플래그 포함.
 
 ---
 
-## 🎯 Next Steps Recommendations
+## 🎯 다음 단계 권장 사항
 
-### Option A: Complete Operation Tools (Pragmatic)
-- **Next**: Rate Limiter
-- **Reason**: Essential for network security.
-- **Difficulty**: ⭐⭐ (1 Day)
+### 옵션 A: 운영 도구 완성 (실용적)
+- **다음**: 속도 제한기
+- **이유**: 네트워크 보안에 필수적.
+- **난이도**: ⭐⭐ (1일)
 
-### Option B: Start Game Development (Fun)
-- **Next**: Vampire Survivor Game Logic
-- **Scope**: Entity Manager, Spatial Grid, Protobuf Integration.
-- **Reason**: Framework is "good enough" to start making the game.
+### 옵션 B: 게임 개발 시작 (재미)
+- **다음**: 뱀파이어 서바이버 게임 로직
+- **범위**: 엔티티 매니저, 공간 그리드, Protobuf 통합.
+- **이유**: 프레임워크가 게임 제작을 시작하기에 "충분히 좋음".
 
-### Option C: Enhance Logging (Stability)
-- **Next**: Structured Logger
-- **Reason**: Deep debugging capability.
-- **Difficulty**: ⭐⭐ (1 Day)
+### 옵션 C: 로깅 강화 (안정성)
+- **다음**: 구조화된 로거
+- **이유**: 심층 디버깅 기능.
+- **난이도**: ⭐⭐ (1일)

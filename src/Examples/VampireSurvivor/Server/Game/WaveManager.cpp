@@ -102,6 +102,7 @@ void WaveManager::SpawnMonster(const PeriodicSpawner &spawner, Room *room)
 
         // Broadcast Spawn
         Protocol::S_SpawnObject msg;
+        msg.set_server_tick(room->GetServerTick()); // [중요] 틱 동기화를 위해 server_tick 설정
         auto *info = msg.add_objects();
         info->set_object_id(monster->GetId());
         info->set_type(Protocol::ObjectType::MONSTER);

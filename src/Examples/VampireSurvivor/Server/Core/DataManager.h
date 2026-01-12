@@ -25,6 +25,7 @@ struct PlayerTemplate
     std::string name;
     int32_t hp;
     float speed;
+    std::vector<int32_t> defaultSkills;
 };
 
 struct SkillTemplate
@@ -37,6 +38,7 @@ struct SkillTemplate
     float lifeTime;
 
     std::string emitterType;   // "Linear", "Orbit", "AoE"
+    int32_t typeId;            // 클라이언트 프리팹 ID (투사체 등)
     int32_t pierce;            // 관통 수
     int32_t maxTargetsPerTick; // 틱당 최대 타겟
     std::string targetRule;    // "Nearest", "Random", "LowestHp"

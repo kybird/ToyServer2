@@ -20,9 +20,10 @@ public:
 
 private:
     int32_t _skillId;
-    std::shared_ptr<Player> _owner;
+    std::weak_ptr<Player> _owner;
 
     int32_t _damage = 0;
+    int32_t _typeId = 0;
     float _tickInterval = 1.0f;
     float _hitRadius = 1.0f;
     float _timer = 0.0f;

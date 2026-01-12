@@ -10,6 +10,7 @@
 #include <gtest/gtest.h>
 
 namespace SimpleGame {
+// Dummy comment to force recompile
 
 TEST(CombatTest, ProjectileHitsMonster)
 {
@@ -33,7 +34,8 @@ TEST(CombatTest, ProjectileHitsMonster)
     int32_t initialHp = monster->GetHp();
 
     // 2. Create a Projectile at (0, 0) moving towards (2, 0)
-    auto proj = ProjectileFactory::Instance().CreateProjectile(room._objMgr, 999, 1, 0.0f, 0.0f, 20.0f, 0.0f);
+    auto proj =
+        ProjectileFactory::Instance().CreateProjectile(room._objMgr, 999, 1, 1, 0.0f, 0.0f, 20.0f, 0.0f, 50, 2.0f);
     proj->SetDamage(50);
     room._objMgr.AddObject(proj);
     room._grid.Add(proj);
@@ -70,7 +72,8 @@ TEST(CombatTest, MonsterDies)
     room._grid.Add(monster);
 
     // Overlapping projectile
-    auto proj = ProjectileFactory::Instance().CreateProjectile(room._objMgr, 999, 1, 0.1f, 0.1f, 0.0f, 0.0f);
+    auto proj =
+        ProjectileFactory::Instance().CreateProjectile(room._objMgr, 999, 1, 1, 0.1f, 0.1f, 0.0f, 0.0f, 20, 2.0f);
     proj->SetDamage(20);
     room._objMgr.AddObject(proj);
     room._grid.Add(proj);
@@ -191,7 +194,7 @@ TEST(CombatTest, LinearEmitterHitsNearestMonster)
     room->Enter(player);
 
     // Add emitter manually (since Enter without DB doesn't add it)
-    room->_emitters.push_back(std::make_unique<DamageEmitter>(1, player));
+    player->AddEmitter(std::make_shared<DamageEmitter>(1, player));
 
     // M1 at (1,0) - Nearest
     auto m1 = MonsterFactory::Instance().CreateMonster(room->_objMgr, 1, 1.0f, 0.0f);
@@ -231,18 +234,109 @@ TEST(CombatTest, LinearEmitterRespectsLifetime)
     room->Enter(player);
 
     // Add emitter with ID 2
-    room->_emitters.clear(); // Clear default emitter from Enter
-    room->_emitters.push_back(std::make_unique<DamageEmitter>(2, player));
+    player->ClearEmitters(); // Clear default emitter from Enter
+    player->AddEmitter(std::make_shared<DamageEmitter>(2, player));
 
-    EXPECT_EQ(room->_emitters.size(), 1);
+    EXPECT_EQ(player->GetEmitterCount(), 1);
 
     // Update within lifetime
     room->Update(0.3f);
-    EXPECT_EQ(room->_emitters.size(), 1);
+    EXPECT_EQ(player->GetEmitterCount(), 1);
 
-    // Update past lifetime
+    // past lifetime
     room->Update(0.3f);
-    EXPECT_EQ(room->_emitters.size(), 0);
+    EXPECT_EQ(player->GetEmitterCount(), 0);
+}
+
+TEST(CombatTest, MonsterKnockback)
+{
+    MonsterTemplate mTmpl;
+    mTmpl.id = 50; // New ID
+    mTmpl.hp = 100;
+    mTmpl.speed = 2.0f;
+    mTmpl.radius = 0.5f;
+    mTmpl.damageOnContact = 20;
+    mTmpl.attackCooldown = 1.0f;
+    mTmpl.aiType = MonsterAIType::CHASER;
+    DataManager::Instance().AddMonsterTemplate(mTmpl);
+
+    PlayerTemplate pTmpl;
+    pTmpl.id = 1;
+    pTmpl.hp = 100;
+    pTmpl.speed = 5.0f;
+    DataManager::Instance().AddPlayerTemplate(pTmpl);
+
+    Room room(7, nullptr, nullptr, nullptr);
+
+    auto player = PlayerFactory::Instance().CreatePlayer(100, nullptr);
+    player->SetPos(0.0f, 0.0f);
+    room._players[100] = player;
+    room._objMgr.AddObject(player);
+    room._grid.Add(player);
+
+    // Monster overlapping player at (0.1, 0)
+    auto monster = MonsterFactory::Instance().CreateMonster(room._objMgr, 50, 0.1f, 0.0f);
+    room._objMgr.AddObject(monster);
+    room._grid.Add(monster);
+
+    // Update Room
+    room.Update(0.01f);
+
+    // Monster should be knocked back in positive X direction (dx = 0.1, player at 0.0)
+    EXPECT_GT(monster->GetVX(), 10.0f);
+}
+
+TEST(CombatTest, LinearEmitterSpawnsProjectile)
+{
+    // 1. Setup Data
+    SkillTemplate sTmpl;
+    sTmpl.id = 10;
+    sTmpl.name = "spawn_linear";
+    sTmpl.damage = 10;
+    sTmpl.tickInterval = 0.5f;
+    sTmpl.hitRadius = 2.0f;
+    sTmpl.lifeTime = 0.0f;
+    sTmpl.typeId = 777; // Expected TypeId
+    sTmpl.emitterType = "Linear";
+    sTmpl.maxTargetsPerTick = 1;
+    sTmpl.targetRule = "Nearest";
+    DataManager::Instance().AddSkillTemplate(sTmpl);
+
+    auto room = std::make_shared<Room>(10, nullptr, nullptr, nullptr);
+
+    // 2. Setup Player
+    auto player = std::make_shared<Player>(100, nullptr);
+    player->Initialize(100, nullptr, 100, 5.0f);
+    player->ApplyInput(1, 1, 0); // Faces (1,0)
+    player->SetVelocity(0, 0);
+    room->Enter(player);
+
+    // Add emitter manually
+    auto emitter = std::make_shared<DamageEmitter>(10, player);
+    player->AddEmitter(emitter);
+
+    // 3. Update Room (tickInterval elapsed)
+    room->Update(0.6f);
+
+    // 4. Verify: Projectile should have been spawned
+    auto allObjects = room->_objMgr.GetAllObjects();
+    bool foundProjectile = false;
+    for (const auto &obj : allObjects)
+    {
+        if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
+        {
+            auto proj = std::dynamic_pointer_cast<Projectile>(obj);
+            if (proj && proj->GetSkillId() == 10)
+            {
+                foundProjectile = true;
+                EXPECT_EQ(proj->GetTypeId(), 777);
+                EXPECT_EQ(proj->GetOwnerId(), 100);
+                EXPECT_GT(std::abs(proj->GetVX()), 0.0f); // Should be moving
+                break;
+            }
+        }
+    }
+    EXPECT_TRUE(foundProjectile);
 }
 
 } // namespace SimpleGame

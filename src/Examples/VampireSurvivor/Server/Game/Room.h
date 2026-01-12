@@ -20,6 +20,7 @@ class IStrand;
 namespace SimpleGame {
 class UserDB;
 class DamageEmitter;
+class CombatManager;
 
 class Room : public System::ITimerListener, public std::enable_shared_from_this<Room>
 {
@@ -29,6 +30,10 @@ class Room : public System::ITimerListener, public std::enable_shared_from_this<
     friend class SwarmPerformanceTest_StressTest500Monsters_Test;
     friend class CombatTest_LinearEmitterHitsNearestMonster_Test;
     friend class CombatTest_LinearEmitterRespectsLifetime_Test;
+    friend class CombatTest_MonsterKnockback_Test;
+    friend class CombatTest_LinearEmitterSpawnsProjectile_Test;
+    friend class CombatManager;
+    friend class DamageEmitter;
 
 public:
     Room(
@@ -111,7 +116,7 @@ public:
 
 private:
     bool _gameStarted = false; // Track if game has started
-    std::vector<std::unique_ptr<DamageEmitter>> _emitters;
+    std::unique_ptr<CombatManager> _combatMgr;
 };
 
 } // namespace SimpleGame

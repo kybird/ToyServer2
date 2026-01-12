@@ -3,6 +3,7 @@
 #include "Entity/Monster.h"
 #include "Entity/Player.h"
 #include "Entity/Projectile.h"
+#include "Game/CombatManager.h"
 #include "Game/DamageEmitter.h"
 #include "Game/GameConfig.h"
 #include "Game/RoomManager.h"
@@ -22,6 +23,7 @@ Room::Room(
 )
     : _roomId(roomId), _timer(timer), _strand(strand), _waveMgr(_objMgr, _grid, roomId), _userDB(userDB)
 {
+    _combatMgr = std::make_unique<CombatManager>();
 }
 
 Room::~Room()
@@ -203,7 +205,20 @@ void Room::BroadcastSpawn(const std::vector<std::shared_ptr<GameObject>> &object
         info->set_hp(obj->GetHp());
         info->set_max_hp(obj->GetMaxHp());
         info->set_state(obj->GetState());
-        // TypeId customization could be added here if needed
+
+        // Set type_id for monsters and projectiles
+        if (obj->GetType() == Protocol::ObjectType::MONSTER)
+        {
+            auto monster = std::dynamic_pointer_cast<Monster>(obj);
+            if (monster)
+                info->set_type_id(monster->GetMonsterTypeId());
+        }
+        else if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
+        {
+            auto proj = std::dynamic_pointer_cast<Projectile>(obj);
+            if (proj)
+                info->set_type_id(proj->GetTypeId());
+        }
     }
     BroadcastProto(this, std::move(msg));
 }
@@ -274,9 +289,16 @@ void Room::Enter(std::shared_ptr<Player> player)
                 );
                 LOG_INFO("Player {} entered Room {}. Waiting for C_GAME_READY.", player->GetSessionId(), self->_roomId);
 
-                // Create Default DamageEmitter for Player
-                // Use skillId 1 for base_linear
-                self->_emitters.push_back(std::make_unique<DamageEmitter>(1, player));
+                // [Refactor] Apply Default Skills from PlayerTemplate
+                const auto *pTmpl =
+                    DataManager::Instance().GetPlayerTemplate(1); // Assuming type ID 1 for now (TODO: Use real type ID)
+                if (pTmpl && !pTmpl->defaultSkills.empty())
+                {
+                    player->AddDefaultSkills(pTmpl->defaultSkills);
+                    LOG_INFO(
+                        "Applied {} default skills to Player {}", pTmpl->defaultSkills.size(), player->GetSessionId()
+                    );
+                }
             }
         );
     }
@@ -284,6 +306,14 @@ void Room::Enter(std::shared_ptr<Player> player)
     {
         // No DB? Just enter immediately
         std::lock_guard<std::recursive_mutex> lock(_mutex);
+
+        // [Refactor] Apply Default Skills from PlayerTemplate
+        const auto *pTmpl = DataManager::Instance().GetPlayerTemplate(1);
+        if (pTmpl && !pTmpl->defaultSkills.empty())
+        {
+            player->AddDefaultSkills(pTmpl->defaultSkills);
+        }
+
         _objMgr.AddObject(player);
         _grid.Add(player);
         LOG_INFO("Player {} entered Room {} (No DB).", player->GetSessionId(), _roomId);
@@ -302,6 +332,7 @@ void Room::OnPlayerReady(uint64_t sessionId)
     }
 
     auto player = it->second;
+    player->SetReady(true);
     LOG_INFO("Player {} is ready in Room {}", sessionId, _roomId);
 
     // [New] Start game loop only when at least one player is fully ready
@@ -550,206 +581,8 @@ void Room::Update(float deltaTime)
         // );
     }
 
-    // 3. Collision Detection & Combat Logic
-    std::vector<int32_t> deadObjectIds;
-    Protocol::S_DamageEffect damageEffect;
-
-    for (auto &obj : objects)
-    {
-        if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
-        {
-            auto proj = std::static_pointer_cast<Projectile>(obj);
-            if (proj->IsExpired())
-                continue;
-
-            // Query nearby objects (Projectiles usually have small radius, e.g. 0.5m)
-            auto nearby = _grid.QueryRange(proj->GetX(), proj->GetY(), proj->GetRadius() + 0.5f);
-            for (auto &target : nearby)
-            {
-                if (target->GetId() == proj->GetId())
-                    continue;
-                if (target->GetId() == proj->GetOwnerId())
-                    continue; // Don't hit owner
-
-                if (target->GetType() == Protocol::ObjectType::MONSTER)
-                {
-                    auto monster = std::static_pointer_cast<Monster>(target);
-                    if (monster->IsDead())
-                        continue;
-
-                    // Simple Circular Collision
-                    float dx = proj->GetX() - monster->GetX();
-                    float dy = proj->GetY() - monster->GetY();
-                    float distSq = dx * dx + dy * dy;
-                    float sumRad = proj->GetRadius() + monster->GetRadius();
-
-                    if (distSq <= sumRad * sumRad)
-                    {
-                        // HIT!
-                        monster->TakeDamage(proj->GetDamage(), this);
-                        proj->SetHit();
-
-                        // Record effect
-                        damageEffect.add_target_ids(monster->GetId());
-                        damageEffect.add_damage_values(proj->GetDamage());
-
-                        if (monster->IsDead())
-                        {
-                            // Give exp to projectile owner
-                            auto it = _players.find(proj->GetOwnerId());
-                            if (it != _players.end())
-                            {
-                                it->second->AddExp(10, this);
-                            }
-                            deadObjectIds.push_back(monster->GetId());
-                        }
-                        break; // Projectile hit one target and disappeared
-                    }
-                }
-            }
-        }
-    }
-
-    // 4. Post-Update: Cleanup & Broadcast Effects
-    if (damageEffect.target_ids_size() > 0)
-    {
-        S_DamageEffectPacket damagePkt(std::move(damageEffect));
-        BroadcastPacket(damagePkt);
-    }
-
-    // Cleanup expired/dead objects
-    std::vector<int32_t> despawnIds;
-    for (auto &obj : objects)
-    {
-        bool shouldRemove = false;
-        if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
-        {
-            if (std::static_pointer_cast<Projectile>(obj)->IsExpired())
-                shouldRemove = true;
-        }
-        else if (obj->GetType() == Protocol::ObjectType::MONSTER)
-        {
-            if (std::static_pointer_cast<Monster>(obj)->IsDead())
-                shouldRemove = true;
-        }
-
-        if (shouldRemove)
-        {
-            despawnIds.push_back(obj->GetId());
-            _grid.Remove(obj);
-            _objMgr.RemoveObject(obj->GetId());
-        }
-    }
-
-    // 5. Update Damage Emitters (Player Attacks)
-    for (auto &emitter : _emitters)
-    {
-        emitter->Update(deltaTime, this);
-    }
-
-    _emitters.erase(
-        std::remove_if(
-            _emitters.begin(),
-            _emitters.end(),
-            [](const auto &e)
-            {
-                return e->IsExpired();
-            }
-        ),
-        _emitters.end()
-    );
-
-    auto allObjectsForDamage = _objMgr.GetAllObjects();
-    for (auto &obj : allObjectsForDamage)
-    {
-        if (obj->GetType() != Protocol::ObjectType::MONSTER)
-            continue;
-
-        auto monster = std::dynamic_pointer_cast<Monster>(obj);
-        if (!monster || monster->IsDead())
-            continue;
-
-        for (auto &playerPair : _players)
-        {
-            auto player = playerPair.second;
-            if (player->IsDead())
-                continue;
-
-            // Simple Circular Collision
-            float dx = monster->GetX() - player->GetX();
-            float dy = monster->GetY() - player->GetY();
-            float distSq = dx * dx + dy * dy;
-            float sumRad = monster->GetRadius() + player->GetRadius();
-
-            if (distSq <= sumRad * sumRad)
-            {
-                // Skip collision if player is already dead
-                if (player->IsDead())
-                    continue;
-
-                if (monster->CanAttack(_totalRunTime))
-                {
-                    player->TakeDamage(monster->GetContactDamage(), this);
-                    monster->ResetAttackCooldown(_totalRunTime);
-
-                    // Send HP Change Packet
-                    {
-                        Protocol::S_HpChange hpMsg;
-                        hpMsg.set_object_id(player->GetId());
-                        hpMsg.set_current_hp(player->GetHp());
-                        hpMsg.set_max_hp(player->GetMaxHp());
-
-                        S_HpChangePacket hpPkt(std::move(hpMsg));
-                        // Send to everyone (so others can see HP bar updates if implemented) or just owner
-                        // For now, let's broadcast to sync state (or change to unicast if optimized)
-                        BroadcastPacket(hpPkt);
-                    }
-
-                    // Broadcast damage to player? (Optional: Damage Effect packet)
-                    LOG_DEBUG("Monster {} hit Player {}. HP={}", monster->GetId(), player->GetId(), player->GetHp());
-
-                    // Check if player died
-                    if (player->IsDead())
-                    {
-                        LOG_INFO("Player {} has died in Room {}", player->GetId(), _roomId);
-
-                        // 1. Notify everyone about player death
-                        Protocol::S_PlayerDead deadMsg;
-                        deadMsg.set_player_id(player->GetId());
-                        BroadcastProto(this, std::move(deadMsg));
-
-                        // 2. Check Game Over (Loss Condition)
-                        bool allDead = true;
-                        for (auto &pPair : _players)
-                        {
-                            if (!pPair.second->IsDead())
-                            {
-                                allDead = false;
-                                break;
-                            }
-                        }
-
-                        if (allDead)
-                        {
-                            LOG_INFO("All players died. Game Over in Room {}", _roomId);
-                            Protocol::S_GameOver gameOverMsg;
-                            gameOverMsg.set_survived_time_ms(static_cast<int64_t>(_totalRunTime * 1000));
-                            gameOverMsg.set_is_win(false);
-                            BroadcastProto(this, std::move(gameOverMsg));
-
-                            // Optional: Reset room or transition to lobby
-                            // For now, let's keep it in game-over state
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (!despawnIds.empty())
-    {
-        BroadcastDespawn(despawnIds);
-    }
+    // 3. Combat & Collision Resolution (Refactored)
+    _combatMgr->Update(deltaTime, this);
 }
 
 std::shared_ptr<Player> Room::GetNearestPlayer(float x, float y)
@@ -831,7 +664,11 @@ void Room::BroadcastPacket(const System::IPacket &pkt)
 
     for (auto &pair : _players)
     {
-        auto *isess = pair.second->GetSession();
+        auto &player = pair.second;
+        if (!player->IsReady())
+            continue;
+
+        auto *isess = player->GetSession();
         if (!isess)
         {
             LOG_WARN("BroadcastPacket: Player {} has NO SESSION. Skipping.", pair.first);
@@ -864,32 +701,6 @@ size_t Room::GetPlayerCount()
 {
     std::lock_guard<std::recursive_mutex> lock(_mutex);
     return _players.size();
-}
-
-void Player::AddExp(int32_t amount, Room *room)
-{
-    _exp += amount;
-
-    // Level up check
-    while (_exp >= _maxExp)
-    {
-        _exp -= _maxExp;
-        _level++;
-        _maxExp = 100 + (_level - 1) * 50; // Increase required exp per level
-        LOG_INFO("Player {} leveled up to {}!", GetId(), _level);
-    }
-
-    // Send exp change to client
-    if (_session && room)
-    {
-        Protocol::S_ExpChange expMsg;
-        expMsg.set_current_exp(_exp);
-        expMsg.set_max_exp(_maxExp);
-        expMsg.set_level(_level);
-
-        S_ExpChangePacket pkt(std::move(expMsg));
-        _session->SendPacket(pkt);
-    }
 }
 
 } // namespace SimpleGame

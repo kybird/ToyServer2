@@ -1,6 +1,6 @@
 #pragma once
-#include <memory>
 #include "System/IObjectPool.h"
+#include <memory>
 
 namespace SimpleGame {
 
@@ -10,12 +10,16 @@ class ObjectManager;
 /**
  * @brief Factory for creating Projectiles with pooling.
  */
-class ProjectileFactory {
+class ProjectileFactory
+{
 public:
-    static ProjectileFactory& Instance();
+    static ProjectileFactory &Instance();
 
-    std::shared_ptr<Projectile> CreateProjectile(ObjectManager& objMgr, int32_t ownerId, int32_t skillId, float x, float y, float vx, float vy);
-    void Release(Projectile* proj);
+    std::shared_ptr<Projectile> CreateProjectile(
+        ObjectManager &objMgr, int32_t ownerId, int32_t skillId, int32_t typeId, float x, float y, float vx, float vy,
+        int32_t damage, float lifetime
+    );
+    void Release(Projectile *proj);
 
 private:
     ProjectileFactory();

@@ -3,10 +3,11 @@
         "id": 1,
         "name": "base_linear",
         "emitter_type": "Linear",
+        "type_id": 1,
         "damage": 10,
         "hit_radius": 0.5,
-        "tick_interval": 0.8,
-        "life_time": 0.1,
+        "tick_interval": 9999.0,
+        "life_time": 0,
         "pierce": 1,
         "max_targets_per_tick": 1,
         "target_rule": "Nearest"
