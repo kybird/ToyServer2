@@ -24,6 +24,7 @@ Room::Room(
     : _roomId(roomId), _timer(timer), _strand(strand), _waveMgr(_objMgr, _grid, roomId), _userDB(userDB)
 {
     _combatMgr = std::make_unique<CombatManager>();
+    _effectMgr = std::make_unique<EffectManager>();
 }
 
 Room::~Room()
@@ -580,6 +581,9 @@ void Room::Update(float deltaTime)
         //     player->GetY()
         // );
     }
+
+    // === [NEW] 효과 업데이트 (Physics 후, Combat 전) ===
+    _effectMgr->Update(_totalRunTime, this);
 
     // 3. Combat & Collision Resolution (Refactored)
     _combatMgr->Update(deltaTime, this);

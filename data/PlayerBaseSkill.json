@@ -11,5 +11,39 @@
         "pierce": 1,
         "max_targets_per_tick": 1,
         "target_rule": "Nearest"
+    },
+    {
+        "id": 2,
+        "name": "Poison Dart",
+        "emitter_type": "Linear",
+        "type_id": 2,
+        "damage": 5,
+        "hit_radius": 0.5,
+        "tick_interval": 1.5,
+        "life_time": 0,
+        "pierce": 1,
+        "max_targets_per_tick": 1,
+        "target_rule": "Nearest",
+        "effect_type": "POISON",
+        "effect_value": 5,
+        "effect_duration": 3.0,
+        "effect_interval": 1.0
+    },
+    {
+        "id": 3,
+        "name": "Frost Nova",
+        "emitter_type": "AoE",
+        "type_id": 0,
+        "damage": 3,
+        "hit_radius": 3.0,
+        "tick_interval": 2.0,
+        "life_time": 0,
+        "pierce": 99,
+        "max_targets_per_tick": 10,
+        "target_rule": "Nearest",
+        "effect_type": "SLOW",
+        "effect_value": 0.5,
+        "effect_duration": 2.0,
+        "effect_interval": 0
     }
 ]

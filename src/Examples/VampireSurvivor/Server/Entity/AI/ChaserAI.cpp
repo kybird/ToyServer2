@@ -1,5 +1,6 @@
 #include "Entity/AI/ChaserAI.h"
 #include "Entity/Monster.h"
+#include "Game/GameConfig.h"
 #include "Game/Room.h"
 
 namespace SimpleGame {
@@ -40,13 +41,24 @@ void ChaserAI::Execute(Monster *monster, float dt)
     float dy = target->GetY() - monster->GetY();
     float distSq = dx * dx + dy * dy;
 
-    // Move towards player if not too close
     if (distSq > 0.001f)
     {
         float dist = std::sqrt(distSq);
-        float nx = dx / dist;
-        float ny = dy / dist;
-        monster->SetVelocity(nx * _speed, ny * _speed);
+        float touchDist = target->GetRadius() + monster->GetRadius();
+
+        // 충돌 방지를 위해 일정 거리(Margin) 밖에서 정지
+        // (dist <= touchDist + MARGIN) 일 때 정지
+        if (dist <= touchDist + GameConfig::AI_STOP_MARGIN)
+        {
+            monster->SetVelocity(0, 0);
+        }
+        else
+        {
+            // 직선 방향으로만 이동
+            float nx = dx / dist;
+            float ny = dy / dist;
+            monster->SetVelocity(nx * _speed, ny * _speed);
+        }
     }
     else
     {

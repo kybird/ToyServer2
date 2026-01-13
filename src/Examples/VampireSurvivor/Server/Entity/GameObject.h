@@ -74,9 +74,25 @@ public:
     {
         return _state;
     }
-    void SetState(Protocol::ObjectState state)
+    void SetState(Protocol::ObjectState state, float expiresAt = 0.0f)
     {
         _state = state;
+        _stateExpiresAt = expiresAt;
+    }
+
+    void UpdateStateExpiry(float currentTime)
+    {
+        if (_stateExpiresAt > 0.0f && currentTime >= _stateExpiresAt)
+        {
+            _state = Protocol::ObjectState::IDLE;
+            _stateExpiresAt = 0.0f;
+        }
+    }
+
+    bool IsControlDisabled() const
+    {
+        return _state == Protocol::ObjectState::KNOCKBACK || _state == Protocol::ObjectState::STUNNED ||
+               _state == Protocol::ObjectState::DEAD;
     }
 
     // Stats
@@ -138,6 +154,7 @@ protected:
     int32_t _id;
     Protocol::ObjectType _type;
     Protocol::ObjectState _state = Protocol::ObjectState::IDLE;
+    float _stateExpiresAt = 0.0f;
 
     float _x = 0.0f;
     float _y = 0.0f;

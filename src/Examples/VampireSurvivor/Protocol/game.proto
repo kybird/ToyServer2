@@ -38,8 +38,9 @@ enum MsgId {
   C_USE_SKILL = 300;
   S_SKILL_EFFECT = 301;
   S_DAMAGE_EFFECT = 302;
-  S_PLAYER_DOWNED = 303;
-  S_PLAYER_REVIVE = 304;
+  S_KNOCKBACK = 305;
+  S_PLAYER_DOWNED = 306;
+  S_PLAYER_REVIVE = 307;
 
   // Progression (400-499)
   S_EXP_CHANGE = 400;
@@ -161,6 +162,8 @@ enum ObjectState {
     ATTACKING = 2;
     DEAD = 3;
     DOWNED = 4; // Player only
+    KNOCKBACK = 5;
+    STUNNED = 6;
 }
 
 message ObjectInfo {
@@ -233,6 +236,14 @@ message S_SkillEffect {
 message S_DamageEffect {
     repeated int32 target_ids = 1;
     repeated int32 damage_values = 2;
+}
+
+message S_Knockback {
+    int32 object_id = 1;
+    float dir_x = 2;
+    float dir_y = 3;
+    float force = 4;
+    float duration = 5;
 }
 
 message S_PlayerDowned {
@@ -312,4 +323,3 @@ message S_Pong {
 message S_DebugServerTick {
     uint32 server_tick = 1;
 }
-

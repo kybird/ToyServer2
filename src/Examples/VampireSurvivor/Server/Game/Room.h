@@ -8,6 +8,7 @@
 
 #include "System/ITimer.h"
 
+#include "Game/Effect/EffectManager.h"
 #include "Game/ObjectManager.h"
 #include "Game/SpatialGrid.h"
 #include "Game/WaveManager.h"
@@ -89,6 +90,20 @@ public:
         return _title;
     }
 
+    EffectManager &GetEffectManager()
+    {
+        return *_effectMgr;
+    }
+    ObjectManager &GetObjectManager()
+    {
+        return _objMgr;
+    }
+
+    float GetTotalRunTime() const
+    {
+        return _totalRunTime;
+    }
+
 private:
     int _roomId;
     std::string _title;
@@ -117,6 +132,7 @@ public:
 private:
     bool _gameStarted = false; // Track if game has started
     std::unique_ptr<CombatManager> _combatMgr;
+    std::unique_ptr<EffectManager> _effectMgr;
 };
 
 } // namespace SimpleGame

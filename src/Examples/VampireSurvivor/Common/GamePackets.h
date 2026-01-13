@@ -120,6 +120,17 @@ public:
     using Base::Base;
 };
 
+// --- S_KNOCKBACK ---
+class S_KnockbackPacket
+    : public System::ProtobufPacketBase<S_KnockbackPacket, PacketHeader, Protocol::S_Knockback>
+{
+    using Base = System::ProtobufPacketBase<S_KnockbackPacket, PacketHeader, Protocol::S_Knockback>;
+
+public:
+    static constexpr uint16_t ID = PacketID::S_KNOCKBACK;
+    using Base::Base;
+};
+
 // --- S_PING ---
 class S_PingPacket : public System::ProtobufPacketBase<S_PingPacket, PacketHeader, Protocol::S_Ping>
 {

@@ -42,6 +42,12 @@ struct SkillTemplate
     int32_t pierce;            // 관통 수
     int32_t maxTargetsPerTick; // 틱당 최대 타겟
     std::string targetRule;    // "Nearest", "Random", "LowestHp"
+
+    // Status Effects
+    std::string effectType; // "POISON", "SLOW", etc. (Empty if none)
+    float effectValue;      // Damage for DoT, Scale for Slow (e.g. 0.5)
+    float effectDuration;   // Duration in seconds
+    float effectInterval;   // Tick interval for DoT
 };
 
 struct WaveData

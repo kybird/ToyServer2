@@ -61,6 +61,10 @@ public:
 
     void AddExp(int32_t amount, Room *room);
 
+    // Invincibility
+    bool IsInvincible(float currentTime) const;
+    void SetInvincible(float untilTime);
+
     // Auto-Attack
     void Update(float dt, Room *room) override;
     void AddDefaultSkills(const std::vector<int32_t> &skillIds);
@@ -94,6 +98,8 @@ private:
     int32_t _exp = 0;
     int32_t _maxExp = 100;
     int32_t _level = 1;
+
+    float _invincibleUntil = 0.0f;
 
     // Auto-Attack
     std::vector<std::shared_ptr<DamageEmitter>> _emitters;

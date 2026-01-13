@@ -9,8 +9,17 @@ void Monster::Update(float dt, Room *room)
     // Update lifetime
     _aliveTime += dt;
 
+    // Update state expiry
+    UpdateStateExpiry(_aliveTime);
+
     if (_ai && !IsDead())
     {
+        // Skip AI if control is disabled (e.g. Knockback, Stun)
+        if (IsControlDisabled())
+        {
+            return;
+        }
+
         // Hybrid AI: Think (periodic) + Execute (every tick)
         _ai->Think(this, room, _aliveTime);
         _ai->Execute(this, dt);

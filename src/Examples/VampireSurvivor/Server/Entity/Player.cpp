@@ -1,6 +1,7 @@
 #include "Entity/Player.h"
 #include "Core/DataManager.h"
 #include "Game/DamageEmitter.h"
+#include "Game/GameConfig.h"
 #include "Game/Room.h"
 #include "GamePackets.h"
 
@@ -18,7 +19,7 @@ void Player::Initialize(int32_t gameId, System::ISession *session, int32_t hp, f
     _session = session;
     _maxHp = hp;
     _hp = hp;
-    _radius = 0.2f; // Lag Compensation: Visual(0.5) - BufferDelay
+    _radius = GameConfig::PLAYER_COLLISION_RADIUS; // Lag Compensation: Visual(0.5) - BufferDelay
     _speed = speed;
     _classId = 0;
     _name.clear();
@@ -28,11 +29,16 @@ void Player::Initialize(int32_t gameId, System::ISession *session, int32_t hp, f
     _exp = 0;
     _maxExp = 100;
     _level = 1;
+
+    _invincibleUntil = 0.0f;
 }
 
 void Player::ApplyInput(uint32_t clientTick, int32_t dx, int32_t dy)
 {
     _lastInputTick = clientTick;
+
+    if (IsControlDisabled())
+        return;
 
     Vector2 dir(static_cast<float>(dx), static_cast<float>(dy));
 
@@ -65,6 +71,13 @@ void Player::TakeDamage(int32_t damage, Room *room)
     if (IsDead())
         return;
 
+    // 무적 상태 체크
+    if (IsInvincible(room->GetTotalRunTime()))
+        return;
+
+    // 무적 시간 적용
+    SetInvincible(room->GetTotalRunTime() + GameConfig::PLAYER_INVINCIBLE_DURATION);
+
     _hp -= damage;
     if (_hp <= 0)
     {
@@ -91,7 +104,9 @@ void Player::Reset()
     _facingDirY = 0.0f;
     _exp = 0;
     _maxExp = 100;
+    _maxExp = 100;
     _level = 1;
+    _invincibleUntil = 0.0f;
     _isReady = false;
 }
 
@@ -255,6 +270,16 @@ void Player::AddEmitter(std::shared_ptr<DamageEmitter> emitter)
 void Player::ClearEmitters()
 {
     _emitters.clear();
+}
+
+bool Player::IsInvincible(float currentTime) const
+{
+    return currentTime < _invincibleUntil;
+}
+
+void Player::SetInvincible(float untilTime)
+{
+    _invincibleUntil = untilTime;
 }
 
 } // namespace SimpleGame

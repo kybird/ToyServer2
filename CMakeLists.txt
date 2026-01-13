@@ -159,6 +159,7 @@ set(GAME_SOURCES
     src/Examples/VampireSurvivor/Server/Game/WaveManager.cpp
     src/Examples/VampireSurvivor/Server/Game/DamageEmitter.cpp
     src/Examples/VampireSurvivor/Server/Game/CombatManager.cpp
+    src/Examples/VampireSurvivor/Server/Game/Effect/EffectManager.cpp
     src/Examples/VampireSurvivor/Server/Entity/Monster.cpp
     src/Examples/VampireSurvivor/Server/Entity/MonsterFactory.cpp
     src/Examples/VampireSurvivor/Server/Entity/Player.cpp
@@ -184,6 +185,8 @@ target_include_directories(VampireSurvivorServer PRIVATE
     src/Examples/VampireSurvivor/Common
     src/Examples/VampireSurvivor/Server/Core
 )
+
+target_precompile_headers(VampireSurvivorServer PRIVATE src/System/Pch.h)
 
 target_link_libraries(VampireSurvivorServer PRIVATE System Share protobuf::libprotobuf)
 
@@ -236,6 +239,7 @@ set(VS_TEST_SOURCES
     src/Examples/VampireSurvivor/tests/TestCombat.cpp
     src/Examples/VampireSurvivor/tests/TestSwarmPerformance.cpp
     src/Examples/VampireSurvivor/tests/TestDeadReckoningCorrection.cpp
+    src/Examples/VampireSurvivor/tests/TestEffectSystem.cpp
     tests/TestEventBus_Mock.cpp
     tests/TestAsyncDatabase.cpp
 )

@@ -147,16 +147,24 @@ void CombatManager::ResolveBodyCollisions(float dt, Room *room)
             float dx = monster->GetX() - player->GetX();
             float dy = monster->GetY() - player->GetY();
             float distSq = dx * dx + dy * dy;
-            float sumRad = monster->GetRadius() + player->GetRadius();
+            // Collision Check (Attack Reach)
+            // 시각적으로 접촉하지 않아도 공격 가능 (MONSTER_ATTACK_REACH)
+            float sumRad = monster->GetRadius() + player->GetRadius() + GameConfig::MONSTER_ATTACK_REACH;
 
             if (distSq <= sumRad * sumRad)
             {
                 if (monster->CanAttack(room->_totalRunTime))
                 {
+                    // Player::TakeDamage checks invincibility internally
                     player->TakeDamage(monster->GetContactDamage(), room);
                     monster->ResetAttackCooldown(room->_totalRunTime);
 
-                    // HP Change Packet
+                    // HP Change Packet - TakeDamage 내부에서 HP가 변했을 때만 보내지는 게 맞지만,
+                    // 현재 구조상 여기서 보내므로 무적인 경우 HP 변화가 없어도 패킷이 갈 수 있음.
+                    // 최적화를 위해 Player HP 변화 체크가 이상적이나,
+                    // 로직 단순화를 위해 무적이어도 0데미지 패킷(HP유지) 가는 것은 허용 (동기화)
+                    // -> 개선: Player::TakeDamage가 bool을 리턴하거나, HP 변화를 감지해야 함.
+                    // 하지만 현재는 그냥 보냄 (큰 문제 없음)
                     Protocol::S_HpChange hpMsg;
                     hpMsg.set_object_id(player->GetId());
                     hpMsg.set_current_hp(player->GetHp());
@@ -164,8 +172,8 @@ void CombatManager::ResolveBodyCollisions(float dt, Room *room)
                     S_HpChangePacket hpPkt(std::move(hpMsg));
                     room->BroadcastPacket(hpPkt);
 
-                    // Apply Knockback
-                    ApplyKnockback(monster, player);
+                    // Apply Knockback - REMOVED per user request
+                    // ApplyKnockback(monster, player, room);
 
                     if (player->IsDead())
                     {
@@ -202,21 +210,8 @@ void CombatManager::ResolveBodyCollisions(float dt, Room *room)
     }
 }
 
-void CombatManager::ApplyKnockback(std::shared_ptr<Monster> monster, std::shared_ptr<Player> player)
-{
-    float dx = monster->GetX() - player->GetX();
-    float dy = monster->GetY() - player->GetY();
-    float len = std::sqrt(dx * dx + dy * dy);
-
-    if (len > 0)
-    {
-        dx /= len;
-        dy /= len;
-        monster->SetVelocity(dx * KNOCKBACK_FORCE, dy * KNOCKBACK_FORCE);
-        LOG_DEBUG(
-            "Monster {} knocked back from Player {}. Dir=({:.2f}, {:.2f})", monster->GetId(), player->GetId(), dx, dy
-        );
-    }
-}
+// ApplyKnockback removed per user request
+// void CombatManager::ApplyKnockback(std::shared_ptr<Monster> monster, std::shared_ptr<Player> player, Room *room)
+// { ... }
 
 } // namespace SimpleGame

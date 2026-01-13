@@ -136,6 +136,12 @@ bool DataManager::LoadSkillData(const std::string &path)
             data.maxTargetsPerTick = item.value("max_targets_per_tick", 1);
             data.targetRule = item.value("target_rule", "Nearest");
 
+            // Effect Parsing
+            data.effectType = item.value("effect_type", "");
+            data.effectValue = item.value("effect_value", 0.0f);
+            data.effectDuration = item.value("effect_duration", 0.0f);
+            data.effectInterval = item.value("effect_interval", 0.0f);
+
             _skills[data.id] = data;
             LOG_INFO(
                 "  - Skill ID: {} | Name: {} | Type: {} | typeId: {}", data.id, data.name, data.emitterType, data.typeId

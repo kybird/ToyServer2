@@ -1,6 +1,7 @@
 #pragma once
 #include "AI/IAIBehavior.h"
 #include "Entity/GameObject.h"
+#include "Game/GameConfig.h"
 #include <memory>
 
 namespace SimpleGame {
@@ -76,6 +77,11 @@ public:
         return _state == Protocol::ObjectState::DEAD;
     }
 
+    float GetAliveTime() const
+    {
+        return _aliveTime;
+    }
+
     // Pool reset
     void Reset()
     {
@@ -85,11 +91,12 @@ public:
         _x = _y = _vx = _vy = 0;
         _hp = _maxHp = 100;
         _aliveTime = 0.0f;
-        _radius = 0.2f;
+        _radius = GameConfig::MONSTER_COLLISION_RADIUS;
         _damageOnContact = 10;
         _attackCooldown = 1.0f;
         _lastAttackTime = -100.0f;
         _state = Protocol::ObjectState::IDLE;
+        _stateExpiresAt = 0.0f;
         if (_ai)
             _ai->Reset();
     }
@@ -99,7 +106,7 @@ public:
         _id = id;
         _monsterTypeId = monsterTypeId;
         _hp = _maxHp = hp;
-        _radius = 0.2f; // Lag Compensation for Body Attack
+        _radius = GameConfig::MONSTER_COLLISION_RADIUS; // Lag Compensation for Body Attack
         // _radius = radius; // Original Visual Size is 0.5
         _damageOnContact = damage;
         _attackCooldown = cooldown;

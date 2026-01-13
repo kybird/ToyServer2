@@ -1,4 +1,5 @@
 #pragma once
+#include "GameConfig.h"
 #include <memory>
 #include <vector>
 
@@ -23,10 +24,8 @@ private:
     void ResolveProjectileCollisions(float dt, Room *room);
     void ResolveBodyCollisions(float dt, Room *room);
     void ResolveCleanup(Room *room);
-    void ApplyKnockback(std::shared_ptr<Monster> monster, std::shared_ptr<Player> player);
-
-private:
-    const float KNOCKBACK_FORCE = 15.0f;
+    // ApplyKnockback removed per user request
+    // void ApplyKnockback(std::shared_ptr<Monster> monster, std::shared_ptr<Player> player, Room *room);
 };
 
 } // namespace SimpleGame

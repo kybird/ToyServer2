@@ -1,11 +1,14 @@
 #include "Entity/AI/SwarmAI.h"
 #include "Entity/Monster.h"
+#include "Game/GameConfig.h"
 #include "Game/Room.h"
 
 namespace SimpleGame {
 
-void SwarmAI::Think(Monster* monster, Room* room, float currentTime) {
-    if (currentTime < _nextThinkTime) return;
+void SwarmAI::Think(Monster *monster, Room *room, float currentTime)
+{
+    if (currentTime < _nextThinkTime)
+        return;
     _nextThinkTime = currentTime + _thinkInterval;
 
     float myX = monster->GetX();
@@ -13,19 +16,24 @@ void SwarmAI::Think(Monster* monster, Room* room, float currentTime) {
 
     // Get player target
     auto player = room->GetNearestPlayer(myX, myY);
-    if (player) {
+    if (player)
+    {
         _playerX = player->GetX();
         _playerY = player->GetY();
         _hasPlayer = true;
-    } else {
+    }
+    else
+    {
         _hasPlayer = false;
     }
 }
 
-void SwarmAI::Execute(Monster* monster, float dt) {
+void SwarmAI::Execute(Monster *monster, float dt)
+{
     (void)dt;
-    
-    if (!_hasPlayer) {
+
+    if (!_hasPlayer)
+    {
         monster->SetVelocity(0, 0);
         return;
     }
@@ -34,22 +42,38 @@ void SwarmAI::Execute(Monster* monster, float dt) {
     float dy = _playerY - monster->GetY();
     float distSq = dx * dx + dy * dy;
 
-    if (distSq > 0.1f) {
+    if (distSq > 0.1f)
+    {
         float dist = std::sqrt(distSq);
-        float nx = dx / dist;
-        float ny = dy / dist;
 
-        // Add slight randomness for swarm effect
-        float jitterX = ((rand() % 100) - 50) / 500.0f;
-        float jitterY = ((rand() % 100) - 50) / 500.0f;
+        // 충돌 방지를 위해 일정 거리(Margin) 밖에서 정지
+        // 플레이어 반경 0.5f (GameConfig::PLAYER_COLLISION_RADIUS) 가정
+        float touchDist = GameConfig::PLAYER_COLLISION_RADIUS + monster->GetRadius();
 
-        monster->SetVelocity((nx + jitterX) * _speed, (ny + jitterY) * _speed);
-    } else {
+        if (dist <= touchDist + GameConfig::AI_STOP_MARGIN)
+        {
+            monster->SetVelocity(0, 0);
+        }
+        else
+        {
+            float nx = dx / dist;
+            float ny = dy / dist;
+
+            // Add slight randomness for swarm effect
+            float jitterX = ((rand() % 100) - 50) / 500.0f;
+            float jitterY = ((rand() % 100) - 50) / 500.0f;
+
+            monster->SetVelocity((nx + jitterX) * _speed, (ny + jitterY) * _speed);
+        }
+    }
+    else
+    {
         monster->SetVelocity(0, 0);
     }
 }
 
-void SwarmAI::Reset() {
+void SwarmAI::Reset()
+{
     _hasPlayer = false;
     _playerX = 0;
     _playerY = 0;
