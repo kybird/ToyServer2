@@ -176,6 +176,9 @@ message ObjectInfo {
   int32 max_hp = 7;
   ObjectState state = 8;
   int32 owner_id = 9; // For projectiles
+  // [Fix] Initial Sync for DeadReckoning
+  float vx = 10;
+  float vy = 11;
 }
 
 message S_SpawnObject {

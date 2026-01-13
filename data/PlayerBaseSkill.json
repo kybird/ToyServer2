@@ -6,7 +6,7 @@
         "type_id": 1,
         "damage": 10,
         "hit_radius": 0.5,
-        "tick_interval": 9999.0,
+        "tick_interval": 1.0,
         "life_time": 0,
         "pierce": 1,
         "max_targets_per_tick": 1,

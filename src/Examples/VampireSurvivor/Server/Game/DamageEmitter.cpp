@@ -72,7 +72,7 @@ void DamageEmitter::Update(float dt, Room *room)
             // Auto-Targeting
             if (_targetRule == "Nearest")
             {
-                auto monsters = room->GetMonstersInRange(px, py, 15.0f); // Search 15m
+                auto monsters = room->GetMonstersInRange(px, py, 30.0f); // Search 30m
                 if (!monsters.empty())
                 {
                     std::shared_ptr<Monster> nearest = nullptr;

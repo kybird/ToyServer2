@@ -4,7 +4,7 @@
         "start_time": 0.0,
         "duration": 999.0,
         "monster_type_id": 1,
-        "count": 1,
-        "interval": 999.0
+        "count": 30,
+        "interval": 1.0
     }
 ]

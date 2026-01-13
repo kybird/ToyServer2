@@ -6,6 +6,8 @@
         "speed": 5.0,
         "defense": 0.0,
         "pickupRadius": 2.5,
-        "defaultSkills": []
+        "defaultSkills": [
+            1
+        ]
     }
 ]

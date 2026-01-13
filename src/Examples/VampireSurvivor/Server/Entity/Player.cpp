@@ -221,6 +221,10 @@ void Player::AddExp(int32_t amount, Room *room)
 
 void Player::Update(float dt, Room *room)
 {
+    // Don't update logic (emitters) until player is ready in the room
+    if (!IsReady())
+        return;
+
     // Update Emitters
     for (auto &emitter : _emitters)
     {

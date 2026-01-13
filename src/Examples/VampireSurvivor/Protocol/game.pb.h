@@ -5324,6 +5324,8 @@ class ObjectInfo final : public ::google::protobuf::Message
     kMaxHpFieldNumber = 7,
     kStateFieldNumber = 8,
     kOwnerIdFieldNumber = 9,
+    kVxFieldNumber = 10,
+    kVyFieldNumber = 11,
   };
   // int32 object_id = 1;
   void clear_object_id() ;
@@ -5415,12 +5417,32 @@ class ObjectInfo final : public ::google::protobuf::Message
   void _internal_set_owner_id(::int32_t value);
 
   public:
+  // float vx = 10;
+  void clear_vx() ;
+  float vx() const;
+  void set_vx(float value);
+
+  private:
+  float _internal_vx() const;
+  void _internal_set_vx(float value);
+
+  public:
+  // float vy = 11;
+  void clear_vy() ;
+  float vy() const;
+  void set_vy(float value);
+
+  private:
+  float _internal_vy() const;
+  void _internal_set_vy(float value);
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.ObjectInfo)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      4, 9, 0,
+      4, 11, 0,
       0, 2>
       _table_;
 
@@ -5447,6 +5469,8 @@ class ObjectInfo final : public ::google::protobuf::Message
     ::int32_t max_hp_;
     int state_;
     ::int32_t owner_id_;
+    float vx_;
+    float vy_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -10088,6 +10112,50 @@ inline ::int32_t ObjectInfo::_internal_owner_id() const {
 inline void ObjectInfo::_internal_set_owner_id(::int32_t value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.owner_id_ = value;
+}
+
+// float vx = 10;
+inline void ObjectInfo::clear_vx() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.vx_ = 0;
+}
+inline float ObjectInfo::vx() const {
+  // @@protoc_insertion_point(field_get:Protocol.ObjectInfo.vx)
+  return _internal_vx();
+}
+inline void ObjectInfo::set_vx(float value) {
+  _internal_set_vx(value);
+  // @@protoc_insertion_point(field_set:Protocol.ObjectInfo.vx)
+}
+inline float ObjectInfo::_internal_vx() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.vx_;
+}
+inline void ObjectInfo::_internal_set_vx(float value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.vx_ = value;
+}
+
+// float vy = 11;
+inline void ObjectInfo::clear_vy() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.vy_ = 0;
+}
+inline float ObjectInfo::vy() const {
+  // @@protoc_insertion_point(field_get:Protocol.ObjectInfo.vy)
+  return _internal_vy();
+}
+inline void ObjectInfo::set_vy(float value) {
+  _internal_set_vy(value);
+  // @@protoc_insertion_point(field_set:Protocol.ObjectInfo.vy)
+}
+inline float ObjectInfo::_internal_vy() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.vy_;
+}
+inline void ObjectInfo::_internal_set_vy(float value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.vy_ = value;
 }
 
 // -------------------------------------------------------------------

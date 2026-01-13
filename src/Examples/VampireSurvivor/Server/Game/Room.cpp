@@ -196,6 +196,7 @@ void Room::BroadcastSpawn(const std::vector<std::shared_ptr<GameObject>> &object
         return;
 
     Protocol::S_SpawnObject msg;
+    msg.set_server_tick(_serverTick);
     for (const auto &obj : objects)
     {
         auto *info = msg.add_objects();
@@ -206,6 +207,8 @@ void Room::BroadcastSpawn(const std::vector<std::shared_ptr<GameObject>> &object
         info->set_hp(obj->GetHp());
         info->set_max_hp(obj->GetMaxHp());
         info->set_state(obj->GetState());
+        info->set_vx(obj->GetVX());
+        info->set_vy(obj->GetVY());
 
         // Set type_id for monsters and projectiles
         if (obj->GetType() == Protocol::ObjectType::MONSTER)
@@ -363,14 +366,24 @@ void Room::OnPlayerReady(uint64_t sessionId)
             info->set_hp(obj->GetHp());
             info->set_max_hp(obj->GetMaxHp());
             info->set_state(obj->GetState());
+            info->set_vx(obj->GetVX());
+            info->set_vy(obj->GetVY());
 
-            // Set type_id for monsters
+            // Set type_id for monsters and projectiles
             if (obj->GetType() == Protocol::ObjectType::MONSTER)
             {
                 auto monster = std::dynamic_pointer_cast<Monster>(obj);
                 if (monster)
                 {
                     info->set_type_id(monster->GetMonsterTypeId());
+                }
+            }
+            else if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
+            {
+                auto proj = std::dynamic_pointer_cast<Projectile>(obj);
+                if (proj)
+                {
+                    info->set_type_id(proj->GetTypeId());
                 }
             }
         }
@@ -386,6 +399,7 @@ void Room::OnPlayerReady(uint64_t sessionId)
 
     // 2. Broadcast the new player's spawn to all other players
     Protocol::S_SpawnObject newPlayerSpawn;
+    newPlayerSpawn.set_server_tick(_serverTick); // [Fix] Anchor Tick set
     auto *info = newPlayerSpawn.add_objects();
     info->set_object_id(player->GetId());
     info->set_type(Protocol::ObjectType::PLAYER);
