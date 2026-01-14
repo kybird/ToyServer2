@@ -14,12 +14,27 @@ class Room;
 class DamageEmitter
 {
 public:
-    DamageEmitter(int32_t skillId, std::shared_ptr<Player> owner);
+    DamageEmitter(int32_t skillId, std::shared_ptr<Player> owner, int32_t weaponId = 0, int32_t level = 1);
     void Update(float dt, Room *room);
     bool IsExpired() const;
 
+    void SetLevel(int32_t level)
+    {
+        _level = level;
+    }
+    int32_t GetSkillId() const
+    {
+        return _skillId;
+    }
+    int32_t GetWeaponId() const
+    {
+        return _weaponId;
+    }
+
 private:
     int32_t _skillId;
+    int32_t _weaponId = 0;
+    int32_t _level = 1;
     std::weak_ptr<Player> _owner;
 
     int32_t _damage = 0;

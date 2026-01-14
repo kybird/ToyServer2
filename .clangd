@@ -1,0 +1,23 @@
+CompileFlags:
+  Add: 
+    - -std=c++20
+    - -Wall
+    - -D_WIN32_WINNT=0x0A00
+    - -DBOOST_ASIO_HAS_STD_INVOKE_RESULT
+    - -I./src
+    - -I./src/System
+    - -I./src/Share
+    - -I./src/Examples/VampireSurvivor
+    - -I./src/Examples/VampireSurvivor/Server
+    - -I./src/Examples/VampireSurvivor/Common
+    - -I./src/Examples/VampireSurvivor/Server/Core
+    - -I./vcpkg_installed/x64-windows/include
+  
+Index:
+  Background: true
+
+Diagnostics:
+  UnusedIncludes: Strict
+  ClangTidy:
+    Add: [bugprone-*, performance-*, readability-*]
+    Remove: [readability-braces-around-statements]

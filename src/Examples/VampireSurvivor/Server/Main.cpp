@@ -39,7 +39,9 @@ int main()
     if (!SimpleGame::DataManager::Instance().LoadMonsterData("data/MonsterData.json") ||
         !SimpleGame::DataManager::Instance().LoadWaveData("data/WaveData.json") ||
         !SimpleGame::DataManager::Instance().LoadPlayerData("data/PlayerData.json") ||
-        !SimpleGame::DataManager::Instance().LoadSkillData("data/PlayerBaseSkill.json"))
+        !SimpleGame::DataManager::Instance().LoadSkillData("data/PlayerBaseSkill.json") ||
+        !SimpleGame::DataManager::Instance().LoadWeaponData("data/WeaponData.json") ||
+        !SimpleGame::DataManager::Instance().LoadPassiveData("data/PassiveData.json"))
     {
         LOG_WARN("Failed to load game data. Server may not function correctly without data files in data/ directory.");
     }

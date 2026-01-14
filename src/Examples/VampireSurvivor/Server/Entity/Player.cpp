@@ -1,14 +1,23 @@
 #include "Entity/Player.h"
 #include "Core/DataManager.h"
+#include "Entity/PlayerInventory.h"
 #include "Game/DamageEmitter.h"
 #include "Game/GameConfig.h"
+#include "Game/LevelUpManager.h"
 #include "Game/Room.h"
 #include "GamePackets.h"
 
 namespace SimpleGame {
 
+Player::Player(int32_t gameId, System::ISession *session)
+    : GameObject(gameId, Protocol::ObjectType::PLAYER), _session(session)
+{
+    _inventory = std::make_unique<PlayerInventory>();
+}
+
 Player::Player() : GameObject(0, Protocol::ObjectType::PLAYER), _session(nullptr)
 {
+    _inventory = std::make_unique<PlayerInventory>();
 }
 
 Player::~Player() = default;
@@ -31,6 +40,13 @@ void Player::Initialize(int32_t gameId, System::ISession *session, int32_t hp, f
     _level = 1;
 
     _invincibleUntil = 0.0f;
+
+    // Initialize inventory
+    if (!_inventory)
+    {
+        _inventory = std::make_unique<PlayerInventory>();
+    }
+    _pendingLevelUpOptions.clear();
 }
 
 void Player::ApplyInput(uint32_t clientTick, int32_t dx, int32_t dy)
@@ -108,6 +124,13 @@ void Player::Reset()
     _level = 1;
     _invincibleUntil = 0.0f;
     _isReady = false;
+
+    // Reset inventory
+    if (_inventory)
+    {
+        _inventory = std::make_unique<PlayerInventory>();
+    }
+    _pendingLevelUpOptions.clear();
 }
 
 uint64_t Player::GetSessionId() const
@@ -198,12 +221,14 @@ void Player::AddExp(int32_t amount, Room *room)
     _exp += amount;
 
     // Level up check
+    bool leveledUp = false;
     while (_exp >= _maxExp)
     {
         _exp -= _maxExp;
         _level++;
         _maxExp = 100 + (_level - 1) * 50; // Increase required exp per level
         LOG_INFO("Player {} leveled up to {}!", GetId(), _level);
+        leveledUp = true;
     }
 
     // Send exp change to client
@@ -216,6 +241,34 @@ void Player::AddExp(int32_t amount, Room *room)
 
         S_ExpChangePacket pkt(std::move(expMsg));
         _session->SendPacket(pkt);
+
+        // Send level up options
+        if (leveledUp)
+        {
+            LevelUpManager levelUpMgr;
+            auto options = levelUpMgr.GenerateOptions(this);
+
+            if (!options.empty())
+            {
+                _pendingLevelUpOptions = options;
+
+                Protocol::S_LevelUpOption levelUpMsg;
+                for (const auto &opt : options)
+                {
+                    auto *protoOpt = levelUpMsg.add_options();
+                    protoOpt->set_option_id(opt.optionId);
+                    protoOpt->set_skill_id(opt.itemId); // 무기 ID or 패시브 ID
+                    protoOpt->set_name(opt.name);
+                    protoOpt->set_desc(opt.desc);
+                    protoOpt->set_is_new(opt.isNew);
+                }
+
+                S_LevelUpOptionPacket levelUpPkt(std::move(levelUpMsg));
+                _session->SendPacket(levelUpPkt);
+
+                LOG_INFO("[LevelUp] Sent {} options to player {}", options.size(), GetId());
+            }
+        }
     }
 }
 
@@ -247,18 +300,19 @@ void Player::Update(float dt, Room *room)
 
 void Player::AddDefaultSkills(const std::vector<int32_t> &skillIds)
 {
+    if (!_inventory)
+    {
+        _inventory = std::make_unique<PlayerInventory>();
+    }
+
     for (int32_t id : skillIds)
     {
-        // Check if skill exists
-        const auto *tmpl = DataManager::Instance().GetSkillTemplate(id);
-        if (tmpl)
-        {
-            _emitters.push_back(
-                std::make_shared<DamageEmitter>(id, std::static_pointer_cast<Player>(shared_from_this()))
-            );
-            // Note: shared_from_this() requires Player to be managed by shared_ptr, which it is.
-        }
+        // Add to inventory as level 1 weapon
+        _inventory->AddOrUpgradeWeapon(id);
     }
+
+    // Refresh emitters based on inventory
+    RefreshInventoryEffects();
 }
 
 size_t Player::GetEmitterCount() const
@@ -284,6 +338,200 @@ bool Player::IsInvincible(float currentTime) const
 void Player::SetInvincible(float untilTime)
 {
     _invincibleUntil = untilTime;
+}
+
+float Player::GetDamageMultiplier() const
+{
+    float mult = 1.0f;
+    if (!_inventory)
+        return mult;
+
+    for (int id : _inventory->GetOwnedPassiveIds())
+    {
+        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        if (tmpl && tmpl->statType == "damage")
+        {
+            int level = _inventory->GetPassiveLevel(id);
+            if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
+            {
+                mult += tmpl->levels[level - 1].bonus;
+            }
+        }
+    }
+    return mult;
+}
+
+float Player::GetMaxHpMultiplier() const
+{
+    float mult = 1.0f;
+    if (!_inventory)
+        return mult;
+
+    for (int id : _inventory->GetOwnedPassiveIds())
+    {
+        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        if (tmpl && tmpl->statType == "max_hp")
+        {
+            int level = _inventory->GetPassiveLevel(id);
+            if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
+            {
+                mult += tmpl->levels[level - 1].bonus;
+            }
+        }
+    }
+    return mult;
+}
+
+float Player::GetMovementSpeedMultiplier() const
+{
+    float mult = 1.0f;
+    if (!_inventory)
+        return mult;
+
+    for (int id : _inventory->GetOwnedPassiveIds())
+    {
+        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        if (tmpl && tmpl->statType == "speed")
+        {
+            int level = _inventory->GetPassiveLevel(id);
+            if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
+            {
+                mult += tmpl->levels[level - 1].bonus;
+            }
+        }
+    }
+    return mult;
+}
+
+float Player::GetCooldownMultiplier() const
+{
+    float mult = 1.0f;
+    if (!_inventory)
+        return mult;
+
+    for (int id : _inventory->GetOwnedPassiveIds())
+    {
+        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        if (tmpl && tmpl->statType == "cooldown")
+        {
+            int level = _inventory->GetPassiveLevel(id);
+            if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
+            {
+                // Cooldown bonus is usually negative (e.g. -0.1) to reduce cooldown
+                mult += tmpl->levels[level - 1].bonus;
+            }
+        }
+    }
+    // Clamp to minimum 0.1 to avoid instant fire or divide by zero if used as divider
+    return std::max(0.1f, mult);
+}
+
+float Player::GetAreaMultiplier() const
+{
+    float mult = 1.0f;
+    if (!_inventory)
+        return mult;
+
+    for (int id : _inventory->GetOwnedPassiveIds())
+    {
+        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        if (tmpl && tmpl->statType == "area")
+        {
+            int level = _inventory->GetPassiveLevel(id);
+            if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
+            {
+                mult += tmpl->levels[level - 1].bonus;
+            }
+        }
+    }
+    return mult;
+}
+
+int32_t Player::GetAdditionalProjectileCount() const
+{
+    int32_t count = 0;
+    if (!_inventory)
+        return count;
+
+    for (int id : _inventory->GetOwnedPassiveIds())
+    {
+        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        if (tmpl && tmpl->statType == "projectile_count")
+        {
+            int level = _inventory->GetPassiveLevel(id);
+            if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
+            {
+                count += static_cast<int32_t>(tmpl->levels[level - 1].bonus);
+            }
+        }
+    }
+    return count;
+}
+
+PlayerInventory &Player::GetInventory()
+{
+    if (!_inventory)
+    {
+        _inventory = std::make_unique<PlayerInventory>();
+    }
+    return *_inventory;
+}
+
+const std::vector<LevelUpOption> &Player::GetPendingLevelUpOptions() const
+{
+    return _pendingLevelUpOptions;
+}
+
+void Player::SetPendingLevelUpOptions(const std::vector<LevelUpOption> &options)
+{
+    _pendingLevelUpOptions = options;
+}
+
+void Player::ClearPendingLevelUpOptions()
+{
+    _pendingLevelUpOptions.clear();
+}
+
+void Player::RefreshInventoryEffects()
+{
+    if (!_inventory)
+        return;
+
+    const auto &weaponIds = _inventory->GetOwnedWeaponIds();
+    for (int weaponId : weaponIds)
+    {
+        int level = _inventory->GetWeaponLevel(weaponId);
+
+        // Find existing emitter for this weapon
+        auto it = std::find_if(
+            _emitters.begin(),
+            _emitters.end(),
+            [weaponId](const std::shared_ptr<DamageEmitter> &e)
+            {
+                return e->GetWeaponId() == weaponId;
+            }
+        );
+
+        if (it != _emitters.end())
+        {
+            // Already exists, just update level
+            (*it)->SetLevel(level);
+        }
+        else
+        {
+            // New weapon, create emitter
+            const auto *tmpl = DataManager::Instance().GetWeaponTemplate(weaponId);
+            if (tmpl && level > 0 && level <= static_cast<int>(tmpl->levels.size()))
+            {
+                int skillId = tmpl->levels[level - 1].skillId;
+                auto emitter = std::make_shared<DamageEmitter>(
+                    skillId, std::static_pointer_cast<Player>(shared_from_this()), weaponId, level
+                );
+                _emitters.push_back(emitter);
+                LOG_INFO("[Player] Added new emitter for weapon {} level {}", weaponId, level);
+            }
+        }
+    }
 }
 
 } // namespace SimpleGame

@@ -3,6 +3,7 @@
 #include <functional>
 #include <utility>
 #include <vector>
+#include <format>
 
 namespace SimpleGame {
 

@@ -187,6 +187,7 @@ bool DataManager::LoadWaveData(const std::string &path)
             data.monsterTypeId = item["monster_type_id"];
             data.count = item["count"];
             data.interval = item.value("interval", 1.0f);
+            data.hpMultiplier = item.value("hp_multiplier", 1.0f);
 
             _waves.push_back(data);
         }
@@ -206,6 +207,117 @@ bool DataManager::LoadWaveData(const std::string &path)
         LOG_ERROR("Failed to load wave data {}: {}", path, e.what());
         return false;
     }
+}
+
+bool DataManager::LoadWeaponData(const std::string &path)
+{
+    try
+    {
+        std::ifstream file(path);
+        if (!file.is_open())
+        {
+            LOG_ERROR("Could not open weapon data file: {}", path);
+            return false;
+        }
+
+        nlohmann::json j;
+        file >> j;
+
+        for (const auto &item : j)
+        {
+            WeaponTemplate data;
+            data.id = item["id"];
+            data.name = item["name"];
+            data.description = item.value("description", "");
+            data.icon = item.value("icon", "");
+            data.maxLevel = item.value("max_level", 8);
+
+            if (item.contains("levels"))
+            {
+                for (const auto &lvl : item["levels"])
+                {
+                    WeaponLevelData levelData;
+                    levelData.level = lvl["level"];
+                    levelData.skillId = lvl["skill_id"];
+                    levelData.damageMult = lvl.value("damage_mult", 1.0f);
+                    levelData.cooldownMult = lvl.value("cooldown_mult", 1.0f);
+                    levelData.desc = lvl.value("desc", "");
+                    data.levels.push_back(levelData);
+                }
+            }
+
+            _weapons[data.id] = data;
+        }
+        LOG_INFO("Loaded {} weapons from {}", _weapons.size(), path);
+        return true;
+    } catch (const std::exception &e)
+    {
+        LOG_ERROR("Failed to load weapon data {}: {}", path, e.what());
+        return false;
+    }
+}
+
+const WeaponTemplate *DataManager::GetWeaponTemplate(int32_t id)
+{
+    auto it = _weapons.find(id);
+    if (it != _weapons.end())
+        return &it->second;
+    return nullptr;
+}
+
+bool DataManager::LoadPassiveData(const std::string &path)
+{
+    try
+    {
+        std::ifstream file(path);
+        if (!file.is_open())
+        {
+            LOG_ERROR("Could not open passive data file: {}", path);
+            return false;
+        }
+
+        nlohmann::json j;
+        file >> j;
+
+        for (const auto &item : j)
+        {
+            PassiveTemplate data;
+            data.id = item["id"];
+            data.name = item["name"];
+            data.description = item.value("description", "");
+            data.icon = item.value("icon", "");
+            data.statType = item.value("stat_type", "");
+            data.maxLevel = item.value("max_level", 5);
+
+            if (item.contains("levels"))
+            {
+                for (const auto &lvl : item["levels"])
+                {
+                    PassiveLevelData levelData;
+                    levelData.level = lvl["level"];
+                    levelData.bonus = lvl.value("bonus", 0.0f);
+                    levelData.desc = lvl.value("desc", "");
+                    data.levels.push_back(levelData);
+                }
+            }
+
+            _passives[data.id] = data;
+        }
+        LOG_INFO("Loaded {} passives from {}", _passives.size(), path);
+        return true;
+    } catch (const std::exception &e)
+    {
+        LOG_ERROR("Failed to load passive data {}: {}", path, e.what());
+        return false;
+    }
+}
+
+const PassiveTemplate *DataManager::GetPassiveTemplate(int32_t id)
+{
+    auto it = _passives.find(id);
+    if (it != _passives.end())
+        return &it->second;
+    return nullptr;
 }
 
 } // namespace SimpleGame

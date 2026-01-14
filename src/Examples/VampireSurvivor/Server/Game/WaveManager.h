@@ -24,14 +24,15 @@ private:
     struct PeriodicSpawner
     {
         int32_t monsterTypeId;
-        int32_t totalCount;
-        int32_t spawnedCount;
+        int32_t batchCount;
+        float hpMultiplier;
         float interval;
         float timer;
+        float remainingDuration;
     };
 
     void StartSpawner(const WaveData &wave);
-    void SpawnMonster(const PeriodicSpawner &spawner, Room *room);
+    void SpawnMonster(int32_t monsterTypeId, float hpMultiplier, Room *room);
     void BroadcastProto(Room *room, PacketID id, const Protocol::S_SpawnObject &msg);
 
     ObjectManager &_objMgr;

@@ -2,6 +2,8 @@
 #include "Entity/MonsterFactory.h"
 #include "Game/Room.h"
 #include "GamePackets.h"
+#include "System/ILog.h"
+
 
 namespace SimpleGame {
 
@@ -47,23 +49,28 @@ void WaveManager::Update(float dt, Room *room)
     for (auto it = _activeSpawners.begin(); it != _activeSpawners.end();)
     {
         it->timer -= dt;
+        it->remainingDuration -= dt;
+
         if (it->timer <= 0)
         {
             // [CPU Optimization] Cap monster population
             static const size_t MAX_MONSTERS_PER_ROOM = 500;
-            if (_objMgr.GetObjectCount() < MAX_MONSTERS_PER_ROOM)
+
+            for (int32_t i = 0; i < it->batchCount; ++i)
             {
-                SpawnMonster(*it, room);
-                it->spawnedCount++;
-            }
-            else
-            {
-                // LOG_DEBUG("Monster cap reached in room {}", _roomId);
+                if (_objMgr.GetObjectCount() < MAX_MONSTERS_PER_ROOM)
+                {
+                    SpawnMonster(it->monsterTypeId, it->hpMultiplier, room);
+                }
+                else
+                {
+                    break;
+                }
             }
             it->timer = it->interval;
         }
 
-        if (it->spawnedCount >= it->totalCount)
+        if (it->remainingDuration <= 0)
         {
             it = _activeSpawners.erase(it);
         }
@@ -78,14 +85,15 @@ void WaveManager::StartSpawner(const WaveData &wave)
 {
     PeriodicSpawner spawner;
     spawner.monsterTypeId = wave.monsterTypeId;
-    spawner.totalCount = wave.count;
-    spawner.spawnedCount = 0;
+    spawner.batchCount = wave.count;
+    spawner.hpMultiplier = wave.hpMultiplier;
+    spawner.remainingDuration = wave.duration;
     spawner.interval = wave.interval;
     spawner.timer = 0.0f; // Spawn immediately
     _activeSpawners.push_back(spawner);
 }
 
-void WaveManager::SpawnMonster(const PeriodicSpawner &spawner, Room *room)
+void WaveManager::SpawnMonster(int32_t monsterTypeId, float hpMultiplier, Room *room)
 {
     // Random Position around 0,0 (or players)
     // For MVP: Random around 0,0 within 20m
@@ -94,7 +102,15 @@ void WaveManager::SpawnMonster(const PeriodicSpawner &spawner, Room *room)
     float x = cos(angle) * dist;
     float y = sin(angle) * dist;
 
-    auto monster = MonsterFactory::Instance().CreateMonster(_objMgr, spawner.monsterTypeId, x, y);
+    // Apply HP Multiplier from WaveData
+    int32_t finalHp = 0;
+    const auto *tmpl = DataManager::Instance().GetMonsterTemplate(monsterTypeId);
+    if (tmpl)
+    {
+        finalHp = static_cast<int32_t>(tmpl->hp * hpMultiplier);
+    }
+
+    auto monster = MonsterFactory::Instance().CreateMonster(_objMgr, monsterTypeId, x, y, finalHp);
     if (monster)
     {
         _objMgr.AddObject(monster);

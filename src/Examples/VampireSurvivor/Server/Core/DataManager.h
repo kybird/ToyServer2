@@ -58,6 +58,44 @@ struct WaveData
     int32_t monsterTypeId;
     int32_t count;
     float interval;
+    float hpMultiplier = 1.0f; // Default 1.0
+};
+
+struct WeaponLevelData
+{
+    int32_t level;
+    int32_t skillId;
+    float damageMult = 1.0f;
+    float cooldownMult = 1.0f;
+    std::string desc;
+};
+
+struct WeaponTemplate
+{
+    int32_t id;
+    std::string name;
+    std::string description;
+    std::string icon;
+    int32_t maxLevel;
+    std::vector<WeaponLevelData> levels;
+};
+
+struct PassiveLevelData
+{
+    int32_t level;
+    float bonus;
+    std::string desc;
+};
+
+struct PassiveTemplate
+{
+    int32_t id;
+    std::string name;
+    std::string description;
+    std::string icon;
+    std::string statType; // "damage", "max_hp", "speed", "cooldown", "area", "projectile_count"
+    int32_t maxLevel;
+    std::vector<PassiveLevelData> levels;
 };
 
 class DataManager
@@ -84,6 +122,20 @@ public:
         return _waves;
     }
 
+    bool LoadWeaponData(const std::string &path);
+    const WeaponTemplate *GetWeaponTemplate(int32_t id);
+    const std::unordered_map<int32_t, WeaponTemplate> &GetAllWeapons() const
+    {
+        return _weapons;
+    }
+
+    bool LoadPassiveData(const std::string &path);
+    const PassiveTemplate *GetPassiveTemplate(int32_t id);
+    const std::unordered_map<int32_t, PassiveTemplate> &GetAllPassives() const
+    {
+        return _passives;
+    }
+
     // For Testing
     void AddMonsterTemplate(const MonsterTemplate &tmpl)
     {
@@ -103,6 +155,8 @@ private:
     std::unordered_map<int32_t, PlayerTemplate> _players;
     std::unordered_map<int32_t, SkillTemplate> _skills;
     std::vector<WaveData> _waves;
+    std::unordered_map<int32_t, WeaponTemplate> _weapons;
+    std::unordered_map<int32_t, PassiveTemplate> _passives;
 };
 
 } // namespace SimpleGame

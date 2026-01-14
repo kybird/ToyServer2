@@ -23,7 +23,8 @@ public:
     /**
      * @brief Create a monster with stats from template and appropriate AI.
      */
-    std::shared_ptr<Monster> CreateMonster(ObjectManager &objMgr, int32_t monsterTypeId, float x, float y);
+    std::shared_ptr<Monster>
+    CreateMonster(ObjectManager &objMgr, int32_t monsterTypeId, float x, float y, int32_t hpOverride = 0);
 
     /**
      * @brief Spawn multiple monsters efficiently.

@@ -22,7 +22,8 @@ MonsterFactory::MonsterFactory()
     _pool = std::make_unique<System::SimplePool<Monster>>(1000);
 }
 
-std::shared_ptr<Monster> MonsterFactory::CreateMonster(ObjectManager &objMgr, int32_t monsterTypeId, float x, float y)
+std::shared_ptr<Monster>
+MonsterFactory::CreateMonster(ObjectManager &objMgr, int32_t monsterTypeId, float x, float y, int32_t hpOverride)
 {
     const auto *tmpl = DataManager::Instance().GetMonsterTemplate(monsterTypeId);
     if (!tmpl)
@@ -30,6 +31,8 @@ std::shared_ptr<Monster> MonsterFactory::CreateMonster(ObjectManager &objMgr, in
         LOG_ERROR("Invalid Monster Type ID: {}", monsterTypeId);
         return nullptr;
     }
+
+    int32_t finalHp = (hpOverride > 0) ? hpOverride : tmpl->hp;
 
     // Acquire from pool or alloc
     Monster *raw = _pool->Acquire();
@@ -51,7 +54,7 @@ std::shared_ptr<Monster> MonsterFactory::CreateMonster(ObjectManager &objMgr, in
     );
 
     // Init
-    monster->Initialize(id, monsterTypeId, tmpl->hp, tmpl->radius, tmpl->damageOnContact, tmpl->attackCooldown);
+    monster->Initialize(id, monsterTypeId, finalHp, tmpl->radius, tmpl->damageOnContact, tmpl->attackCooldown);
 
     // Apply Velocity/Pos
     monster->SetVelocity(0, 0);

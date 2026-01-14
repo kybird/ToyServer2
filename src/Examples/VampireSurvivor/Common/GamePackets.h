@@ -121,8 +121,7 @@ public:
 };
 
 // --- S_KNOCKBACK ---
-class S_KnockbackPacket
-    : public System::ProtobufPacketBase<S_KnockbackPacket, PacketHeader, Protocol::S_Knockback>
+class S_KnockbackPacket : public System::ProtobufPacketBase<S_KnockbackPacket, PacketHeader, Protocol::S_Knockback>
 {
     using Base = System::ProtobufPacketBase<S_KnockbackPacket, PacketHeader, Protocol::S_Knockback>;
 
@@ -199,6 +198,28 @@ class S_HpChangePacket : public System::ProtobufPacketBase<S_HpChangePacket, Pac
 
 public:
     static constexpr uint16_t ID = PacketID::S_HP_CHANGE;
+    using Base::Base;
+};
+
+// --- S_LEVEL_UP_OPTION ---
+class S_LevelUpOptionPacket
+    : public System::ProtobufPacketBase<S_LevelUpOptionPacket, PacketHeader, Protocol::S_LevelUpOption>
+{
+    using Base = System::ProtobufPacketBase<S_LevelUpOptionPacket, PacketHeader, Protocol::S_LevelUpOption>;
+
+public:
+    static constexpr uint16_t ID = PacketID::S_LEVEL_UP_OPTION;
+    using Base::Base;
+};
+
+// --- C_SELECT_LEVEL_UP ---
+class C_SelectLevelUpPacket
+    : public System::ProtobufPacketBase<C_SelectLevelUpPacket, PacketHeader, Protocol::C_SelectLevelUp>
+{
+    using Base = System::ProtobufPacketBase<C_SelectLevelUpPacket, PacketHeader, Protocol::C_SelectLevelUp>;
+
+public:
+    static constexpr uint16_t ID = PacketID::C_SELECT_LEVEL_UP;
     using Base::Base;
 };
 

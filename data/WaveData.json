@@ -2,9 +2,28 @@
     {
         "wave_id": 1,
         "start_time": 0.0,
+        "duration": 60.0,
+        "monster_type_id": 1,
+        "count": 5,
+        "interval": 3.0,
+        "hp_multiplier": 1.0
+    },
+    {
+        "wave_id": 2,
+        "start_time": 30.0,
+        "duration": 90.0,
+        "monster_type_id": 2,
+        "count": 10,
+        "interval": 2.0,
+        "hp_multiplier": 1.2
+    },
+    {
+        "wave_id": 3,
+        "start_time": 60.0,
         "duration": 999.0,
         "monster_type_id": 1,
-        "count": 30,
-        "interval": 1.0
+        "count": 10,
+        "interval": 4.0,
+        "hp_multiplier": 2.0
     }
 ]

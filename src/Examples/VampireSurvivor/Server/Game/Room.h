@@ -80,6 +80,7 @@ public:
 
     void StartGame(); // Start wave manager when first player enters
     void Reset();     // Reset room state when all players leave
+    void HandleGameOver(bool isWin);
 
     void SetTitle(const std::string &title)
     {
@@ -131,6 +132,7 @@ public:
 
 private:
     bool _gameStarted = false; // Track if game has started
+    bool _isGameOver = false;  // Track if game is over
     std::unique_ptr<CombatManager> _combatMgr;
     std::unique_ptr<EffectManager> _effectMgr;
 };

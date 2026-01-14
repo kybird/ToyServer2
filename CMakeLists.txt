@@ -13,6 +13,7 @@ endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Setup VCPKG
 
@@ -151,6 +152,7 @@ set(GAME_SOURCES
     src/Examples/VampireSurvivor/Server/Core/Handlers/Game/MoveInputHandler.cpp
     src/Examples/VampireSurvivor/Server/Core/Handlers/Game/GameReadyHandler.cpp
     src/Examples/VampireSurvivor/Server/Core/Handlers/Game/ChatHandler.cpp
+    src/Examples/VampireSurvivor/Server/Core/Handlers/Game/SelectLevelUpHandler.cpp
     src/Examples/VampireSurvivor/Server/Core/Handlers/System/PingHandler.cpp
     src/Examples/VampireSurvivor/Server/Core/Handlers/System/PongHandler.cpp
     src/Examples/VampireSurvivor/Server/Core/DataManager.cpp
@@ -159,11 +161,13 @@ set(GAME_SOURCES
     src/Examples/VampireSurvivor/Server/Game/WaveManager.cpp
     src/Examples/VampireSurvivor/Server/Game/DamageEmitter.cpp
     src/Examples/VampireSurvivor/Server/Game/CombatManager.cpp
+    src/Examples/VampireSurvivor/Server/Game/LevelUpManager.cpp
     src/Examples/VampireSurvivor/Server/Game/Effect/EffectManager.cpp
     src/Examples/VampireSurvivor/Server/Entity/Monster.cpp
     src/Examples/VampireSurvivor/Server/Entity/MonsterFactory.cpp
     src/Examples/VampireSurvivor/Server/Entity/Player.cpp
     src/Examples/VampireSurvivor/Server/Entity/PlayerFactory.cpp
+    src/Examples/VampireSurvivor/Server/Entity/PlayerInventory.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/ChaserAI.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/WanderAI.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/SwarmAI.cpp

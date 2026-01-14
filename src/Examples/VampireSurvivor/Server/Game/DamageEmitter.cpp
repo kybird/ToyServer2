@@ -12,7 +12,8 @@
 
 namespace SimpleGame {
 
-DamageEmitter::DamageEmitter(int32_t skillId, std::shared_ptr<Player> owner) : _skillId(skillId), _owner(owner)
+DamageEmitter::DamageEmitter(int32_t skillId, std::shared_ptr<Player> owner, int32_t weaponId, int32_t level)
+    : _skillId(skillId), _owner(owner), _weaponId(weaponId), _level(level)
 {
     const auto *tmpl = DataManager::Instance().GetSkillTemplate(skillId);
     if (tmpl)
@@ -57,13 +58,37 @@ void DamageEmitter::Update(float dt, Room *room)
         return;
     }
 
-    _timer += dt;
-    if (_timer >= _tickInterval)
+    // --- Apply Multipliers ---
+    float effectiveDamageMult = owner->GetDamageMultiplier();
+    float effectiveCooldownMult = owner->GetCooldownMultiplier();
+    float effectiveAreaMult = owner->GetAreaMultiplier();
+    int32_t additionalProjectiles = owner->GetAdditionalProjectileCount();
+
+    // Weapon Level Multipliers
+    if (_weaponId > 0)
     {
-        _timer -= _tickInterval;
+        const auto *weaponTmpl = DataManager::Instance().GetWeaponTemplate(_weaponId);
+        if (weaponTmpl && _level > 0 && _level <= static_cast<int>(weaponTmpl->levels.size()))
+        {
+            const auto &levelData = weaponTmpl->levels[_level - 1];
+            effectiveDamageMult *= levelData.damageMult;
+            effectiveCooldownMult *= levelData.cooldownMult;
+        }
+    }
+
+    float currentTickInterval = _tickInterval * effectiveCooldownMult;
+    // Clamp min interval
+    currentTickInterval = std::max(0.05f, currentTickInterval);
+
+    _timer += dt;
+    if (_timer >= currentTickInterval)
+    {
+        _timer -= currentTickInterval;
 
         float px = owner->GetX();
         float py = owner->GetY();
+        int32_t finalDamage = static_cast<int32_t>(_damage * effectiveDamageMult);
+        float finalRadius = _hitRadius * effectiveAreaMult;
 
         if (_emitterType == "Linear")
         {
@@ -107,47 +132,53 @@ void DamageEmitter::Update(float dt, Room *room)
 
             float speed = 15.0f;
             float life = 3.0f;
+            int32_t projectileCount = 1 + additionalProjectiles;
 
-            // Spawn slightly ahead of player
-            float spawnOffset = owner->GetRadius() + 0.3f;
-            float spawnX = px + direction.x * spawnOffset;
-            float spawnY = py + direction.y * spawnOffset;
-
-            auto proj = ProjectileFactory::Instance().CreateProjectile(
-                room->_objMgr,
-                owner->GetId(),
-                _skillId,
-                _typeId,
-                spawnX,
-                spawnY,
-                direction.x * speed,
-                direction.y * speed,
-                _damage,
-                life
-            );
-
-            if (proj)
+            for (int i = 0; i < projectileCount; ++i)
             {
-                proj->SetRadius(0.2f);
-                room->_objMgr.AddObject(proj);
-                room->_grid.Add(proj);
-                room->BroadcastSpawn({proj});
+                // Spawn slightly ahead of player (add slight delay or offset if firing many?)
+                // For now, same spot/direction or slightly spread?
+                // Let's just fire them all or with slight angle offset
+                Vector2 fireDir = direction;
+                if (projectileCount > 1)
+                {
+                    // Spread: -15 to +15 degrees
+                    float angleOffset = (static_cast<float>(i) / (projectileCount - 1) - 0.5f) * 0.5f;
+                    float s = sin(angleOffset);
+                    float c = cos(angleOffset);
+                    fireDir = Vector2(direction.x * c - direction.y * s, direction.x * s + direction.y * c);
+                }
 
-                LOG_DEBUG(
-                    "[DamageEmitter] Spawned Projectile ID={} TypeId={} at ({:.1f}, {:.1f}) Dir=({:.2f}, {:.2f})",
-                    proj->GetId(),
+                float spawnOffset = owner->GetRadius() + 0.3f;
+                float spawnX = px + fireDir.x * spawnOffset;
+                float spawnY = py + fireDir.y * spawnOffset;
+
+                auto proj = ProjectileFactory::Instance().CreateProjectile(
+                    room->_objMgr,
+                    owner->GetId(),
+                    _skillId,
                     _typeId,
                     spawnX,
                     spawnY,
-                    direction.x,
-                    direction.y
+                    fireDir.x * speed,
+                    fireDir.y * speed,
+                    finalDamage,
+                    life
                 );
+
+                if (proj)
+                {
+                    proj->SetRadius(0.2f);
+                    room->_objMgr.AddObject(proj);
+                    room->_grid.Add(proj);
+                    room->BroadcastSpawn({proj});
+                }
             }
         }
         else
         {
             // AoE Damage logic
-            auto victims = room->GetMonstersInRange(px, py, _hitRadius);
+            auto victims = room->GetMonstersInRange(px, py, finalRadius);
             if (_targetRule == "Nearest")
             {
                 std::sort(
@@ -162,11 +193,16 @@ void DamageEmitter::Update(float dt, Room *room)
             }
 
             int count = 0;
+            // Additional projectile count for AoE might mean more targets or multiple hits?
+            // In Vampire Survivors, "Amount" (projectile count) often adds 1 base target or repeat pulses.
+            // Let's just increase maxTargetsPerTick for now.
+            int32_t finalMaxTargets = _maxTargetsPerTick + additionalProjectiles;
+
             for (auto &monster : victims)
             {
-                if (count >= _maxTargetsPerTick)
+                if (count >= finalMaxTargets)
                     break;
-                monster->TakeDamage(_damage, room);
+                monster->TakeDamage(finalDamage, room);
                 count++;
             }
         }

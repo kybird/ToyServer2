@@ -96,6 +96,7 @@ void Room::Reset()
 
     // 3. Reset game state
     _gameStarted = false;
+    _isGameOver = false;
     _totalRunTime = 0.0f;
 
     LOG_INFO("Room {} has been reset. Ready for new game.", _roomId);
@@ -465,7 +466,10 @@ void Room::Update(float deltaTime)
     //     LOG_INFO("[DebugTick] serverTick = {}", _serverTick);
     // }
 
-    _waveMgr.Update(deltaTime, this);
+    if (!_isGameOver)
+    {
+        _waveMgr.Update(deltaTime, this);
+    }
     _totalRunTime += deltaTime;
 
     // 1. Physics & Logic Update
@@ -719,6 +723,21 @@ size_t Room::GetPlayerCount()
 {
     std::lock_guard<std::recursive_mutex> lock(_mutex);
     return _players.size();
+}
+
+void Room::HandleGameOver(bool isWin)
+{
+    if (_isGameOver)
+        return;
+
+    _isGameOver = true;
+    LOG_INFO("Game Over in Room {} (Win: {})", _roomId, isWin);
+
+    Protocol::S_GameOver msg;
+    msg.set_survived_time_ms(static_cast<int64_t>(_totalRunTime * 1000));
+    msg.set_is_win(isWin);
+
+    BroadcastProto(this, std::move(msg));
 }
 
 } // namespace SimpleGame

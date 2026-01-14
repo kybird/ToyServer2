@@ -10,14 +10,13 @@
 namespace SimpleGame {
 
 class DamageEmitter;
+class PlayerInventory;
+struct LevelUpOption;
 
 class Player : public GameObject
 {
 public:
-    Player(int32_t gameId, System::ISession *session)
-        : GameObject(gameId, Protocol::ObjectType::PLAYER), _session(session)
-    {
-    }
+    Player(int32_t gameId, System::ISession *session);
 
     // Default constructor for pooling
     Player();
@@ -60,6 +59,15 @@ public:
     int32_t GetLevel() const;
 
     void AddExp(int32_t amount, Room *room);
+    void RefreshInventoryEffects();
+
+    // Passive Stats Calculation
+    float GetDamageMultiplier() const;
+    float GetMaxHpMultiplier() const;
+    float GetMovementSpeedMultiplier() const;
+    float GetCooldownMultiplier() const;
+    float GetAreaMultiplier() const;
+    int32_t GetAdditionalProjectileCount() const;
 
     // Invincibility
     bool IsInvincible(float currentTime) const;
@@ -78,6 +86,12 @@ public:
     {
         _isReady = ready;
     }
+
+    // Level Up System
+    PlayerInventory &GetInventory();
+    const std::vector<LevelUpOption> &GetPendingLevelUpOptions() const;
+    void SetPendingLevelUpOptions(const std::vector<LevelUpOption> &options);
+    void ClearPendingLevelUpOptions();
 
     // For Testing
     size_t GetEmitterCount() const;
@@ -103,6 +117,10 @@ private:
 
     // Auto-Attack
     std::vector<std::shared_ptr<DamageEmitter>> _emitters;
+
+    // Level Up System
+    std::unique_ptr<PlayerInventory> _inventory;
+    std::vector<LevelUpOption> _pendingLevelUpOptions;
 
     bool _isReady = false;
 };

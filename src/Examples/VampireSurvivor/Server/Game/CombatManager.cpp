@@ -196,12 +196,7 @@ void CombatManager::ResolveBodyCollisions(float dt, Room *room)
 
                         if (allDead)
                         {
-                            LOG_INFO("All players died. Game Over in Room {}", room->GetId());
-                            Protocol::S_GameOver gameOverMsg;
-                            gameOverMsg.set_survived_time_ms(static_cast<int64_t>(room->_totalRunTime * 1000));
-                            gameOverMsg.set_is_win(false);
-                            S_GameOverPacket gameOverPkt(gameOverMsg);
-                            room->BroadcastPacket(gameOverPkt);
+                            room->HandleGameOver(false);
                         }
                     }
                 }
