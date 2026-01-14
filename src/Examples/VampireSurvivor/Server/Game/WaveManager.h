@@ -45,6 +45,19 @@ private:
     float _nextSpawnTime = 0.0f;
 
     std::vector<PeriodicSpawner> _activeSpawners;
-};
+
+    // Clustering & Spawning Logic
+    struct PlayerCluster
+    {
+        std::vector<std::shared_ptr<GameObject>> players;
+        float centerX = 0.0f;
+        float centerY = 0.0f;
+    };
+
+    std::vector<PlayerCluster> BuildClusters(Room *room) const;
+    std::pair<float, float> GetAngularGapSpawnPos(const PlayerCluster &cluster) const;
+    void SpawnMonster(int32_t monsterTypeId, float hpMultiplier, Room *room, float x, float y);
+
+}; // Missing semicolon fixed
 
 } // namespace SimpleGame

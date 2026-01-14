@@ -534,15 +534,28 @@ void Room::Update(float deltaTime)
     }
 
     // === 2. Broadcast Monsters ===
+    // === 2. Broadcast Monsters ===
     if (!monsterMoves.empty())
     {
-        Protocol::S_MoveObjectBatch batch;
-        batch.set_server_tick(_serverTick);
+        // [Optim] Split into Batches of 50 to prevent huge packets (Network Flush/MTU issues)
+        const size_t BATCH_SIZE = 50;
+        size_t totalMoves = monsterMoves.size();
+        size_t processed = 0;
 
-        for (auto &move : monsterMoves)
-            *batch.add_moves() = move;
+        while (processed < totalMoves)
+        {
+            Protocol::S_MoveObjectBatch batch;
+            batch.set_server_tick(_serverTick);
 
-        BroadcastProto(this, std::move(batch));
+            size_t count = std::min(BATCH_SIZE, totalMoves - processed);
+            for (size_t i = 0; i < count; ++i)
+            {
+                *batch.add_moves() = monsterMoves[processed + i];
+            }
+
+            BroadcastProto(this, std::move(batch));
+            processed += count;
+        }
     }
 
     // === 3. Broadcast Players (filter self) ===
