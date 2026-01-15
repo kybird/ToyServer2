@@ -60,7 +60,7 @@ void LevelUpManager::ApplySelection(Player *player, int optionIndex, Room *room)
     if (success)
     {
         player->RefreshInventoryEffects();
-        LOG_INFO("[LevelUpManager] Player {} selection applied and effects refreshed", player->GetId());
+        LOG_INFO("[LevelUpManager] Player {} selected {} (ID: {})", player->GetId(), selected.name, selected.itemId);
     }
     else
     {

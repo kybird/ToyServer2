@@ -242,32 +242,12 @@ void Player::AddExp(int32_t amount, Room *room)
         S_ExpChangePacket pkt(std::move(expMsg));
         _session->SendPacket(pkt);
 
-        // Send level up options
+        // [Temp Hack] Automatically upgrade Projectile Mirror (ID: 6) on Level Up
         if (leveledUp)
         {
-            LevelUpManager levelUpMgr;
-            auto options = levelUpMgr.GenerateOptions(this);
-
-            if (!options.empty())
-            {
-                _pendingLevelUpOptions = options;
-
-                Protocol::S_LevelUpOption levelUpMsg;
-                for (const auto &opt : options)
-                {
-                    auto *protoOpt = levelUpMsg.add_options();
-                    protoOpt->set_option_id(opt.optionId);
-                    protoOpt->set_skill_id(opt.itemId); // 무기 ID or 패시브 ID
-                    protoOpt->set_name(opt.name);
-                    protoOpt->set_desc(opt.desc);
-                    protoOpt->set_is_new(opt.isNew);
-                }
-
-                S_LevelUpOptionPacket levelUpPkt(std::move(levelUpMsg));
-                _session->SendPacket(levelUpPkt);
-
-                LOG_INFO("[LevelUp] Sent {} options to player {}", options.size(), GetId());
-            }
+            _inventory->AddOrUpgradePassive(6);
+            RefreshInventoryEffects();
+            LOG_INFO("[Temp] Player {} automatically upgraded Projectile Mirror (ID: 6) via Level Up", GetId());
         }
     }
 }

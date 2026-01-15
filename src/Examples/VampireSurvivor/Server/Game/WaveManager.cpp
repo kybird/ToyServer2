@@ -1,8 +1,10 @@
 #include "WaveManager.h"
 #include "Entity/MonsterFactory.h"
 #include "Game/Room.h"
+#include "GameConfig.h"
 #include "GamePackets.h"
 #include "System/ILog.h"
+
 
 namespace SimpleGame {
 
@@ -115,7 +117,8 @@ void WaveManager::Update(float dt, Room *room)
 std::vector<WaveManager::PlayerCluster> WaveManager::BuildClusters(Room *room) const
 {
     std::vector<PlayerCluster> clusters;
-    const float CLUSTER_RADIUS = 20.0f; // Adjust based on screen size (e.g. Screen + 20%)
+    const float CLUSTER_RADIUS =
+        GameConfig::MONSTER_SPAWN_CLUSTER_RADIUS; // Adjust based on screen size (e.g. Screen + 20%)
 
     // Get All Players
     // Note: We need a way to get players from Room.
@@ -187,8 +190,8 @@ std::vector<WaveManager::PlayerCluster> WaveManager::BuildClusters(Room *room) c
 
 std::pair<float, float> WaveManager::GetAngularGapSpawnPos(const PlayerCluster &cluster) const
 {
-    static const float MIN_SPAWN_DIST = 10.0f; // Base distance from center
-    static const float MAX_SPAWN_DIST = 25.0f; // Cap
+    static const float MIN_SPAWN_DIST = GameConfig::MONSTER_SPAWN_MIN_DIST; // Base distance from center
+    static const float MAX_SPAWN_DIST = GameConfig::MONSTER_SPAWN_MAX_DIST; // Cap
 
     // 1. Calculate Max Player Dist from Center to define Spawn Radius
     float maxPlayerDist = 0.0f;
