@@ -48,6 +48,7 @@
 # CMake
 build/
 build_gtest/
+build_clangd/
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake

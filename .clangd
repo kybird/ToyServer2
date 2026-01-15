@@ -12,6 +12,8 @@ CompileFlags:
     - -I./src/Examples/VampireSurvivor/Common
     - -I./src/Examples/VampireSurvivor/Server/Core
     - -I./vcpkg_installed/x64-windows/include
+    - -I./build
+  CompilationDatabase: .
   
 Index:
   Background: true
