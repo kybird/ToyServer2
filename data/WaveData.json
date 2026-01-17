@@ -13,7 +13,7 @@
         "start_time": 35.0,
         "duration": 60.0,
         "monster_type_id": 2,
-        "count": 10,
+        "count": 20,
         "interval": 2.0,
         "hp_multiplier": 1.2
     },
@@ -22,7 +22,7 @@
         "start_time": 65.0,
         "duration": 999.0,
         "monster_type_id": 1,
-        "count": 10,
+        "count": 30,
         "interval": 1.0,
         "hp_multiplier": 2.0
     }

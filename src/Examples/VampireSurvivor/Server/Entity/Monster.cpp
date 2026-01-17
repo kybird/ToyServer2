@@ -12,7 +12,7 @@ void Monster::Update(float dt, Room *room)
     // Update state expiry
     UpdateStateExpiry(_aliveTime);
 
-    if (_ai && !IsDead())
+    if (_ai != nullptr && !IsDead())
     {
         // Skip AI if control is disabled (e.g. Knockback, Stun)
         if (IsControlDisabled())
@@ -23,6 +23,8 @@ void Monster::Update(float dt, Room *room)
         // Hybrid AI: Think (periodic) + Execute (every tick)
         _ai->Think(this, room, _aliveTime);
         _ai->Execute(this, dt);
+
+        // Speed multiplier is now naturally handled by AI using GetSpeed() inside Execute()
     }
     // If no AI assigned, monster stays idle
 }

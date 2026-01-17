@@ -33,6 +33,9 @@ public:
     virtual size_t GetDispatcherQueueSize() const = 0;
     virtual std::shared_ptr<IDispatcher> GetDispatcher() const = 0;
 
+    // Command Console Accessor
+    virtual std::shared_ptr<class ICommandConsole> GetCommandConsole() const = 0;
+
     // Event Subscription Helper (Hides IDispatcher)
     template <typename EventType, typename CallbackType> void Subscribe(CallbackType callback)
     {

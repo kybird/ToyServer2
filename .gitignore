@@ -46,6 +46,7 @@
 .vscode/
 
 # CMake
+.cache
 build/
 build_gtest/
 build_clangd/
@@ -54,6 +55,8 @@ CMakeFiles/
 cmake_install.cmake
 *.cmake
 !CMakeLists.txt
+compile_commands.json
+compile_flags.txt
 
 # Additional generated files
 *_log.txt

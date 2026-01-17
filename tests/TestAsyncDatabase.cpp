@@ -1,10 +1,13 @@
 
+#include "System/Database/DatabaseImpl.h"
+#include "System/Drivers/SQLite/SQLiteConnectionFactory.h"
 #include "System/Thread/ThreadPool.h"
 #include "System/ToyServerSystem.h"
 #include <condition_variable>
 #include <deque>
 #include <gtest/gtest.h>
 #include <mutex>
+
 
 // Mock Dispatcher to simulate Main Thread processing
 class DbTestMockDispatcher : public System::IDispatcher
@@ -84,7 +87,11 @@ protected:
         _dispatcher = std::make_shared<DbTestMockDispatcher>();
 
         // 3. Create Database with dependencies injected
-        _db = System::IDatabase::Create("sqlite", ":memory:", 1, _threadPool, _dispatcher);
+        auto factory = std::make_unique<System::SQLiteConnectionFactory>();
+        auto dbImpl =
+            std::make_shared<System::DatabaseImpl>(":memory:", 1, 5000, std::move(factory), _threadPool, _dispatcher);
+        dbImpl->Init();
+        _db = dbImpl;
         ASSERT_TRUE(_db);
         _db->Execute("CREATE TABLE test (id INTEGER PRIMARY KEY, value TEXT);");
 

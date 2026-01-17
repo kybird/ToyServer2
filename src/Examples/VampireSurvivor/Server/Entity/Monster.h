@@ -68,6 +68,28 @@ public:
         return _damageOnContact;
     }
 
+    // Speed Control
+    void AddLevelUpSlow()
+    {
+        _levelUpSlowCount++;
+        UpdateSpeedMultiplier();
+    }
+    void RemoveLevelUpSlow()
+    {
+        if (_levelUpSlowCount > 0)
+            _levelUpSlowCount--;
+        UpdateSpeedMultiplier();
+    }
+    float GetSpeedMultiplier() const
+    {
+        return _speedMultiplier;
+    }
+    void UpdateSpeedMultiplier()
+    {
+        // Slow down to 15% of normal speed
+        _speedMultiplier = (_levelUpSlowCount > 0) ? 0.15f : 1.0f;
+    }
+
     // Called by Room::Update
     void Update(float dt, Room *room) override;
 
@@ -99,32 +121,52 @@ public:
         _stateExpiresAt = 0.0f;
         if (_ai)
             _ai->Reset();
+
+        _speedMultiplier = 1.0f;
+        _levelUpSlowCount = 0;
     }
 
-    void Initialize(int32_t id, int32_t monsterTypeId, int32_t hp, float radius, int32_t damage, float cooldown)
+    void
+    Initialize(int32_t id, int32_t monsterTypeId, int32_t hp, float radius, int32_t damage, float cooldown, float speed)
     {
         _id = id;
         _monsterTypeId = monsterTypeId;
         _hp = _maxHp = hp;
         _radius = GameConfig::MONSTER_COLLISION_RADIUS; // Lag Compensation for Body Attack
-        // _radius = radius; // Original Visual Size is 0.5
+        (void)radius;                                   // Suppress unused warning
         _damageOnContact = damage;
         _attackCooldown = cooldown;
         _lastAttackTime = -100.0f;
         _aliveTime = 0.0f;
         _state = Protocol::ObjectState::IDLE;
+        _speedMultiplier = 1.0f;
+        _levelUpSlowCount = 0;
+        _baseSpeed = speed;
+    }
+
+    float GetSpeed() const
+    {
+        return _baseSpeed * _speedMultiplier;
     }
 
 private:
+    // Pointers (8 bytes)
+    std::unique_ptr<IAIBehavior> _ai;
+
+    // 4 bytes members
     int32_t _monsterTypeId = 0;
     int32_t _targetId = 0;
     float _aliveTime = 0.0f;
-    std::unique_ptr<IAIBehavior> _ai;
 
     // Extended Combat Stats
     int32_t _damageOnContact = 10;
     float _attackCooldown = 1.0f;
     float _lastAttackTime = -100.0f;
+
+    // Control Stats
+    float _speedMultiplier = 1.0f;
+    float _baseSpeed = 2.0f;
+    int _levelUpSlowCount = 0;
 };
 
 } // namespace SimpleGame

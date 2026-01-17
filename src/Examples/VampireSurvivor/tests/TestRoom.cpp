@@ -261,6 +261,10 @@ TEST(SendPacketTest, BroadcastPacketToRoomWithPlayers)
     room->Enter(p1);
     room->Enter(p2);
 
+    // Fix: Players must be Ready to receive broadcasts (optimization)
+    p1->SetReady(true);
+    p2->SetReady(true);
+
     MockPacket packet;
 
     // ACT: 브로드캐스트

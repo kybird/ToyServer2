@@ -20,6 +20,9 @@ public:
     void Update(float dt, Room *room);
     void Reset(); // Reset wave manager state
 
+    // Debug
+    void DebugSpawn(Room *room, int32_t monsterTypeId, int32_t count);
+
 private:
     struct PeriodicSpawner
     {
@@ -31,7 +34,7 @@ private:
         float remainingDuration;
     };
 
-    void StartSpawner(const WaveData &wave);
+    void StartSpawner(Room *room, const WaveData &wave);
     void SpawnMonster(int32_t monsterTypeId, float hpMultiplier, Room *room);
     void BroadcastProto(Room *room, PacketID id, const Protocol::S_SpawnObject &msg);
 

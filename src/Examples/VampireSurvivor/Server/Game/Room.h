@@ -1,7 +1,5 @@
 #pragma once
 #include "Entity/Player.h"
-#include "Protocol.h"
-#include "System/ILog.h"
 #include <mutex>
 #include <unordered_map>
 #include <vector>
@@ -41,9 +39,9 @@ public:
         int roomId, std::shared_ptr<System::ITimer> timer, std::shared_ptr<System::IStrand> strand,
         std::shared_ptr<UserDB> userDB
     );
-    ~Room();
+    virtual ~Room() override;
 
-    void Enter(std::shared_ptr<Player> player);
+    void Enter(const std::shared_ptr<Player> &player);
     void Leave(uint64_t sessionId);
     void OnPlayerReady(uint64_t sessionId); // Called when client finishes loading
     void BroadcastPacket(const System::IPacket &pkt);
@@ -61,7 +59,7 @@ public:
         return _roomId;
     }
     size_t GetPlayerCount();
-    size_t GetMaxPlayers() const
+    static size_t GetMaxPlayers()
     {
         return 4;
     } // TODO: Make configurable
@@ -104,6 +102,19 @@ public:
     {
         return _totalRunTime;
     }
+
+    // Debug Commands
+    void DebugAddExpToAll(int32_t exp);
+    void DebugSpawnMonster(int32_t monsterId, int32_t count);
+    void DebugToggleGodMode();
+
+    // void HandleGameOver(bool isWin); (Removed duplicate)
+    void UpdateObject(
+        const std::shared_ptr<GameObject> &obj, float deltaTime, std::vector<Protocol::ObjectPos> &monsterMoves,
+        std::vector<Protocol::ObjectPos> &playerMoves
+    );
+    void BroadcastPlayerMoves(const std::vector<Protocol::ObjectPos> &playerMoves);
+    void SendPlayerAcks();
 
 private:
     int _roomId;

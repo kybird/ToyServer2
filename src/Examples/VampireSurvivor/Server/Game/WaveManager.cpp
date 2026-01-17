@@ -5,7 +5,6 @@
 #include "GamePackets.h"
 #include "System/ILog.h"
 
-
 namespace SimpleGame {
 
 void WaveManager::Start()
@@ -37,7 +36,7 @@ void WaveManager::Update(float dt, Room *room)
 
         if (_currentTime >= wave.startTime)
         {
-            StartSpawner(wave);
+            StartSpawner(room, wave);
             _currentWaveIndex++;
         }
         else
@@ -257,7 +256,7 @@ std::pair<float, float> WaveManager::GetAngularGapSpawnPos(const PlayerCluster &
     return {cluster.centerX + std::cos(finalAngle) * finalRadius, cluster.centerY + std::sin(finalAngle) * finalRadius};
 }
 
-void WaveManager::StartSpawner(const WaveData &wave)
+void WaveManager::StartSpawner(Room *room, const WaveData &wave)
 {
     PeriodicSpawner spawner;
     spawner.monsterTypeId = wave.monsterTypeId;
@@ -267,6 +266,16 @@ void WaveManager::StartSpawner(const WaveData &wave)
     spawner.interval = wave.interval;
     spawner.timer = 0.0f; // Spawn immediately
     _activeSpawners.push_back(spawner);
+
+    // Notify Clients
+    Protocol::S_WaveNotify notify;
+    notify.set_wave_index(_currentWaveIndex + 1);
+    notify.set_title("Wave " + std::to_string(_currentWaveIndex + 1));
+    notify.set_duration_seconds(wave.duration);
+
+    S_WaveNotifyPacket pkt(notify);
+    room->BroadcastPacket(pkt);
+    LOG_INFO("Started Wave {} in Room {}", _currentWaveIndex + 1, _roomId);
 }
 
 void WaveManager::SpawnMonster(int32_t monsterTypeId, float hpMultiplier, Room *room, float x, float y)
@@ -310,6 +319,31 @@ void WaveManager::BroadcastProto(Room *room, PacketID id, const Protocol::S_Spaw
         S_SpawnObjectPacket packet(msg);
         room->BroadcastPacket(packet);
     }
+}
+
+void WaveManager::DebugSpawn(Room *room, int32_t monsterTypeId, int32_t count)
+{
+    // Need a position near players
+    auto clusters = BuildClusters(room);
+    if (clusters.empty())
+    {
+        // No players, spawn at 0,0?
+        for (int i = 0; i < count; ++i)
+        {
+            SpawnMonster(monsterTypeId, 1.0f, room, 0.0f, 0.0f);
+        }
+        return;
+    }
+
+    // Distribute among clusters or just pick first
+    for (int i = 0; i < count; ++i)
+    {
+        const auto &cluster = clusters[rand() % clusters.size()];
+        auto pos = GetAngularGapSpawnPos(cluster);
+        SpawnMonster(monsterTypeId, 1.0f, room, pos.first, pos.second);
+    }
+
+    LOG_INFO("DebugSpawn: Spawned {} monsters of type {} in Room {}", count, monsterTypeId, _roomId);
 }
 
 } // namespace SimpleGame

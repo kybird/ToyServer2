@@ -45,6 +45,11 @@ std::shared_ptr<IDispatcher> Framework::GetDispatcher() const
     return _dispatcher;
 }
 
+std::shared_ptr<ICommandConsole> Framework::GetCommandConsole() const
+{
+    return _console;
+}
+
 Framework::Framework()
 {
 }
@@ -162,7 +167,7 @@ bool Framework::Init(std::shared_ptr<IConfig> config, std::shared_ptr<IPacketHan
     }
 
     // 6. Console
-    _console = std::make_unique<CommandConsole>(_config);
+    _console = std::make_shared<CommandConsole>(_config);
 
     LOG_INFO("Framework Initialized.");
     return true;

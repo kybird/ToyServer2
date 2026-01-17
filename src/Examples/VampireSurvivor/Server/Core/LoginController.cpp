@@ -11,7 +11,7 @@
 namespace SimpleGame {
 
 LoginController::LoginController(std::shared_ptr<System::IDatabase> db, System::IFramework *framework)
-    : _db(db), _framework(framework)
+    : _db(std::move(db)), _framework(framework)
 {
 }
 
@@ -33,7 +33,7 @@ void LoginController::OnLogin(const LoginRequestEvent &evt)
     LOG_INFO("Processing Login Request for User: {}", evt.username);
 
     // 0. Manual Session Ref Count for Async Lifetime
-    if (evt.session)
+    if (evt.session != nullptr)
     {
         evt.session->IncRef();
     }
@@ -41,7 +41,7 @@ void LoginController::OnLogin(const LoginRequestEvent &evt)
         evt.session,
         [](System::ISession *s)
         {
-            if (s)
+            if (s != nullptr)
                 s->DecRef();
         }
     );
@@ -85,7 +85,7 @@ void LoginController::OnLogin(const LoginRequestEvent &evt)
                 // Send S_LOGIN Response (Auth Success)
                 Protocol::S_Login resMsg;
                 resMsg.set_success(true);
-                resMsg.set_my_player_id((int32_t)sessionId); // Use SessionID as PlayerID
+                resMsg.set_my_player_id(static_cast<int32_t>(sessionId)); // Use SessionID as PlayerID
                 resMsg.set_map_width(0);
                 resMsg.set_map_height(0);
                 resMsg.set_server_tick_rate(GameConfig::TPS);
@@ -93,8 +93,8 @@ void LoginController::OnLogin(const LoginRequestEvent &evt)
 
                 // [Modified] Send current server tick from Default Room (1)
                 uint32_t currentTick = 0;
-                auto room = RoomManager::Instance().GetRoom(1);
-                if (room)
+                auto room = RoomManager::Instance().GetRoom(GameConfig::DEFAULT_ROOM_ID);
+                if (room != nullptr)
                 {
                     currentTick = room->GetServerTick();
                 }
@@ -108,7 +108,7 @@ void LoginController::OnLogin(const LoginRequestEvent &evt)
             else
             {
                 LOG_INFO("Login Failed: {}", username);
-                if (sessionInfo)
+                if (sessionInfo != nullptr)
                 {
                     // Optional: Send Login Fail Packet
                     Protocol::S_Login resMsg;

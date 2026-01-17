@@ -26,7 +26,11 @@ Session *SessionFactory::CreateSession(std::shared_ptr<boost::asio::ip::tcp::soc
     }
 
     uint64_t id = _nextSessionId.fetch_add(1);
-    session->Reset(socket, id, dispatcher);
+
+    // [PIMPL] Helper to cast shared_ptr<socket> to shared_ptr<void> to match Session interface
+    // shared_ptr aliasing constructor or simple cast?
+    // std::shared_ptr<void> voidSocket = socket; // Should work thanks to polymorphism/shared_ptr implicit conversion
+    session->Reset(std::static_pointer_cast<void>(socket), id, dispatcher);
 
     // [Encryption] Inject if factory is set
     if (_encryptionFactory)

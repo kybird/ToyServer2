@@ -54,10 +54,17 @@ bool JsonConfigLoader::Load(const std::string &filePath)
                 _config.dbWorkerCount = 2; // Default
 
             _config.dbAddress = server.value("db_info", server.value("dbAddress", ""));
+            _config.dbType = server.value("db_type", server.value("dbType", "sqlite"));
+            _config.dbUser = server.value("db_user", server.value("dbUser", ""));
+            _config.dbPassword = server.value("db_password", server.value("dbPassword", ""));
+            _config.dbSchema = server.value("db_schema", server.value("dbSchema", ""));
+            _config.dbPort = server.value("db_port", server.value("dbPort", 3306));
+
             _config.rateLimit = server.value("rate_limit", server.value("rateLimit", 50.0));
             _config.rateBurst = server.value("rate_burst", server.value("rateBurst", 100.0));
             _config.encryption = server.value("encryption", "none");
             _config.encryptionKey = server.value("encryption_key", server.value("encryptionKey", ""));
+
             _config.encryptionIV = server.value("encryption_iv", server.value("encryptionIV", ""));
             _config.logLevel = server.value("log_level", "info");
         }

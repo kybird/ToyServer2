@@ -3,12 +3,13 @@ cmake_minimum_required(VERSION 3.16)
 # Setup VCPKG (Must be before project() to activate toolchain)
 set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed" CACHE PATH "vcpkg installed directory")
 set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake")
+set(VCPKG_TARGET_TRIPLET "x64-windows" CACHE STRING "Vcpkg target triplet")
 
 project(HGSF VERSION 0.1.0 LANGUAGES CXX)
 
 if(MSVC)
     add_compile_definitions(_WIN32_WINNT=0x0A00) # Windows 10
-    add_compile_options(/FS) # Enable synchronous PDB access to fix C1041
+    add_compile_options(/FS /utf-8) # Enable synchronous PDB access to fix C1041, and UTF-8 for fmt
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -18,6 +19,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Setup VCPKG
 
 
+
+# ==========================================
+# Options
+# ==========================================
+option(ENABLE_DRIVER_SQLITE "Enable SQLite Driver" ON)
+option(ENABLE_DRIVER_MYSQL "Enable MySQL Driver" ON)
+
 # Dependencies
 find_package(Boost CONFIG REQUIRED COMPONENTS system)
 find_package(spdlog CONFIG REQUIRED)
@@ -25,8 +33,20 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(concurrentqueue CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)
-find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(Protobuf REQUIRED)
+
+if(ENABLE_DRIVER_SQLITE)
+    find_package(unofficial-sqlite3 CONFIG REQUIRED)
+endif()
+
+if(ENABLE_DRIVER_MYSQL)
+    find_package(unofficial-libmysql CONFIG REQUIRED)
+endif()
+
+find_package(cnats CONFIG REQUIRED)
+find_package(redis++ CONFIG REQUIRED)
+
+
 
 # Common functionality
 add_library(Share STATIC)
@@ -36,13 +56,44 @@ target_sources(Share PRIVATE
 )
 target_include_directories(Share PUBLIC src/Share src/System src)
 target_precompile_headers(Share PRIVATE src/System/Pch.h)
-target_link_libraries(Share PUBLIC 
+target_link_libraries(Share PRIVATE 
     Boost::system
     spdlog::spdlog 
     nlohmann_json::nlohmann_json 
     fmt::fmt
     concurrentqueue::concurrentqueue
 )
+
+# ==========================================
+# Drivers
+# ==========================================
+set(DRIVER_LIBS "")
+
+if(ENABLE_DRIVER_SQLITE)
+    add_library(DriverSQLite SHARED)
+    set_target_properties(DriverSQLite PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    target_sources(DriverSQLite PRIVATE
+        src/System/Drivers/SQLite/SQLiteConnection.cpp
+    )
+    target_include_directories(DriverSQLite PUBLIC src)
+    target_link_libraries(DriverSQLite PUBLIC unofficial::sqlite3::sqlite3 System)
+    list(APPEND DRIVER_LIBS DriverSQLite)
+    add_compile_definitions(USE_SQLITE)
+endif()
+
+if(ENABLE_DRIVER_MYSQL)
+    add_library(DriverMySQL SHARED)
+    set_target_properties(DriverMySQL PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    target_sources(DriverMySQL PRIVATE
+        src/System/Drivers/MySQL/MySQLConnection.cpp
+    )
+    target_include_directories(DriverMySQL PUBLIC src)
+    target_link_libraries(DriverMySQL PUBLIC unofficial::libmysql::libmysql System)
+    list(APPEND DRIVER_LIBS DriverMySQL)
+    add_compile_definitions(USE_MYSQL)
+endif()
+
+
 
 # System Library (The Engine)
 add_library(System STATIC)
@@ -67,7 +118,7 @@ target_sources(System PRIVATE
     src/System/Events/EventBus.h
     src/System/Network/ByteBuffer.h # Added
     src/System/Database/DatabaseImpl.cpp
-    src/System/Database/SQLite/SQLiteConnection.cpp
+    # src/System/Database/SQLite/SQLiteConnection.cpp # Moved to DriverSQLite
     src/System/Framework/Framework.cpp
     src/System/Thread/ThreadPool.cpp
     src/System/Dispatcher/DISPATCHER/DispatcherImpl.cpp
@@ -96,16 +147,29 @@ target_sources(System PRIVATE
     src/System/Packet/PacketBuilder.h
     src/System/Packet/SharedPacket.h
     src/System/Packet/PacketBroadcast.h
+    src/System/Packet/PacketBroadcast.h
+    
+    # MQ System
+    src/System/MQ/IMessageDriver.h
+    src/System/MQ/MessageQoS.h
+    src/System/MQ/NatsDriver.h
+    src/System/MQ/NatsDriver.cpp
+    src/System/MQ/RedisStreamDriver.h
+    src/System/MQ/RedisStreamDriver.cpp
+    src/System/MQ/MessageSystem.h
+    src/System/MQ/MessageSystem.cpp
 )
 target_include_directories(System PUBLIC src/System src)
 target_precompile_headers(System PRIVATE src/System/Pch.h)
-target_link_libraries(System PUBLIC Share dbghelp unofficial::sqlite3::sqlite3)
+target_link_libraries(System PUBLIC Share dbghelp unofficial::sqlite3::sqlite3 cnats::nats redis++::redis++ PRIVATE Boost::system)
 
 # GameServer Executable
 add_executable(GameServer src/GameServer/main.cpp)
 target_include_directories(GameServer PRIVATE src/GameServer src)
 target_precompile_headers(GameServer PRIVATE src/System/Pch.h)
-target_link_libraries(GameServer PRIVATE System Share)
+target_link_libraries(GameServer PRIVATE System Share ${DRIVER_LIBS})
+
+
 
 # Copy Data Directory to Output Directory
 add_custom_command(TARGET GameServer POST_BUILD
@@ -192,7 +256,9 @@ target_include_directories(VampireSurvivorServer PRIVATE
 
 target_precompile_headers(VampireSurvivorServer PRIVATE src/System/Pch.h)
 
-target_link_libraries(VampireSurvivorServer PRIVATE System Share protobuf::libprotobuf)
+target_link_libraries(VampireSurvivorServer PRIVATE System Share protobuf::libprotobuf ${DRIVER_LIBS})
+
+
 
 # Copy Data Directory to Output Directory for VampireSurvivorServer
 add_custom_command(TARGET VampireSurvivorServer POST_BUILD
@@ -240,12 +306,19 @@ install(DIRECTORY src/Share DESTINATION dist/include
 set(VS_TEST_SOURCES
     src/Examples/VampireSurvivor/tests/main_test.cpp
     src/Examples/VampireSurvivor/tests/TestRoom.cpp
+    src/Examples/VampireSurvivor/tests/TestRoom.cpp
     src/Examples/VampireSurvivor/tests/TestCombat.cpp
-    src/Examples/VampireSurvivor/tests/TestSwarmPerformance.cpp
     src/Examples/VampireSurvivor/tests/TestDeadReckoningCorrection.cpp
     src/Examples/VampireSurvivor/tests/TestEffectSystem.cpp
     tests/TestEventBus_Mock.cpp
     tests/TestAsyncDatabase.cpp
+    tests/TestThreadPool.cpp
+    tests/TestByteBuffer.cpp
+    tests/TestRateLimiter.cpp
+    tests/TestSpatialGrid.cpp
+    tests/TestSpatialGrid.cpp
+    tests/TestPerformance.cpp
+    tests/TestMQ.cpp
 )
 add_executable(UnitTests ${VS_TEST_SOURCES} ${GAME_SOURCES})
 target_include_directories(UnitTests PRIVATE 
@@ -256,7 +329,9 @@ target_include_directories(UnitTests PRIVATE
     src/Examples/VampireSurvivor/Server/Core
 )
 target_precompile_headers(UnitTests PRIVATE src/System/Pch.h)
-target_link_libraries(UnitTests PRIVATE System Share GTest::gtest GTest::gmock protobuf::libprotobuf unofficial::sqlite3::sqlite3)
+target_link_libraries(UnitTests PRIVATE System Share GTest::gtest GTest::gmock protobuf::libprotobuf ${DRIVER_LIBS})
+
+
 
 # Copy Data Directory to Output Directory for UnitTests
 add_custom_command(TARGET UnitTests POST_BUILD

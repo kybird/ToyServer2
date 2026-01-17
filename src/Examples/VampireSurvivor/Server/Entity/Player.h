@@ -1,9 +1,9 @@
 #pragma once
 #include "Entity/GameObject.h"
 #include "Math/Vector2.h"
-#include "System/ILog.h"
 #include "System/ISession.h"
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -20,7 +20,7 @@ public:
 
     // Default constructor for pooling
     Player();
-    virtual ~Player();
+    virtual ~Player() override;
 
     // Init for pooling
     void Initialize(int32_t gameId, System::ISession *session, int32_t hp, float speed);
@@ -73,6 +73,14 @@ public:
     bool IsInvincible(float currentTime) const;
     void SetInvincible(float untilTime);
 
+    // Level Up State (Invincible + Input Disabled)
+    bool IsLevelingUp() const
+    {
+        return _isLevelingUp;
+    }
+    void EnterLevelUpState(Room *room);
+    void ExitLevelUpState(Room *room);
+
     // Auto-Attack
     void Update(float dt, Room *room) override;
     void AddDefaultSkills(const std::vector<int32_t> &skillIds);
@@ -98,6 +106,10 @@ public:
     void AddEmitter(std::shared_ptr<DamageEmitter> emitter);
     void ClearEmitters();
 
+    // Debug
+    void SetGodMode(bool enable);
+    bool IsGodMode() const;
+
 private:
     System::ISession *_session = nullptr;
     std::string _name;
@@ -114,6 +126,7 @@ private:
     int32_t _level = 1;
 
     float _invincibleUntil = 0.0f;
+    bool _isLevelingUp = false;
 
     // Auto-Attack
     std::vector<std::shared_ptr<DamageEmitter>> _emitters;
@@ -121,8 +134,10 @@ private:
     // Level Up System
     std::unique_ptr<PlayerInventory> _inventory;
     std::vector<LevelUpOption> _pendingLevelUpOptions;
+    std::set<int32_t> _slowedMonsterIds;
 
     bool _isReady = false;
+    bool _godMode = false;
 };
 
 } // namespace SimpleGame

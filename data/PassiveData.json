@@ -1,8 +1,8 @@
 [
     {
         "id": 1,
-        "name": "힘의 반지",
-        "description": "공격력 증가",
+        "name": "Ring of Power",
+        "description": "Increases Damage",
         "icon": "power_ring",
         "stat_type": "damage",
         "max_level": 5,
@@ -10,34 +10,34 @@
             {
                 "level": 1,
                 "bonus": 0.10,
-                "desc": "공격력 +10%"
+                "desc": "Damage +10%"
             },
             {
                 "level": 2,
                 "bonus": 0.20,
-                "desc": "공격력 +20%"
+                "desc": "Damage +20%"
             },
             {
                 "level": 3,
                 "bonus": 0.30,
-                "desc": "공격력 +30%"
+                "desc": "Damage +30%"
             },
             {
                 "level": 4,
                 "bonus": 0.40,
-                "desc": "공격력 +40%"
+                "desc": "Damage +40%"
             },
             {
                 "level": 5,
                 "bonus": 0.50,
-                "desc": "공격력 +50%"
+                "desc": "Damage +50%"
             }
         ]
     },
     {
         "id": 2,
-        "name": "생명의 성배",
-        "description": "최대 HP 증가",
+        "name": "Chalice of Life",
+        "description": "Increases Max HP",
         "icon": "hp_chalice",
         "stat_type": "max_hp",
         "max_level": 5,
@@ -45,34 +45,34 @@
             {
                 "level": 1,
                 "bonus": 0.10,
-                "desc": "최대 HP +10%"
+                "desc": "Max HP +10%"
             },
             {
                 "level": 2,
                 "bonus": 0.20,
-                "desc": "최대 HP +20%"
+                "desc": "Max HP +20%"
             },
             {
                 "level": 3,
                 "bonus": 0.30,
-                "desc": "최대 HP +30%"
+                "desc": "Max HP +30%"
             },
             {
                 "level": 4,
                 "bonus": 0.40,
-                "desc": "최대 HP +40%"
+                "desc": "Max HP +40%"
             },
             {
                 "level": 5,
                 "bonus": 0.50,
-                "desc": "최대 HP +50%"
+                "desc": "Max HP +50%"
             }
         ]
     },
     {
         "id": 3,
-        "name": "신속의 장화",
-        "description": "이동 속도 증가",
+        "name": "Boots of Speed",
+        "description": "Increases Movement Speed",
         "icon": "speed_boots",
         "stat_type": "speed",
         "max_level": 5,
@@ -80,34 +80,34 @@
             {
                 "level": 1,
                 "bonus": 0.10,
-                "desc": "이동 속도 +10%"
+                "desc": "Move Speed +10%"
             },
             {
                 "level": 2,
                 "bonus": 0.20,
-                "desc": "이동 속도 +20%"
+                "desc": "Move Speed +20%"
             },
             {
                 "level": 3,
                 "bonus": 0.30,
-                "desc": "이동 속도 +30%"
+                "desc": "Move Speed +30%"
             },
             {
                 "level": 4,
                 "bonus": 0.40,
-                "desc": "이동 속도 +40%"
+                "desc": "Move Speed +40%"
             },
             {
                 "level": 5,
                 "bonus": 0.50,
-                "desc": "이동 속도 +50%"
+                "desc": "Move Speed +50%"
             }
         ]
     },
     {
         "id": 4,
-        "name": "시간의 모래시계",
-        "description": "스킬 쿨다운 감소",
+        "name": "Hourglass of Time",
+        "description": "Reduces Skill Cooldown",
         "icon": "cooldown_hourglass",
         "stat_type": "cooldown",
         "max_level": 5,
@@ -115,34 +115,34 @@
             {
                 "level": 1,
                 "bonus": 0.08,
-                "desc": "쿨다운 -8%"
+                "desc": "Cooldown -8%"
             },
             {
                 "level": 2,
                 "bonus": 0.16,
-                "desc": "쿨다운 -16%"
+                "desc": "Cooldown -16%"
             },
             {
                 "level": 3,
                 "bonus": 0.24,
-                "desc": "쿨다운 -24%"
+                "desc": "Cooldown -24%"
             },
             {
                 "level": 4,
                 "bonus": 0.32,
-                "desc": "쿨다운 -32%"
+                "desc": "Cooldown -32%"
             },
             {
                 "level": 5,
                 "bonus": 0.40,
-                "desc": "쿨다운 -40%"
+                "desc": "Cooldown -40%"
             }
         ]
     },
     {
         "id": 5,
-        "name": "확장의 오브",
-        "description": "공격 범위 증가",
+        "name": "Orb of Expansion",
+        "description": "Increases Attack Area",
         "icon": "area_orb",
         "stat_type": "area",
         "max_level": 5,
@@ -150,34 +150,34 @@
             {
                 "level": 1,
                 "bonus": 0.10,
-                "desc": "공격 범위 +10%"
+                "desc": "Area +10%"
             },
             {
                 "level": 2,
                 "bonus": 0.20,
-                "desc": "공격 범위 +20%"
+                "desc": "Area +20%"
             },
             {
                 "level": 3,
                 "bonus": 0.30,
-                "desc": "공격 범위 +30%"
+                "desc": "Area +30%"
             },
             {
                 "level": 4,
                 "bonus": 0.40,
-                "desc": "공격 범위 +40%"
+                "desc": "Area +40%"
             },
             {
                 "level": 5,
                 "bonus": 0.50,
-                "desc": "공격 범위 +50%"
+                "desc": "Area +50%"
             }
         ]
     },
     {
         "id": 6,
-        "name": "복제의 거울",
-        "description": "투사체 수 증가",
+        "name": "Mirror of Duplication",
+        "description": "Increases Projectile Count",
         "icon": "projectile_mirror",
         "stat_type": "projectile_count",
         "max_level": 5,
@@ -185,27 +185,27 @@
             {
                 "level": 1,
                 "bonus": 1,
-                "desc": "투사체 +1"
+                "desc": "Projectile +1"
             },
             {
                 "level": 2,
                 "bonus": 2,
-                "desc": "투사체 +2"
+                "desc": "Projectile +2"
             },
             {
                 "level": 3,
                 "bonus": 3,
-                "desc": "투사체 +3"
+                "desc": "Projectile +3"
             },
             {
                 "level": 4,
                 "bonus": 4,
-                "desc": "투사체 +4"
+                "desc": "Projectile +4"
             },
             {
                 "level": 5,
                 "bonus": 5,
-                "desc": "투사체 +5"
+                "desc": "Projectile +5"
             }
         ]
     }

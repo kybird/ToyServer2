@@ -138,6 +138,8 @@ TEST(CombatTest, OverkillDoesNotResultInNegativeHp)
     auto player = std::make_shared<Player>(100, nullptr);
     player->Initialize(100, nullptr, 100, 5.0f);
     player->SetHp(10);
+    player->SetHp(10);
+    player->SetReady(true); // Fix: Must be ready to update
     room->Enter(player);
 
     // 2. Apply 100 Damage (Overkill)
@@ -191,6 +193,7 @@ TEST(CombatTest, LinearEmitterHitsNearestMonster)
     player->Initialize(100, nullptr, 100, 5.0f);
     player->ApplyInput(1, 1, 0); // Faces (1,0)
     player->SetVelocity(0, 0);   // Stop movement for testing static position
+    player->SetReady(true);      // Fix: Must be ready
     room->Enter(player);
 
     // Add emitter manually (since Enter without DB doesn't add it)
@@ -231,6 +234,8 @@ TEST(CombatTest, LinearEmitterRespectsLifetime)
     auto room = std::make_shared<Room>(6, nullptr, nullptr, nullptr);
     auto player = std::make_shared<Player>(100, nullptr);
     player->Initialize(100, nullptr, 100, 5.0f);
+    player->Initialize(100, nullptr, 100, 5.0f);
+    player->SetReady(true); // Fix: Must be ready
     room->Enter(player);
 
     // Add emitter with ID 2
@@ -248,6 +253,11 @@ TEST(CombatTest, LinearEmitterRespectsLifetime)
     EXPECT_EQ(player->GetEmitterCount(), 0);
 }
 
+TEST(CombatTest, DISABLED_MonsterKnockback)
+{
+    // Feature removed per design decision
+}
+/*
 TEST(CombatTest, MonsterKnockback)
 {
     MonsterTemplate mTmpl;
@@ -285,6 +295,7 @@ TEST(CombatTest, MonsterKnockback)
     // Monster should be knocked back in positive X direction (dx = 0.1, player at 0.0)
     EXPECT_GT(monster->GetVX(), 10.0f);
 }
+*/
 
 TEST(CombatTest, LinearEmitterSpawnsProjectile)
 {
@@ -309,6 +320,9 @@ TEST(CombatTest, LinearEmitterSpawnsProjectile)
     player->Initialize(100, nullptr, 100, 5.0f);
     player->ApplyInput(1, 1, 0); // Faces (1,0)
     player->SetVelocity(0, 0);
+    player->ApplyInput(1, 1, 0); // Faces (1,0)
+    player->SetVelocity(0, 0);
+    player->SetReady(true); // Fix: Must be ready
     room->Enter(player);
 
     // Add emitter manually

@@ -63,7 +63,8 @@ void SwarmAI::Execute(Monster *monster, float dt)
             float jitterX = ((rand() % 100) - 50) / 500.0f;
             float jitterY = ((rand() % 100) - 50) / 500.0f;
 
-            monster->SetVelocity((nx + jitterX) * _speed, (ny + jitterY) * _speed);
+            float speed = monster->GetSpeed(); // Use dynamic speed from monster
+            monster->SetVelocity((nx + jitterX) * speed, (ny + jitterY) * speed);
         }
     }
     else

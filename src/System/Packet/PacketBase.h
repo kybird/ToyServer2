@@ -84,6 +84,9 @@ public:
     explicit ProtobufPacketBase(const TProto &msg) : _proto(msg)
     {
     }
+    explicit ProtobufPacketBase(TProto &&msg) : _proto(std::move(msg))
+    {
+    }
     ProtobufPacketBase() = default;
 
     TProto &GetProto()

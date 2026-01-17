@@ -1,6 +1,7 @@
 #pragma once
 
 #include "System/Database/IConnection.h"
+#include "System/Database/IConnectionFactory.h"
 #include "System/Dispatcher/IDispatcher.h"
 #include "System/IDatabase.h"
 #include "System/Thread/ThreadPool.h"
@@ -17,10 +18,8 @@ namespace System {
 class DatabaseImpl : public IDatabase, public std::enable_shared_from_this<DatabaseImpl>
 {
 public:
-    using ConnectionFactory = std::function<IConnection *()>;
-
     DatabaseImpl(
-        const std::string &connStr, int poolSize, int defaultTimeoutMs, ConnectionFactory factory,
+        const std::string &connStr, int poolSize, int defaultTimeoutMs, std::unique_ptr<IConnectionFactory> factory,
         std::shared_ptr<ThreadPool> threadPool, std::shared_ptr<IDispatcher> dispatcher
     );
     ~DatabaseImpl() override;
@@ -46,7 +45,8 @@ private:
     std::string _connectionString;
     int _poolMax;
     int _defaultTimeoutMs;
-    ConnectionFactory _factory;
+
+    std::unique_ptr<IConnectionFactory> _factory;
 
     std::shared_ptr<ThreadPool> _threadPool;
     std::shared_ptr<IDispatcher> _dispatcher;

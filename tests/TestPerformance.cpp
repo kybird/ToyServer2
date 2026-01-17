@@ -10,8 +10,9 @@
 #include <gtest/gtest.h>
 #include <iostream>
 
-using namespace SimpleGame;
 using namespace std::chrono;
+
+namespace SimpleGame {
 
 class SwarmPerformanceTest : public ::testing::Test
 {
@@ -59,7 +60,7 @@ TEST_F(SwarmPerformanceTest, StressTest500Monsters)
 
     // Add Dummy Player to trigger AI
     auto player = std::make_shared<Player>(1000, nullptr); // ID 1000, Session null
-    player->Initialize(1000, nullptr);                     // Initialize explicitly if needed
+    player->Initialize(1000, nullptr, 100, 5.0f);          // Fixed: Added hp and speed
     player->SetPos(1000.0f, 1000.0f);                      // Center
     room->Enter(player);
 
@@ -90,3 +91,5 @@ TEST_F(SwarmPerformanceTest, StressTest500Monsters)
     // Without players, it broadcasts nothing!
     // We need a dummy player to trigger broadcast.
 }
+
+} // namespace SimpleGame

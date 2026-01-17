@@ -21,7 +21,8 @@ Room::Room(
     int roomId, std::shared_ptr<System::ITimer> timer, std::shared_ptr<System::IStrand> strand,
     std::shared_ptr<UserDB> userDB
 )
-    : _roomId(roomId), _timer(timer), _strand(strand), _waveMgr(_objMgr, _grid, roomId), _userDB(userDB)
+    : _roomId(roomId), _timer(std::move(timer)), _strand(std::move(strand)), _waveMgr(_objMgr, _grid, roomId),
+      _userDB(std::move(userDB))
 {
     _combatMgr = std::make_unique<CombatManager>();
     _effectMgr = std::make_unique<EffectManager>();
@@ -34,17 +35,17 @@ Room::~Room()
 
 void Room::Start()
 {
-    std::cout << "[DEBUG] Room::Start(" << _roomId << ")" << std::endl;
-    if (_timer)
+    std::cout << "[DEBUG] Room::Start(" << _roomId << ")\n";
+    if (_timer != nullptr)
     {
         // Use constants for TPS and interval
         _timerHandle = _timer->SetInterval(1, GameConfig::TICK_INTERVAL_MS, this);
         std::cout << "[DEBUG] Room " << _roomId << " Game Loop Started (" << GameConfig::TPS << " TPS, "
-                  << GameConfig::TICK_INTERVAL_MS << "ms). TimerHandle: " << _timerHandle << std::endl;
+                  << GameConfig::TICK_INTERVAL_MS << "ms). TimerHandle: " << _timerHandle << "\n";
     }
     else
     {
-        std::cerr << "[ERROR] Room " << _roomId << " has NO TIMER!" << std::endl;
+        std::cerr << "[ERROR] Room " << _roomId << " has NO TIMER!\n";
     }
     // WaveManager will be started when first player enters
     LOG_INFO("Room {} created. Waiting for players...", _roomId);
@@ -52,7 +53,7 @@ void Room::Start()
 
 void Room::Stop()
 {
-    if (_timer && _timerHandle)
+    if (_timer != nullptr && _timerHandle != 0)
     {
         _timer->CancelTimer(_timerHandle);
         _timerHandle = 0;
@@ -104,6 +105,8 @@ void Room::Reset()
 
 void Room::OnTimer(uint32_t timerId, void *pParam)
 {
+    (void)timerId;
+    (void)pParam;
     // Offload to Strand (Worker Thread)
     // capture shared_ptr to keep room alive if needed, but 'this' is safe if Timer cancels on destruct.
     // However, safest pattern is capturing shared_from_this() if we want to be 100% sure,
@@ -112,7 +115,7 @@ void Room::OnTimer(uint32_t timerId, void *pParam)
     _serverTick++;
 
     // LOG_DEBUG("[ServerTick] {}", _serverTick);
-    if (_strand)
+    if (_strand != nullptr)
     {
         _strand->Post(
             [this]()
@@ -130,66 +133,7 @@ void Room::OnTimer(uint32_t timerId, void *pParam)
     }
 }
 
-// Helper to broadcast Protobuf message - Overloaded for specific packets
-void BroadcastProto(Room *room, const Protocol::S_SpawnObject &msg)
-{
-    S_SpawnObjectPacket packet(msg);
-    room->BroadcastPacket(packet);
-}
-
-void BroadcastProto(Room *room, Protocol::S_SpawnObject &&msg)
-{
-    S_SpawnObjectPacket packet(std::move(msg));
-    room->BroadcastPacket(packet);
-}
-
-void BroadcastProto(Room *room, const Protocol::S_DespawnObject &msg)
-{
-    S_DespawnObjectPacket packet(msg);
-    room->BroadcastPacket(packet);
-}
-
-void BroadcastProto(Room *room, Protocol::S_DespawnObject &&msg)
-{
-    S_DespawnObjectPacket packet(std::move(msg));
-    room->BroadcastPacket(packet);
-}
-
-void BroadcastProto(Room *room, const Protocol::S_MoveObjectBatch &msg)
-{
-    S_MoveObjectBatchPacket packet(msg);
-    room->BroadcastPacket(packet);
-}
-
-void BroadcastProto(Room *room, Protocol::S_MoveObjectBatch &&msg)
-{
-    S_MoveObjectBatchPacket packet(std::move(msg));
-    room->BroadcastPacket(packet);
-}
-
-void BroadcastProto(Room *room, const Protocol::S_GameOver &msg)
-{
-    S_GameOverPacket packet(msg);
-    room->BroadcastPacket(packet);
-}
-
-void BroadcastProto(Room *room, Protocol::S_GameOver &&msg)
-{
-    S_GameOverPacket packet(std::move(msg));
-    room->BroadcastPacket(packet);
-}
-
-void BroadcastProto(Room *room, const Protocol::S_PlayerDead &msg)
-{
-    S_PlayerDeadPacket packet(msg);
-    room->BroadcastPacket(packet);
-}
-
-void BroadcastProto(Room *room, Protocol::S_PlayerDead &&msg)
-{
-    S_PlayerDeadPacket packet(std::move(msg));
-    room->BroadcastPacket(packet);
-}
+// (Redundant BroadcastProto helpers removed)
 
 void Room::BroadcastSpawn(const std::vector<std::shared_ptr<GameObject>> &objects)
 {
@@ -215,17 +159,17 @@ void Room::BroadcastSpawn(const std::vector<std::shared_ptr<GameObject>> &object
         if (obj->GetType() == Protocol::ObjectType::MONSTER)
         {
             auto monster = std::dynamic_pointer_cast<Monster>(obj);
-            if (monster)
+            if (monster != nullptr)
                 info->set_type_id(monster->GetMonsterTypeId());
         }
         else if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
         {
             auto proj = std::dynamic_pointer_cast<Projectile>(obj);
-            if (proj)
+            if (proj != nullptr)
                 info->set_type_id(proj->GetTypeId());
         }
     }
-    BroadcastProto(this, std::move(msg));
+    BroadcastPacket(S_SpawnObjectPacket(std::move(msg)));
 }
 
 void Room::BroadcastDespawn(const std::vector<int32_t> &objectIds)
@@ -238,10 +182,10 @@ void Room::BroadcastDespawn(const std::vector<int32_t> &objectIds)
     {
         msg.add_object_ids(id);
     }
-    BroadcastProto(this, std::move(msg));
+    BroadcastPacket(S_DespawnObjectPacket(std::move(msg)));
 }
 
-void Room::Enter(std::shared_ptr<Player> player)
+void Room::Enter(const std::shared_ptr<Player> &player)
 {
     // [Async Loading Flow]
     // 1. Register Session in Room (So networking works)
@@ -257,14 +201,14 @@ void Room::Enter(std::shared_ptr<Player> player)
     // 2. Async Load Data
     // We must keep player alive.
     // We assume _userDB is valid.
-    int userId = (int)player->GetSessionId(); // TODO: Use real UserId
-    auto self = shared_from_this();           // Keep Room alive during DB call
+    int32_t userId = static_cast<int32_t>(player->GetSessionId()); // TODO: Use real UserId
+    auto self = shared_from_this();                                // Keep Room alive during DB call
 
-    if (_userDB)
+    if (_userDB != nullptr)
     {
         _userDB->GetUserSkills(
             userId,
-            [self, player](std::vector<std::pair<int, int>> skills)
+            [self, player](const std::vector<std::pair<int, int>> &skills)
             {
                 // [Main Thread] Callback
                 // 3. Finalize Entry
@@ -297,7 +241,7 @@ void Room::Enter(std::shared_ptr<Player> player)
                 // [Refactor] Apply Default Skills from PlayerTemplate
                 const auto *pTmpl =
                     DataManager::Instance().GetPlayerTemplate(1); // Assuming type ID 1 for now (TODO: Use real type ID)
-                if (pTmpl && !pTmpl->defaultSkills.empty())
+                if (pTmpl != nullptr && !pTmpl->defaultSkills.empty())
                 {
                     player->AddDefaultSkills(pTmpl->defaultSkills);
                     LOG_INFO(
@@ -314,7 +258,7 @@ void Room::Enter(std::shared_ptr<Player> player)
 
         // [Refactor] Apply Default Skills from PlayerTemplate
         const auto *pTmpl = DataManager::Instance().GetPlayerTemplate(1);
-        if (pTmpl && !pTmpl->defaultSkills.empty())
+        if (pTmpl != nullptr && !pTmpl->defaultSkills.empty())
         {
             player->AddDefaultSkills(pTmpl->defaultSkills);
         }
@@ -374,7 +318,7 @@ void Room::OnPlayerReady(uint64_t sessionId)
             if (obj->GetType() == Protocol::ObjectType::MONSTER)
             {
                 auto monster = std::dynamic_pointer_cast<Monster>(obj);
-                if (monster)
+                if (monster != nullptr)
                 {
                     info->set_type_id(monster->GetMonsterTypeId());
                 }
@@ -382,7 +326,7 @@ void Room::OnPlayerReady(uint64_t sessionId)
             else if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
             {
                 auto proj = std::dynamic_pointer_cast<Projectile>(obj);
-                if (proj)
+                if (proj != nullptr)
                 {
                     info->set_type_id(proj->GetTypeId());
                 }
@@ -410,7 +354,7 @@ void Room::OnPlayerReady(uint64_t sessionId)
     info->set_max_hp(player->GetMaxHp());
     info->set_state(Protocol::ObjectState::IDLE);
 
-    BroadcastProto(this, std::move(newPlayerSpawn));
+    BroadcastPacket(S_SpawnObjectPacket(std::move(newPlayerSpawn)));
     LOG_INFO("Broadcasted ready player {} spawn to all players in room", sessionId);
 }
 
@@ -431,7 +375,7 @@ void Room::Leave(uint64_t sessionId)
         // Broadcast Despawn
         Protocol::S_DespawnObject despawn;
         despawn.add_object_ids(player->GetId());
-        BroadcastProto(this, std::move(despawn));
+        BroadcastPacket(S_DespawnObjectPacket(std::move(despawn)));
 
         _players.erase(it);
         LOG_INFO("Player {} left Room {}", sessionId, _roomId);
@@ -481,63 +425,21 @@ void Room::Update(float deltaTime)
 
     for (auto &obj : objects)
     {
-        // AI / Logic Update
-        obj->Update(deltaTime, this);
-
-        float oldX = obj->GetX();
-        float oldY = obj->GetY();
-
-        // Simple Euler Integration
-        // Server uses input-based velocity (from C_MOVE_INPUT)
-        if (obj->GetVX() != 0 || obj->GetVY() != 0)
-        {
-            float newX = oldX + obj->GetVX() * deltaTime;
-            float newY = oldY + obj->GetVY() * deltaTime;
-
-            // Map Bounds Check (TODO)
-
-            obj->SetPos(newX, newY);
-
-            if (obj->GetType() == Protocol::ObjectType::PLAYER)
-            {
-                // LOG_DEBUG(
-                //     "[UpdateTick] Tick={} Obj={} Pos=({:.2f},{:.2f}) -> ({:.2f},{:.2f}) Vel=({:.2f},{:.2f})",
-                //     _serverTick,
-                //     obj->GetId(),
-                //     oldX,
-                //     oldY,
-                //     newX,
-                //     newY,
-                //     obj->GetVX(),
-                //     obj->GetVY()
-                // );
-            }
-
-            _grid.Update(obj, oldX, oldY);
-        }
-
-        Protocol::ObjectPos move;
-        move.set_object_id(obj->GetId());
-        move.set_x(obj->GetX());
-        move.set_y(obj->GetY());
-        move.set_vx(obj->GetVX());
-        move.set_vy(obj->GetVY());
-
-        if (obj->GetType() == Protocol::ObjectType::PLAYER)
-        {
-            playerMoves.push_back(move);
-        }
-        else
-        {
-            monsterMoves.push_back(move);
-        }
+        UpdateObject(obj, deltaTime, monsterMoves, playerMoves);
     }
 
-    // === 2. Broadcast Monsters ===
-    // === 2. Broadcast Monsters ===
-    if (!monsterMoves.empty())
+    // === 2. Broadcast Monsters (Throttled: 3 TPS) ===
+    // 3 TPS = 0.333s interval.
+    // Logic TPS remains at 25.
+
+    // Better: use _serverTick based modulo if TPS is fixed.
+    // TPS 25. 3 times/sec = every 8 ticks (25/3 = 8.33).
+    // Let's use Tick Count for stability.
+    // Every 8 ticks = 0.32s (approx 3.125 Hz)
+
+    if (_serverTick % 8 == 0 && !monsterMoves.empty())
     {
-        // [Optim] Split into Batches of 50 to prevent huge packets (Network Flush/MTU issues)
+        // [Optim] Split into Batches of 50
         const size_t BATCH_SIZE = 50;
         size_t totalMoves = monsterMoves.size();
         size_t processed = 0;
@@ -553,42 +455,100 @@ void Room::Update(float deltaTime)
                 *batch.add_moves() = monsterMoves[processed + i];
             }
 
-            BroadcastProto(this, std::move(batch));
+            BroadcastPacket(S_MoveObjectBatchPacket(std::move(batch)));
             processed += count;
         }
     }
 
     // === 3. Broadcast Players (filter self) ===
-    if (!playerMoves.empty())
-    {
-        for (auto &pair : _players)
-        {
-            auto viewer = pair.second;
-            if (!viewer->GetSession())
-                continue;
-
-            Protocol::S_MoveObjectBatch batch;
-            batch.set_server_tick(_serverTick);
-
-            for (auto &move : playerMoves)
-            {
-                if (move.object_id() != viewer->GetId())
-                    *batch.add_moves() = move;
-            }
-
-            if (batch.moves_size() > 0)
-            {
-                S_MoveObjectBatchPacket pkt(batch);
-                viewer->GetSession()->SendPacket(pkt);
-            }
-        }
-    }
+    BroadcastPlayerMoves(playerMoves);
 
     // === 4. Send Player Ack (authoritative snapshot) ===
+    SendPlayerAcks();
+
+    // === [NEW] 효과 업데이트 (Physics 후, Combat 전) ===
+    _effectMgr->Update(_totalRunTime, this);
+
+    // 3. Combat & Collision Resolution (Refactored)
+    _combatMgr->Update(deltaTime, this);
+}
+
+void Room::UpdateObject(
+    const std::shared_ptr<GameObject> &obj, float deltaTime, std::vector<Protocol::ObjectPos> &monsterMoves,
+    std::vector<Protocol::ObjectPos> &playerMoves
+)
+{
+    // AI / Logic Update
+    obj->Update(deltaTime, this);
+
+    float oldX = obj->GetX();
+    float oldY = obj->GetY();
+
+    // Simple Euler Integration
+    // Server uses input-based velocity (from C_MOVE_INPUT)
+    if (std::abs(obj->GetVX()) > std::numeric_limits<float>::epsilon() ||
+        std::abs(obj->GetVY()) > std::numeric_limits<float>::epsilon())
+    {
+        float newX = oldX + obj->GetVX() * deltaTime;
+        float newY = oldY + obj->GetVY() * deltaTime;
+
+        // Map Bounds Check (TODO)
+
+        obj->SetPos(newX, newY);
+        _grid.Update(obj, oldX, oldY);
+    }
+
+    Protocol::ObjectPos move;
+    move.set_object_id(obj->GetId());
+    move.set_x(obj->GetX());
+    move.set_y(obj->GetY());
+    move.set_vx(obj->GetVX());
+    move.set_vy(obj->GetVY());
+
+    if (obj->GetType() == Protocol::ObjectType::PLAYER)
+    {
+        playerMoves.push_back(move);
+    }
+    else
+    {
+        monsterMoves.push_back(move);
+    }
+}
+
+void Room::BroadcastPlayerMoves(const std::vector<Protocol::ObjectPos> &playerMoves)
+{
+    if (playerMoves.empty())
+        return;
+
+    for (auto &pair : _players)
+    {
+        auto viewer = pair.second;
+        if (viewer->GetSession() == nullptr || !viewer->IsReady())
+            continue;
+
+        Protocol::S_MoveObjectBatch batch;
+        batch.set_server_tick(_serverTick);
+
+        for (const auto &move : playerMoves)
+        {
+            if (move.object_id() != viewer->GetId())
+                *batch.add_moves() = move;
+        }
+
+        if (batch.moves_size() > 0)
+        {
+            S_MoveObjectBatchPacket pkt(batch);
+            viewer->GetSession()->SendPacket(pkt);
+        }
+    }
+}
+
+void Room::SendPlayerAcks()
+{
     for (auto &pair : _players)
     {
         auto player = pair.second;
-        if (!player->GetSession())
+        if (player->GetSession() == nullptr)
             continue;
 
         Protocol::S_PlayerStateAck ack;
@@ -602,22 +562,7 @@ void Room::Update(float deltaTime)
 
         // Update Internal LastSent State to prevent resending if nothing changes
         player->UpdateLastSentState(_totalRunTime, _serverTick);
-
-        // LOG_DEBUG(
-        //     "[Ack] Player={} ServerTick={} ClientTick={} Pos=({:.2f},{:.2f})",
-        //     player->GetId(),
-        //     _serverTick,
-        //     player->GetLastProcessedClientTick(),
-        //     player->GetX(),
-        //     player->GetY()
-        // );
     }
-
-    // === [NEW] 효과 업데이트 (Physics 후, Combat 전) ===
-    _effectMgr->Update(_totalRunTime, this);
-
-    // 3. Combat & Collision Resolution (Refactored)
-    _combatMgr->Update(deltaTime, this);
 }
 
 std::shared_ptr<Player> Room::GetNearestPlayer(float x, float y)
@@ -649,39 +594,16 @@ std::vector<std::shared_ptr<Monster>> Room::GetMonstersInRange(float x, float y,
     std::lock_guard<std::recursive_mutex> lock(_mutex);
     std::vector<std::shared_ptr<Monster>> found;
 
-    if (true) // SpatialGrid is direct member, always there.
+    // SpatialGrid is used for optimized query
+    auto objects = _grid.QueryRange(x, y, radius);
+    for (auto &obj : objects)
     {
-        auto objects = _grid.QueryRange(x, y, radius);
-        for (auto &obj : objects)
+        if (obj->GetType() == Protocol::ObjectType::MONSTER)
         {
-            if (obj->GetType() == Protocol::ObjectType::MONSTER)
-            {
-                auto monster = std::dynamic_pointer_cast<Monster>(obj);
-                if (monster && !monster->IsDead())
-                {
-                    found.push_back(monster);
-                }
-            }
-        }
-    }
-    else
-    {
-        auto allObjectsInRange = _objMgr.GetAllObjects();
-        for (auto &obj : allObjectsInRange)
-        {
-            if (obj->GetType() != Protocol::ObjectType::MONSTER)
-                continue;
-
             auto monster = std::dynamic_pointer_cast<Monster>(obj);
-            if (monster && !monster->IsDead())
+            if (monster != nullptr && !monster->IsDead())
             {
-                float dx = monster->GetX() - x;
-                float dy = monster->GetY() - y;
-                float distSq = dx * dx + dy * dy;
-                if (distSq <= radius * radius)
-                {
-                    found.push_back(monster);
-                }
+                found.push_back(monster);
             }
         }
     }
@@ -704,7 +626,7 @@ void Room::BroadcastPacket(const System::IPacket &pkt)
             continue;
 
         auto *isess = player->GetSession();
-        if (!isess)
+        if (isess == nullptr)
         {
             LOG_WARN("BroadcastPacket: Player {} has NO SESSION. Skipping.", pair.first);
             continue;
@@ -713,7 +635,7 @@ void Room::BroadcastPacket(const System::IPacket &pkt)
         // Dynamic cast to check if it's a real Session (vs MockSession)
         // This overhead is acceptable compared to serialization savings for many players.
         auto *sess = dynamic_cast<System::Session *>(isess);
-        if (sess)
+        if (sess != nullptr)
         {
             // LOG_DEBUG("BroadcastPacket: Player {} is Real Session.", pair.first);
             realSessions.push_back(sess);
@@ -750,7 +672,36 @@ void Room::HandleGameOver(bool isWin)
     msg.set_survived_time_ms(static_cast<int64_t>(_totalRunTime * 1000));
     msg.set_is_win(isWin);
 
-    BroadcastProto(this, std::move(msg));
+    BroadcastPacket(S_GameOverPacket(std::move(msg)));
+}
+
+void Room::DebugAddExpToAll(int32_t exp)
+{
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    for (auto &pair : _players)
+    {
+        auto player = pair.second;
+        player->AddExp(exp, this);
+    }
+    LOG_INFO("DEBUG: Added {} EXP to all players in Room {}", exp, _roomId);
+}
+
+void Room::DebugSpawnMonster(int32_t monsterId, int32_t count)
+{
+    // Delegate to WaveManager
+    _waveMgr.DebugSpawn(this, monsterId, count);
+}
+
+void Room::DebugToggleGodMode()
+{
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    for (auto &pair : _players)
+    {
+        auto player = pair.second;
+        bool newState = !player->IsGodMode();
+        player->SetGodMode(newState);
+    }
+    LOG_INFO("DEBUG: Toggled God Mode for all players in Room {}", _roomId);
 }
 
 } // namespace SimpleGame

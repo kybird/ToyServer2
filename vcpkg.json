@@ -10,6 +10,9 @@
         "concurrentqueue",
         "gtest",
         "sqlite3",
-        "protobuf"
+        "protobuf",
+        "libmysql",
+        "cnats",
+        "redis-plus-plus"
     ]
 }

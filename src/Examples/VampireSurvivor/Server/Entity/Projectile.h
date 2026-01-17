@@ -62,12 +62,10 @@ public:
         return _damage;
     }
 
-    void Update(float dt)
+    void Update(float dt, Room *room) override
     {
-        // Simple linear movement
-        _x += _vx * dt;
-        _y += _vy * dt;
-
+        // Movement is handled by Room::Update via GameObject::GetVX/VY
+        // We only handle logic (lifetime)
         _lifetime -= dt;
     }
 

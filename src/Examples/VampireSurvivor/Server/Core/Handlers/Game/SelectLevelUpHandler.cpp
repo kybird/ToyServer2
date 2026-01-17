@@ -44,6 +44,8 @@ void SelectLevelUpHandler::Handle(System::ISession *session, System::PacketView 
             LevelUpManager levelUpMgr;
             levelUpMgr.ApplySelection(player.get(), optionIndex, room.get());
 
+            player->ExitLevelUpState(room.get());
+
             LOG_INFO(
                 "[SelectLevelUpHandler] Processed selection for Player {} Option index {}", player->GetId(), optionIndex
             );

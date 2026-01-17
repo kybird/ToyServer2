@@ -45,3 +45,17 @@ target_link_libraries(TestAsyncDatabase
 target_precompile_headers(TestAsyncDatabase PRIVATE "${CMAKE_SOURCE_DIR}/src/System/Pch.h")
 
 gtest_discover_tests(TestAsyncDatabase)
+
+# Command Console Test
+add_executable(TestCommandConsole
+    TestCommandConsole.cpp
+)
+
+target_link_libraries(TestCommandConsole
+    PRIVATE
+        System
+        GTest::gtest_main
+)
+target_precompile_headers(TestCommandConsole PRIVATE "${CMAKE_SOURCE_DIR}/src/System/Pch.h")
+
+gtest_discover_tests(TestCommandConsole)

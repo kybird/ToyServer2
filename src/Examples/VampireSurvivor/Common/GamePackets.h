@@ -201,6 +201,16 @@ public:
     using Base::Base;
 };
 
+// --- S_WAVE_NOTIFY ---
+class S_WaveNotifyPacket : public System::ProtobufPacketBase<S_WaveNotifyPacket, PacketHeader, Protocol::S_WaveNotify>
+{
+    using Base = System::ProtobufPacketBase<S_WaveNotifyPacket, PacketHeader, Protocol::S_WaveNotify>;
+
+public:
+    static constexpr uint16_t ID = PacketID::S_WAVE_NOTIFY;
+    using Base::Base;
+};
+
 // --- S_LEVEL_UP_OPTION ---
 class S_LevelUpOptionPacket
     : public System::ProtobufPacketBase<S_LevelUpOptionPacket, PacketHeader, Protocol::S_LevelUpOption>

@@ -8,39 +8,12 @@ namespace System {
 
 // SQLite 드라이버용 팩토리 (향후 드라이버 추가 시 확장)
 // 이 부분은 드라이버 구현 후에 구체화되거나 IDatabase::Create에서 처리됨.
-IConnection *CreateSQLiteConnection();
-
-std::shared_ptr<IDatabase> IDatabase::Create(
-    const std::string &driverType, const std::string &connStr, int poolSize, std::shared_ptr<ThreadPool> threadPool,
-    std::shared_ptr<IDispatcher> dispatcher, int defaultTimeoutMs
-)
-{
-    DatabaseImpl::ConnectionFactory factory;
-
-    if (driverType == "sqlite")
-    {
-        factory = []()
-        {
-            // SQLiteConnection을 생성하여 반환 (내부 인터페이스 IConnection으로 캐스팅 필요)
-            // 실제 구현은 SQLiteConnection.cpp에서 제공하는 헬퍼를 활용할 예정
-            return CreateSQLiteConnection();
-        };
-    }
-    else
-    {
-        return nullptr;
-    }
-
-    auto db = std::make_shared<DatabaseImpl>(connStr, poolSize, defaultTimeoutMs, factory, threadPool, dispatcher);
-    db->Init();
-    return db;
-}
 
 DatabaseImpl::DatabaseImpl(
-    const std::string &connStr, int poolSize, int defaultTimeoutMs, ConnectionFactory factory,
+    const std::string &connStr, int poolSize, int defaultTimeoutMs, std::unique_ptr<IConnectionFactory> factory,
     std::shared_ptr<ThreadPool> threadPool, std::shared_ptr<IDispatcher> dispatcher
 )
-    : _connectionString(connStr), _poolMax(poolSize), _defaultTimeoutMs(defaultTimeoutMs), _factory(factory),
+    : _connectionString(connStr), _poolMax(poolSize), _defaultTimeoutMs(defaultTimeoutMs), _factory(std::move(factory)),
       _threadPool(threadPool), _dispatcher(dispatcher)
 {
 }
@@ -231,7 +204,7 @@ std::shared_ptr<IConnection> DatabaseImpl::Acquire(int timeoutMs)
             {
                 if (_currentSize.compare_exchange_weak(current, current + 1))
                 {
-                    rawConn = _factory();
+                    rawConn = _factory->CreateConnection();
                     if (rawConn && rawConn->Connect(_connectionString))
                     {
                         // Success (Fresh connection, no Ping needed)

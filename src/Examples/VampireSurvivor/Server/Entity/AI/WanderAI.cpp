@@ -3,11 +3,13 @@
 
 namespace SimpleGame {
 
-void WanderAI::Think(Monster* monster, Room* room, float currentTime) {
+void WanderAI::Think(Monster *monster, Room *room, float currentTime)
+{
     (void)monster;
     (void)room;
-    
-    if (currentTime < _nextDirectionChangeTime) return;
+
+    if (currentTime < _nextDirectionChangeTime)
+        return;
     _nextDirectionChangeTime = currentTime + _directionChangeInterval;
 
     // Pick random direction
@@ -16,12 +18,15 @@ void WanderAI::Think(Monster* monster, Room* room, float currentTime) {
     _dirY = std::sin(angle);
 }
 
-void WanderAI::Execute(Monster* monster, float dt) {
+void WanderAI::Execute(Monster *monster, float dt)
+{
     (void)dt;
-    monster->SetVelocity(_dirX * _speed, _dirY * _speed);
+    float speed = monster->GetSpeed(); // AI now respects dynamic speed from monster
+    monster->SetVelocity(_dirX * speed, _dirY * speed);
 }
 
-void WanderAI::Reset() {
+void WanderAI::Reset()
+{
     _dirX = 0;
     _dirY = 0;
     _nextDirectionChangeTime = 0;

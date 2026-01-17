@@ -54,7 +54,9 @@ MonsterFactory::CreateMonster(ObjectManager &objMgr, int32_t monsterTypeId, floa
     );
 
     // Init
-    monster->Initialize(id, monsterTypeId, finalHp, tmpl->radius, tmpl->damageOnContact, tmpl->attackCooldown);
+    monster->Initialize(
+        id, monsterTypeId, finalHp, tmpl->radius, tmpl->damageOnContact, tmpl->attackCooldown, tmpl->speed
+    );
 
     // Apply Velocity/Pos
     monster->SetVelocity(0, 0);

@@ -159,11 +159,7 @@ public:
      * @param dispatcher 메인 스레드 디스패처
      * @param defaultTimeoutMs 기본 타임아웃 (ms), 기본값 5000
      */
-    static std::shared_ptr<IDatabase> Create(
-        const std::string &driverType, const std::string &connStr, int poolSize,
-        std::shared_ptr<class ThreadPool> threadPool, std::shared_ptr<class IDispatcher> dispatcher,
-        int defaultTimeoutMs = 5000
-    );
+    // static Create 제거: DatabaseImpl을 직접 생성하여 의존성을 주입하세요.
 
     // 단순 쿼리/실행 (내부에서 커넥션 획득 및 반환 자동 수행)
     virtual DbResult<std::unique_ptr<IResultSet>> Query(const std::string &sql) = 0;

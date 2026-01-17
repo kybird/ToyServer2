@@ -1,11 +1,14 @@
 #include "System/Database/DatabaseImpl.h"
 #include "System/Dispatcher/IDispatcher.h"
+#ifdef USE_SQLITE
+#include "System/Drivers/SQLite/SQLiteConnectionFactory.h"
+#endif
+#include <atomic>
+#include <chrono>
+#include <condition_variable>
 #include <gtest/gtest.h>
 #include <memory>
-#include <atomic>
-#include <condition_variable>
 #include <mutex>
-#include <chrono>
 
 namespace System {
 
@@ -20,7 +23,9 @@ public:
         _cv.notify_one();
     }
 
-    void Post(IMessage *) override {}
+    void Post(IMessage *) override
+    {
+    }
 
     bool Process() override
     {
@@ -39,16 +44,34 @@ public:
     {
         std::unique_lock<std::mutex> lock(_mutex);
         return _cv.wait_for(
-            lock, std::chrono::milliseconds(timeoutMs), [this, count] { return _tasks.size() >= (size_t)count; }
+            lock,
+            std::chrono::milliseconds(timeoutMs),
+            [this, count]
+            {
+                return _tasks.size() >= (size_t)count;
+            }
         );
     }
 
     // Dummy methods
-    void Wait(int) override {}
-    size_t GetQueueSize() const override { return _tasks.size(); }
-    bool IsOverloaded() const override { return false; }
-    bool IsRecovered() const override { return true; }
-    void RegisterTimerHandler(ITimerHandler *) override {}
+    void Wait(int) override
+    {
+    }
+    size_t GetQueueSize() const override
+    {
+        return _tasks.size();
+    }
+    bool IsOverloaded() const override
+    {
+        return false;
+    }
+    bool IsRecovered() const override
+    {
+        return true;
+    }
+    void RegisterTimerHandler(ITimerHandler *) override
+    {
+    }
 
 private:
     std::vector<std::function<void()>> _tasks;
@@ -56,19 +79,29 @@ private:
     std::condition_variable _cv;
 };
 
-class DatabaseAsyncTest : public ::testing::Test {
+class DatabaseAsyncTest : public ::testing::Test
+{
 protected:
-    void SetUp() override {
+    void SetUp() override
+    {
     }
-    void TearDown() override {
+    void TearDown() override
+    {
     }
 };
 
 TEST_F(DatabaseAsyncTest, BasicAsyncQuery)
 {
     // 1. Create SQLite DB (memory) with 1 thread
-    auto db = IDatabase::Create("sqlite", ":memory:", 1);
+#ifdef USE_SQLITE
+    auto factory = std::make_unique<SQLiteConnectionFactory>();
+    auto db = std::make_shared<DatabaseImpl>(":memory:", 1, 5000, std::move(factory), nullptr, nullptr);
+    db->Init();
     ASSERT_NE(db, nullptr);
+#else
+    GTEST_SKIP() << "SQLite Driver Not Enabled";
+    return;
+#endif
 
     auto dispatcher = std::make_shared<TestDispatcher>();
     db->SetDispatcher(dispatcher);
@@ -107,9 +140,16 @@ TEST_F(DatabaseAsyncTest, BasicAsyncQuery)
 
 TEST_F(DatabaseAsyncTest, RunInTransactionAsync)
 {
-    auto db = IDatabase::Create("sqlite", ":memory:", 1);
+#ifdef USE_SQLITE
+    auto factory = std::make_unique<SQLiteConnectionFactory>();
+    auto db = std::make_shared<DatabaseImpl>(":memory:", 1, 5000, std::move(factory), nullptr, nullptr);
+    db->Init();
     ASSERT_NE(db, nullptr);
-    
+#else
+    GTEST_SKIP() << "SQLite Driver Not Enabled";
+    return;
+#endif
+
     auto dispatcher = std::make_shared<TestDispatcher>();
     db->SetDispatcher(dispatcher);
 

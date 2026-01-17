@@ -5,6 +5,20 @@
 #include "Core/UserDB.h"
 #include "Game/RoomManager.h"
 #include "Protocol/game.pb.h"
+#include "System/Database/DatabaseImpl.h"
+
+#ifdef USE_SQLITE
+#include "System/Drivers/SQLite/SQLiteConnectionFactory.h"
+#endif
+
+#ifdef USE_MYSQL
+#include "System/Drivers/MySQL/MySQLConnectionFactory.h"
+#endif
+
+#include "System/MQ/MessageQoS.h"
+#include "System/MQ/MessageSystem.h"
+
+#include "System/ICommandConsole.h"
 #include "System/Session/SessionFactory.h"
 #include "System/Thread/ThreadPool.h"
 #include "System/ToyServerSystem.h"
@@ -53,6 +67,72 @@ int main()
         return 1;
     }
 
+    // [Command Console Registration]
+    auto console = framework->GetCommandConsole();
+    if (console)
+    {
+        console->RegisterCommand(
+            {"/levelup",
+             "Level Up all players in Room 1. Usage: /levelup [amount]",
+             [](const std::vector<std::string> &args)
+             {
+                 int exp = 100; // Default
+                 if (!args.empty())
+                 {
+                     try
+                     {
+                         exp = std::stoi(args[0]);
+                     } catch (...)
+                     {
+                         LOG_WARN("Invalid exp amount, using default 100");
+                     }
+                 }
+
+                 auto room = SimpleGame::RoomManager::Instance().GetRoom(1);
+                 if (room)
+                 {
+                     room->DebugAddExpToAll(exp);
+                     LOG_INFO("Executed /levelup with {} EXP", exp);
+                 }
+                 else
+                 {
+                     LOG_WARN("Room 1 not found for /levelup");
+                 }
+             }}
+        );
+
+        console->RegisterCommand(
+            {"/spawn",
+             "Spawn Monster [id] [count]",
+             [](const std::vector<std::string> &args)
+             {
+                 if (args.size() < 2)
+                 {
+                     LOG_WARN("Usage: /spawn [id] [count]");
+                     return;
+                 }
+                 try
+                 {
+                     int id = std::stoi(args[0]);
+                     int count = std::stoi(args[1]);
+                     auto room = SimpleGame::RoomManager::Instance().GetRoom(1);
+                     if (room)
+                     {
+                         room->DebugSpawnMonster(id, count);
+                         LOG_INFO("Executed /spawn {} {}", id, count);
+                     }
+                     else
+                     {
+                         LOG_WARN("Room 1 not found for /spawn");
+                     }
+                 } catch (...)
+                 {
+                     LOG_ERROR("Invalid arguments for /spawn");
+                 }
+             }}
+        );
+    }
+
     // [Heartbeat] Configure Ping (5s Interval, 15s Timeout)
     System::SessionFactory::SetHeartbeatConfig(
         5000,
@@ -76,13 +156,51 @@ int main()
     auto dbThreadPool = std::make_shared<System::ThreadPool>(4);
     dbThreadPool->Start();
 
-    // Initialize Database (SQLite) with dependencies
-    auto db = System::IDatabase::Create("sqlite", "data/game.db", 2, dbThreadPool, framework->GetDispatcher());
+    // Initialize Database with Factory based on Config
+    std::unique_ptr<System::IConnectionFactory> dbFactory;
+    const auto &cfg = config->GetConfig();
+
+    if (cfg.dbType == "mysql")
+    {
+#ifdef USE_MYSQL
+        System::MySQLConfig mysqlCfg;
+        mysqlCfg.Host = cfg.dbAddress;
+        mysqlCfg.Port = cfg.dbPort;
+        mysqlCfg.User = cfg.dbUser;
+        mysqlCfg.Password = cfg.dbPassword;
+        mysqlCfg.Database = cfg.dbSchema;
+
+        dbFactory = std::make_unique<System::MySQLConnectionFactory>(mysqlCfg);
+        LOG_INFO("Using MySQL Database Driver. Host: {}, DB: {}", mysqlCfg.Host, mysqlCfg.Database);
+#else
+        LOG_ERROR("MySQL Driver is not available in this build.");
+        return 1;
+#endif
+    }
+    else
+    {
+#ifdef USE_SQLITE
+        // Default SQLite
+        dbFactory = std::make_unique<System::SQLiteConnectionFactory>();
+        LOG_INFO("Using SQLite Database Driver. File: {}", cfg.dbAddress);
+#else
+        LOG_ERROR("SQLite Driver is not available in this build.");
+        return 1;
+#endif
+    }
+
+    auto db = std::make_shared<System::DatabaseImpl>(
+        cfg.dbAddress, cfg.dbWorkerCount, 5000, std::move(dbFactory), dbThreadPool, framework->GetDispatcher()
+    );
+
     if (!db)
     {
         LOG_ERROR("Failed to create database system.");
         return 1;
     }
+
+    // Initialize DB Connection
+    db->Init();
 
     // Ensure Tables Exist
     {
@@ -112,6 +230,58 @@ int main()
     auto &roomMgr = SimpleGame::RoomManager::Instance();
     roomMgr.TestMethod();
     roomMgr.Init(framework, userDB);
+
+    // Initialize MQ System
+    auto &mq = System::MQ::MessageSystem::Instance();
+    // Assuming local NATS and Redis for now (config could be better)
+    if (!mq.Initialize("nats://localhost:4222", "tcp://localhost:6379"))
+    {
+        LOG_WARN("MQ System failed to connect. Distributed features may not work.");
+    }
+    else
+    {
+        LOG_INFO("MQ System Initialized.");
+
+        // Subscribe to "LobbyChat" on Reliable Channel (Redis)
+        mq.Subscribe(
+            "LobbyChat",
+            [](const std::string &topic, const std::string &msg)
+            {
+                // This callback runs on a background thread (RedisStreamDriver poll thread)
+                // We need to parse the message.
+                // But wait, the msg is just the payload string?
+                // ChatHandler sends "json" or "protobuf"?
+                // Let's assume ChatHandler sends RAW STRING for msg based on previous analysis of ChatHandler.
+                // Oh wait, `ChatHandler` extracts `req.msg()` which is string.
+                // But we need PlayerID to construct S_Chat packet.
+                // We should define a simple JSON format or delimiters for MQ payload: "PlayerID:Message"
+
+                // For now, let's look at `S_ChatPacket`. It takes `Protocol::S_Chat`.
+                // `S_Chat` has `player_id` and `msg`.
+                // So we need to serialize both. JSON is easiest.
+
+                try
+                {
+                    auto json = nlohmann::json::parse(msg);
+                    int32_t playerId = json["p"];
+                    std::string chatMsg = json["m"];
+
+                    Protocol::S_Chat res;
+                    res.set_player_id(playerId);
+                    res.set_msg(chatMsg);
+                    SimpleGame::S_ChatPacket pkt(res);
+
+                    // Broadcast to Local Lobby Users
+                    SimpleGame::RoomManager::Instance().BroadcastPacketToLobby(pkt);
+
+                } catch (...)
+                {
+                    LOG_ERROR("Failed to parse LobbyChat MQ message: {}", msg);
+                }
+            },
+            System::MQ::MessageQoS::Reliable
+        );
+    }
 
     // Default room 1 created by ctor -> Re-created/Available
     auto room = roomMgr.GetRoom(1);

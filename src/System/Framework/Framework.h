@@ -12,8 +12,10 @@ class IDispatcher;
 class IMetrics; // Forward Decl
 class ThreadPool;
 class IPacketHandler;
-class CommandConsole; // Forward Decl
-class IDatabase;      // Forward Decl
+class IPacketHandler;
+class CommandConsole;  // Forward Decl
+class ICommandConsole; // Forward Decl
+class IDatabase;       // Forward Decl
 
 class Framework : public IFramework
 {
@@ -35,6 +37,7 @@ public:
 
 protected:
     std::shared_ptr<IDispatcher> GetDispatcher() const override;
+    std::shared_ptr<ICommandConsole> GetCommandConsole() const override;
 
 private:
     std::shared_ptr<NetworkImpl> _network;
@@ -45,7 +48,7 @@ private:
     std::vector<std::jthread> _ioThreads;
     std::atomic<bool> _running{false};
 
-    std::unique_ptr<CommandConsole> _console;
+    std::shared_ptr<CommandConsole> _console;
     std::shared_ptr<IConfig> _config;
 };
 

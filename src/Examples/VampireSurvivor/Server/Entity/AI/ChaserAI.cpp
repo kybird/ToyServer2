@@ -22,6 +22,7 @@ void ChaserAI::Think(Monster *monster, Room *room, float currentTime)
 void ChaserAI::Execute(Monster *monster, float dt)
 {
     (void)dt;
+    float speed = monster->GetSpeed(); // AI now respects dynamic speed from monster
     if (!_hasTarget || !_room)
     {
         monster->SetVelocity(0, 0);
@@ -57,7 +58,7 @@ void ChaserAI::Execute(Monster *monster, float dt)
             // 직선 방향으로만 이동
             float nx = dx / dist;
             float ny = dy / dist;
-            monster->SetVelocity(nx * _speed, ny * _speed);
+            monster->SetVelocity(nx * speed, ny * speed);
         }
     }
     else

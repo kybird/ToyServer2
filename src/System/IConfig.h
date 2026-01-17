@@ -13,6 +13,13 @@ struct ServerConfig
     int dbWorkerCount = 2; // Default for Async DB Workers
     std::string dbAddress;
 
+    // Database Config
+    std::string dbType = "sqlite"; // sqlite, mysql
+    std::string dbUser = "";
+    std::string dbPassword = "";
+    std::string dbSchema = ""; // For MySQL
+    int dbPort = 3306;
+
     // Rate Limiter
     double rateLimit = 50.0;
     double rateBurst = 100.0;

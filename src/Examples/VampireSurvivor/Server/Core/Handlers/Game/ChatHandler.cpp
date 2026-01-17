@@ -1,47 +1,52 @@
 #include "ChatHandler.h"
-#include "Protocol/game.pb.h"
-#include "GamePackets.h"
 #include "Game/RoomManager.h"
+#include "GamePackets.h"
+#include "Protocol/game.pb.h"
 #include "System/ILog.h"
 #include <iostream>
 #include <string>
+
+#include "System/MQ/MessageQoS.h"
+#include "System/MQ/MessageSystem.h"
+#include <nlohmann/json.hpp>
 
 namespace SimpleGame {
 namespace Handlers {
 namespace Game {
 
-void ChatHandler::Handle(System::ISession* session, System::PacketView packet)
+void ChatHandler::Handle(System::ISession *session, System::PacketView packet)
 {
-    std::cout << "[DEBUG] Handling C_CHAT" << std::endl;
+    // std::cout << "[DEBUG] Handling C_CHAT" << std::endl;
     Protocol::C_Chat req;
     if (packet.Parse(req))
     {
         std::string msg = req.msg();
-        std::cout << "[DEBUG] Chat Msg: " << msg << std::endl;
+        // std::cout << "[DEBUG] Chat Msg: " << msg << std::endl;
 
-        // Broadcast
-        Protocol::S_Chat res;
-        res.set_player_id((int32_t)session->GetId());
-        res.set_msg(msg);
-
-        S_ChatPacket chatPacket(res);
-        // If in Lobby, broadcast to all lobby sessions
+        // If in Lobby, use MQ for Distributed Global Chat
         if (RoomManager::Instance().IsInLobby(session->GetId()))
         {
-            std::cout << "[DEBUG] Broadcasting to Lobby..." << std::endl;
-            RoomManager::Instance().BroadcastPacketToLobby(chatPacket);
-            std::cout << "[DEBUG] Broadcast to Lobby Complete." << std::endl;
+            // Serialize "PlayerID:Msg" to JSON
+            nlohmann::json j;
+            j["p"] = (int32_t)session->GetId();
+            j["m"] = msg;
+
+            // Publish to MQ (Reliable)
+            System::MQ::MessageSystem::Instance().Publish("LobbyChat", j.dump(), System::MQ::MessageQoS::Reliable);
         }
         else
         {
-            // In Room - Broadcast via Room
-            std::cout << "[DEBUG] Broadcasting to Room..." << std::endl;
+            // In Room - Echo local only (or implement Room Chat later)
+            Protocol::S_Chat res;
+            res.set_player_id((int32_t)session->GetId());
+            res.set_msg(msg);
+            S_ChatPacket chatPacket(res);
+
+            // std::cout << "[DEBUG] Broadcasting to Room..." << std::endl;
             auto player = RoomManager::Instance().GetPlayer(session->GetId());
             if (player)
             {
-                // Room broadcast logic
-                // player->GetRoom()->BroadcastPacket(chatPacket);
-                LOG_WARN("Room Chat not fully implemented. Echoing only.");
+                // Simple echo for now
                 session->SendPacket(chatPacket);
             }
         }

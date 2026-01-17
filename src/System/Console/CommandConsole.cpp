@@ -4,6 +4,7 @@
 #include "System/Metrics/MetricsCollector.h"
 #include "System/Pch.h"
 
+#include <algorithm>
 #include <iostream>
 #include <sstream>
 
@@ -11,6 +12,63 @@ namespace System {
 
 CommandConsole::CommandConsole(std::shared_ptr<IConfig> config) : _config(config)
 {
+    // Register Default Commands
+
+    // 1. /status
+    RegisterCommand(
+        {"/status",
+         "Show server status",
+         [this](const std::vector<std::string> &args)
+         {
+             // Need access to Server Stats... using MetricsCollector?
+             // MetricsCollector stores metrics, but maybe not active session count directly unless tracked.
+             // For now, print what we have.
+             LOG_INFO("Config: RateLimit={}, Burst={}", _config->GetConfig().rateLimit, _config->GetConfig().rateBurst);
+         }}
+    );
+
+    // 2. /reload
+    RegisterCommand(
+        {"/reload",
+         "Reload configuration",
+         [this](const std::vector<std::string> &args)
+         {
+             LOG_INFO("Reloading Config...");
+             if (_config->Load("data/server_config.json"))
+             {
+                 LOG_INFO("Config Reloaded.");
+             }
+             else
+             {
+                 LOG_ERROR("Failed to reload config.");
+             }
+         }}
+    );
+
+    // 3. /help
+    RegisterCommand(
+        {"/help",
+         "List available commands",
+         [this](const std::vector<std::string> &args)
+         {
+             LOG_INFO("Available Commands:");
+             for (const auto &[cmd, desc] : _commands)
+             {
+                 LOG_INFO("  {:<10} - {}", cmd, desc.description);
+             }
+         }}
+    );
+
+    // 4. /quit
+    RegisterCommand(
+        {"/quit",
+         "Shutdown server",
+         [](const std::vector<std::string> &args)
+         {
+             LOG_INFO("Quit command received. Shutting down...");
+             std::exit(0);
+         }}
+    );
 }
 
 CommandConsole::~CommandConsole()
@@ -29,15 +87,9 @@ void CommandConsole::Start()
 
 void CommandConsole::Stop()
 {
-    // stdin blocking makes it hard to stop cleanly without platform hacks (CancelIoEx etc.)
-    // For now, we set running to false. The thread might hang on cin until enter is pressed.
-    // Given this is a dev tool, we accept this or use Detach if needed.
     _running = false;
     if (_inputThread.joinable())
     {
-        // Option: _inputThread.detach();
-        // But better to let main shutdown kill it if it refuses to die.
-        // We can hint user to press enter.
         _inputThread.detach();
     }
 }
@@ -53,64 +105,51 @@ void CommandConsole::InputLoop()
     }
 }
 
+void CommandConsole::RegisterCommand(const CommandDescriptor &desc)
+{
+    if (_commands.contains(desc.command))
+    {
+        LOG_WARN("Command '{}' is already registered. Overwriting.", desc.command);
+    }
+    _commands[desc.command] = desc;
+}
+
+void CommandConsole::UnregisterCommand(const std::string &command)
+{
+    _commands.erase(command);
+}
+
 void CommandConsole::ProcessCommand(const std::string &line)
 {
     std::istringstream iss(line);
     std::string cmd;
     iss >> cmd;
 
-    if (cmd == "/status")
-        HandleStatus();
-    else if (cmd == "/reload")
-        HandleReload();
-    else if (cmd == "/help")
-        HandleHelp();
-    else if (cmd == "/quit")
-        HandleQuit();
+    std::vector<std::string> args;
+    std::string arg;
+    while (iss >> arg)
+    {
+        args.push_back(arg);
+    }
+
+    auto it = _commands.find(cmd);
+    if (it != _commands.end())
+    {
+        try
+        {
+            it->second.handler(args);
+        } catch (const std::exception &e)
+        {
+            LOG_ERROR("Error executing command '{}': {}", cmd, e.what());
+        } catch (...)
+        {
+            LOG_ERROR("Unknown error executing command '{}'", cmd);
+        }
+    }
     else
+    {
         LOG_INFO("Unknown command: {}", cmd);
-}
-
-void CommandConsole::HandleStatus()
-{
-    // Need access to Server Stats... using MetricsCollector?
-    // MetricsCollector stores metrics, but maybe not active session count directly unless tracked.
-    // For now, print what we have.
-    size_t sessions = 0; // TODO: Get from SessionPool or Metrics
-    LOG_INFO("Config: RateLimit={}, Burst={}", _config->GetConfig().rateLimit, _config->GetConfig().rateBurst);
-}
-
-void CommandConsole::HandleReload()
-{
-    LOG_INFO("Reloading Config...");
-    if (_config->Load("data/server_config.json"))
-    {
-        LOG_INFO("Config Reloaded.");
     }
-    else
-    {
-        LOG_ERROR("Failed to reload config.");
-    }
-}
-
-void CommandConsole::HandleHelp()
-{
-    LOG_INFO("Available Commands:");
-    LOG_INFO("  /status  - Show server status");
-    LOG_INFO("  /reload  - Reload configuration");
-    LOG_INFO("  /quit    - Shutdown server");
-}
-
-void CommandConsole::HandleQuit()
-{
-    LOG_INFO("Quit command received. Shutting down...");
-    // Trigger Framework Shutdown?
-    // We don't have direct access to Framework instance here unless Singleton or passed in.
-    // Ideally we set a global flag or callback.
-    // Quick hack: exit(0) is brutal.
-    // Better: Assuming Framework handles SIGINT, maybe we can simulate it?
-    // Or just let Framework poll a flag.
-    std::exit(0);
 }
 
 } // namespace System

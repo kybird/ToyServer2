@@ -180,6 +180,9 @@ extern S_SkillEffectDefaultTypeInternal _S_SkillEffect_default_instance_;
 class S_SpawnObject;
 struct S_SpawnObjectDefaultTypeInternal;
 extern S_SpawnObjectDefaultTypeInternal _S_SpawnObject_default_instance_;
+class S_WaveNotify;
+struct S_WaveNotifyDefaultTypeInternal;
+extern S_WaveNotifyDefaultTypeInternal _S_WaveNotify_default_instance_;
 }  // namespace Protocol
 namespace google {
 namespace protobuf {
@@ -219,6 +222,7 @@ enum MsgId : int {
   S_LEVEL_UP_OPTION = 401,
   C_SELECT_LEVEL_UP = 402,
   S_HP_CHANGE = 403,
+  S_WAVE_NOTIFY = 404,
   S_GAME_WIN = 500,
   S_GAME_OVER = 501,
   S_PLAYER_DEAD = 502,
@@ -329,6 +333,226 @@ inline bool ObjectState_Parse(absl::string_view name, ObjectState* value) {
 // ===================================================================
 
 
+// -------------------------------------------------------------------
+
+class S_WaveNotify final : public ::google::protobuf::Message
+/* @@protoc_insertion_point(class_definition:Protocol.S_WaveNotify) */ {
+ public:
+  inline S_WaveNotify() : S_WaveNotify(nullptr) {}
+  ~S_WaveNotify() PROTOBUF_FINAL;
+
+#if defined(PROTOBUF_CUSTOM_VTABLE)
+  void operator delete(S_WaveNotify* msg, std::destroying_delete_t) {
+    SharedDtor(*msg);
+    ::google::protobuf::internal::SizedDelete(msg, sizeof(S_WaveNotify));
+  }
+#endif
+
+  template <typename = void>
+  explicit PROTOBUF_CONSTEXPR S_WaveNotify(
+      ::google::protobuf::internal::ConstantInitialized);
+
+  inline S_WaveNotify(const S_WaveNotify& from) : S_WaveNotify(nullptr, from) {}
+  inline S_WaveNotify(S_WaveNotify&& from) noexcept
+      : S_WaveNotify(nullptr, std::move(from)) {}
+  inline S_WaveNotify& operator=(const S_WaveNotify& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline S_WaveNotify& operator=(S_WaveNotify&& from) noexcept {
+    if (this == &from) return *this;
+    if (::google::protobuf::internal::CanMoveWithInternalSwap(GetArena(), from.GetArena())) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.unknown_fields<::google::protobuf::UnknownFieldSet>(::google::protobuf::UnknownFieldSet::default_instance);
+  }
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields()
+      ABSL_ATTRIBUTE_LIFETIME_BOUND {
+    return _internal_metadata_.mutable_unknown_fields<::google::protobuf::UnknownFieldSet>();
+  }
+
+  static const ::google::protobuf::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::google::protobuf::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::google::protobuf::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const S_WaveNotify& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const S_WaveNotify* internal_default_instance() {
+    return reinterpret_cast<const S_WaveNotify*>(
+        &_S_WaveNotify_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages = 31;
+  friend void swap(S_WaveNotify& a, S_WaveNotify& b) { a.Swap(&b); }
+  inline void Swap(S_WaveNotify* other) {
+    if (other == this) return;
+    if (::google::protobuf::internal::CanUseInternalSwap(GetArena(), other->GetArena())) {
+      InternalSwap(other);
+    } else {
+      ::google::protobuf::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(S_WaveNotify* other) {
+    if (other == this) return;
+    ABSL_DCHECK(GetArena() == other->GetArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  S_WaveNotify* New(::google::protobuf::Arena* arena = nullptr) const {
+    return ::google::protobuf::Message::DefaultConstruct<S_WaveNotify>(arena);
+  }
+  using ::google::protobuf::Message::CopyFrom;
+  void CopyFrom(const S_WaveNotify& from);
+  using ::google::protobuf::Message::MergeFrom;
+  void MergeFrom(const S_WaveNotify& from) { S_WaveNotify::MergeImpl(*this, from); }
+
+  private:
+  static void MergeImpl(
+      ::google::protobuf::MessageLite& to_msg,
+      const ::google::protobuf::MessageLite& from_msg);
+
+  public:
+  bool IsInitialized() const {
+    return true;
+  }
+  ABSL_ATTRIBUTE_REINITIALIZES void Clear() PROTOBUF_FINAL;
+  #if defined(PROTOBUF_CUSTOM_VTABLE)
+  private:
+  static ::size_t ByteSizeLong(const ::google::protobuf::MessageLite& msg);
+  static ::uint8_t* _InternalSerialize(
+      const MessageLite& msg, ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream);
+
+  public:
+  ::size_t ByteSizeLong() const { return ByteSizeLong(*this); }
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const {
+    return _InternalSerialize(*this, target, stream);
+  }
+  #else   // PROTOBUF_CUSTOM_VTABLE
+  ::size_t ByteSizeLong() const final;
+  ::uint8_t* _InternalSerialize(
+      ::uint8_t* target,
+      ::google::protobuf::io::EpsCopyOutputStream* stream) const final;
+  #endif  // PROTOBUF_CUSTOM_VTABLE
+  int GetCachedSize() const { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::google::protobuf::Arena* arena);
+  static void SharedDtor(MessageLite& self);
+  void InternalSwap(S_WaveNotify* other);
+ private:
+  template <typename T>
+  friend ::absl::string_view(
+      ::google::protobuf::internal::GetAnyMessageName)();
+  static ::absl::string_view FullMessageName() { return "Protocol.S_WaveNotify"; }
+
+ protected:
+  explicit S_WaveNotify(::google::protobuf::Arena* arena);
+  S_WaveNotify(::google::protobuf::Arena* arena, const S_WaveNotify& from);
+  S_WaveNotify(::google::protobuf::Arena* arena, S_WaveNotify&& from) noexcept
+      : S_WaveNotify(arena) {
+    *this = ::std::move(from);
+  }
+  const ::google::protobuf::internal::ClassData* GetClassData() const PROTOBUF_FINAL;
+  static void* PlacementNew_(const void*, void* mem,
+                             ::google::protobuf::Arena* arena);
+  static constexpr auto InternalNewImpl_();
+  static const ::google::protobuf::internal::ClassDataFull _class_data_;
+
+ public:
+  ::google::protobuf::Metadata GetMetadata() const;
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+  enum : int {
+    kTitleFieldNumber = 2,
+    kWaveIndexFieldNumber = 1,
+    kDurationSecondsFieldNumber = 3,
+  };
+  // string title = 2;
+  void clear_title() ;
+  const std::string& title() const;
+  template <typename Arg_ = const std::string&, typename... Args_>
+  void set_title(Arg_&& arg, Args_... args);
+  std::string* mutable_title();
+  PROTOBUF_NODISCARD std::string* release_title();
+  void set_allocated_title(std::string* value);
+
+  private:
+  const std::string& _internal_title() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_title(
+      const std::string& value);
+  std::string* _internal_mutable_title();
+
+  public:
+  // int32 wave_index = 1;
+  void clear_wave_index() ;
+  ::int32_t wave_index() const;
+  void set_wave_index(::int32_t value);
+
+  private:
+  ::int32_t _internal_wave_index() const;
+  void _internal_set_wave_index(::int32_t value);
+
+  public:
+  // float duration_seconds = 3;
+  void clear_duration_seconds() ;
+  float duration_seconds() const;
+  void set_duration_seconds(float value);
+
+  private:
+  float _internal_duration_seconds() const;
+  void _internal_set_duration_seconds(float value);
+
+  public:
+  // @@protoc_insertion_point(class_scope:Protocol.S_WaveNotify)
+ private:
+  class _Internal;
+  friend class ::google::protobuf::internal::TcParser;
+  static const ::google::protobuf::internal::TcParseTable<
+      2, 3, 0,
+      35, 2>
+      _table_;
+
+  friend class ::google::protobuf::MessageLite;
+  friend class ::google::protobuf::Arena;
+  template <typename T>
+  friend class ::google::protobuf::Arena::InternalHelper;
+  using InternalArenaConstructable_ = void;
+  using DestructorSkippable_ = void;
+  struct Impl_ {
+    inline explicit constexpr Impl_(
+        ::google::protobuf::internal::ConstantInitialized) noexcept;
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena);
+    inline explicit Impl_(::google::protobuf::internal::InternalVisibility visibility,
+                          ::google::protobuf::Arena* arena, const Impl_& from,
+                          const S_WaveNotify& from_msg);
+    ::google::protobuf::internal::ArenaStringPtr title_;
+    ::int32_t wave_index_;
+    float duration_seconds_;
+    ::google::protobuf::internal::CachedSize _cached_size_;
+    PROTOBUF_TSAN_DECLARE_MEMBER
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_game_2eproto;
+};
 // -------------------------------------------------------------------
 
 class S_SkillEffect final : public ::google::protobuf::Message
@@ -637,7 +861,7 @@ class S_Pong final : public ::google::protobuf::Message
     return reinterpret_cast<const S_Pong*>(
         &_S_Pong_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 40;
+  static constexpr int kIndexInFileMessages = 41;
   friend void swap(S_Pong& a, S_Pong& b) { a.Swap(&b); }
   inline void Swap(S_Pong* other) {
     if (other == this) return;
@@ -1433,7 +1657,7 @@ class S_PlayerDead final : public ::google::protobuf::Message
     return reinterpret_cast<const S_PlayerDead*>(
         &_S_PlayerDead_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 36;
+  static constexpr int kIndexInFileMessages = 37;
   friend void swap(S_PlayerDead& a, S_PlayerDead& b) { a.Swap(&b); }
   inline void Swap(S_PlayerDead* other) {
     if (other == this) return;
@@ -1623,7 +1847,7 @@ class S_Ping final : public ::google::protobuf::Message
     return reinterpret_cast<const S_Ping*>(
         &_S_Ping_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 37;
+  static constexpr int kIndexInFileMessages = 38;
   friend void swap(S_Ping& a, S_Ping& b) { a.Swap(&b); }
   inline void Swap(S_Ping* other) {
     if (other == this) return;
@@ -2919,7 +3143,7 @@ class S_GameWin final : public ::google::protobuf::Message
     return reinterpret_cast<const S_GameWin*>(
         &_S_GameWin_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 34;
+  static constexpr int kIndexInFileMessages = 35;
   friend void swap(S_GameWin& a, S_GameWin& b) { a.Swap(&b); }
   inline void Swap(S_GameWin* other) {
     if (other == this) return;
@@ -3121,7 +3345,7 @@ class S_GameOver final : public ::google::protobuf::Message
     return reinterpret_cast<const S_GameOver*>(
         &_S_GameOver_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 35;
+  static constexpr int kIndexInFileMessages = 36;
   friend void swap(S_GameOver& a, S_GameOver& b) { a.Swap(&b); }
   inline void Swap(S_GameOver* other) {
     if (other == this) return;
@@ -3926,7 +4150,7 @@ class S_DebugServerTick final : public ::google::protobuf::Message
     return reinterpret_cast<const S_DebugServerTick*>(
         &_S_DebugServerTick_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 41;
+  static constexpr int kIndexInFileMessages = 42;
   friend void swap(S_DebugServerTick& a, S_DebugServerTick& b) { a.Swap(&b); }
   inline void Swap(S_DebugServerTick* other) {
     if (other == this) return;
@@ -5538,7 +5762,7 @@ class LevelUpOption final : public ::google::protobuf::Message
     return reinterpret_cast<const LevelUpOption*>(
         &_LevelUpOption_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 31;
+  static constexpr int kIndexInFileMessages = 32;
   friend void swap(LevelUpOption& a, LevelUpOption& b) { a.Swap(&b); }
   inline void Swap(LevelUpOption* other) {
     if (other == this) return;
@@ -6002,7 +6226,7 @@ class C_SelectLevelUp final : public ::google::protobuf::Message
     return reinterpret_cast<const C_SelectLevelUp*>(
         &_C_SelectLevelUp_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 33;
+  static constexpr int kIndexInFileMessages = 34;
   friend void swap(C_SelectLevelUp& a, C_SelectLevelUp& b) { a.Swap(&b); }
   inline void Swap(C_SelectLevelUp* other) {
     if (other == this) return;
@@ -6192,7 +6416,7 @@ class C_Pong final : public ::google::protobuf::Message
     return reinterpret_cast<const C_Pong*>(
         &_C_Pong_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 38;
+  static constexpr int kIndexInFileMessages = 39;
   friend void swap(C_Pong& a, C_Pong& b) { a.Swap(&b); }
   inline void Swap(C_Pong* other) {
     if (other == this) return;
@@ -6382,7 +6606,7 @@ class C_Ping final : public ::google::protobuf::Message
     return reinterpret_cast<const C_Ping*>(
         &_C_Ping_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 39;
+  static constexpr int kIndexInFileMessages = 40;
   friend void swap(C_Ping& a, C_Ping& b) { a.Swap(&b); }
   inline void Swap(C_Ping* other) {
     if (other == this) return;
@@ -8852,7 +9076,7 @@ class S_LevelUpOption final : public ::google::protobuf::Message
     return reinterpret_cast<const S_LevelUpOption*>(
         &_S_LevelUpOption_default_instance_);
   }
-  static constexpr int kIndexInFileMessages = 32;
+  static constexpr int kIndexInFileMessages = 33;
   friend void swap(S_LevelUpOption& a, S_LevelUpOption& b) { a.Swap(&b); }
   inline void Swap(S_LevelUpOption* other) {
     if (other == this) return;
@@ -8940,6 +9164,7 @@ class S_LevelUpOption final : public ::google::protobuf::Message
   // accessors -------------------------------------------------------
   enum : int {
     kOptionsFieldNumber = 1,
+    kTimeoutSecondsFieldNumber = 2,
   };
   // repeated .Protocol.LevelUpOption options = 1;
   int options_size() const;
@@ -8958,12 +9183,22 @@ class S_LevelUpOption final : public ::google::protobuf::Message
   const ::Protocol::LevelUpOption& options(int index) const;
   ::Protocol::LevelUpOption* add_options();
   const ::google::protobuf::RepeatedPtrField<::Protocol::LevelUpOption>& options() const;
+  // float timeout_seconds = 2;
+  void clear_timeout_seconds() ;
+  float timeout_seconds() const;
+  void set_timeout_seconds(float value);
+
+  private:
+  float _internal_timeout_seconds() const;
+  void _internal_set_timeout_seconds(float value);
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.S_LevelUpOption)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      0, 1, 1,
+      1, 2, 1,
       0, 2>
       _table_;
 
@@ -8982,6 +9217,7 @@ class S_LevelUpOption final : public ::google::protobuf::Message
                           ::google::protobuf::Arena* arena, const Impl_& from,
                           const S_LevelUpOption& from_msg);
     ::google::protobuf::RepeatedPtrField< ::Protocol::LevelUpOption > options_;
+    float timeout_seconds_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -11242,6 +11478,102 @@ inline void S_HpChange::_internal_set_max_hp(float value) {
 
 // -------------------------------------------------------------------
 
+// S_WaveNotify
+
+// int32 wave_index = 1;
+inline void S_WaveNotify::clear_wave_index() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.wave_index_ = 0;
+}
+inline ::int32_t S_WaveNotify::wave_index() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_WaveNotify.wave_index)
+  return _internal_wave_index();
+}
+inline void S_WaveNotify::set_wave_index(::int32_t value) {
+  _internal_set_wave_index(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_WaveNotify.wave_index)
+}
+inline ::int32_t S_WaveNotify::_internal_wave_index() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.wave_index_;
+}
+inline void S_WaveNotify::_internal_set_wave_index(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.wave_index_ = value;
+}
+
+// string title = 2;
+inline void S_WaveNotify::clear_title() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.title_.ClearToEmpty();
+}
+inline const std::string& S_WaveNotify::title() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:Protocol.S_WaveNotify.title)
+  return _internal_title();
+}
+template <typename Arg_, typename... Args_>
+inline PROTOBUF_ALWAYS_INLINE void S_WaveNotify::set_title(Arg_&& arg,
+                                                     Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.title_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:Protocol.S_WaveNotify.title)
+}
+inline std::string* S_WaveNotify::mutable_title() ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  std::string* _s = _internal_mutable_title();
+  // @@protoc_insertion_point(field_mutable:Protocol.S_WaveNotify.title)
+  return _s;
+}
+inline const std::string& S_WaveNotify::_internal_title() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.title_.Get();
+}
+inline void S_WaveNotify::_internal_set_title(const std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.title_.Set(value, GetArena());
+}
+inline std::string* S_WaveNotify::_internal_mutable_title() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.title_.Mutable( GetArena());
+}
+inline std::string* S_WaveNotify::release_title() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:Protocol.S_WaveNotify.title)
+  return _impl_.title_.Release();
+}
+inline void S_WaveNotify::set_allocated_title(std::string* value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.title_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.title_.IsDefault()) {
+    _impl_.title_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:Protocol.S_WaveNotify.title)
+}
+
+// float duration_seconds = 3;
+inline void S_WaveNotify::clear_duration_seconds() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.duration_seconds_ = 0;
+}
+inline float S_WaveNotify::duration_seconds() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_WaveNotify.duration_seconds)
+  return _internal_duration_seconds();
+}
+inline void S_WaveNotify::set_duration_seconds(float value) {
+  _internal_set_duration_seconds(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_WaveNotify.duration_seconds)
+}
+inline float S_WaveNotify::_internal_duration_seconds() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.duration_seconds_;
+}
+inline void S_WaveNotify::_internal_set_duration_seconds(float value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.duration_seconds_ = value;
+}
+
+// -------------------------------------------------------------------
+
 // LevelUpOption
 
 // int32 option_id = 1;
@@ -11457,6 +11789,28 @@ inline ::google::protobuf::RepeatedPtrField<::Protocol::LevelUpOption>*
 S_LevelUpOption::_internal_mutable_options() {
   ::google::protobuf::internal::TSanRead(&_impl_);
   return &_impl_.options_;
+}
+
+// float timeout_seconds = 2;
+inline void S_LevelUpOption::clear_timeout_seconds() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.timeout_seconds_ = 0;
+}
+inline float S_LevelUpOption::timeout_seconds() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_LevelUpOption.timeout_seconds)
+  return _internal_timeout_seconds();
+}
+inline void S_LevelUpOption::set_timeout_seconds(float value) {
+  _internal_set_timeout_seconds(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_LevelUpOption.timeout_seconds)
+}
+inline float S_LevelUpOption::_internal_timeout_seconds() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.timeout_seconds_;
+}
+inline void S_LevelUpOption::_internal_set_timeout_seconds(float value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.timeout_seconds_ = value;
 }
 
 // -------------------------------------------------------------------
