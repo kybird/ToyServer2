@@ -291,6 +291,7 @@ message LevelUpOption {
 message S_LevelUpOption {
     repeated LevelUpOption options = 1;
     float timeout_seconds = 2;
+    float slow_radius = 3;
 }
 
 message C_SelectLevelUp {

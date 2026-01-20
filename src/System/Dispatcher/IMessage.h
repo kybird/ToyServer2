@@ -16,6 +16,13 @@ enum class MessageType {
     LOGIC_JOB,
     LAMBDA_JOB, // Added for generic tasks
 
+    // Timer System Messages
+    LOGIC_TIMER,
+    LOGIC_TIMER_EXPIRED,
+    LOGIC_TIMER_ADD,
+    LOGIC_TIMER_CANCEL,
+    LOGIC_TIMER_TICK,
+
     // User defined messages start here or after reserved range
     PACKET = 10
 };

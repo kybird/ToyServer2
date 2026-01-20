@@ -68,27 +68,9 @@ public:
         return _damageOnContact;
     }
 
-    // Speed Control
-    void AddLevelUpSlow()
-    {
-        _levelUpSlowCount++;
-        UpdateSpeedMultiplier();
-    }
-    void RemoveLevelUpSlow()
-    {
-        if (_levelUpSlowCount > 0)
-            _levelUpSlowCount--;
-        UpdateSpeedMultiplier();
-    }
-    float GetSpeedMultiplier() const
-    {
-        return _speedMultiplier;
-    }
-    void UpdateSpeedMultiplier()
-    {
-        // Slow down to 15% of normal speed
-        _speedMultiplier = (_levelUpSlowCount > 0) ? 0.15f : 1.0f;
-    }
+    // Speed Control (via Modifier System)
+    void AddLevelUpSlow(float currentTime, float duration);
+    void RemoveLevelUpSlow();
 
     // Called by Room::Update
     void Update(float dt, Room *room) override;
@@ -122,8 +104,7 @@ public:
         if (_ai)
             _ai->Reset();
 
-        _speedMultiplier = 1.0f;
-        _levelUpSlowCount = 0;
+        _modifiers.Clear();
     }
 
     void
@@ -139,14 +120,14 @@ public:
         _lastAttackTime = -100.0f;
         _aliveTime = 0.0f;
         _state = Protocol::ObjectState::IDLE;
-        _speedMultiplier = 1.0f;
-        _levelUpSlowCount = 0;
-        _baseSpeed = speed;
+
+        // Set base speed via Modifier System
+        _modifiers.SetBaseStat(StatType::Speed, speed);
     }
 
-    float GetSpeed() const
+    float GetSpeed()
     {
-        return _baseSpeed * _speedMultiplier;
+        return _modifiers.GetStat(StatType::Speed);
     }
 
 private:
@@ -163,10 +144,7 @@ private:
     float _attackCooldown = 1.0f;
     float _lastAttackTime = -100.0f;
 
-    // Control Stats
-    float _speedMultiplier = 1.0f;
-    float _baseSpeed = 2.0f;
-    int _levelUpSlowCount = 0;
+    // Control Stats (removed - now using ModifierContainer)
 };
 
 } // namespace SimpleGame

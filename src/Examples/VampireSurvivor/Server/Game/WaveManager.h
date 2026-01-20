@@ -12,6 +12,8 @@ class Room; // Forward Declaration
 class WaveManager
 {
 public:
+    enum class WaveState { NotStarted, InProgress, Completed };
+
     WaveManager(ObjectManager &objMgr, SpatialGrid &grid, int roomId) : _objMgr(objMgr), _grid(grid), _roomId(roomId)
     {
     }
@@ -19,6 +21,11 @@ public:
     void Start();
     void Update(float dt, Room *room);
     void Reset(); // Reset wave manager state
+
+    bool IsAllWavesComplete() const
+    {
+        return _state == WaveState::Completed;
+    }
 
     // Debug
     void DebugSpawn(Room *room, int32_t monsterTypeId, int32_t count);
@@ -48,6 +55,7 @@ private:
     float _nextSpawnTime = 0.0f;
 
     std::vector<PeriodicSpawner> _activeSpawners;
+    WaveState _state = WaveState::NotStarted;
 
     // Clustering & Spawning Logic
     struct PlayerCluster

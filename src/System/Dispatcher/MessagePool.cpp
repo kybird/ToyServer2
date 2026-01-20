@@ -66,7 +66,7 @@ TimerMessage *MessagePool::AllocateTimer()
     if (!block)
         return nullptr;
     TimerMessage *msg = new (block) TimerMessage();
-    msg->type = (uint32_t)InternalMessageType::IMT_LOGIC_TIMER;
+    msg->type = static_cast<uint32_t>(MessageType::LOGIC_TIMER);
     // Re-using LOGIC_JOB or adding LOGIC_TIMER in future?
     // Let's check IMessage.h for MessageType enum. It has LOGIC_JOB.
     // Let's stick to LOGIC_JOB or add LOGIC_TIMER?
@@ -81,7 +81,7 @@ TimerExpiredMessage *MessagePool::AllocateTimerExpired()
     if (!block)
         return nullptr;
     TimerExpiredMessage *msg = new (block) TimerExpiredMessage();
-    msg->type = (uint32_t)InternalMessageType::IMT_LOGIC_TIMER_EXPIRED;
+    msg->type = static_cast<uint32_t>(MessageType::LOGIC_TIMER_EXPIRED);
     return msg;
 }
 
@@ -91,7 +91,7 @@ TimerAddMessage *MessagePool::AllocateTimerAdd()
     if (!block)
         return nullptr;
     TimerAddMessage *msg = new (block) TimerAddMessage();
-    msg->type = (uint32_t)InternalMessageType::IMT_LOGIC_TIMER_ADD;
+    msg->type = static_cast<uint32_t>(MessageType::LOGIC_TIMER_ADD);
     return msg;
 }
 
@@ -101,7 +101,7 @@ TimerCancelMessage *MessagePool::AllocateTimerCancel()
     if (!block)
         return nullptr;
     TimerCancelMessage *msg = new (block) TimerCancelMessage();
-    msg->type = (uint32_t)InternalMessageType::IMT_LOGIC_TIMER_CANCEL;
+    msg->type = static_cast<uint32_t>(MessageType::LOGIC_TIMER_CANCEL);
     return msg;
 }
 
@@ -111,7 +111,7 @@ TimerTickMessage *MessagePool::AllocateTimerTick()
     if (!block)
         return nullptr;
     TimerTickMessage *msg = new (block) TimerTickMessage();
-    msg->type = (uint32_t)InternalMessageType::IMT_LOGIC_TIMER_TICK;
+    msg->type = static_cast<uint32_t>(MessageType::LOGIC_TIMER_TICK);
     return msg;
 }
 

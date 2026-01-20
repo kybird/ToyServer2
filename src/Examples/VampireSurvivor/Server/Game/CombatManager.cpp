@@ -7,6 +7,7 @@
 #include "Game/SpatialGrid.h"
 #include "GamePackets.h"
 #include "Protocol/game.pb.h"
+#include "System/ILog.h"
 #include <cmath>
 
 namespace SimpleGame {

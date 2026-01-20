@@ -9165,6 +9165,7 @@ class S_LevelUpOption final : public ::google::protobuf::Message
   enum : int {
     kOptionsFieldNumber = 1,
     kTimeoutSecondsFieldNumber = 2,
+    kSlowRadiusFieldNumber = 3,
   };
   // repeated .Protocol.LevelUpOption options = 1;
   int options_size() const;
@@ -9193,12 +9194,22 @@ class S_LevelUpOption final : public ::google::protobuf::Message
   void _internal_set_timeout_seconds(float value);
 
   public:
+  // float slow_radius = 3;
+  void clear_slow_radius() ;
+  float slow_radius() const;
+  void set_slow_radius(float value);
+
+  private:
+  float _internal_slow_radius() const;
+  void _internal_set_slow_radius(float value);
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.S_LevelUpOption)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      1, 2, 1,
+      2, 3, 1,
       0, 2>
       _table_;
 
@@ -9218,6 +9229,7 @@ class S_LevelUpOption final : public ::google::protobuf::Message
                           const S_LevelUpOption& from_msg);
     ::google::protobuf::RepeatedPtrField< ::Protocol::LevelUpOption > options_;
     float timeout_seconds_;
+    float slow_radius_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -11811,6 +11823,28 @@ inline float S_LevelUpOption::_internal_timeout_seconds() const {
 inline void S_LevelUpOption::_internal_set_timeout_seconds(float value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.timeout_seconds_ = value;
+}
+
+// float slow_radius = 3;
+inline void S_LevelUpOption::clear_slow_radius() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.slow_radius_ = 0;
+}
+inline float S_LevelUpOption::slow_radius() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_LevelUpOption.slow_radius)
+  return _internal_slow_radius();
+}
+inline void S_LevelUpOption::set_slow_radius(float value) {
+  _internal_set_slow_radius(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_LevelUpOption.slow_radius)
+}
+inline float S_LevelUpOption::_internal_slow_radius() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.slow_radius_;
+}
+inline void S_LevelUpOption::_internal_set_slow_radius(float value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.slow_radius_ = value;
 }
 
 // -------------------------------------------------------------------

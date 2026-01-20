@@ -227,7 +227,9 @@ set(GAME_SOURCES
     src/Examples/VampireSurvivor/Server/Game/CombatManager.cpp
     src/Examples/VampireSurvivor/Server/Game/LevelUpManager.cpp
     src/Examples/VampireSurvivor/Server/Game/Effect/EffectManager.cpp
+    src/Examples/VampireSurvivor/Server/Entity/GameObject.cpp
     src/Examples/VampireSurvivor/Server/Entity/Monster.cpp
+    src/Examples/VampireSurvivor/Server/Entity/ModifierContainer.cpp
     src/Examples/VampireSurvivor/Server/Entity/MonsterFactory.cpp
     src/Examples/VampireSurvivor/Server/Entity/Player.cpp
     src/Examples/VampireSurvivor/Server/Entity/PlayerFactory.cpp
@@ -319,6 +321,7 @@ set(VS_TEST_SOURCES
     tests/TestSpatialGrid.cpp
     tests/TestPerformance.cpp
     tests/TestMQ.cpp
+    src/Examples/VampireSurvivor/tests/TestStatModifier.cpp
 )
 add_executable(UnitTests ${VS_TEST_SOURCES} ${GAME_SOURCES})
 target_include_directories(UnitTests PRIVATE 

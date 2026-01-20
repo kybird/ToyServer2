@@ -1,4 +1,5 @@
 #pragma once
+#include "ModifierContainer.h"
 #include "Protocol/game.pb.h"
 #include <cstdint>
 #include <memory>
@@ -80,14 +81,7 @@ public:
         _stateExpiresAt = expiresAt;
     }
 
-    void UpdateStateExpiry(float currentTime)
-    {
-        if (_stateExpiresAt > 0.0f && currentTime >= _stateExpiresAt)
-        {
-            _state = Protocol::ObjectState::IDLE;
-            _stateExpiresAt = 0.0f;
-        }
-    }
+    void UpdateStateExpiry(float currentTime);
 
     bool IsControlDisabled() const
     {
@@ -150,6 +144,16 @@ public:
         _lastSentState = _state;
     }
 
+    // Modifier Container 접근
+    ModifierContainer &GetModifiers()
+    {
+        return _modifiers;
+    }
+    const ModifierContainer &GetModifiers() const
+    {
+        return _modifiers;
+    }
+
 protected:
     int32_t _id;
     Protocol::ObjectType _type;
@@ -176,6 +180,9 @@ protected:
     float _lastSentTime = 0.0f;
     uint32_t _lastSentServerTick = 0;
     Protocol::ObjectState _lastSentState = Protocol::ObjectState::IDLE;
+
+    // Stat Modifier System
+    ModifierContainer _modifiers;
 };
 
 } // namespace SimpleGame

@@ -115,6 +115,7 @@ public:
     );
     void BroadcastPlayerMoves(const std::vector<Protocol::ObjectPos> &playerMoves);
     void SendPlayerAcks();
+    bool CheckWinCondition() const;
 
 private:
     int _roomId;

@@ -413,6 +413,12 @@ void Room::Update(float deltaTime)
     if (!_isGameOver)
     {
         _waveMgr.Update(deltaTime, this);
+
+        // [NEW] 승리 조건 체크
+        if (CheckWinCondition())
+        {
+            HandleGameOver(true);
+        }
     }
     _totalRunTime += deltaTime;
 
@@ -673,6 +679,11 @@ void Room::HandleGameOver(bool isWin)
     msg.set_is_win(isWin);
 
     BroadcastPacket(S_GameOverPacket(std::move(msg)));
+}
+
+bool Room::CheckWinCondition() const
+{
+    return _waveMgr.IsAllWavesComplete() && _objMgr.GetAliveMonsterCount() == 0;
 }
 
 void Room::DebugAddExpToAll(int32_t exp)

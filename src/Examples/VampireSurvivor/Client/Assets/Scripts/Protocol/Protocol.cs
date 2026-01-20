@@ -72,37 +72,38 @@ namespace Protocol {
             "YXZlX2luZGV4GAEgASgFEg0KBXRpdGxlGAIgASgJEhgKEGR1cmF0aW9uX3Nl",
             "Y29uZHMYAyABKAIiYAoNTGV2ZWxVcE9wdGlvbhIRCglvcHRpb25faWQYASAB",
             "KAUSEAoIc2tpbGxfaWQYAiABKAUSDAoEbmFtZRgDIAEoCRIMCgRkZXNjGAQg",
-            "ASgJEg4KBmlzX25ldxgFIAEoCCJUCg9TX0xldmVsVXBPcHRpb24SKAoHb3B0",
+            "ASgJEg4KBmlzX25ldxgFIAEoCCJpCg9TX0xldmVsVXBPcHRpb24SKAoHb3B0",
             "aW9ucxgBIAMoCzIXLlByb3RvY29sLkxldmVsVXBPcHRpb24SFwoPdGltZW91",
-            "dF9zZWNvbmRzGAIgASgCIicKD0NfU2VsZWN0TGV2ZWxVcBIUCgxvcHRpb25f",
-            "aW5kZXgYASABKAUiNgoJU19HYW1lV2luEhUKDXRvdGFsX3RpbWVfbXMYASAB",
-            "KAMSEgoKa2lsbF9jb3VudBgCIAEoBSI2CgpTX0dhbWVPdmVyEhgKEHN1cnZp",
-            "dmVkX3RpbWVfbXMYASABKAMSDgoGaXNfd2luGAIgASgIIiEKDFNfUGxheWVy",
-            "RGVhZBIRCglwbGF5ZXJfaWQYASABKAUiGwoGU19QaW5nEhEKCXRpbWVzdGFt",
-            "cBgBIAEoAyIbCgZDX1BvbmcSEQoJdGltZXN0YW1wGAEgASgDIhsKBkNfUGlu",
-            "ZxIRCgl0aW1lc3RhbXAYASABKAMiGwoGU19Qb25nEhEKCXRpbWVzdGFtcBgB",
-            "IAEoAyIoChFTX0RlYnVnU2VydmVyVGljaxITCgtzZXJ2ZXJfdGljaxgBIAEo",
-            "DSroBQoFTXNnSWQSCAoETk9ORRAAEgsKB0NfTE9HSU4QZBILCgdTX0xPR0lO",
-            "EGUSEQoNQ19DUkVBVEVfUk9PTRBmEhEKDVNfQ1JFQVRFX1JPT00QZxIPCgtD",
-            "X0pPSU5fUk9PTRBoEg8KC1NfSk9JTl9ST09NEGkSEwoPQ19HRVRfUk9PTV9M",
-            "SVNUEGoSDwoLU19ST09NX0xJU1QQaxIRCg1DX0VOVEVSX0xPQkJZEG4SEQoN",
-            "U19FTlRFUl9MT0JCWRBvEhAKDENfTEVBVkVfUk9PTRBwEhAKDFNfTEVBVkVf",
-            "Uk9PTRBxEhAKDENfR0FNRV9SRUFEWRByEgoKBkNfQ0hBVBB4EgoKBlNfQ0hB",
-            "VBB5EhMKDlNfU1BBV05fT0JKRUNUEMgBEhUKEFNfREVTUEFXTl9PQkpFQ1QQ",
-            "yQESGAoTU19NT1ZFX09CSkVDVF9CQVRDSBDKARIRCgxDX01PVkVfSU5QVVQQ",
-            "ywESFwoSU19QTEFZRVJfU1RBVEVfQUNLEMwBEhAKC0NfVVNFX1NLSUxMEKwC",
-            "EhMKDlNfU0tJTExfRUZGRUNUEK0CEhQKD1NfREFNQUdFX0VGRkVDVBCuAhIQ",
-            "CgtTX0tOT0NLQkFDSxCxAhIUCg9TX1BMQVlFUl9ET1dORUQQsgISFAoPU19Q",
-            "TEFZRVJfUkVWSVZFELMCEhEKDFNfRVhQX0NIQU5HRRCQAxIWChFTX0xFVkVM",
-            "X1VQX09QVElPThCRAxIWChFDX1NFTEVDVF9MRVZFTF9VUBCSAxIQCgtTX0hQ",
-            "X0NIQU5HRRCTAxISCg1TX1dBVkVfTk9USUZZEJQDEg8KClNfR0FNRV9XSU4Q",
-            "9AMSEAoLU19HQU1FX09WRVIQ9QMSEgoNU19QTEFZRVJfREVBRBD2AxILCgZT",
-            "X1BJTkcQhAcSCwoGQ19QT05HEIUHEgsKBkNfUElORxCGBxILCgZTX1BPTkcQ",
-            "hwcSGAoTU19ERUJVR19TRVJWRVJfVElDSxCIBypMCgpPYmplY3RUeXBlEgsK",
-            "B1VOS05PV04QABIKCgZQTEFZRVIQARILCgdNT05TVEVSEAISDgoKUFJPSkVD",
-            "VElMRRADEggKBElURU0QBCpkCgtPYmplY3RTdGF0ZRIICgRJRExFEAASCgoG",
-            "TU9WSU5HEAESDQoJQVRUQUNLSU5HEAISCAoEREVBRBADEgoKBkRPV05FRBAE",
-            "Eg0KCUtOT0NLQkFDSxAFEgsKB1NUVU5ORUQQBmIGcHJvdG8z"));
+            "dF9zZWNvbmRzGAIgASgCEhMKC3Nsb3dfcmFkaXVzGAMgASgCIicKD0NfU2Vs",
+            "ZWN0TGV2ZWxVcBIUCgxvcHRpb25faW5kZXgYASABKAUiNgoJU19HYW1lV2lu",
+            "EhUKDXRvdGFsX3RpbWVfbXMYASABKAMSEgoKa2lsbF9jb3VudBgCIAEoBSI2",
+            "CgpTX0dhbWVPdmVyEhgKEHN1cnZpdmVkX3RpbWVfbXMYASABKAMSDgoGaXNf",
+            "d2luGAIgASgIIiEKDFNfUGxheWVyRGVhZBIRCglwbGF5ZXJfaWQYASABKAUi",
+            "GwoGU19QaW5nEhEKCXRpbWVzdGFtcBgBIAEoAyIbCgZDX1BvbmcSEQoJdGlt",
+            "ZXN0YW1wGAEgASgDIhsKBkNfUGluZxIRCgl0aW1lc3RhbXAYASABKAMiGwoG",
+            "U19Qb25nEhEKCXRpbWVzdGFtcBgBIAEoAyIoChFTX0RlYnVnU2VydmVyVGlj",
+            "axITCgtzZXJ2ZXJfdGljaxgBIAEoDSroBQoFTXNnSWQSCAoETk9ORRAAEgsK",
+            "B0NfTE9HSU4QZBILCgdTX0xPR0lOEGUSEQoNQ19DUkVBVEVfUk9PTRBmEhEK",
+            "DVNfQ1JFQVRFX1JPT00QZxIPCgtDX0pPSU5fUk9PTRBoEg8KC1NfSk9JTl9S",
+            "T09NEGkSEwoPQ19HRVRfUk9PTV9MSVNUEGoSDwoLU19ST09NX0xJU1QQaxIR",
+            "Cg1DX0VOVEVSX0xPQkJZEG4SEQoNU19FTlRFUl9MT0JCWRBvEhAKDENfTEVB",
+            "VkVfUk9PTRBwEhAKDFNfTEVBVkVfUk9PTRBxEhAKDENfR0FNRV9SRUFEWRBy",
+            "EgoKBkNfQ0hBVBB4EgoKBlNfQ0hBVBB5EhMKDlNfU1BBV05fT0JKRUNUEMgB",
+            "EhUKEFNfREVTUEFXTl9PQkpFQ1QQyQESGAoTU19NT1ZFX09CSkVDVF9CQVRD",
+            "SBDKARIRCgxDX01PVkVfSU5QVVQQywESFwoSU19QTEFZRVJfU1RBVEVfQUNL",
+            "EMwBEhAKC0NfVVNFX1NLSUxMEKwCEhMKDlNfU0tJTExfRUZGRUNUEK0CEhQK",
+            "D1NfREFNQUdFX0VGRkVDVBCuAhIQCgtTX0tOT0NLQkFDSxCxAhIUCg9TX1BM",
+            "QVlFUl9ET1dORUQQsgISFAoPU19QTEFZRVJfUkVWSVZFELMCEhEKDFNfRVhQ",
+            "X0NIQU5HRRCQAxIWChFTX0xFVkVMX1VQX09QVElPThCRAxIWChFDX1NFTEVD",
+            "VF9MRVZFTF9VUBCSAxIQCgtTX0hQX0NIQU5HRRCTAxISCg1TX1dBVkVfTk9U",
+            "SUZZEJQDEg8KClNfR0FNRV9XSU4Q9AMSEAoLU19HQU1FX09WRVIQ9QMSEgoN",
+            "U19QTEFZRVJfREVBRBD2AxILCgZTX1BJTkcQhAcSCwoGQ19QT05HEIUHEgsK",
+            "BkNfUElORxCGBxILCgZTX1BPTkcQhwcSGAoTU19ERUJVR19TRVJWRVJfVElD",
+            "SxCIBypMCgpPYmplY3RUeXBlEgsKB1VOS05PV04QABIKCgZQTEFZRVIQARIL",
+            "CgdNT05TVEVSEAISDgoKUFJPSkVDVElMRRADEggKBElURU0QBCpkCgtPYmpl",
+            "Y3RTdGF0ZRIICgRJRExFEAASCgoGTU9WSU5HEAESDQoJQVRUQUNLSU5HEAIS",
+            "CAoEREVBRBADEgoKBkRPV05FRBAEEg0KCUtOT0NLQkFDSxAFEgsKB1NUVU5O",
+            "RUQQBmIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Protocol.MsgId), typeof(global::Protocol.ObjectType), typeof(global::Protocol.ObjectState), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -139,7 +140,7 @@ namespace Protocol {
             new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.S_HpChange), global::Protocol.S_HpChange.Parser, new[]{ "ObjectId", "CurrentHp", "MaxHp" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.S_WaveNotify), global::Protocol.S_WaveNotify.Parser, new[]{ "WaveIndex", "Title", "DurationSeconds" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.LevelUpOption), global::Protocol.LevelUpOption.Parser, new[]{ "OptionId", "SkillId", "Name", "Desc", "IsNew" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.S_LevelUpOption), global::Protocol.S_LevelUpOption.Parser, new[]{ "Options", "TimeoutSeconds" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.S_LevelUpOption), global::Protocol.S_LevelUpOption.Parser, new[]{ "Options", "TimeoutSeconds", "SlowRadius" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.C_SelectLevelUp), global::Protocol.C_SelectLevelUp.Parser, new[]{ "OptionIndex" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.S_GameWin), global::Protocol.S_GameWin.Parser, new[]{ "TotalTimeMs", "KillCount" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.S_GameOver), global::Protocol.S_GameOver.Parser, new[]{ "SurvivedTimeMs", "IsWin" }, null, null, null, null),
@@ -8837,6 +8838,7 @@ namespace Protocol {
     public S_LevelUpOption(S_LevelUpOption other) : this() {
       options_ = other.options_.Clone();
       timeoutSeconds_ = other.timeoutSeconds_;
+      slowRadius_ = other.slowRadius_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -8869,6 +8871,18 @@ namespace Protocol {
       }
     }
 
+    /// <summary>Field number for the "slow_radius" field.</summary>
+    public const int SlowRadiusFieldNumber = 3;
+    private float slowRadius_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public float SlowRadius {
+      get { return slowRadius_; }
+      set {
+        slowRadius_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -8886,6 +8900,7 @@ namespace Protocol {
       }
       if(!options_.Equals(other.options_)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(TimeoutSeconds, other.TimeoutSeconds)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(SlowRadius, other.SlowRadius)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -8895,6 +8910,7 @@ namespace Protocol {
       int hash = 1;
       hash ^= options_.GetHashCode();
       if (TimeoutSeconds != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(TimeoutSeconds);
+      if (SlowRadius != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(SlowRadius);
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -8918,6 +8934,10 @@ namespace Protocol {
         output.WriteRawTag(21);
         output.WriteFloat(TimeoutSeconds);
       }
+      if (SlowRadius != 0F) {
+        output.WriteRawTag(29);
+        output.WriteFloat(SlowRadius);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -8933,6 +8953,10 @@ namespace Protocol {
         output.WriteRawTag(21);
         output.WriteFloat(TimeoutSeconds);
       }
+      if (SlowRadius != 0F) {
+        output.WriteRawTag(29);
+        output.WriteFloat(SlowRadius);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -8945,6 +8969,9 @@ namespace Protocol {
       int size = 0;
       size += options_.CalculateSize(_repeated_options_codec);
       if (TimeoutSeconds != 0F) {
+        size += 1 + 4;
+      }
+      if (SlowRadius != 0F) {
         size += 1 + 4;
       }
       if (_unknownFields != null) {
@@ -8962,6 +8989,9 @@ namespace Protocol {
       options_.Add(other.options_);
       if (other.TimeoutSeconds != 0F) {
         TimeoutSeconds = other.TimeoutSeconds;
+      }
+      if (other.SlowRadius != 0F) {
+        SlowRadius = other.SlowRadius;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -8990,6 +9020,10 @@ namespace Protocol {
             TimeoutSeconds = input.ReadFloat();
             break;
           }
+          case 29: {
+            SlowRadius = input.ReadFloat();
+            break;
+          }
         }
       }
     #endif
@@ -9015,6 +9049,10 @@ namespace Protocol {
           }
           case 21: {
             TimeoutSeconds = input.ReadFloat();
+            break;
+          }
+          case 29: {
+            SlowRadius = input.ReadFloat();
             break;
           }
         }

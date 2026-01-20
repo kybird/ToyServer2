@@ -1143,6 +1143,7 @@ inline constexpr S_LevelUpOption::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
       : options_{},
         timeout_seconds_{0},
+        slow_radius_{0},
         _cached_size_{0} {}
 
 template <typename>
@@ -1533,6 +1534,7 @@ const ::uint32_t
         ~0u,  // no sizeof(Split)
         PROTOBUF_FIELD_OFFSET(::Protocol::S_LevelUpOption, _impl_.options_),
         PROTOBUF_FIELD_OFFSET(::Protocol::S_LevelUpOption, _impl_.timeout_seconds_),
+        PROTOBUF_FIELD_OFFSET(::Protocol::S_LevelUpOption, _impl_.slow_radius_),
         ~0u,  // no _has_bits_
         PROTOBUF_FIELD_OFFSET(::Protocol::C_SelectLevelUp, _internal_metadata_),
         ~0u,  // no _extensions_
@@ -1654,15 +1656,15 @@ static const ::_pbi::MigrationSchema
         {328, -1, -1, sizeof(::Protocol::S_WaveNotify)},
         {339, -1, -1, sizeof(::Protocol::LevelUpOption)},
         {352, -1, -1, sizeof(::Protocol::S_LevelUpOption)},
-        {362, -1, -1, sizeof(::Protocol::C_SelectLevelUp)},
-        {371, -1, -1, sizeof(::Protocol::S_GameWin)},
-        {381, -1, -1, sizeof(::Protocol::S_GameOver)},
-        {391, -1, -1, sizeof(::Protocol::S_PlayerDead)},
-        {400, -1, -1, sizeof(::Protocol::S_Ping)},
-        {409, -1, -1, sizeof(::Protocol::C_Pong)},
-        {418, -1, -1, sizeof(::Protocol::C_Ping)},
-        {427, -1, -1, sizeof(::Protocol::S_Pong)},
-        {436, -1, -1, sizeof(::Protocol::S_DebugServerTick)},
+        {363, -1, -1, sizeof(::Protocol::C_SelectLevelUp)},
+        {372, -1, -1, sizeof(::Protocol::S_GameWin)},
+        {382, -1, -1, sizeof(::Protocol::S_GameOver)},
+        {392, -1, -1, sizeof(::Protocol::S_PlayerDead)},
+        {401, -1, -1, sizeof(::Protocol::S_Ping)},
+        {410, -1, -1, sizeof(::Protocol::C_Pong)},
+        {419, -1, -1, sizeof(::Protocol::C_Ping)},
+        {428, -1, -1, sizeof(::Protocol::S_Pong)},
+        {437, -1, -1, sizeof(::Protocol::S_DebugServerTick)},
 };
 static const ::_pb::Message* const file_default_instances[] = {
     &::Protocol::_C_Login_default_instance_._instance,
@@ -1765,47 +1767,48 @@ const char descriptor_table_protodef_game_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIA
     "\022\r\n\005title\030\002 \001(\t\022\030\n\020duration_seconds\030\003 \001("
     "\002\"`\n\rLevelUpOption\022\021\n\toption_id\030\001 \001(\005\022\020\n"
     "\010skill_id\030\002 \001(\005\022\014\n\004name\030\003 \001(\t\022\014\n\004desc\030\004 "
-    "\001(\t\022\016\n\006is_new\030\005 \001(\010\"T\n\017S_LevelUpOption\022("
+    "\001(\t\022\016\n\006is_new\030\005 \001(\010\"i\n\017S_LevelUpOption\022("
     "\n\007options\030\001 \003(\0132\027.Protocol.LevelUpOption"
-    "\022\027\n\017timeout_seconds\030\002 \001(\002\"\'\n\017C_SelectLev"
-    "elUp\022\024\n\014option_index\030\001 \001(\005\"6\n\tS_GameWin\022"
-    "\025\n\rtotal_time_ms\030\001 \001(\003\022\022\n\nkill_count\030\002 \001"
-    "(\005\"6\n\nS_GameOver\022\030\n\020survived_time_ms\030\001 \001"
-    "(\003\022\016\n\006is_win\030\002 \001(\010\"!\n\014S_PlayerDead\022\021\n\tpl"
-    "ayer_id\030\001 \001(\005\"\033\n\006S_Ping\022\021\n\ttimestamp\030\001 \001"
-    "(\003\"\033\n\006C_Pong\022\021\n\ttimestamp\030\001 \001(\003\"\033\n\006C_Pin"
-    "g\022\021\n\ttimestamp\030\001 \001(\003\"\033\n\006S_Pong\022\021\n\ttimest"
-    "amp\030\001 \001(\003\"(\n\021S_DebugServerTick\022\023\n\013server"
-    "_tick\030\001 \001(\r*\350\005\n\005MsgId\022\010\n\004NONE\020\000\022\013\n\007C_LOG"
-    "IN\020d\022\013\n\007S_LOGIN\020e\022\021\n\rC_CREATE_ROOM\020f\022\021\n\r"
-    "S_CREATE_ROOM\020g\022\017\n\013C_JOIN_ROOM\020h\022\017\n\013S_JO"
-    "IN_ROOM\020i\022\023\n\017C_GET_ROOM_LIST\020j\022\017\n\013S_ROOM"
-    "_LIST\020k\022\021\n\rC_ENTER_LOBBY\020n\022\021\n\rS_ENTER_LO"
-    "BBY\020o\022\020\n\014C_LEAVE_ROOM\020p\022\020\n\014S_LEAVE_ROOM\020"
-    "q\022\020\n\014C_GAME_READY\020r\022\n\n\006C_CHAT\020x\022\n\n\006S_CHA"
-    "T\020y\022\023\n\016S_SPAWN_OBJECT\020\310\001\022\025\n\020S_DESPAWN_OB"
-    "JECT\020\311\001\022\030\n\023S_MOVE_OBJECT_BATCH\020\312\001\022\021\n\014C_M"
-    "OVE_INPUT\020\313\001\022\027\n\022S_PLAYER_STATE_ACK\020\314\001\022\020\n"
-    "\013C_USE_SKILL\020\254\002\022\023\n\016S_SKILL_EFFECT\020\255\002\022\024\n\017"
-    "S_DAMAGE_EFFECT\020\256\002\022\020\n\013S_KNOCKBACK\020\261\002\022\024\n\017"
-    "S_PLAYER_DOWNED\020\262\002\022\024\n\017S_PLAYER_REVIVE\020\263\002"
-    "\022\021\n\014S_EXP_CHANGE\020\220\003\022\026\n\021S_LEVEL_UP_OPTION"
-    "\020\221\003\022\026\n\021C_SELECT_LEVEL_UP\020\222\003\022\020\n\013S_HP_CHAN"
-    "GE\020\223\003\022\022\n\rS_WAVE_NOTIFY\020\224\003\022\017\n\nS_GAME_WIN\020"
-    "\364\003\022\020\n\013S_GAME_OVER\020\365\003\022\022\n\rS_PLAYER_DEAD\020\366\003"
-    "\022\013\n\006S_PING\020\204\007\022\013\n\006C_PONG\020\205\007\022\013\n\006C_PING\020\206\007\022"
-    "\013\n\006S_PONG\020\207\007\022\030\n\023S_DEBUG_SERVER_TICK\020\210\007*L"
-    "\n\nObjectType\022\013\n\007UNKNOWN\020\000\022\n\n\006PLAYER\020\001\022\013\n"
-    "\007MONSTER\020\002\022\016\n\nPROJECTILE\020\003\022\010\n\004ITEM\020\004*d\n\013"
-    "ObjectState\022\010\n\004IDLE\020\000\022\n\n\006MOVING\020\001\022\r\n\tATT"
-    "ACKING\020\002\022\010\n\004DEAD\020\003\022\n\n\006DOWNED\020\004\022\r\n\tKNOCKB"
-    "ACK\020\005\022\013\n\007STUNNED\020\006b\006proto3"
+    "\022\027\n\017timeout_seconds\030\002 \001(\002\022\023\n\013slow_radius"
+    "\030\003 \001(\002\"\'\n\017C_SelectLevelUp\022\024\n\014option_inde"
+    "x\030\001 \001(\005\"6\n\tS_GameWin\022\025\n\rtotal_time_ms\030\001 "
+    "\001(\003\022\022\n\nkill_count\030\002 \001(\005\"6\n\nS_GameOver\022\030\n"
+    "\020survived_time_ms\030\001 \001(\003\022\016\n\006is_win\030\002 \001(\010\""
+    "!\n\014S_PlayerDead\022\021\n\tplayer_id\030\001 \001(\005\"\033\n\006S_"
+    "Ping\022\021\n\ttimestamp\030\001 \001(\003\"\033\n\006C_Pong\022\021\n\ttim"
+    "estamp\030\001 \001(\003\"\033\n\006C_Ping\022\021\n\ttimestamp\030\001 \001("
+    "\003\"\033\n\006S_Pong\022\021\n\ttimestamp\030\001 \001(\003\"(\n\021S_Debu"
+    "gServerTick\022\023\n\013server_tick\030\001 \001(\r*\350\005\n\005Msg"
+    "Id\022\010\n\004NONE\020\000\022\013\n\007C_LOGIN\020d\022\013\n\007S_LOGIN\020e\022\021"
+    "\n\rC_CREATE_ROOM\020f\022\021\n\rS_CREATE_ROOM\020g\022\017\n\013"
+    "C_JOIN_ROOM\020h\022\017\n\013S_JOIN_ROOM\020i\022\023\n\017C_GET_"
+    "ROOM_LIST\020j\022\017\n\013S_ROOM_LIST\020k\022\021\n\rC_ENTER_"
+    "LOBBY\020n\022\021\n\rS_ENTER_LOBBY\020o\022\020\n\014C_LEAVE_RO"
+    "OM\020p\022\020\n\014S_LEAVE_ROOM\020q\022\020\n\014C_GAME_READY\020r"
+    "\022\n\n\006C_CHAT\020x\022\n\n\006S_CHAT\020y\022\023\n\016S_SPAWN_OBJE"
+    "CT\020\310\001\022\025\n\020S_DESPAWN_OBJECT\020\311\001\022\030\n\023S_MOVE_O"
+    "BJECT_BATCH\020\312\001\022\021\n\014C_MOVE_INPUT\020\313\001\022\027\n\022S_P"
+    "LAYER_STATE_ACK\020\314\001\022\020\n\013C_USE_SKILL\020\254\002\022\023\n\016"
+    "S_SKILL_EFFECT\020\255\002\022\024\n\017S_DAMAGE_EFFECT\020\256\002\022"
+    "\020\n\013S_KNOCKBACK\020\261\002\022\024\n\017S_PLAYER_DOWNED\020\262\002\022"
+    "\024\n\017S_PLAYER_REVIVE\020\263\002\022\021\n\014S_EXP_CHANGE\020\220\003"
+    "\022\026\n\021S_LEVEL_UP_OPTION\020\221\003\022\026\n\021C_SELECT_LEV"
+    "EL_UP\020\222\003\022\020\n\013S_HP_CHANGE\020\223\003\022\022\n\rS_WAVE_NOT"
+    "IFY\020\224\003\022\017\n\nS_GAME_WIN\020\364\003\022\020\n\013S_GAME_OVER\020\365"
+    "\003\022\022\n\rS_PLAYER_DEAD\020\366\003\022\013\n\006S_PING\020\204\007\022\013\n\006C_"
+    "PONG\020\205\007\022\013\n\006C_PING\020\206\007\022\013\n\006S_PONG\020\207\007\022\030\n\023S_D"
+    "EBUG_SERVER_TICK\020\210\007*L\n\nObjectType\022\013\n\007UNK"
+    "NOWN\020\000\022\n\n\006PLAYER\020\001\022\013\n\007MONSTER\020\002\022\016\n\nPROJE"
+    "CTILE\020\003\022\010\n\004ITEM\020\004*d\n\013ObjectState\022\010\n\004IDLE"
+    "\020\000\022\n\n\006MOVING\020\001\022\r\n\tATTACKING\020\002\022\010\n\004DEAD\020\003\022"
+    "\n\n\006DOWNED\020\004\022\r\n\tKNOCKBACK\020\005\022\013\n\007STUNNED\020\006b"
+    "\006proto3"
 };
 static ::absl::once_flag descriptor_table_game_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_game_2eproto = {
     false,
     false,
-    3546,
+    3567,
     descriptor_table_protodef_game_2eproto,
     "game.proto",
     &descriptor_table_game_2eproto_once,
@@ -10279,7 +10282,13 @@ S_LevelUpOption::S_LevelUpOption(
   _internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
       from._internal_metadata_);
   new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
-  _impl_.timeout_seconds_ = from._impl_.timeout_seconds_;
+  ::memcpy(reinterpret_cast<char *>(&_impl_) +
+               offsetof(Impl_, timeout_seconds_),
+           reinterpret_cast<const char *>(&from._impl_) +
+               offsetof(Impl_, timeout_seconds_),
+           offsetof(Impl_, slow_radius_) -
+               offsetof(Impl_, timeout_seconds_) +
+               sizeof(Impl_::slow_radius_));
 
   // @@protoc_insertion_point(copy_constructor:Protocol.S_LevelUpOption)
 }
@@ -10291,7 +10300,12 @@ inline PROTOBUF_NDEBUG_INLINE S_LevelUpOption::Impl_::Impl_(
 
 inline void S_LevelUpOption::SharedCtor(::_pb::Arena* arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
-  _impl_.timeout_seconds_ = {};
+  ::memset(reinterpret_cast<char *>(&_impl_) +
+               offsetof(Impl_, timeout_seconds_),
+           0,
+           offsetof(Impl_, slow_radius_) -
+               offsetof(Impl_, timeout_seconds_) +
+               sizeof(Impl_::slow_radius_));
 }
 S_LevelUpOption::~S_LevelUpOption() {
   // @@protoc_insertion_point(destructor:Protocol.S_LevelUpOption)
@@ -10352,15 +10366,15 @@ const ::google::protobuf::internal::ClassData* S_LevelUpOption::GetClassData() c
   return _class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<1, 2, 1, 0, 2> S_LevelUpOption::_table_ = {
+const ::_pbi::TcParseTable<2, 3, 1, 0, 2> S_LevelUpOption::_table_ = {
   {
     0,  // no _has_bits_
     0, // no _extensions_
-    2, 8,  // max_field_number, fast_idx_mask
+    3, 24,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967292,  // skipmap
+    4294967288,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    2,  // num_field_entries
+    3,  // num_field_entries
     1,  // num_aux_entries
     offsetof(decltype(_table_), aux_entries),
     _class_data_.base(),
@@ -10370,12 +10384,16 @@ const ::_pbi::TcParseTable<1, 2, 1, 0, 2> S_LevelUpOption::_table_ = {
     ::_pbi::TcParser::GetTable<::Protocol::S_LevelUpOption>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
-    // float timeout_seconds = 2;
-    {::_pbi::TcParser::FastF32S1,
-     {21, 63, 0, PROTOBUF_FIELD_OFFSET(S_LevelUpOption, _impl_.timeout_seconds_)}},
+    {::_pbi::TcParser::MiniParse, {}},
     // repeated .Protocol.LevelUpOption options = 1;
     {::_pbi::TcParser::FastMtR1,
      {10, 63, 0, PROTOBUF_FIELD_OFFSET(S_LevelUpOption, _impl_.options_)}},
+    // float timeout_seconds = 2;
+    {::_pbi::TcParser::FastF32S1,
+     {21, 63, 0, PROTOBUF_FIELD_OFFSET(S_LevelUpOption, _impl_.timeout_seconds_)}},
+    // float slow_radius = 3;
+    {::_pbi::TcParser::FastF32S1,
+     {29, 63, 0, PROTOBUF_FIELD_OFFSET(S_LevelUpOption, _impl_.slow_radius_)}},
   }}, {{
     65535, 65535
   }}, {{
@@ -10384,6 +10402,9 @@ const ::_pbi::TcParseTable<1, 2, 1, 0, 2> S_LevelUpOption::_table_ = {
     (0 | ::_fl::kFcRepeated | ::_fl::kMessage | ::_fl::kTvTable)},
     // float timeout_seconds = 2;
     {PROTOBUF_FIELD_OFFSET(S_LevelUpOption, _impl_.timeout_seconds_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
+    // float slow_radius = 3;
+    {PROTOBUF_FIELD_OFFSET(S_LevelUpOption, _impl_.slow_radius_), 0, 0,
     (0 | ::_fl::kFcSingular | ::_fl::kFloat)},
   }}, {{
     {::_pbi::TcParser::GetTable<::Protocol::LevelUpOption>()},
@@ -10399,7 +10420,9 @@ PROTOBUF_NOINLINE void S_LevelUpOption::Clear() {
   (void) cached_has_bits;
 
   _impl_.options_.Clear();
-  _impl_.timeout_seconds_ = 0;
+  ::memset(&_impl_.timeout_seconds_, 0, static_cast<::size_t>(
+      reinterpret_cast<char*>(&_impl_.slow_radius_) -
+      reinterpret_cast<char*>(&_impl_.timeout_seconds_)) + sizeof(_impl_.slow_radius_));
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
 }
 
@@ -10434,6 +10457,13 @@ PROTOBUF_NOINLINE void S_LevelUpOption::Clear() {
             target = stream->EnsureSpace(target);
             target = ::_pbi::WireFormatLite::WriteFloatToArray(
                 2, this_._internal_timeout_seconds(), target);
+          }
+
+          // float slow_radius = 3;
+          if (::absl::bit_cast<::uint32_t>(this_._internal_slow_radius()) != 0) {
+            target = stream->EnsureSpace(target);
+            target = ::_pbi::WireFormatLite::WriteFloatToArray(
+                3, this_._internal_slow_radius(), target);
           }
 
           if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
@@ -10474,6 +10504,10 @@ PROTOBUF_NOINLINE void S_LevelUpOption::Clear() {
             if (::absl::bit_cast<::uint32_t>(this_._internal_timeout_seconds()) != 0) {
               total_size += 5;
             }
+            // float slow_radius = 3;
+            if (::absl::bit_cast<::uint32_t>(this_._internal_slow_radius()) != 0) {
+              total_size += 5;
+            }
           }
           return this_.MaybeComputeUnknownFieldsSize(total_size,
                                                      &this_._impl_._cached_size_);
@@ -10492,6 +10526,9 @@ void S_LevelUpOption::MergeImpl(::google::protobuf::MessageLite& to_msg, const :
   if (::absl::bit_cast<::uint32_t>(from._internal_timeout_seconds()) != 0) {
     _this->_impl_.timeout_seconds_ = from._impl_.timeout_seconds_;
   }
+  if (::absl::bit_cast<::uint32_t>(from._internal_slow_radius()) != 0) {
+    _this->_impl_.slow_radius_ = from._impl_.slow_radius_;
+  }
   _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(from._internal_metadata_);
 }
 
@@ -10507,7 +10544,12 @@ void S_LevelUpOption::InternalSwap(S_LevelUpOption* PROTOBUF_RESTRICT other) {
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   _impl_.options_.InternalSwap(&other->_impl_.options_);
-        swap(_impl_.timeout_seconds_, other->_impl_.timeout_seconds_);
+  ::google::protobuf::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(S_LevelUpOption, _impl_.slow_radius_)
+      + sizeof(S_LevelUpOption::_impl_.slow_radius_)
+      - PROTOBUF_FIELD_OFFSET(S_LevelUpOption, _impl_.timeout_seconds_)>(
+          reinterpret_cast<char*>(&_impl_.timeout_seconds_),
+          reinterpret_cast<char*>(&other->_impl_.timeout_seconds_));
 }
 
 ::google::protobuf::Metadata S_LevelUpOption::GetMetadata() const {

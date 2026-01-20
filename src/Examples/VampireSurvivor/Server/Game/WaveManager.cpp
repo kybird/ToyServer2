@@ -9,6 +9,7 @@ namespace SimpleGame {
 
 void WaveManager::Start()
 {
+    _state = WaveState::InProgress;
     _currentTime = 0.0f;
     _currentWaveIndex = 0;
     _nextSpawnTime = 0.0f;
@@ -18,6 +19,7 @@ void WaveManager::Start()
 
 void WaveManager::Reset()
 {
+    _state = WaveState::NotStarted;
     _currentTime = 0.0f;
     _currentWaveIndex = 0;
     _nextSpawnTime = 0.0f;
@@ -110,6 +112,13 @@ void WaveManager::Update(float dt, Room *room)
         {
             ++it;
         }
+    }
+
+    // [NEW] 1회성 상태 전이: InProgress → Completed
+    if (_state == WaveState::InProgress && _currentWaveIndex >= _waves.size() && _activeSpawners.empty())
+    {
+        _state = WaveState::Completed;
+        LOG_INFO("All waves completed in Room {}", _roomId);
     }
 }
 

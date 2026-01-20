@@ -6,13 +6,7 @@
 
 namespace System {
 
-enum class InternalMessageType {
-    IMT_LOGIC_TIMER = 1000,
-    IMT_LOGIC_TIMER_EXPIRED,
-    IMT_LOGIC_TIMER_ADD,
-    IMT_LOGIC_TIMER_CANCEL,
-    IMT_LOGIC_TIMER_TICK
-};
+// InternalMessageType removed - merged into MessageType
 
 struct ITimerListener;
 
@@ -20,7 +14,7 @@ struct TimerMessage : public IMessage
 {
     TimerMessage()
     {
-        type = (uint32_t)InternalMessageType::IMT_LOGIC_TIMER;
+        type = (uint32_t)MessageType::LOGIC_TIMER;
     }
     uint32_t timerId;
     void *pParam;
@@ -32,7 +26,7 @@ struct TimerExpiredMessage : public IMessage
 {
     TimerExpiredMessage()
     {
-        type = (uint32_t)InternalMessageType::IMT_LOGIC_TIMER_EXPIRED;
+        type = (uint32_t)MessageType::LOGIC_TIMER_EXPIRED;
     }
     uint64_t timerId;
 };
@@ -41,7 +35,7 @@ struct TimerTickMessage : public IMessage
 {
     TimerTickMessage()
     {
-        type = (uint32_t)InternalMessageType::IMT_LOGIC_TIMER_TICK;
+        type = (uint32_t)MessageType::LOGIC_TIMER_TICK;
     }
     uint32_t tickCount;
 };
@@ -50,7 +44,7 @@ struct TimerAddMessage : public IMessage
 {
     TimerAddMessage()
     {
-        type = (uint32_t)InternalMessageType::IMT_LOGIC_TIMER_ADD;
+        type = (uint32_t)MessageType::LOGIC_TIMER_ADD;
     }
     uint64_t timerId;
     uint32_t logicTimerId;
@@ -65,7 +59,7 @@ struct TimerCancelMessage : public IMessage
 {
     TimerCancelMessage()
     {
-        type = (uint32_t)InternalMessageType::IMT_LOGIC_TIMER_CANCEL;
+        type = (uint32_t)MessageType::LOGIC_TIMER_CANCEL;
     }
     uint64_t timerId;
     ITimerListener *listener;

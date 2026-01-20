@@ -279,6 +279,7 @@ void Player::AddExp(int32_t amount, Room *room)
 
             Protocol::S_LevelUpOption optionMsg;
             optionMsg.set_timeout_seconds(GameConfig::LEVEL_UP_TIMEOUT_SEC);
+            optionMsg.set_slow_radius(10.0f); // Match the logic in Update()
             for (const auto &opt : options)
             {
                 auto *protoOpt = optionMsg.add_options();
@@ -304,7 +305,7 @@ void Player::Update(float dt, Room *room)
         // Continuous slow field while leveling up (30m Radius)
         if (room != nullptr)
         {
-            float slowRadius = 30.0f;
+            float slowRadius = 10.0f; // Aligned with client AoE visual indicator
             auto monstersInRange = room->GetMonstersInRange(GetX(), GetY(), slowRadius);
 
             // Collect IDs for efficient containment check
@@ -319,7 +320,9 @@ void Player::Update(float dt, Room *room)
             {
                 if (_slowedMonsterIds.find(m->GetId()) == _slowedMonsterIds.end())
                 {
-                    m->AddLevelUpSlow();
+                    // Apply slow with duration (will auto-expire if player exits levelup state)
+                    float slowDuration = 999.0f; // Very long duration, will be manually removed on exit
+                    m->AddLevelUpSlow(room->GetTotalRunTime(), slowDuration);
                     _slowedMonsterIds.insert(m->GetId());
 
                     // Immediate packet sync for speed change

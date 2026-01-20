@@ -151,7 +151,7 @@ TEST(CombatTest, OverkillDoesNotResultInNegativeHp)
 
     // 4. Setup Monster with 10 HP
     auto monster = std::make_shared<Monster>(200, 1);
-    monster->Initialize(200, 1, 100, 0.5f, 10, 1.0f);
+    monster->Initialize(200, 1, 100, 0.5f, 10, 1.0f, 2.0f);
     monster->SetHp(10);
 
     // 5. Apply 100 Damage (Overkill)

@@ -99,12 +99,12 @@ bool DispatcherImpl::Process()
                 }
                 break;
 
-            case (uint32_t)InternalMessageType::IMT_LOGIC_TIMER: {
+            case static_cast<uint32_t>(MessageType::LOGIC_TIMER): {
                 // [DEPRECATED]
             }
             break;
 
-            case (uint32_t)InternalMessageType::IMT_LOGIC_TIMER_EXPIRED: {
+            case static_cast<uint32_t>(MessageType::LOGIC_TIMER_EXPIRED): {
                 if (_timerHandler)
                 {
                     TimerExpiredMessage *tMsg = static_cast<TimerExpiredMessage *>(msg);
@@ -113,7 +113,7 @@ bool DispatcherImpl::Process()
             }
             break;
 
-            case (uint32_t)InternalMessageType::IMT_LOGIC_TIMER_ADD: {
+            case static_cast<uint32_t>(MessageType::LOGIC_TIMER_ADD): {
                 if (_timerHandler)
                 {
                     TimerAddMessage *tMsg = static_cast<TimerAddMessage *>(msg);
@@ -122,7 +122,7 @@ bool DispatcherImpl::Process()
             }
             break;
 
-            case (uint32_t)InternalMessageType::IMT_LOGIC_TIMER_CANCEL: {
+            case static_cast<uint32_t>(MessageType::LOGIC_TIMER_CANCEL): {
                 if (_timerHandler)
                 {
                     TimerCancelMessage *tMsg = static_cast<TimerCancelMessage *>(msg);
@@ -131,7 +131,7 @@ bool DispatcherImpl::Process()
             }
             break;
 
-            case (uint32_t)InternalMessageType::IMT_LOGIC_TIMER_TICK: {
+            case static_cast<uint32_t>(MessageType::LOGIC_TIMER_TICK): {
                 if (_timerHandler)
                 {
                     TimerTickMessage *tMsg = static_cast<TimerTickMessage *>(msg);
@@ -180,7 +180,14 @@ bool DispatcherImpl::Process()
 void DispatcherImpl::Wait(int timeoutMs)
 {
     std::unique_lock<std::mutex> lock(_mutex);
-    _cv.wait_for(lock, std::chrono::milliseconds(timeoutMs), [this] { return GetQueueSize() > 0; });
+    _cv.wait_for(
+        lock,
+        std::chrono::milliseconds(timeoutMs),
+        [this]
+        {
+            return GetQueueSize() > 0;
+        }
+    );
 }
 
 void DispatcherImpl::ProcessPendingDestroys()

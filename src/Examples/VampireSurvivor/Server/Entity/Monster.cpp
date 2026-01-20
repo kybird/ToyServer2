@@ -4,13 +4,20 @@
 
 namespace SimpleGame {
 
+// LevelUp Slow Source ID (고유 식별자)
+constexpr int32_t LEVELUP_SLOW_SOURCE_ID = 1000;
+
 void Monster::Update(float dt, Room *room)
 {
     // Update lifetime
     _aliveTime += dt;
 
     // Update state expiry
-    UpdateStateExpiry(_aliveTime);
+    // [Fix] Use room->GetTotalRunTime() because state expiration is set based on room time
+    UpdateStateExpiry(room->GetTotalRunTime());
+
+    // Update Modifier expiration
+    _modifiers.Update(_aliveTime);
 
     if (_ai != nullptr && !IsDead())
     {
@@ -40,6 +47,26 @@ void Monster::TakeDamage(int32_t damage, Room *room)
         _hp = 0;
         SetState(Protocol::ObjectState::DEAD);
     }
+}
+
+void Monster::AddLevelUpSlow(float currentTime, float duration)
+{
+    // 15% 속도로 감소 (PercentMult 0.15)
+    StatModifier slowMod(
+        StatType::Speed,
+        ModifierOp::PercentMult,
+        0.15f, // 15% of normal speed
+        LEVELUP_SLOW_SOURCE_ID,
+        currentTime + duration, // 만료 시각
+        false                   // Refresh 정책
+    );
+
+    _modifiers.AddModifier(slowMod);
+}
+
+void Monster::RemoveLevelUpSlow()
+{
+    _modifiers.RemoveBySourceId(LEVELUP_SLOW_SOURCE_ID);
 }
 
 } // namespace SimpleGame
