@@ -31,7 +31,14 @@ PacketMessage *MessagePool::AllocatePacket(uint16_t bodySize)
     // For now, assume Hot Path packets are always <= 4KB.
     if (bodySize > MAX_PACKET_BODY_SIZE)
     {
-        return nullptr; // Error case
+        // [Hybrid Strategy] 대용량 패킷은 힙에서 직접 할당
+        size_t allocSize = PacketMessage::CalculateAllocSize(bodySize);
+        void *block = ::operator new(allocSize);
+        PacketMessage *msg = new (block) PacketMessage();
+        msg->type = (uint32_t)MessageType::PACKET;
+        msg->length = bodySize;
+        msg->isPooled = false;
+        return msg;
     }
 
     void *block = PopBlock();
@@ -40,9 +47,9 @@ PacketMessage *MessagePool::AllocatePacket(uint16_t bodySize)
 
     // Placement New
     PacketMessage *msg = new (block) PacketMessage();
-    msg->type = (uint32_t)MessageType::NETWORK_DATA;
+    msg->type = (uint32_t)MessageType::PACKET; // Ensure consistent type
     msg->length = bodySize;
-    // Data is ready to be written to msg->data
+    msg->isPooled = true;
 
     return msg;
 }
@@ -54,9 +61,6 @@ EventMessage *MessagePool::AllocateEvent()
         return nullptr;
     EventMessage *msg = new (block) EventMessage();
     return msg;
-}
-
-return msg;
 }
 
 TimerMessage *MessagePool::AllocateTimer()
@@ -123,11 +127,11 @@ void MessagePool::Free(IMessage *msg)
     if (msg->DecRef())
     {
         // [Hybrid Strategy Decision]
-        // 벤치마크 결과, LambdaMessage와 같은 소형 객체는 4KB 풀링이 비효율적임이 확인됨.
-        // LAMBDA_JOB 타입은 시스템 할당자가 관리하도록 직접 delete를 수행함.
-        if (msg->type == (uint32_t)MessageType::LAMBDA_JOB)
+        // isPooled 플래그에 따라 풀 반납 또는 시스템 해제 수행
+        if (!msg->isPooled)
         {
-            delete static_cast<LambdaMessage *>(msg);
+            // [Fix] LambdaMessage뿐만 아니라 대형 패킷도 여기서 안전하게 해제됨
+            delete msg;
             return;
         }
 

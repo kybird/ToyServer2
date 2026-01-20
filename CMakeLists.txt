@@ -324,6 +324,8 @@ set(VS_TEST_SOURCES
     src/Examples/VampireSurvivor/tests/TestStatModifier.cpp
     tests/TestBroadcastBenchmark.cpp
     tests/TestDispatcherBenchmark.cpp
+    tests/TestGatherWriteBenchmark.cpp
+    tests/TestMessagePoolExpansion.cpp
 )
 add_executable(UnitTests ${VS_TEST_SOURCES} ${GAME_SOURCES})
 target_include_directories(UnitTests PRIVATE 

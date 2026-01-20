@@ -50,6 +50,7 @@ struct IMessage
     uint32_t type; // Changed from enum class to support internal/external extension
     uint64_t sessionId;
     Session *session = nullptr;
+    bool isPooled = true; // [Hybrid Strategy] Added to distinguish pool allocation
 };
 
 struct EventMessage : public IMessage
@@ -67,6 +68,7 @@ struct LambdaMessage : public IMessage
     LambdaMessage()
     {
         type = (uint32_t)MessageType::LAMBDA_JOB;
+        isPooled = false; // [Hybrid Strategy] Small objects are system allocated
     }
     std::function<void()> task;
 };
