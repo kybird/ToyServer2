@@ -21,6 +21,8 @@ void RecvBuffer::Clean()
 
     // [Lazy Compaction] Only compact when absolutely necessary
     // This minimizes expensive memmove calls
+    // 임계값(COMPACT_THRESHOLD, 10KB) 미만으로 여유 공간이 남았을 때만 압축을 수행하여
+    // 빈번한 메모리 복사(memmove)로 인한 CPU 부하를 방지합니다.
     if (FreeSize() < COMPACT_THRESHOLD)
     {
         // [Slow Path] Move remaining data to front

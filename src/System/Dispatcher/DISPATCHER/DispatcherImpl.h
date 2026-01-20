@@ -50,6 +50,9 @@ private:
 
     // System Handlers
     ITimerHandler *_timerHandler = nullptr;
+
+    // [Optimization] Smart Notify using wait count
+    std::atomic<int32_t> _waitingCount{0};
 };
 
 } // namespace System

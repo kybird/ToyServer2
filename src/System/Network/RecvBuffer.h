@@ -13,6 +13,12 @@ namespace System {
     - Single IO thread access (no locks needed)
     - Tuned for typical MMORPG packet sizes (~100B - 4KB)
 
+    [Thread Safety]
+    - 이 클래스는 IO 스레드(Completion 핸들러)에 의해 독점적으로 접근됩니다.
+    - 로직 스레드로는 데이터의 복사본(Packet Object)이 전달되므로, 버퍼 자체에 대한 별도의 동기화(Lock)가 필요
+   전무합니다.
+    - 설계 의도: Lock-Free를 통한 성능 확보 및 메모리 연속성(Cache Locality) 극대화.
+
     [Hot Path Optimization]
     - OnWrite/OnRead: O(1), no branches in fast path
     - Clean(): Compaction only when free space is critically low (< 10KB)

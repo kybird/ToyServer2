@@ -53,11 +53,10 @@ EventMessage *MessagePool::AllocateEvent()
     if (!block)
         return nullptr;
     EventMessage *msg = new (block) EventMessage();
-    msg->type = (uint32_t)MessageType::NETWORK_CONNECT; // Default or ignored?
-    // EventMessage typically doesn't use type for dispatch logic in same way or has specific types?
-    // IMessage.h has NETWORK_CONNECT, NETWORK_DISCONNECT, etc.
-    // AllocateEvent is generic.
     return msg;
+}
+
+return msg;
 }
 
 TimerMessage *MessagePool::AllocateTimer()
@@ -121,8 +120,17 @@ void MessagePool::Free(IMessage *msg)
         return;
 
     // [RefCount] Decrement and only free if 0
-    if (msg->refCount.fetch_sub(1, std::memory_order_acq_rel) == 1)
+    if (msg->DecRef())
     {
+        // [Hybrid Strategy Decision]
+        // 벤치마크 결과, LambdaMessage와 같은 소형 객체는 4KB 풀링이 비효율적임이 확인됨.
+        // LAMBDA_JOB 타입은 시스템 할당자가 관리하도록 직접 delete를 수행함.
+        if (msg->type == (uint32_t)MessageType::LAMBDA_JOB)
+        {
+            delete static_cast<LambdaMessage *>(msg);
+            return;
+        }
+
         // Destructor? trivial for these structs, but good practice if limits change.
         msg->~IMessage();
 

@@ -36,9 +36,15 @@ struct IMessage
     // Initialized to 1.
     mutable std::atomic<int> refCount{1};
 
-    void AddRef()
+    void AddRef() const
     {
         refCount.fetch_add(1, std::memory_order_relaxed);
+    }
+
+    // Returns true if refCount reached 0
+    bool DecRef() const
+    {
+        return refCount.fetch_sub(1, std::memory_order_acq_rel) == 1;
     }
 
     uint32_t type; // Changed from enum class to support internal/external extension
@@ -71,17 +77,11 @@ struct PacketMessage : public IMessage
     {
         type = (uint32_t)MessageType::PACKET;
     }
-    // refCount is in base
     uint16_t length;
     uint8_t data[1]; // Flexible Array Member
 
-    void AddRef()
-    {
-        refCount.fetch_add(1, std::memory_order_relaxed);
-    }
-
-    void Release(); // Implemented in MessagePool/Source file? Or header if circular deps?
-    // MessagePool defines Free(IMessage*). IMessage doesn't know MessagePool.
+    // [Reference Counting Integration]
+    // Use IMessage::AddRef() and MessagePool::Free() for lifecycle.
     // We can't implement Release here easily without including MessagePool.h (Circular)
     // Or we make MessagePool::Free handle it?
     // "Release" usually implies "DecRef and Free if 0".

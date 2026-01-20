@@ -16,7 +16,6 @@
 #include <boost/asio/steady_timer.hpp>
 #include <concurrentqueue/moodycamel/concurrentqueue.h>
 
-
 namespace System {
 
 // =========================================================================================
@@ -234,6 +233,10 @@ struct SessionImpl
             System::Debug::MemoryMetrics::RecvPacket.fetch_add(1, std::memory_order_relaxed);
 #endif
 
+            // [Thread Safety Logic]
+            // RecvBuffer는 IO 스레드가 독점하며, 로직 스레드(Dispatcher)로는
+            // 아래와 같이 새로 할당된 메시지 객체에 데이터를 복사하여 전달합니다.
+            // 이를 통해 버퍼 경합 없이 Lock-Free한 구조를 유지합니다.
             System::PacketMessage *msg = System::MessagePool::AllocatePacket(header->size);
             if (!msg)
             {
@@ -380,7 +383,15 @@ struct SessionImpl
                     if (_linearBuffer.capacity() < size)
                         _linearBuffer.reserve(size);
                     _linearBuffer.resize(size);
-                    std::memcpy(_linearBuffer.data(), straggler->Payload(), size);
+
+                    if (_encryption)
+                    {
+                        _encryption->Encrypt(straggler->Payload(), _linearBuffer.data(), size);
+                    }
+                    else
+                    {
+                        std::memcpy(_linearBuffer.data(), straggler->Payload(), size);
+                    }
                     MessagePool::Free(straggler);
 
                     _owner->IncRef();
@@ -425,7 +436,16 @@ struct SessionImpl
         for (size_t i = 0; i < count; ++i)
         {
             size_t pktSize = tempItems[i]->length;
-            std::memcpy(destPtr, tempItems[i]->Payload(), pktSize);
+            if (_encryption)
+            {
+                // [Optimization] Cryptographic Zero-Copy:
+                // 복사와 암호화를 동시에 수행하여 메모리 통과 횟수 감소
+                _encryption->Encrypt(tempItems[i]->Payload(), destPtr, pktSize);
+            }
+            else
+            {
+                std::memcpy(destPtr, tempItems[i]->Payload(), pktSize);
+            }
             destPtr += pktSize;
             MessagePool::Free(tempItems[i]);
         }
@@ -613,11 +633,7 @@ void Session::SendPacket(const IPacket &pkt)
 
     pkt.SerializeTo(msg->Payload());
 
-    if (_impl->_encryption)
-    {
-        _impl->_encryption->Encrypt(msg->Payload(), msg->Payload(), size);
-    }
-
+    // [Note] Encryption is deferred until SessionImpl::Flush
     _impl->EnqueueSend(msg);
 }
 
@@ -626,18 +642,10 @@ void Session::SendPreSerialized(const PacketMessage *source)
     if (!_impl->_connected.load(std::memory_order_relaxed))
         return;
 
-    auto msg = MessagePool::AllocatePacket(source->length);
-    if (!msg)
-        return;
-
-    std::memcpy(msg->Payload(), source->Payload(), source->length);
-
-    if (_impl->_encryption)
-    {
-        _impl->_encryption->Encrypt(msg->Payload(), msg->Payload(), source->length);
-    }
-
-    _impl->EnqueueSend(msg);
+    // [Optimization] Reference Counting Broadcast:
+    // 패킷의 참조 카운트만 늘려서 큐에 삽입. 복사 및 즉각 암호화 제거.
+    source->AddRef();
+    _impl->EnqueueSend(const_cast<PacketMessage *>(source));
 }
 
 void Session::Close()
