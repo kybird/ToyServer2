@@ -59,3 +59,17 @@ target_link_libraries(TestCommandConsole
 target_precompile_headers(TestCommandConsole PRIVATE "${CMAKE_SOURCE_DIR}/src/System/Pch.h")
 
 gtest_discover_tests(TestCommandConsole)
+
+# Smart Notify Benchmark Test
+add_executable(TestSmartNotifyBenchmark
+    TestSmartNotifyBenchmark.cpp
+)
+
+target_link_libraries(TestSmartNotifyBenchmark
+    PRIVATE
+        System
+        GTest::gtest_main
+)
+target_precompile_headers(TestSmartNotifyBenchmark PRIVATE "${CMAKE_SOURCE_DIR}/src/System/Pch.h")
+
+gtest_discover_tests(TestSmartNotifyBenchmark)

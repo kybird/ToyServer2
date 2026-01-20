@@ -154,6 +154,7 @@ bool DispatcherImpl::Process()
                 }
                 // Manual delete since it was allocated with new in Push
                 delete lMsg;
+
                 // Prevent MessagePool::Free below which expects Pool-allocated objects
                 // OR adapt MessagePool to handle it. Actually, MessagePool::Free handles IMessage*.
                 // BUT LambdaMessage is NOT in MessagePool yet.
