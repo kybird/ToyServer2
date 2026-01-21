@@ -1,5 +1,6 @@
 #include "System/Framework/Framework.h"
 #include "System/Console/CommandConsole.h"
+#include "System/MQ/MessageSystem.h"
 
 #include "System/Debug/CrashHandler.h"
 #include "System/Dispatcher/DISPATCHER/DispatcherImpl.h"
@@ -48,6 +49,11 @@ std::shared_ptr<IDispatcher> Framework::GetDispatcher() const
 std::shared_ptr<ICommandConsole> Framework::GetCommandConsole() const
 {
     return _console;
+}
+
+std::shared_ptr<ThreadPool> Framework::GetThreadPool() const
+{
+    return _threadPool;
 }
 
 Framework::Framework()
@@ -228,6 +234,10 @@ void Framework::Stop()
 
     if (_console)
         _console->Stop();
+
+    // Shutdown MQ System before stopping ThreadPool
+    // This ensures poll tasks can exit gracefully
+    System::MQ::MessageSystem::Instance().Shutdown();
 
     if (_threadPool)
         _threadPool->Stop();

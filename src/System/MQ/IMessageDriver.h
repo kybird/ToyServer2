@@ -1,8 +1,10 @@
 #pragma once
 #include <functional>
-#include <future>
 #include <string>
 
+namespace System {
+class ThreadPool;
+}
 
 namespace System::MQ {
 
@@ -22,6 +24,12 @@ public:
 
     // Subscribe to a topic
     virtual bool Subscribe(const std::string &topic, MessageCallback callback) = 0;
+
+    // Set execution context (ThreadPool) for blocking I/O drivers
+    // Default implementation is no-op for backward compatibility
+    virtual void SetThreadPool(System::ThreadPool *threadPool)
+    {
+    }
 };
 
 } // namespace System::MQ

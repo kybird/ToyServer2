@@ -3,7 +3,6 @@
 #include "RedisStreamDriver.h"
 #include "System/Pch.h"
 
-
 namespace System::MQ {
 
 MessageSystem &MessageSystem::Instance()
@@ -12,10 +11,15 @@ MessageSystem &MessageSystem::Instance()
     return instance;
 }
 
-bool MessageSystem::Initialize(const std::string &natsConfig, const std::string &redisConfig)
+bool MessageSystem::Initialize(
+    const std::string &natsConfig, const std::string &redisConfig, System::ThreadPool *threadPool
+)
 {
     // Fast Channel (NATS)
     auto nats = std::make_shared<NatsDriver>();
+    if (threadPool)
+        nats->SetThreadPool(threadPool);
+
     if (nats->Connect(natsConfig))
     {
         m_drivers[MessageQoS::Fast] = nats;
@@ -28,6 +32,9 @@ bool MessageSystem::Initialize(const std::string &natsConfig, const std::string 
 
     // Reliable Channel (Redis)
     auto redis = std::make_shared<RedisStreamDriver>();
+    if (threadPool)
+        redis->SetThreadPool(threadPool);
+
     if (redis->Connect(redisConfig))
     {
         m_drivers[MessageQoS::Reliable] = redis;

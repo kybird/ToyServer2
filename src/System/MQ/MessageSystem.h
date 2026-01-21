@@ -5,6 +5,10 @@
 #include <memory>
 #include <string>
 
+namespace System {
+class ThreadPool;
+}
+
 namespace System::MQ {
 
 class MessageSystem
@@ -12,7 +16,7 @@ class MessageSystem
 public:
     static MessageSystem &Instance();
 
-    bool Initialize(const std::string &natsConfig, const std::string &redisConfig);
+    bool Initialize(const std::string &natsConfig, const std::string &redisConfig, System::ThreadPool *threadPool);
     void Shutdown();
 
     bool Publish(const std::string &topic, const std::string &message, MessageQoS qos);

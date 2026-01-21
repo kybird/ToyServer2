@@ -2,8 +2,8 @@
 #include "System/MQ/NatsDriver.h"
 #include "System/MQ/RedisStreamDriver.h"
 #include "System/Pch.h"
+#include "System/Thread/ThreadPool.h"
 #include <gtest/gtest.h>
-
 
 // Note: These tests require running NATS and Redis servers to pass 'Connect' = true.
 // In CI/Build environment without them, we expect them to handle failure gracefully or fail to connect.
@@ -29,6 +29,10 @@ TEST(MQ, NatsDriver_Lifecycle)
 TEST(MQ, RedisStreamDriver_Lifecycle)
 {
     System::MQ::RedisStreamDriver driver;
+    System::ThreadPool pool(1, "TestMQ_Redis");
+    pool.Start();
+    driver.SetThreadPool(&pool);
+
     bool connected = driver.Connect("tcp://localhost:6379");
     if (connected)
     {
@@ -46,8 +50,11 @@ TEST(MQ, MessageSystem_Integration)
 {
     // Basic singleton access check
     auto &sys = System::MQ::MessageSystem::Instance();
+    std::shared_ptr<System::ThreadPool> pool = std::make_shared<System::ThreadPool>(1, "TestMQ_Sys");
+    pool->Start();
+
     // Intentionally invalid or default strings
-    sys.Initialize("nats://localhost:4222", "tcp://localhost:6379");
+    sys.Initialize("nats://localhost:4222", "tcp://localhost:6379", pool.get());
 
     // Attempt publish (will fail if not connected, but safe)
     sys.Publish("any", "data", System::MQ::MessageQoS::Fast);

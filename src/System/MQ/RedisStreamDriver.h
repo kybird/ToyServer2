@@ -3,10 +3,12 @@
 #include <atomic>
 #include <mutex>
 #include <sw/redis++/redis++.h>
-#include <thread>
 #include <unordered_map>
 #include <vector>
 
+namespace System {
+class ThreadPool;
+}
 
 namespace System::MQ {
 
@@ -22,12 +24,14 @@ public:
     bool Publish(const std::string &topic, const std::string &message) override;
     bool Subscribe(const std::string &topic, MessageCallback callback) override;
 
+    void SetThreadPool(System::ThreadPool *threadPool) override;
+
 private:
-    void _PollThread();
+    void _PollTask();
 
     std::unique_ptr<sw::redis::Redis> m_redis;
     std::atomic<bool> m_running{false};
-    std::thread m_pollThread;
+    System::ThreadPool *m_threadPool = nullptr;
 
     struct Subscription
     {

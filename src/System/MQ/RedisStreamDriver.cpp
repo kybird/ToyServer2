@@ -1,5 +1,6 @@
 #include "RedisStreamDriver.h"
 #include "System/Pch.h"
+#include "System/Thread/ThreadPool.h"
 #include <iostream>
 
 namespace System::MQ {
@@ -13,6 +14,11 @@ RedisStreamDriver::~RedisStreamDriver()
     Disconnect();
 }
 
+void RedisStreamDriver::SetThreadPool(System::ThreadPool *threadPool)
+{
+    m_threadPool = threadPool;
+}
+
 bool RedisStreamDriver::Connect(const std::string &connectionString)
 {
     try
@@ -22,7 +28,13 @@ bool RedisStreamDriver::Connect(const std::string &connectionString)
         m_redis->ping();
 
         m_running = true;
-        m_pollThread = std::thread(&RedisStreamDriver::_PollThread, this);
+
+        // Start poll task (1 time registration)
+        if (m_threadPool)
+        {
+            m_threadPool->Enqueue(&RedisStreamDriver::_PollTask, this);
+        }
+
         return true;
     } catch (const std::exception &e)
     {
@@ -34,11 +46,11 @@ bool RedisStreamDriver::Connect(const std::string &connectionString)
 void RedisStreamDriver::Disconnect()
 {
     m_running = false;
-    if (m_pollThread.joinable())
-    {
-        m_pollThread.join();
-    }
+
+    // Close connection to force blocking I/O to return with error
     m_redis.reset();
+
+    // PollTask will exit naturally when m_running=false or connection error occurs
 }
 
 bool RedisStreamDriver::Publish(const std::string &topic, const std::string &message)
@@ -67,7 +79,7 @@ bool RedisStreamDriver::Subscribe(const std::string &topic, MessageCallback call
     return true;
 }
 
-void RedisStreamDriver::_PollThread()
+void RedisStreamDriver::_PollTask()
 {
     while (m_running)
     {

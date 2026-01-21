@@ -38,6 +38,7 @@ public:
 protected:
     std::shared_ptr<IDispatcher> GetDispatcher() const override;
     std::shared_ptr<ICommandConsole> GetCommandConsole() const override;
+    std::shared_ptr<ThreadPool> GetThreadPool() const override;
 
 private:
     std::shared_ptr<NetworkImpl> _network;

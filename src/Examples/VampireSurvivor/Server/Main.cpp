@@ -234,7 +234,7 @@ int main()
     // Initialize MQ System
     auto &mq = System::MQ::MessageSystem::Instance();
     // Assuming local NATS and Redis for now (config could be better)
-    if (!mq.Initialize("nats://localhost:4222", "tcp://localhost:6379"))
+    if (!mq.Initialize("nats://localhost:4222", "tcp://localhost:6379", framework->GetThreadPool().get()))
     {
         LOG_WARN("MQ System failed to connect. Distributed features may not work.");
     }
