@@ -69,11 +69,4 @@
 *   `logs/`: 서버 실행 및 빌드 로그 파일.
 *   `doc/`: 개발자 문서 및 코딩 컨벤션.
 
-## License
-
-This project is licensed under the **BSD 3-Clause License**.
-
-> **Condition**:
->
-> Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. (See the `LICENSE` file for details.)
 
