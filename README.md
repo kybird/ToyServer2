@@ -1,12 +1,5 @@
 # ToyServer2
 
-**ToyServer의 한계를 넘어 처음부터 다시 설계된 프로젝트입니다.**
-
-본 프로젝트는 기존 `ToyServer` 코드베이스의 구조적 한계와 "스파게티 코드" 위험성을 인지하고, 이를 완전히 뜯어고쳐(Rebuilt) 강력하고 확장 가능하며 유지보수가 용이한 고성능 네트워크 서버 프레임워크를 구축하는 것을 목표로 합니다.
-
-> **🚧 상태: 개발 진행 중 (Work In Progress) 🚧**
->
-> 현재 활발히 개발이 진행되고 있습니다. 핵심 프레임워크 안정화 작업과 기능 추가가 점진적으로 이루어지고 있습니다.
 
 ## 핵심 특징 (Key Features)
 
@@ -69,11 +62,4 @@
 *   `logs/`: 서버 실행 및 빌드 로그 파일.
 *   `doc/`: 개발자 문서 및 코딩 컨벤션.
 
-## License
-
-This project is licensed under the **BSD 3-Clause License**.
-
-> **Condition**:
->
-> Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. (See the `LICENSE` file for details.)
 
