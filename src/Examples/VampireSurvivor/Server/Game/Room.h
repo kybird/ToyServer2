@@ -46,7 +46,7 @@ public:
     void OnPlayerReady(uint64_t sessionId); // Called when client finishes loading
     void BroadcastPacket(const System::IPacket &pkt);
     void BroadcastSpawn(const std::vector<std::shared_ptr<GameObject>> &objects);
-    void BroadcastDespawn(const std::vector<int32_t> &objectIds);
+    void BroadcastDespawn(const std::vector<int32_t> &objectIds, const std::vector<int32_t> &pickerIds = {});
 
     // Game Loop
     void Start();

@@ -1,4 +1,5 @@
 #include "CombatManager.h"
+#include "Entity/ExpGem.h"
 #include "Entity/Monster.h"
 #include "Entity/Player.h"
 #include "Entity/Projectile.h"
@@ -8,7 +9,6 @@
 #include "GamePackets.h"
 #include "Protocol/game.pb.h"
 #include "System/ILog.h"
-#include <cmath>
 
 namespace SimpleGame {
 
@@ -23,6 +23,7 @@ void CombatManager::Update(float dt, Room *room)
 {
     ResolveProjectileCollisions(dt, room);
     ResolveBodyCollisions(dt, room);
+    ResolveItemCollisions(dt, room);
     ResolveCleanup(room);
 }
 
@@ -30,10 +31,13 @@ void CombatManager::ResolveCleanup(Room *room)
 {
     auto objects = room->_objMgr.GetAllObjects();
     std::vector<int32_t> despawnIds;
+    std::vector<int32_t> pickerIds;
 
     for (auto &obj : objects)
     {
         bool shouldRemove = false;
+        int32_t pickerId = 0;
+
         if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
         {
             auto proj = std::static_pointer_cast<Projectile>(obj);
@@ -46,10 +50,20 @@ void CombatManager::ResolveCleanup(Room *room)
             if (monster->IsDead())
                 shouldRemove = true;
         }
+        else if (obj->GetType() == Protocol::ObjectType::ITEM)
+        {
+            auto gem = std::static_pointer_cast<ExpGem>(obj);
+            if (gem->IsPickedUp())
+            {
+                shouldRemove = true;
+                pickerId = gem->GetPickerId();
+            }
+        }
 
         if (shouldRemove)
         {
             despawnIds.push_back(obj->GetId());
+            pickerIds.push_back(pickerId);
             room->_grid.Remove(obj);
             room->_objMgr.RemoveObject(obj->GetId());
         }
@@ -57,7 +71,7 @@ void CombatManager::ResolveCleanup(Room *room)
 
     if (!despawnIds.empty())
     {
-        room->BroadcastDespawn(despawnIds);
+        room->BroadcastDespawn(despawnIds, pickerIds);
     }
 }
 
@@ -106,11 +120,19 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
 
                         if (monster->IsDead())
                         {
-                            auto it = room->_players.find(proj->GetOwnerId());
-                            if (it != room->_players.end())
-                            {
-                                it->second->AddExp(10, room);
-                            }
+                            // 몬스터 사망 시 경험치 젬 스폰 (즉시 가산 대신)
+                            auto gem = std::make_shared<ExpGem>(room->GetObjectManager().GenerateId(), 10);
+                            gem->Initialize(gem->GetId(), monster->GetX(), monster->GetY(), 10);
+
+                            room->GetObjectManager().AddObject(gem);
+                            room->_grid.Add(gem);
+
+                            // 브로드캐스트를 위해 리스트에 수집 (여기는 즉시 보내도 되지만 구조상 SpawnBroadcast 활용)
+                            std::vector<std::shared_ptr<GameObject>> spawns;
+                            spawns.push_back(gem);
+                            room->BroadcastSpawn(spawns);
+
+                            LOG_INFO("Monster {} died. Spawned ExpGem {}", monster->GetId(), gem->GetId());
                         }
                         break;
                     }
@@ -206,8 +228,39 @@ void CombatManager::ResolveBodyCollisions(float dt, Room *room)
     }
 }
 
-// ApplyKnockback removed per user request
-// void CombatManager::ApplyKnockback(std::shared_ptr<Monster> monster, std::shared_ptr<Player> player, Room *room)
-// { ... }
+void CombatManager::ResolveItemCollisions(float dt, Room *room)
+{
+    auto objects = room->_objMgr.GetAllObjects();
 
+    for (auto &obj : objects)
+    {
+        if (obj->GetType() != Protocol::ObjectType::ITEM)
+            continue;
+
+        auto gem = std::static_pointer_cast<ExpGem>(obj);
+        if (gem->IsPickedUp())
+            continue;
+
+        // 가장 가까운 플레이어 찾기
+        auto nearestPlayer = room->GetNearestPlayer(gem->GetX(), gem->GetY());
+        if (nearestPlayer == nullptr || nearestPlayer->IsDead())
+            continue;
+
+        float dx = nearestPlayer->GetX() - gem->GetX();
+        float dy = nearestPlayer->GetY() - gem->GetY();
+        float distSq = dx * dx + dy * dy;
+
+        // 자석 범위 안이면 즉시 습득 처리 (연출은 클라이언트가 담당)
+        if (distSq <= GameConfig::EXP_GEM_MAGNET_RADIUS * GameConfig::EXP_GEM_MAGNET_RADIUS)
+        {
+            nearestPlayer->AddExp(gem->GetExpAmount(), room);
+            gem->SetPickerId(nearestPlayer->GetId());
+            gem->MarkAsPickedUp();
+
+            LOG_DEBUG(
+                "Player {} magnetized ExpGem {}. EXP +{}", nearestPlayer->GetId(), gem->GetId(), gem->GetExpAmount()
+            );
+        }
+    }
+}
 } // namespace SimpleGame

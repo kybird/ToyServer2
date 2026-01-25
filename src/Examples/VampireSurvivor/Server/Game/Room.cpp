@@ -172,15 +172,19 @@ void Room::BroadcastSpawn(const std::vector<std::shared_ptr<GameObject>> &object
     BroadcastPacket(S_SpawnObjectPacket(std::move(msg)));
 }
 
-void Room::BroadcastDespawn(const std::vector<int32_t> &objectIds)
+void Room::BroadcastDespawn(const std::vector<int32_t> &objectIds, const std::vector<int32_t> &pickerIds)
 {
     if (objectIds.empty())
         return;
 
     Protocol::S_DespawnObject msg;
-    for (int32_t id : objectIds)
+    for (size_t i = 0; i < objectIds.size(); ++i)
     {
-        msg.add_object_ids(id);
+        msg.add_object_ids(objectIds[i]);
+        if (i < pickerIds.size())
+            msg.add_picker_ids(pickerIds[i]);
+        else
+            msg.add_picker_ids(0);
     }
     BroadcastPacket(S_DespawnObjectPacket(std::move(msg)));
 }

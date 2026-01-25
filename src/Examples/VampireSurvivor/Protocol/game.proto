@@ -189,6 +189,7 @@ message S_SpawnObject {
 
 message S_DespawnObject {
   repeated int32 object_ids = 1;
+  repeated int32 picker_ids = 2; // 플레이어가 습득한 경우 대상 플레이어 ID, 단순 제거는 0
 }
 
 // Batched Movement Update

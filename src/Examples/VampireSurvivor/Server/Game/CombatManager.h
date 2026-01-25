@@ -23,6 +23,7 @@ public:
 private:
     void ResolveProjectileCollisions(float dt, Room *room);
     void ResolveBodyCollisions(float dt, Room *room);
+    void ResolveItemCollisions(float dt, Room *room);
     void ResolveCleanup(Room *room);
     // ApplyKnockback removed per user request
     // void ApplyKnockback(std::shared_ptr<Monster> monster, std::shared_ptr<Player> player, Room *room);
