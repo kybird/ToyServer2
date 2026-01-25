@@ -30,6 +30,7 @@ int main()
     System::GetLog().Init();
 
     LOG_INFO("SimpleGame Server Starting...");
+    LOG_ERROR("[DEBUG] Build Timestamp: {} {} (Fresh Build)", __DATE__, __TIME__);
     // Force Recompile
 
     // Basic Framework Setup
@@ -137,7 +138,7 @@ int main()
     System::SessionFactory::SetHeartbeatConfig(
         5000,
         15000,
-        [](System::Session *session)
+        [](System::ISession *session)
         {
             Protocol::S_Ping msg;
             msg.set_timestamp(

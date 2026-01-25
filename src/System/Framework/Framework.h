@@ -23,11 +23,12 @@ public:
     Framework();
     ~Framework();
 
-    // Dependency Injection: User provides PacketHandler
+    // Core Lifecycle
     bool Init(std::shared_ptr<IConfig> config, std::shared_ptr<IPacketHandler> packetHandler) override;
     void Run() override;
     void Stop() override;
 
+    // Accessors
     std::shared_ptr<ITimer> GetTimer() const override;
     std::shared_ptr<IStrand> CreateStrand() override;
     size_t GetDispatcherQueueSize() const override
@@ -51,6 +52,7 @@ private:
 
     std::shared_ptr<CommandConsole> _console;
     std::shared_ptr<IConfig> _config;
+    std::unique_ptr<class boost::asio::signal_set> _signals; // Added for internal signal handling
 };
 
 } // namespace System

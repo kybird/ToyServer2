@@ -11,7 +11,7 @@ static constexpr size_t LOW_WATER = 3000;
 
 namespace System {
 
-class Session;
+class ISession;
 
 class DispatcherImpl : public IDispatcher
 {
@@ -46,7 +46,7 @@ private:
 
     // [No session registry] Dispatcher doesn't own sessions, just processes messages
     // Session lifetime is managed by Session IncRef/DecRef
-    std::vector<Session *> _pendingDestroy;
+    std::vector<ISession *> _pendingDestroy;
 
     // System Handlers
     ITimerHandler *_timerHandler = nullptr;

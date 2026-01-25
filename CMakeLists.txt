@@ -109,6 +109,11 @@ target_sources(System PRIVATE
     src/System/Session/SessionFactory.cpp
     src/System/Session/SessionFactory.h
     src/System/Session/SessionPool.h
+    src/System/Session/GatewaySession.cpp
+    src/System/Session/GatewaySession.h
+    src/System/Session/BackendSession.cpp
+    src/System/Session/BackendSession.h
+    src/System/Session/SessionCommon.h
     src/System/ISession.h
 
     src/System/Network/INetwork.h

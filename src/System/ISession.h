@@ -29,6 +29,11 @@ public:
     {
     }
 
+    // Connection Lifecycle
+    virtual void OnConnect() = 0;
+    virtual void OnDisconnect() = 0;
+    virtual bool IsConnected() const = 0;
+
     // [Lifetime] Reference counting for async message queue safety
     virtual void IncRef() = 0;
     virtual void DecRef() = 0;

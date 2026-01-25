@@ -6,6 +6,7 @@
 #include "System/PacketView.h" // Added
 #include "System/Pch.h"
 #include "System/Session/Session.h"
+#include "System/Session/SessionFactory.h" // Added for SessionFactory::Destroy
 #include "System/Session/SessionPool.h"
 
 #include "System/Debug/MemoryMetrics.h"
@@ -55,8 +56,8 @@ bool DispatcherImpl::Process()
             {
             case (uint32_t)MessageType::NETWORK_DATA: {
                 // [Hot Path] Direct Session access - no map lookup, no vtable
-                // session pointer is concrete Session*, not ISession*
-                Session *session = msg->session;
+                // session pointer is now ISession* to support Gateway/Backend sessions
+                ISession *session = msg->session;
                 if (session && session->IsConnected())
                 {
                     PacketMessage *content = static_cast<PacketMessage *>(msg);
@@ -83,105 +84,106 @@ bool DispatcherImpl::Process()
                     }
                 }
             }
-            break;
-
-            case (uint32_t)MessageType::NETWORK_CONNECT:
-                // No registry - just notification, session is already managed by Session
-                break;
-
-            case (uint32_t)MessageType::NETWORK_DISCONNECT:
-                if (msg->session)
-                {
-                    // Notify Logic verify cleanup before destruction
-                    if (_packetHandler)
-                    {
-                        _packetHandler->OnSessionDisconnect(msg->session);
-                    }
-
-                    // [Invariant] After DISCONNECT, no new NETWORK_DATA messages
-                    // will be generated for this session. Remaining messages in queue
-                    // are protected by IncRef and will be safely processed.
-                    _pendingDestroy.push_back(msg->session);
-                }
-                break;
-
-            case static_cast<uint32_t>(MessageType::LOGIC_TIMER): {
-                // [DEPRECATED]
             }
             break;
 
-            case static_cast<uint32_t>(MessageType::LOGIC_TIMER_EXPIRED): {
-                if (_timerHandler)
-                {
-                    TimerExpiredMessage *tMsg = static_cast<TimerExpiredMessage *>(msg);
-                    _timerHandler->OnTimerExpired(tMsg->timerId);
-                }
-            }
+        case (uint32_t)MessageType::NETWORK_CONNECT:
+            // No registry - just notification, session is already managed by Session
             break;
 
-            case static_cast<uint32_t>(MessageType::LOGIC_TIMER_ADD): {
-                if (_timerHandler)
-                {
-                    TimerAddMessage *tMsg = static_cast<TimerAddMessage *>(msg);
-                    _timerHandler->OnTimerAdd(tMsg);
-                }
-            }
-            break;
-
-            case static_cast<uint32_t>(MessageType::LOGIC_TIMER_CANCEL): {
-                if (_timerHandler)
-                {
-                    TimerCancelMessage *tMsg = static_cast<TimerCancelMessage *>(msg);
-                    _timerHandler->OnTimerCancel(tMsg);
-                }
-            }
-            break;
-
-            case static_cast<uint32_t>(MessageType::LOGIC_TIMER_TICK): {
-                if (_timerHandler)
-                {
-                    TimerTickMessage *tMsg = static_cast<TimerTickMessage *>(msg);
-                    _timerHandler->OnTick(tMsg);
-                }
-            }
-            break;
-
-            case (uint32_t)MessageType::LAMBDA_JOB: {
-                LambdaMessage *lMsg = static_cast<LambdaMessage *>(msg);
-                if (lMsg->task)
-                {
-                    lMsg->task();
-                }
-                // Manual delete since it was allocated with new in Push
-                delete lMsg;
-
-                // Prevent MessagePool::Free below which expects Pool-allocated objects
-                // OR adapt MessagePool to handle it. Actually, MessagePool::Free handles IMessage*.
-                // BUT LambdaMessage is NOT in MessagePool yet.
-                // Hack: continue to avoid MessagePool::Free
-                continue;
-            }
-            break;
-
-            default:
-                break;
-            }
-
-            // [Lifetime] Release session reference (matches IncRef before Post)
+        case (uint32_t)MessageType::NETWORK_DISCONNECT:
             if (msg->session)
             {
-                msg->session->DecRef();
+                // Notify Logic verify cleanup before destruction
+                if (_packetHandler)
+                {
+                    _packetHandler->OnSessionDisconnect(msg->session);
+                }
+
+                // [Invariant] After DISCONNECT, no new NETWORK_DATA messages
+                // will be generated for this session. Remaining messages in queue
+                // are protected by IncRef and will be safely processed.
+                _pendingDestroy.push_back(msg->session);
             }
+            break;
 
-            // Return to pool
-            MessagePool::Free(msg);
+        case static_cast<uint32_t>(MessageType::LOGIC_TIMER): {
+            // [DEPRECATED]
         }
+        break;
+
+        case static_cast<uint32_t>(MessageType::LOGIC_TIMER_EXPIRED): {
+            if (_timerHandler)
+            {
+                TimerExpiredMessage *tMsg = static_cast<TimerExpiredMessage *>(msg);
+                _timerHandler->OnTimerExpired(tMsg->timerId);
+            }
+        }
+        break;
+
+        case static_cast<uint32_t>(MessageType::LOGIC_TIMER_ADD): {
+            if (_timerHandler)
+            {
+                TimerAddMessage *tMsg = static_cast<TimerAddMessage *>(msg);
+                _timerHandler->OnTimerAdd(tMsg);
+            }
+        }
+        break;
+
+        case static_cast<uint32_t>(MessageType::LOGIC_TIMER_CANCEL): {
+            if (_timerHandler)
+            {
+                TimerCancelMessage *tMsg = static_cast<TimerCancelMessage *>(msg);
+                _timerHandler->OnTimerCancel(tMsg);
+            }
+        }
+        break;
+
+        case static_cast<uint32_t>(MessageType::LOGIC_TIMER_TICK): {
+            if (_timerHandler)
+            {
+                TimerTickMessage *tMsg = static_cast<TimerTickMessage *>(msg);
+                _timerHandler->OnTick(tMsg);
+            }
+        }
+        break;
+
+        case (uint32_t)MessageType::LAMBDA_JOB: {
+            LambdaMessage *lMsg = static_cast<LambdaMessage *>(msg);
+            if (lMsg->task)
+            {
+                lMsg->task();
+            }
+            // Manual delete since it was allocated with new in Push
+            delete lMsg;
+
+            // Prevent MessagePool::Free below which expects Pool-allocated objects
+            // OR adapt MessagePool to handle it. Actually, MessagePool::Free handles IMessage*.
+            // BUT LambdaMessage is NOT in MessagePool yet.
+            // Hack: continue to avoid MessagePool::Free
+            continue;
+        }
+        break;
+
+        default:
+            break;
+        }
+
+        // [Lifetime] Release session reference (matches IncRef before Post)
+        if (msg->session)
+        {
+            msg->session->DecRef();
+        }
+
+        // Return to pool
+        MessagePool::Free(msg);
     }
+}
 
-    // [Phase 2] Process Lifecycle (Deferred Destruction)
-    ProcessPendingDestroys();
+// [Phase 2] Process Lifecycle (Deferred Destruction)
+ProcessPendingDestroys();
 
-    return count > 0;
+return count > 0;
 }
 
 void DispatcherImpl::Wait(int timeoutMs)
@@ -222,11 +224,11 @@ void DispatcherImpl::ProcessPendingDestroys()
     size_t i = 0;
     while (i < _pendingDestroy.size())
     {
-        Session *session = _pendingDestroy[i];
+        ISession *session = _pendingDestroy[i];
         if (session->CanDestroy())
         {
-            // Release to pool
-            SessionPool<Session>::Release(session);
+            // Release to pool via factory
+            SessionFactory::Destroy(session);
 
             // Swap-and-pop: O(1) deletion
             _pendingDestroy[i] = _pendingDestroy.back();

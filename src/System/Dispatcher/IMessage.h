@@ -6,7 +6,7 @@
 
 namespace System {
 
-class Session;
+class ISession;
 
 // Public Message Types
 enum class MessageType {
@@ -49,8 +49,8 @@ struct IMessage
 
     uint32_t type; // Changed from enum class to support internal/external extension
     uint64_t sessionId;
-    Session *session = nullptr;
-    bool isPooled = true; // [Hybrid Strategy] Added to distinguish pool allocation
+    ISession *session = nullptr; // Changed from Session* to support GatewaySession/BackendSession
+    bool isPooled = true;        // [Hybrid Strategy] Added to distinguish pool allocation
 };
 
 struct EventMessage : public IMessage

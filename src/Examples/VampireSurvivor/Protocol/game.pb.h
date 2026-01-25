@@ -4039,6 +4039,7 @@ class S_DespawnObject final : public ::google::protobuf::Message
   // accessors -------------------------------------------------------
   enum : int {
     kObjectIdsFieldNumber = 1,
+    kPickerIdsFieldNumber = 2,
   };
   // repeated int32 object_ids = 1;
   int object_ids_size() const;
@@ -4058,12 +4059,30 @@ class S_DespawnObject final : public ::google::protobuf::Message
   ::google::protobuf::RepeatedField<::int32_t>* _internal_mutable_object_ids();
 
   public:
+  // repeated int32 picker_ids = 2;
+  int picker_ids_size() const;
+  private:
+  int _internal_picker_ids_size() const;
+
+  public:
+  void clear_picker_ids() ;
+  ::int32_t picker_ids(int index) const;
+  void set_picker_ids(int index, ::int32_t value);
+  void add_picker_ids(::int32_t value);
+  const ::google::protobuf::RepeatedField<::int32_t>& picker_ids() const;
+  ::google::protobuf::RepeatedField<::int32_t>* mutable_picker_ids();
+
+  private:
+  const ::google::protobuf::RepeatedField<::int32_t>& _internal_picker_ids() const;
+  ::google::protobuf::RepeatedField<::int32_t>* _internal_mutable_picker_ids();
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.S_DespawnObject)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      0, 1, 0,
+      1, 2, 0,
       0, 2>
       _table_;
 
@@ -4083,6 +4102,8 @@ class S_DespawnObject final : public ::google::protobuf::Message
                           const S_DespawnObject& from_msg);
     ::google::protobuf::RepeatedField<::int32_t> object_ids_;
     ::google::protobuf::internal::CachedSize _object_ids_cached_byte_size_;
+    ::google::protobuf::RepeatedField<::int32_t> picker_ids_;
+    ::google::protobuf::internal::CachedSize _picker_ids_cached_byte_size_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -10528,6 +10549,51 @@ S_DespawnObject::_internal_object_ids() const {
 inline ::google::protobuf::RepeatedField<::int32_t>* S_DespawnObject::_internal_mutable_object_ids() {
   ::google::protobuf::internal::TSanRead(&_impl_);
   return &_impl_.object_ids_;
+}
+
+// repeated int32 picker_ids = 2;
+inline int S_DespawnObject::_internal_picker_ids_size() const {
+  return _internal_picker_ids().size();
+}
+inline int S_DespawnObject::picker_ids_size() const {
+  return _internal_picker_ids_size();
+}
+inline void S_DespawnObject::clear_picker_ids() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.picker_ids_.Clear();
+}
+inline ::int32_t S_DespawnObject::picker_ids(int index) const {
+  // @@protoc_insertion_point(field_get:Protocol.S_DespawnObject.picker_ids)
+  return _internal_picker_ids().Get(index);
+}
+inline void S_DespawnObject::set_picker_ids(int index, ::int32_t value) {
+  _internal_mutable_picker_ids()->Set(index, value);
+  // @@protoc_insertion_point(field_set:Protocol.S_DespawnObject.picker_ids)
+}
+inline void S_DespawnObject::add_picker_ids(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _internal_mutable_picker_ids()->Add(value);
+  // @@protoc_insertion_point(field_add:Protocol.S_DespawnObject.picker_ids)
+}
+inline const ::google::protobuf::RepeatedField<::int32_t>& S_DespawnObject::picker_ids() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_list:Protocol.S_DespawnObject.picker_ids)
+  return _internal_picker_ids();
+}
+inline ::google::protobuf::RepeatedField<::int32_t>* S_DespawnObject::mutable_picker_ids()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable_list:Protocol.S_DespawnObject.picker_ids)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _internal_mutable_picker_ids();
+}
+inline const ::google::protobuf::RepeatedField<::int32_t>&
+S_DespawnObject::_internal_picker_ids() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.picker_ids_;
+}
+inline ::google::protobuf::RepeatedField<::int32_t>* S_DespawnObject::_internal_mutable_picker_ids() {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return &_impl_.picker_ids_;
 }
 
 // -------------------------------------------------------------------

@@ -13,6 +13,8 @@
 #include "System/Network/AesEncryption.h"
 #include "System/Network/NetworkImpl.h"
 #include "System/Network/XorEncryption.h"
+#include "System/Session/BackendSession.h"
+#include "System/Session/GatewaySession.h"
 #include "System/Session/Session.h"
 #include "System/Session/SessionFactory.h"
 #include "System/Session/SessionPool.h"
@@ -82,10 +84,21 @@ bool Framework::Init(std::shared_ptr<IConfig> config, std::shared_ptr<IPacketHan
 
     const auto &serverConfig = _config->GetConfig();
 
+    // 1.5 Server Role Setup
+    if (serverConfig.serverRole == "backend")
+    {
+        SessionFactory::SetServerRole(ServerRole::Backend);
+        System::SessionPool<System::BackendSession>::Init(1000, 1000);
+    }
+    else
+    {
+        SessionFactory::SetServerRole(ServerRole::Gateway);
+        System::SessionPool<System::GatewaySession>::Init(1000, 1000);
+    }
+
     // 2. Prepare Pools & Encryption (Hidden from User)
-    LOG_INFO("Pre-allocating MessagePool & SessionPool...");
+    LOG_INFO("Pre-allocating MessagePool...");
     System::MessagePool::Prepare(6000);
-    System::SessionPool<System::Session>::Init(1000, 1000);
 
     // [Encryption] Configure Factory
     std::string encType = serverConfig.encryption;
@@ -166,14 +179,30 @@ bool Framework::Init(std::shared_ptr<IConfig> config, std::shared_ptr<IPacketHan
 
     // 5. Init Network
     int port = serverConfig.port;
+    LOG_ERROR("[DEBUG] Framework calling Network->Start({})", port);
     if (!_network->Start(port))
     {
+        LOG_ERROR("[DEBUG] Network->Start returned FALSE!");
         LOG_ERROR("Failed to start network on port {}", port);
         return false;
     }
+    LOG_ERROR("[DEBUG] Network->Start returned TRUE!");
 
     // 6. Console
     _console = std::make_shared<CommandConsole>(_config);
+
+    // 7. Internal Signal Handling (Graceful Shutdown)
+    _signals = std::make_unique<boost::asio::signal_set>(_network->GetIOContext(), SIGINT, SIGTERM);
+    _signals->async_wait(
+        [this](const boost::system::error_code &error, int signal_number)
+        {
+            if (!error)
+            {
+                LOG_INFO("Signal {} received. Stopping framework internally...", signal_number);
+                Stop();
+            }
+        }
+    );
 
     LOG_INFO("Framework Initialized.");
     return true;
@@ -199,10 +228,16 @@ void Framework::Run()
             {
                 try
                 {
+                    LOG_ERROR("[DEBUG] IO Thread #{} Started.", i);
                     _network->Run();
+                    LOG_ERROR("[DEBUG] IO Thread #{} Stopped.", i);
                 } catch (const std::exception &e)
                 {
-                    LOG_ERROR("IO Thread #{} Exception: {}", i, e.what());
+                    // If we are shutting down, ignore resource deadlock errors from logger/asio
+                    if (_running)
+                    {
+                        LOG_ERROR("IO Thread #{} Exception: {}", i, e.what());
+                    }
                 }
             }
         );
@@ -214,6 +249,7 @@ void Framework::Run()
         _dbThreadPool->Start();
 
     // 3. Main Thread Logic Loop
+    auto lastLog = std::chrono::steady_clock::now();
     while (_running)
     {
         // Optimization: Handle all available packets before yielding
@@ -224,6 +260,14 @@ void Framework::Run()
         else
         {
             _dispatcher->Wait(10); // Wait up to 10ms for new messages
+        }
+
+        // [DEBUG] Heartbeat
+        auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration_cast<std::chrono::seconds>(now - lastLog).count() >= 5)
+        {
+            LOG_ERROR("[DEBUG] Server Main Loop Alive...");
+            lastLog = now;
         }
     }
 }

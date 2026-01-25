@@ -67,14 +67,9 @@ bool JsonConfigLoader::Load(const std::string &filePath)
 
             _config.encryptionIV = server.value("encryption_iv", server.value("encryptionIV", ""));
             _config.logLevel = server.value("log_level", "info");
+            _config.serverRole = server.value("server_role", server.value("serverRole", "gateway"));
         }
 
-        LOG_INFO(
-            "Config loaded. Port: {}, IO Threads: {}, Task Threads: {}",
-            _config.port,
-            _config.workerThreadCount,
-            _config.taskWorkerCount
-        );
         return true;
     } catch (const std::exception &e)
     {

@@ -29,6 +29,9 @@ struct ServerConfig
     std::string encryptionKey = "";
     std::string encryptionIV = "";
     std::string logLevel = "info";
+
+    // Server Role (gateway, backend)
+    std::string serverRole = "gateway";
 };
 
 class IConfig

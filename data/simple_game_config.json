@@ -1,11 +1,13 @@
 {
     "server": {
-        "port": 9000,
+        "port": 9001,
         "worker_threads": 2,
         "task_worker_threads": 4,
         "db_info": "game.db",
         "rate_limit": 100.0,
         "rate_burst": 200.0,
-        "log_level": "debug"
+        "log_level": "debug",
+        "server_role": "gateway",
+        "encryption": "xor"
     }
 }
