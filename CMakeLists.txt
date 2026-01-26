@@ -114,6 +114,8 @@ target_sources(System PRIVATE
     src/System/Session/BackendSession.cpp
     src/System/Session/BackendSession.h
     src/System/Session/SessionCommon.h
+    src/System/Session/SessionContext.cpp
+    src/System/Session/SessionContext.h
     src/System/ISession.h
 
     src/System/Network/INetwork.h

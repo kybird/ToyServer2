@@ -1,7 +1,7 @@
 #include "CreateRoomHandler.h"
-#include "Protocol/game.pb.h"
-#include "GamePackets.h"
 #include "Game/RoomManager.h"
+#include "GamePackets.h"
+#include "Protocol/game.pb.h"
 #include "System/ILog.h"
 #include <iostream>
 #include <string>
@@ -10,7 +10,7 @@ namespace SimpleGame {
 namespace Handlers {
 namespace Room {
 
-void CreateRoomHandler::Handle(System::ISession* session, System::PacketView packet)
+void CreateRoomHandler::Handle(System::SessionContext &ctx, System::PacketView packet)
 {
     std::cout << "[DEBUG] Handling C_CREATE_ROOM" << std::endl;
     Protocol::C_CreateRoom req;
@@ -32,7 +32,7 @@ void CreateRoomHandler::Handle(System::ISession* session, System::PacketView pac
         res.set_room_id(newRoomId);
 
         S_CreateRoomPacket respPacket(res);
-        session->SendPacket(respPacket);
+        ctx.Send(respPacket);
         LOG_INFO("Created Room {}", newRoomId);
     }
 }

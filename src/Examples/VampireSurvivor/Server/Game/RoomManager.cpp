@@ -47,7 +47,8 @@ std::shared_ptr<Room> RoomManager::CreateRoom(int roomId, const std::string &tit
     }
 
     std::cout << "[DEBUG] Creating Room Object..." << std::endl;
-    std::shared_ptr<Room> newRoom = std::make_shared<Room>(roomId, _timer, strand, _userDB);
+    std::shared_ptr<Room> newRoom =
+        std::make_shared<Room>(roomId, _framework->GetDispatcher(), _timer, strand, _userDB);
     newRoom->SetTitle(title);
 
     std::cout << "[DEBUG] Room Object Created. Adding to map..." << std::endl;
@@ -118,56 +119,44 @@ std::shared_ptr<Player> RoomManager::GetPlayer(uint64_t sessionId)
     return nullptr;
 }
 
-void RoomManager::EnterLobby(System::ISession *session)
+void RoomManager::EnterLobby(uint64_t sessionId)
 {
     std::lock_guard<std::mutex> lock(_mutex);
-    _lobbySessions[session->GetId()] = session;
+    if (std::find(_lobbySessions.begin(), _lobbySessions.end(), sessionId) == _lobbySessions.end())
+    {
+        _lobbySessions.push_back(sessionId);
+    }
 }
 
 void RoomManager::LeaveLobby(uint64_t sessionId)
 {
     std::lock_guard<std::mutex> lock(_mutex);
-    _lobbySessions.erase(sessionId);
+    _lobbySessions.erase(std::remove(_lobbySessions.begin(), _lobbySessions.end(), sessionId), _lobbySessions.end());
 }
 
 bool RoomManager::IsInLobby(uint64_t sessionId)
 {
     std::lock_guard<std::mutex> lock(_mutex);
-    return _lobbySessions.find(sessionId) != _lobbySessions.end();
+    return std::find(_lobbySessions.begin(), _lobbySessions.end(), sessionId) != _lobbySessions.end();
 }
 
 void RoomManager::BroadcastPacketToLobby(const System::IPacket &pkt)
 {
-    LOG_INFO("Broadcasting packet to lobby");
     std::lock_guard<std::mutex> lock(_mutex);
-    LOG_INFO("Lock is Problem");
-    // Collect real sessions
-    std::vector<System::Session *> realSessions;
-    realSessions.reserve(_lobbySessions.size());
+    if (!_framework || !_framework->GetDispatcher())
+        return;
 
-    for (auto &pair : _lobbySessions)
+    auto dispatcher = _framework->GetDispatcher();
+    for (uint64_t sessionId : _lobbySessions)
     {
-        auto isess = pair.second;
-        if (!isess)
-            continue;
-
-        auto sess = dynamic_cast<System::Session *>(isess);
-        if (sess)
-        {
-            realSessions.push_back(sess);
-        }
-        else
-        {
-            isess->SendPacket(pkt);
-        }
+        dispatcher->WithSession(
+            sessionId,
+            [&pkt](System::SessionContext &ctx)
+            {
+                ctx.Send(pkt);
+            }
+        );
     }
-
-    if (!realSessions.empty())
-    {
-        LOG_INFO("realSessions is not empty");
-        System::PacketBroadcast::Broadcast(pkt, realSessions);
-    }
-    LOG_INFO("Broadcasting packet to lobby done");
 }
 
 } // namespace SimpleGame

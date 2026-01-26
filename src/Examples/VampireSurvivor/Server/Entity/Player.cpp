@@ -11,23 +11,23 @@
 
 namespace SimpleGame {
 
-Player::Player(int32_t gameId, System::ISession *session)
-    : GameObject(gameId, Protocol::ObjectType::PLAYER), _session(session)
+Player::Player(int32_t gameId, uint64_t sessionId)
+    : GameObject(gameId, Protocol::ObjectType::PLAYER), _sessionId(sessionId)
 {
     _inventory = std::make_unique<PlayerInventory>();
 }
 
-Player::Player() : GameObject(0, Protocol::ObjectType::PLAYER), _session(nullptr)
+Player::Player() : GameObject(0, Protocol::ObjectType::PLAYER), _sessionId(0)
 {
     _inventory = std::make_unique<PlayerInventory>();
 }
 
 Player::~Player() = default;
 
-void Player::Initialize(int32_t gameId, System::ISession *session, int32_t hp, float speed)
+void Player::Initialize(int32_t gameId, uint64_t sessionId, int32_t hp, float speed)
 {
     _id = gameId;
-    _session = session;
+    _sessionId = sessionId;
     _maxHp = hp;
     _hp = hp;
     _radius = GameConfig::PLAYER_COLLISION_RADIUS; // Lag Compensation: Visual(0.5) - BufferDelay
@@ -125,7 +125,7 @@ bool Player::IsDead() const
 
 void Player::Reset()
 {
-    _session = nullptr;
+    _sessionId = 0;
     _name.clear();
     _classId = 0;
     _hp = 0;
@@ -154,12 +154,7 @@ void Player::Reset()
 
 uint64_t Player::GetSessionId() const
 {
-    return (_session != nullptr) ? _session->GetId() : 0;
-}
-
-System::ISession *Player::GetSession() const
-{
-    return _session;
+    return _sessionId;
 }
 
 void Player::SetName(const std::string &name)
@@ -254,7 +249,7 @@ void Player::AddExp(int32_t amount, Room *room)
         leveledUp = true;
     }
 
-    if (_session != nullptr && room != nullptr)
+    if (_sessionId != 0 && room != nullptr)
     {
         Protocol::S_ExpChange expMsg;
         expMsg.set_current_exp(_exp);
@@ -262,7 +257,7 @@ void Player::AddExp(int32_t amount, Room *room)
         expMsg.set_level(_level);
 
         S_ExpChangePacket pkt(std::move(expMsg));
-        _session->SendPacket(pkt);
+        room->SendToPlayer(_sessionId, pkt);
 
         if (leveledUp)
         {
@@ -291,7 +286,7 @@ void Player::AddExp(int32_t amount, Room *room)
             }
 
             S_LevelUpOptionPacket optPkt(std::move(optionMsg));
-            _session->SendPacket(optPkt);
+            room->SendToPlayer(_sessionId, optPkt);
 
             LOG_INFO("[Player] Sent level-up options to player {}", GetId());
         }

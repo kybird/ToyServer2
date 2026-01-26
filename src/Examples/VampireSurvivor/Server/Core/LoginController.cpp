@@ -32,20 +32,6 @@ void LoginController::OnLogin(const LoginRequestEvent &evt)
 {
     LOG_INFO("Processing Login Request for User: {}", evt.username);
 
-    // 0. Manual Session Ref Count for Async Lifetime
-    if (evt.session != nullptr)
-    {
-        evt.session->IncRef();
-    }
-    std::shared_ptr<System::ISession> sessionInfo(
-        evt.session,
-        [](System::ISession *s)
-        {
-            if (s != nullptr)
-                s->DecRef();
-        }
-    );
-
     std::string username = evt.username;
     std::string password = evt.password;
     uint64_t sessionId = evt.sessionId;
@@ -68,53 +54,47 @@ void LoginController::OnLogin(const LoginRequestEvent &evt)
                 }
             }
 
-            // 2. Auto-Registration (if not found or query empty)
-            // Note: If query failed we might want to fail, but auto-reg usually implies 'if not exist'
-            // Ideally we check if error was DB_ERROR or just empty result.
-            // Simplified: Try Register.
+            // 2. Auto-Registration
             std::string insertQuery =
                 fmt::format("INSERT INTO users (username, password) VALUES ('{}', '{}');", username, password);
             auto insertStatus = db->Execute(insertQuery);
             return insertStatus.IsOk();
         },
-        [this, sessionInfo, username, sessionId](bool success)
+        [this, username, sessionId](bool success)
         {
             // 3. Send Response (on Main Thread)
-            if (success && sessionInfo)
+            // Auth Success
+            Protocol::S_Login resMsg;
+            resMsg.set_success(success);
+
+            if (success)
             {
-                // Send S_LOGIN Response (Auth Success)
-                Protocol::S_Login resMsg;
-                resMsg.set_success(true);
-                resMsg.set_my_player_id(static_cast<int32_t>(sessionId)); // Use SessionID as PlayerID
+                resMsg.set_my_player_id(static_cast<int32_t>(sessionId));
                 resMsg.set_map_width(0);
                 resMsg.set_map_height(0);
                 resMsg.set_server_tick_rate(GameConfig::TPS);
                 resMsg.set_server_tick_interval(GameConfig::TICK_INTERVAL_SEC);
 
-                // [Modified] Send current server tick from Default Room (1)
                 uint32_t currentTick = 0;
                 auto room = RoomManager::Instance().GetRoom(GameConfig::DEFAULT_ROOM_ID);
                 if (room != nullptr)
                 {
                     currentTick = room->GetServerTick();
+                    resMsg.set_server_tick(currentTick);
+
+                    S_LoginPacket packet(resMsg);
+                    room->SendToPlayer(sessionId, packet);
                 }
-                resMsg.set_server_tick(currentTick);
-
-                S_LoginPacket packet(resMsg);
-                sessionInfo->SendPacket(packet);
-
                 LOG_INFO("Login Auth Success: {} (Session: {})", username, sessionId);
             }
             else
             {
                 LOG_INFO("Login Failed: {}", username);
-                if (sessionInfo != nullptr)
+                auto room = RoomManager::Instance().GetRoom(GameConfig::DEFAULT_ROOM_ID);
+                if (room != nullptr)
                 {
-                    // Optional: Send Login Fail Packet
-                    Protocol::S_Login resMsg;
-                    resMsg.set_success(false);
                     S_LoginPacket packet(resMsg);
-                    sessionInfo->SendPacket(packet);
+                    room->SendToPlayer(sessionId, packet);
                 }
             }
         }

@@ -589,7 +589,7 @@ void Session::OnConnect()
     _impl->_connected.store(true, std::memory_order_relaxed);
 
     System::EventMessage *msg = System::MessagePool::AllocateEvent();
-    msg->type = (uint32_t)System::MessageType::NETWORK_CONNECT;
+    msg->type = System::MessageType::NETWORK_CONNECT;
     msg->sessionId = GetId();
     msg->session = this;
     if (_impl->_dispatcher)
@@ -608,7 +608,7 @@ void Session::OnDisconnect()
     if (_impl->_connected.exchange(false))
     {
         System::EventMessage *msg = System::MessagePool::AllocateEvent();
-        msg->type = (uint32_t)System::MessageType::NETWORK_DISCONNECT;
+        msg->type = System::MessageType::NETWORK_DISCONNECT;
         msg->sessionId = GetId();
         msg->session = this;
         if (_impl->_dispatcher)

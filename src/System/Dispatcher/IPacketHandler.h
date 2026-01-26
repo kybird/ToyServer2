@@ -1,28 +1,23 @@
 #pragma once
-#include "System/ISession.h"
+
+#include "System/PacketView.h"
+#include "System/Session/SessionContext.h"
 #include <cstdint>
 #include <memory>
-#include <vector>
-
-#include "System/Dispatcher/IMessage.h"
-#include "System/PacketView.h"
-#include "System/Pch.h"
 
 namespace System {
-
-class ISession;
-struct PacketMessage;
 
 class IPacketHandler
 {
 public:
     virtual ~IPacketHandler() = default;
 
-    // Interface Change: PacketMessage* -> PacketView (Zero-Copy View)
-    virtual void HandlePacket(ISession *session, PacketView packet) = 0;
+    // [SessionContext Refactoring] Changed from ISession* to SessionContext (value passing)
+    virtual void HandlePacket(SessionContext ctx, PacketView packet) = 0;
 
     // Optional: Notification of disconnection to clean up game state (e.g. Lobby/Room)
-    virtual void OnSessionDisconnect(ISession *session)
+    // Note: SessionContext is still valid during this call, but session is about to be destroyed
+    virtual void OnSessionDisconnect(SessionContext ctx)
     {
     }
 };

@@ -1,27 +1,30 @@
 #include "EnterLobbyHandler.h"
-#include "Protocol/game.pb.h"
-#include "GamePackets.h"
 #include "Game/RoomManager.h"
+#include "GamePackets.h"
+#include "Protocol/game.pb.h"
 #include "System/ILog.h"
 
 namespace SimpleGame {
 namespace Handlers {
 namespace Lobby {
 
-void EnterLobbyHandler::Handle(System::ISession* session, System::PacketView packet)
+void EnterLobbyHandler::Handle(System::SessionContext &ctx, System::PacketView packet)
 {
     Protocol::C_EnterLobby req;
     if (packet.Parse(req))
     {
-        RoomManager::Instance().EnterLobby(session); // Now passes session pointer
+        // [Phase 2 TODO] RoomManager::EnterLobby needs to be updated to accept SessionId
+        // For now, we use sessionId-based registration
+        uint64_t sessionId = ctx.Id();
+        RoomManager::Instance().EnterLobby(sessionId);
 
         Protocol::S_EnterLobby res;
         res.set_success(true);
 
         // Send Response
         S_EnterLobbyPacket respPacket(res);
-        session->SendPacket(respPacket);
-        LOG_INFO("Session {} Entered Lobby", session->GetId());
+        ctx.Send(respPacket);
+        LOG_INFO("Session {} Entered Lobby", sessionId);
     }
     else
     {

@@ -9,6 +9,7 @@
 #include "Game/RoomManager.h"
 #include "GamePackets.h"
 #include "Protocol/game.pb.h"
+#include "System/Dispatcher/IDispatcher.h"
 #include "System/Packet/IPacket.h"
 #include "System/Packet/PacketBroadcast.h"
 #include "System/Thread/IStrand.h"
@@ -18,11 +19,11 @@
 namespace SimpleGame {
 
 Room::Room(
-    int roomId, std::shared_ptr<System::ITimer> timer, std::shared_ptr<System::IStrand> strand,
-    std::shared_ptr<UserDB> userDB
+    int roomId, std::shared_ptr<System::IDispatcher> dispatcher, std::shared_ptr<System::ITimer> timer,
+    std::shared_ptr<System::IStrand> strand, std::shared_ptr<UserDB> userDB
 )
     : _roomId(roomId), _timer(std::move(timer)), _strand(std::move(strand)), _waveMgr(_objMgr, _grid, roomId),
-      _userDB(std::move(userDB))
+      _dispatcher(std::move(dispatcher)), _userDB(std::move(userDB))
 {
     _combatMgr = std::make_unique<CombatManager>();
     _effectMgr = std::make_unique<EffectManager>();
@@ -341,7 +342,7 @@ void Room::OnPlayerReady(uint64_t sessionId)
         if (existingObjects.objects_size() > 0)
         {
             S_SpawnObjectPacket packet(existingObjects);
-            player->GetSession()->SendPacket(packet);
+            SendToPlayer(sessionId, packet);
             LOG_INFO("Sent {} existing objects to ready player {}", existingObjects.objects_size(), sessionId);
         }
     }
@@ -533,7 +534,7 @@ void Room::BroadcastPlayerMoves(const std::vector<Protocol::ObjectPos> &playerMo
     for (auto &pair : _players)
     {
         auto viewer = pair.second;
-        if (viewer->GetSession() == nullptr || !viewer->IsReady())
+        if (!viewer->IsReady())
             continue;
 
         Protocol::S_MoveObjectBatch batch;
@@ -548,7 +549,7 @@ void Room::BroadcastPlayerMoves(const std::vector<Protocol::ObjectPos> &playerMo
         if (batch.moves_size() > 0)
         {
             S_MoveObjectBatchPacket pkt(batch);
-            viewer->GetSession()->SendPacket(pkt);
+            SendToPlayer(pair.first, pkt);
         }
     }
 }
@@ -558,8 +559,6 @@ void Room::SendPlayerAcks()
     for (auto &pair : _players)
     {
         auto player = pair.second;
-        if (player->GetSession() == nullptr)
-            continue;
 
         Protocol::S_PlayerStateAck ack;
         ack.set_server_tick(_serverTick);
@@ -568,7 +567,7 @@ void Room::SendPlayerAcks()
         ack.set_y(player->GetY());
 
         S_PlayerStateAckPacket pkt(ack);
-        player->GetSession()->SendPacket(pkt);
+        SendToPlayer(pair.first, pkt);
 
         // Update Internal LastSent State to prevent resending if nothing changes
         player->UpdateLastSentState(_totalRunTime, _serverTick);
@@ -635,32 +634,26 @@ void Room::BroadcastPacket(const System::IPacket &pkt)
         if (!player->IsReady())
             continue;
 
-        auto *isess = player->GetSession();
-        if (isess == nullptr)
-        {
-            LOG_WARN("BroadcastPacket: Player {} has NO SESSION. Skipping.", pair.first);
-            continue;
-        }
-
-        // Dynamic cast to check if it's a real Session (vs MockSession)
-        // This overhead is acceptable compared to serialization savings for many players.
-        auto *sess = dynamic_cast<System::Session *>(isess);
-        if (sess != nullptr)
-        {
-            // LOG_DEBUG("BroadcastPacket: Player {} is Real Session.", pair.first);
-            realSessions.push_back(sess);
-        }
-        else
-        {
-            LOG_WARN("BroadcastPacket: Player {} is MockSession/Other. Fallback SendPacket.", pair.first);
-            // Fallback for MockSession (e.g. Unit Tests)
-            isess->SendPacket(pkt);
-        }
+        // [Phase 2] Broadcast is now handled via Session Registry in Dispatcher
+        // or through individual SendToPlayer if optimization is not used.
+        // For now, fallback to individual sends as Broadcast needs real Session*
+        SendToPlayer(pair.first, pkt);
     }
 
-    if (!realSessions.empty())
+    // [Phase 2 TODO] Implement optimized multicast in Dispatcher
+}
+
+void Room::SendToPlayer(uint64_t sessionId, const System::IPacket &pkt)
+{
+    if (_dispatcher)
     {
-        System::PacketBroadcast::Broadcast(pkt, realSessions);
+        _dispatcher->WithSession(
+            sessionId,
+            [&pkt](System::SessionContext &ctx)
+            {
+                ctx.Send(pkt);
+            }
+        );
     }
 }
 

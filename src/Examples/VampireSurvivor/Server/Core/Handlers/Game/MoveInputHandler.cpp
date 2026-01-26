@@ -10,17 +10,18 @@ namespace SimpleGame {
 namespace Handlers {
 namespace Game {
 
-void MoveInputHandler::Handle(System::ISession *session, System::PacketView packet)
+void MoveInputHandler::Handle(System::SessionContext &ctx, System::PacketView packet)
 {
     Protocol::C_MoveInput req;
     if (!packet.Parse(req))
         return;
     // Find Player using Global Map
-    auto player = RoomManager::Instance().GetPlayer(session->GetId());
+    uint64_t sessionId = ctx.Id();
+    auto player = RoomManager::Instance().GetPlayer(sessionId);
 
     if (!player)
     {
-        LOG_WARN("C_MOVE_INPUT from unknown session {}", session->GetId());
+        LOG_WARN("C_MOVE_INPUT from unknown session {}", sessionId);
         return;
     }
 

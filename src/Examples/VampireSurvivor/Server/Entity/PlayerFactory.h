@@ -1,6 +1,6 @@
 #pragma once
-#include "Game/ObjectManager.h"
 #include "Entity/Player.h"
+#include "Game/ObjectManager.h"
 #include "System/IObjectPool.h"
 
 namespace SimpleGame {
@@ -17,7 +17,7 @@ public:
         return instance;
     }
 
-    std::shared_ptr<Player> CreatePlayer(int32_t gameId, System::ISession *session);
+    std::shared_ptr<Player> CreatePlayer(int32_t gameId, uint64_t sessionId);
     void Release(Player *player);
 
 private:

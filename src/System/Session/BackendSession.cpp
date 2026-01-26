@@ -202,7 +202,7 @@ void BackendSession::OnRecv(size_t bytesTransferred)
             return;
         }
 
-        msg->type = (uint32_t)System::MessageType::NETWORK_DATA; // Critical Fix
+        msg->type = System::MessageType::NETWORK_DATA; // Critical Fix
         msg->sessionId = _id;
         msg->session = this;
 
@@ -486,7 +486,7 @@ void BackendSession::OnConnect()
     _connected.store(true, std::memory_order_relaxed);
 
     System::EventMessage *msg = System::MessagePool::AllocateEvent();
-    msg->type = (uint32_t)System::MessageType::NETWORK_CONNECT;
+    msg->type = System::MessageType::NETWORK_CONNECT;
     msg->sessionId = GetId();
     msg->session = this;
     if (_dispatcher)
@@ -505,7 +505,7 @@ void BackendSession::OnDisconnect()
     if (_connected.exchange(false))
     {
         System::EventMessage *msg = System::MessagePool::AllocateEvent();
-        msg->type = (uint32_t)System::MessageType::NETWORK_DISCONNECT;
+        msg->type = System::MessageType::NETWORK_DISCONNECT;
         msg->sessionId = GetId();
         msg->session = this;
         if (_dispatcher)

@@ -40,7 +40,7 @@ public:
     std::shared_ptr<Player> GetPlayer(uint64_t sessionId);
 
     // Lobby Management
-    void EnterLobby(System::ISession *session);
+    void EnterLobby(uint64_t sessionId); // [SessionContext Refactoring] Preferred
     void LeaveLobby(uint64_t sessionId);
     bool IsInLobby(uint64_t sessionId);
     void BroadcastPacketToLobby(const System::IPacket &pkt);
@@ -48,7 +48,7 @@ public:
 private:
     std::map<int, std::shared_ptr<Room>> _rooms;
     std::map<uint64_t, std::shared_ptr<Player>> _players;
-    std::map<uint64_t, System::ISession *> _lobbySessions; // Session ID -> Session Pointer
+    std::vector<uint64_t> _lobbySessions; // Session IDs in Lobby
     std::mutex _mutex;
     std::shared_ptr<System::IFramework> _framework;
     std::shared_ptr<System::ITimer> _timer;

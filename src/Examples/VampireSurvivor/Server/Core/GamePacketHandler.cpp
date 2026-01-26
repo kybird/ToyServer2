@@ -5,7 +5,6 @@
 #include "GamePackets.h"
 #include "System/ILog.h"
 
-
 // Handlers
 #include "Handlers/Auth/LoginHandler.h"
 #include "Handlers/Game/ChatHandler.h"
@@ -19,7 +18,6 @@
 #include "Handlers/Room/LeaveRoomHandler.h"
 #include "Handlers/System/PingHandler.h"
 #include "Handlers/System/PongHandler.h"
-
 
 namespace SimpleGame {
 
@@ -43,12 +41,12 @@ GamePacketHandler::GamePacketHandler()
     _handlers[PacketID::C_PONG] = Handlers::System::PongHandler::Handle;
 }
 
-void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketView packet)
+void GamePacketHandler::HandlePacket(System::SessionContext ctx, System::PacketView packet)
 {
     auto it = _handlers.find(packet.GetId());
     if (it != _handlers.end())
     {
-        it->second(session, packet);
+        it->second(ctx, packet);
     }
     else
     {
@@ -56,19 +54,20 @@ void GamePacketHandler::HandlePacket(System::ISession *session, System::PacketVi
     }
 }
 
-void GamePacketHandler::OnSessionDisconnect(System::ISession *session)
+void GamePacketHandler::OnSessionDisconnect(System::SessionContext ctx)
 {
-    LOG_INFO("Session {} Disconnected. Cleaning up...", session->GetId());
+    uint64_t sessionId = ctx.Id();
+    LOG_INFO("Session {} Disconnected. Cleaning up...", sessionId);
 
     // 1. Remove from Lobby
-    if (RoomManager::Instance().IsInLobby(session->GetId()))
+    if (RoomManager::Instance().IsInLobby(sessionId))
     {
-        RoomManager::Instance().LeaveLobby(session->GetId());
-        LOG_INFO("Session {} removed from Lobby.", session->GetId());
+        RoomManager::Instance().LeaveLobby(sessionId);
+        LOG_INFO("Session {} removed from Lobby.", sessionId);
     }
 
     // 2. Remove from Room/Game
-    auto player = RoomManager::Instance().GetPlayer(session->GetId());
+    auto player = RoomManager::Instance().GetPlayer(sessionId);
     if (player)
     {
         // Safe to call Room::Leave as it is thread-safe (internal mutex)
@@ -76,12 +75,12 @@ void GamePacketHandler::OnSessionDisconnect(System::ISession *session)
         auto room = RoomManager::Instance().GetRoom(roomId);
         if (room)
         {
-            room->Leave(session->GetId());
+            room->Leave(sessionId);
         }
 
         // Unregister from global map
-        RoomManager::Instance().UnregisterPlayer(session->GetId());
-        LOG_INFO("Session {} unregistered from Player Map.", session->GetId());
+        RoomManager::Instance().UnregisterPlayer(sessionId);
+        LOG_INFO("Session {} unregistered from Player Map.", sessionId);
     }
 }
 

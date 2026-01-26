@@ -10,7 +10,7 @@
 class ServerPacketHandler : public System::IPacketHandler
 {
 public:
-    void HandlePacket(System::ISession *session, System::PacketView packet) override
+    void HandlePacket(System::SessionContext ctx, System::PacketView packet) override
     {
         // Simple ECHO logic
         // PacketView provides stripped payload and ID.
@@ -19,7 +19,7 @@ public:
         {
             // Echo Response using EchoPacket (Zero-copy payload view)
             Share::EchoPacket response(std::span<const uint8_t>(packet.GetPayload(), packet.GetLength()));
-            session->SendPacket(response);
+            ctx.Send(response);
 
 #ifdef ENABLE_DIAGNOSTICS
             // [Diagnostics] Echo 응답 카운트

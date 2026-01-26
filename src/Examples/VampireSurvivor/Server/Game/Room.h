@@ -14,6 +14,7 @@
 namespace System {
 class IPacket;
 class IStrand;
+class IDispatcher;
 } // namespace System
 
 namespace SimpleGame {
@@ -36,8 +37,8 @@ class Room : public System::ITimerListener, public std::enable_shared_from_this<
 
 public:
     Room(
-        int roomId, std::shared_ptr<System::ITimer> timer, std::shared_ptr<System::IStrand> strand,
-        std::shared_ptr<UserDB> userDB
+        int roomId, std::shared_ptr<System::IDispatcher> dispatcher, std::shared_ptr<System::ITimer> timer,
+        std::shared_ptr<System::IStrand> strand, std::shared_ptr<UserDB> userDB
     );
     virtual ~Room() override;
 
@@ -47,6 +48,7 @@ public:
     void BroadcastPacket(const System::IPacket &pkt);
     void BroadcastSpawn(const std::vector<std::shared_ptr<GameObject>> &objects);
     void BroadcastDespawn(const std::vector<int32_t> &objectIds, const std::vector<int32_t> &pickerIds = {});
+    void SendToPlayer(uint64_t sessionId, const System::IPacket &pkt);
 
     // Game Loop
     void Start();
@@ -131,6 +133,7 @@ private:
     ObjectManager _objMgr;
     SpatialGrid _grid{2000.0f}; // [Phase 1] Large cell for Full Broadcast
     WaveManager _waveMgr;
+    std::shared_ptr<System::IDispatcher> _dispatcher;
     std::shared_ptr<UserDB> _userDB;
     float _totalRunTime = 0.0f;
     uint32_t _serverTick = 0;

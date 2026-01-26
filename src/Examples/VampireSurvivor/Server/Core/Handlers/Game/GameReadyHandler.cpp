@@ -1,22 +1,23 @@
 #include "GameReadyHandler.h"
-#include "Protocol/game.pb.h"
 #include "Game/RoomManager.h"
+#include "Protocol/game.pb.h"
 #include "System/ILog.h"
 
 namespace SimpleGame {
 namespace Handlers {
 namespace Game {
 
-void GameReadyHandler::Handle(System::ISession* session, System::PacketView packet)
+void GameReadyHandler::Handle(System::SessionContext &ctx, System::PacketView packet)
 {
     // [Game Ready] Client finished loading, send spawn packets
-    auto player = RoomManager::Instance().GetPlayer(session->GetId());
+    uint64_t sessionId = ctx.Id();
+    auto player = RoomManager::Instance().GetPlayer(sessionId);
     if (player)
     {
         auto room = RoomManager::Instance().GetRoom(player->GetRoomId());
         if (room)
         {
-            room->OnPlayerReady(session->GetId());
+            room->OnPlayerReady(sessionId);
         }
     }
 }

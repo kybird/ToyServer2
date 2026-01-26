@@ -1,14 +1,14 @@
 #include "GetRoomListHandler.h"
-#include "Protocol/game.pb.h"
-#include "GamePackets.h"
 #include "Game/RoomManager.h"
+#include "GamePackets.h"
+#include "Protocol/game.pb.h"
 #include "System/ILog.h"
 
 namespace SimpleGame {
 namespace Handlers {
 namespace Room {
 
-void GetRoomListHandler::Handle(System::ISession* session, System::PacketView packet)
+void GetRoomListHandler::Handle(System::SessionContext &ctx, System::PacketView packet)
 {
     Protocol::C_GetRoomList req;
     if (packet.Parse(req))
@@ -31,8 +31,8 @@ void GetRoomListHandler::Handle(System::ISession* session, System::PacketView pa
         }
 
         S_RoomListPacket respPacket(res);
-        session->SendPacket(respPacket);
-        LOG_INFO("Sent room list to session {}: {} rooms", session->GetId(), res.rooms_size());
+        ctx.Send(respPacket);
+        LOG_INFO("Sent room list to session {}: {} rooms", ctx.Id(), res.rooms_size());
     }
 }
 

@@ -1,15 +1,15 @@
 #include "PongHandler.h"
-#include "Protocol/game.pb.h"
 #include "GamePackets.h"
+#include "Protocol/game.pb.h"
 
 namespace SimpleGame {
 namespace Handlers {
 namespace System {
 
-void PongHandler::Handle(::System::ISession* session, ::System::PacketView packet)
+void PongHandler::Handle(::System::SessionContext &ctx, ::System::PacketView packet)
 {
     // [Heartbeat] Client responded. Update timeout logic.
-    session->OnPong();
+    ctx.OnPong();
 }
 
 } // namespace System

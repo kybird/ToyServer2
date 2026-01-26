@@ -6,6 +6,8 @@
 namespace System {
 struct ITimerHandler;
 
+class SessionContext;
+
 class IDispatcher
 {
 public:
@@ -16,6 +18,9 @@ public:
     virtual size_t GetQueueSize() const = 0;
     virtual bool IsOverloaded() const = 0;
     virtual bool IsRecovered() const = 0;
+
+    // Session-safe access
+    virtual void WithSession(uint64_t sessionId, std::function<void(SessionContext &)> callback) = 0;
 
     // System Handlers
     // System Handlers

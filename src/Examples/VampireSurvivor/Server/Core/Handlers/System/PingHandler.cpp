@@ -1,13 +1,13 @@
 #include "PingHandler.h"
-#include "Protocol/game.pb.h"
 #include "GamePackets.h"
+#include "Protocol/game.pb.h"
 #include "System/ILog.h"
 
 namespace SimpleGame {
 namespace Handlers {
 namespace System {
 
-void PingHandler::Handle(::System::ISession* session, ::System::PacketView packet)
+void PingHandler::Handle(::System::SessionContext &ctx, ::System::PacketView packet)
 {
     // [Latency Check] Echo timestamp back to client
     Protocol::C_Ping req;
@@ -16,7 +16,7 @@ void PingHandler::Handle(::System::ISession* session, ::System::PacketView packe
         Protocol::S_Pong res;
         res.set_timestamp(req.timestamp());
         S_PongPacket respPacket(res);
-        session->SendPacket(respPacket);
+        ctx.Send(respPacket);
     }
 }
 

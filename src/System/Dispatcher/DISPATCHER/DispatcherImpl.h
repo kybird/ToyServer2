@@ -7,6 +7,7 @@
 #include <condition_variable>
 #include <memory>
 #include <mutex>
+#include <unordered_map>
 #include <vector>
 
 namespace System {
@@ -34,6 +35,9 @@ public:
 
     void RegisterTimerHandler(ITimerHandler *handler) override;
 
+    // Session-safe access
+    void WithSession(uint64_t sessionId, std::function<void(SessionContext &)> callback) override;
+
     // Generic Task Submission
     void Push(std::function<void()> task) override;
 
@@ -55,8 +59,8 @@ private:
     std::condition_variable _cv;
     std::shared_ptr<IPacketHandler> _packetHandler;
 
-    // [No session registry] Dispatcher doesn't own sessions, just processes messages
-    // Session lifetime is managed by Session IncRef/DecRef
+    // [Session Registry] Maps sessionId to ISession* for safe access in WithSession
+    std::unordered_map<uint64_t, ISession *> _sessions;
     std::vector<ISession *> _pendingDestroy;
 
     // System Handlers

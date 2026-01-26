@@ -16,14 +16,14 @@ struct LevelUpOption;
 class Player : public GameObject
 {
 public:
-    Player(int32_t gameId, System::ISession *session);
+    Player(int32_t gameId, uint64_t sessionId);
 
     // Default constructor for pooling
     Player();
     virtual ~Player() override;
 
     // Init for pooling
-    void Initialize(int32_t gameId, System::ISession *session, int32_t hp, float speed);
+    void Initialize(int32_t gameId, uint64_t sessionId, int32_t hp, float speed);
 
     void ApplyInput(uint32_t clientTick, int32_t dx, int32_t dy);
 
@@ -35,7 +35,6 @@ public:
     void Reset();
 
     uint64_t GetSessionId() const;
-    System::ISession *GetSession() const;
 
     void SetName(const std::string &name);
     const std::string &GetName() const;
@@ -111,7 +110,7 @@ public:
     bool IsGodMode() const;
 
 private:
-    System::ISession *_session = nullptr;
+    uint64_t _sessionId = 0;
     std::string _name;
     int32_t _classId = 0;
     int _currentRoomId = 0;

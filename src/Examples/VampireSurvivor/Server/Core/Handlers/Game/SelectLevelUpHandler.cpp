@@ -11,19 +11,20 @@ namespace SimpleGame {
 namespace Handlers {
 namespace Game {
 
-void SelectLevelUpHandler::Handle(System::ISession *session, System::PacketView packet)
+void SelectLevelUpHandler::Handle(System::SessionContext &ctx, System::PacketView packet)
 {
     Protocol::C_SelectLevelUp req;
+    uint64_t sessionId = ctx.Id();
     if (!packet.Parse(req))
     {
-        LOG_ERROR("[SelectLevelUpHandler] Failed to parse C_SELECT_LEVEL_UP from session {}", session->GetId());
+        LOG_ERROR("[SelectLevelUpHandler] Failed to parse C_SELECT_LEVEL_UP from session {}", sessionId);
         return;
     }
 
-    auto player = RoomManager::Instance().GetPlayer(session->GetId());
+    auto player = RoomManager::Instance().GetPlayer(sessionId);
     if (!player)
     {
-        LOG_WARN("[SelectLevelUpHandler] Player not found for session {}", session->GetId());
+        LOG_WARN("[SelectLevelUpHandler] Player not found for session {}", sessionId);
         return;
     }
 

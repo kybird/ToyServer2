@@ -1,6 +1,6 @@
 #include "LoginHandler.h"
-#include "Protocol/game.pb.h"
 #include "GameEvents.h"
+#include "Protocol/game.pb.h"
 #include "System/Events/EventBus.h"
 #include "System/ILog.h"
 
@@ -8,15 +8,15 @@ namespace SimpleGame {
 namespace Handlers {
 namespace Auth {
 
-void LoginHandler::Handle(System::ISession* session, System::PacketView packet)
+void LoginHandler::Handle(System::SessionContext &ctx, System::PacketView packet)
 {
     Protocol::C_Login req;
     if (packet.Parse(req))
     {
-        // Map to Event
+        // [Phase 2 TODO] LoginRequestEvent.session should be removed
+        // For now, we only use sessionId
         LoginRequestEvent evt;
-        evt.sessionId = session->GetId();
-        evt.session = session;
+        evt.sessionId = ctx.Id();
         evt.username = req.username();
         evt.password = req.password();
         System::EventBus::Instance().Publish(evt);

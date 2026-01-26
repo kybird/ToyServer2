@@ -13,11 +13,12 @@ public:
     GamePacketHandler();
     virtual ~GamePacketHandler() = default;
 
-    void HandlePacket(System::ISession *session, System::PacketView packet) override;
-    void OnSessionDisconnect(System::ISession *session) override;
+    void HandlePacket(System::SessionContext ctx, System::PacketView packet) override;
+    void OnSessionDisconnect(System::SessionContext ctx) override;
 
 private:
-    using PacketHandlerFunc = std::function<void(System::ISession*, System::PacketView)>;
+    // [SessionContext Refactoring] Handler functions receive SessionContext by reference
+    using PacketHandlerFunc = std::function<void(System::SessionContext &, System::PacketView)>;
     std::unordered_map<uint16_t, PacketHandlerFunc> _handlers;
 };
 

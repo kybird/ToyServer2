@@ -4,6 +4,7 @@
 #include "System/ILog.h"
 #include "System/Packet/PacketHeader.h"
 #include "System/PacketView.h"
+#include "System/Session/SessionContext.h"
 #include "System/Session/SessionFactory.h"
 
 namespace System {
@@ -58,15 +59,20 @@ bool DispatcherImpl::Process()
                 break;
 
             case MessageType::NETWORK_CONNECT:
-                // No registry - just notification, session is already managed by Session
+                if (msg->session != nullptr)
+                {
+                    _sessions[msg->sessionId] = msg->session;
+                }
                 break;
 
             case MessageType::NETWORK_DISCONNECT:
                 if (msg->session != nullptr)
                 {
+                    _sessions.erase(msg->sessionId);
                     if (_packetHandler != nullptr)
                     {
-                        _packetHandler->OnSessionDisconnect(msg->session);
+                        SessionContext ctx(msg->session);
+                        _packetHandler->OnSessionDisconnect(std::move(ctx));
                     }
                     _pendingDestroy.push_back(msg->session);
                 }
@@ -102,7 +108,7 @@ bool DispatcherImpl::Process()
             }
 
             // [Lifetime] Release session reference (matches IncRef before Post)
-            if (msg->session)
+            if (msg->session != nullptr)
             {
                 msg->session->DecRef();
             }
@@ -153,7 +159,9 @@ void DispatcherImpl::HandlePacketMessage(IMessage *msg)
 
             if (_packetHandler != nullptr)
             {
-                _packetHandler->HandlePacket(session, view);
+                // [SessionContext Refactoring] Create context and pass by value (move)
+                SessionContext ctx(session);
+                _packetHandler->HandlePacket(std::move(ctx), view);
             }
         }
         else
@@ -278,6 +286,22 @@ bool DispatcherImpl::IsRecovered() const
 void DispatcherImpl::RegisterTimerHandler(ITimerHandler *handler)
 {
     _timerHandler = handler;
+}
+
+void DispatcherImpl::WithSession(uint64_t sessionId, std::function<void(SessionContext &)> callback)
+{
+    // [SessionContext Refactoring] Use Push to ensure callback runs in Dispatcher's logic context (serial)
+    Push(
+        [this, sessionId, callback = std::move(callback)]()
+        {
+            auto it = _sessions.find(sessionId);
+            if (it != _sessions.end() && it->second->IsConnected())
+            {
+                SessionContext ctx(it->second);
+                callback(ctx);
+            }
+        }
+    );
 }
 
 void DispatcherImpl::Push(std::function<void()> task)
