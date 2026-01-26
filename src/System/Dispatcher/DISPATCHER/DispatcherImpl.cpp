@@ -1,20 +1,14 @@
 #include "System/Dispatcher/DISPATCHER/DispatcherImpl.h"
+#include "System/Dispatcher/MessagePool.h"
 #include "System/Dispatcher/SystemMessages.h"
 #include "System/ILog.h"
-#include "System/ITimer.h"
 #include "System/Packet/PacketHeader.h"
-#include "System/PacketView.h" // Added
-#include "System/Pch.h"
-#include "System/Session/Session.h"
-#include "System/Session/SessionFactory.h" // Added for SessionFactory::Destroy
-#include "System/Session/SessionPool.h"
-
-#include "System/Debug/MemoryMetrics.h"
-#include "System/Dispatcher/MessagePool.h"
+#include "System/PacketView.h"
+#include "System/Session/SessionFactory.h"
 
 namespace System {
 
-DispatcherImpl::DispatcherImpl(std::shared_ptr<IPacketHandler> packetHandler) : _packetHandler(packetHandler)
+DispatcherImpl::DispatcherImpl(std::shared_ptr<IPacketHandler> packetHandler) : _packetHandler(std::move(packetHandler))
 {
 }
 
@@ -54,136 +48,74 @@ bool DispatcherImpl::Process()
 
             switch (msg->type)
             {
-            case (uint32_t)MessageType::NETWORK_DATA: {
-                // [Hot Path] Direct Session access - no map lookup, no vtable
-                // session pointer is now ISession* to support Gateway/Backend sessions
-                ISession *session = msg->session;
-                if (session && session->IsConnected())
+            case MessageType::LOGIC_JOB:
+                // Ignored for now or handled elsewhere
+                break;
+
+            case MessageType::NETWORK_DATA:
+            case MessageType::PACKET:
+                HandlePacketMessage(msg);
+                break;
+
+            case MessageType::NETWORK_CONNECT:
+                // No registry - just notification, session is already managed by Session
+                break;
+
+            case MessageType::NETWORK_DISCONNECT:
+                if (msg->session != nullptr)
                 {
-                    PacketMessage *content = static_cast<PacketMessage *>(msg);
-
-                    if (content->length >= sizeof(System::PacketHeader))
+                    if (_packetHandler != nullptr)
                     {
-                        System::PacketHeader *header = reinterpret_cast<System::PacketHeader *>(content->Payload());
-
-                        // Dispatch packet to handler
-
-                        // [Refactoring] Create PacketView (Body Only)
-                        // Strip header so handler only sees the payload
-                        PacketView view(
-                            header->id,
-                            content->Payload() + sizeof(System::PacketHeader),
-                            content->length - sizeof(System::PacketHeader)
-                        );
-
-                        _packetHandler->HandlePacket(session, view);
+                        _packetHandler->OnSessionDisconnect(msg->session);
                     }
-                    else
-                    {
-                        LOG_ERROR("Packet too small for header: {}", content->length);
-                    }
+                    _pendingDestroy.push_back(msg->session);
                 }
-            }
-            }
-            break;
+                break;
 
-        case (uint32_t)MessageType::NETWORK_CONNECT:
-            // No registry - just notification, session is already managed by Session
-            break;
+            case MessageType::LOGIC_TIMER:
+                HandleTimerMessage(msg);
+                break;
 
-        case (uint32_t)MessageType::NETWORK_DISCONNECT:
+            case MessageType::LOGIC_TIMER_EXPIRED:
+                HandleTimerExpiredMessage(msg);
+                break;
+
+            case MessageType::LOGIC_TIMER_ADD:
+                HandleTimerAddMessage(msg);
+                break;
+
+            case MessageType::LOGIC_TIMER_CANCEL:
+                HandleTimerCancelMessage(msg);
+                break;
+
+            case MessageType::LOGIC_TIMER_TICK:
+                HandleTimerTickMessage(msg);
+                break;
+
+            case MessageType::LAMBDA_JOB:
+                HandleLambdaMessage(msg);
+                continue; // Skip MessagePool::Free and DecRef (handled in HandleLambdaMessage)
+
+            default:
+                LOG_INFO("Unhandled message type: {}", static_cast<uint32_t>(msg->type));
+                break;
+            }
+
+            // [Lifetime] Release session reference (matches IncRef before Post)
             if (msg->session)
             {
-                // Notify Logic verify cleanup before destruction
-                if (_packetHandler)
-                {
-                    _packetHandler->OnSessionDisconnect(msg->session);
-                }
-
-                // [Invariant] After DISCONNECT, no new NETWORK_DATA messages
-                // will be generated for this session. Remaining messages in queue
-                // are protected by IncRef and will be safely processed.
-                _pendingDestroy.push_back(msg->session);
+                msg->session->DecRef();
             }
-            break;
 
-        case static_cast<uint32_t>(MessageType::LOGIC_TIMER): {
-            // [DEPRECATED]
+            // Return to pool
+            MessagePool::Free(msg);
         }
-        break;
-
-        case static_cast<uint32_t>(MessageType::LOGIC_TIMER_EXPIRED): {
-            if (_timerHandler)
-            {
-                TimerExpiredMessage *tMsg = static_cast<TimerExpiredMessage *>(msg);
-                _timerHandler->OnTimerExpired(tMsg->timerId);
-            }
-        }
-        break;
-
-        case static_cast<uint32_t>(MessageType::LOGIC_TIMER_ADD): {
-            if (_timerHandler)
-            {
-                TimerAddMessage *tMsg = static_cast<TimerAddMessage *>(msg);
-                _timerHandler->OnTimerAdd(tMsg);
-            }
-        }
-        break;
-
-        case static_cast<uint32_t>(MessageType::LOGIC_TIMER_CANCEL): {
-            if (_timerHandler)
-            {
-                TimerCancelMessage *tMsg = static_cast<TimerCancelMessage *>(msg);
-                _timerHandler->OnTimerCancel(tMsg);
-            }
-        }
-        break;
-
-        case static_cast<uint32_t>(MessageType::LOGIC_TIMER_TICK): {
-            if (_timerHandler)
-            {
-                TimerTickMessage *tMsg = static_cast<TimerTickMessage *>(msg);
-                _timerHandler->OnTick(tMsg);
-            }
-        }
-        break;
-
-        case (uint32_t)MessageType::LAMBDA_JOB: {
-            LambdaMessage *lMsg = static_cast<LambdaMessage *>(msg);
-            if (lMsg->task)
-            {
-                lMsg->task();
-            }
-            // Manual delete since it was allocated with new in Push
-            delete lMsg;
-
-            // Prevent MessagePool::Free below which expects Pool-allocated objects
-            // OR adapt MessagePool to handle it. Actually, MessagePool::Free handles IMessage*.
-            // BUT LambdaMessage is NOT in MessagePool yet.
-            // Hack: continue to avoid MessagePool::Free
-            continue;
-        }
-        break;
-
-        default:
-            break;
-        }
-
-        // [Lifetime] Release session reference (matches IncRef before Post)
-        if (msg->session)
-        {
-            msg->session->DecRef();
-        }
-
-        // Return to pool
-        MessagePool::Free(msg);
     }
-}
 
-// [Phase 2] Process Lifecycle (Deferred Destruction)
-ProcessPendingDestroys();
+    // [Phase 2] Process Lifecycle (Deferred Destruction)
+    ProcessPendingDestroys();
 
-return count > 0;
+    return count > 0;
 }
 
 void DispatcherImpl::Wait(int timeoutMs)
@@ -202,6 +134,91 @@ void DispatcherImpl::Wait(int timeoutMs)
     );
 
     _waitingCount.fetch_sub(1, std::memory_order_relaxed);
+}
+
+void DispatcherImpl::HandlePacketMessage(IMessage *msg)
+{
+    ISession *session = msg->session;
+    if (session != nullptr && session->IsConnected())
+    {
+        PacketMessage *content = static_cast<PacketMessage *>(msg);
+        if (content->length >= sizeof(System::PacketHeader))
+        {
+            auto *header = reinterpret_cast<System::PacketHeader *>(content->Payload());
+            PacketView view(
+                header->id,
+                content->Payload() + sizeof(System::PacketHeader),
+                content->length - sizeof(System::PacketHeader)
+            );
+
+            if (_packetHandler != nullptr)
+            {
+                _packetHandler->HandlePacket(session, view);
+            }
+        }
+        else
+        {
+            LOG_ERROR("Packet too small for header: {}", content->length);
+        }
+    }
+}
+
+void DispatcherImpl::HandleTimerMessage(IMessage * /*msg*/)
+{
+    // [DEPRECATED]
+}
+
+void DispatcherImpl::HandleTimerExpiredMessage(IMessage *msg)
+{
+    if (_timerHandler != nullptr)
+    {
+        auto *tMsg = static_cast<TimerExpiredMessage *>(msg);
+        _timerHandler->OnTimerExpired(tMsg->timerId);
+    }
+}
+
+void DispatcherImpl::HandleTimerAddMessage(IMessage *msg)
+{
+    if (_timerHandler != nullptr)
+    {
+        auto *tMsg = static_cast<TimerAddMessage *>(msg);
+        _timerHandler->OnTimerAdd(tMsg);
+    }
+}
+
+void DispatcherImpl::HandleTimerCancelMessage(IMessage *msg)
+{
+    if (_timerHandler != nullptr)
+    {
+        auto *tMsg = static_cast<TimerCancelMessage *>(msg);
+        _timerHandler->OnTimerCancel(tMsg);
+    }
+}
+
+void DispatcherImpl::HandleTimerTickMessage(IMessage *msg)
+{
+    if (_timerHandler != nullptr)
+    {
+        auto *tMsg = static_cast<TimerTickMessage *>(msg);
+        _timerHandler->OnTick(tMsg);
+    }
+}
+
+void DispatcherImpl::HandleLambdaMessage(IMessage *msg)
+{
+    auto *lMsg = static_cast<LambdaMessage *>(msg);
+    if (lMsg->task)
+    {
+        lMsg->task();
+    }
+
+    if (msg->session != nullptr)
+    {
+        msg->session->DecRef();
+    }
+
+    // LambdaMessage is not pooled, allocated with 'new' in Push()
+    delete lMsg;
 }
 
 void DispatcherImpl::ProcessPendingDestroys()
@@ -250,12 +267,12 @@ size_t DispatcherImpl::GetQueueSize() const
 
 bool DispatcherImpl::IsOverloaded() const
 {
-    return _messageQueue.size_approx() > HIGH_WATER;
+    return _messageQueue.size_approx() > DispatcherImpl::HIGH_WATER;
 }
 
 bool DispatcherImpl::IsRecovered() const
 {
-    return _messageQueue.size_approx() < LOW_WATER;
+    return _messageQueue.size_approx() < DispatcherImpl::LOW_WATER;
 }
 
 void DispatcherImpl::RegisterTimerHandler(ITimerHandler *handler)

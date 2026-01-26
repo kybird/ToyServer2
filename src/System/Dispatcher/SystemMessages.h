@@ -14,7 +14,7 @@ struct TimerMessage : public IMessage
 {
     TimerMessage()
     {
-        type = (uint32_t)MessageType::LOGIC_TIMER;
+        type = MessageType::LOGIC_TIMER;
     }
     uint32_t timerId;
     void *pParam;
@@ -26,7 +26,7 @@ struct TimerExpiredMessage : public IMessage
 {
     TimerExpiredMessage()
     {
-        type = (uint32_t)MessageType::LOGIC_TIMER_EXPIRED;
+        type = MessageType::LOGIC_TIMER_EXPIRED;
     }
     uint64_t timerId;
 };
@@ -35,7 +35,7 @@ struct TimerTickMessage : public IMessage
 {
     TimerTickMessage()
     {
-        type = (uint32_t)MessageType::LOGIC_TIMER_TICK;
+        type = MessageType::LOGIC_TIMER_TICK;
     }
     uint32_t tickCount;
 };
@@ -44,7 +44,7 @@ struct TimerAddMessage : public IMessage
 {
     TimerAddMessage()
     {
-        type = (uint32_t)MessageType::LOGIC_TIMER_ADD;
+        type = MessageType::LOGIC_TIMER_ADD;
     }
     uint64_t timerId;
     uint32_t logicTimerId;
@@ -59,7 +59,7 @@ struct TimerCancelMessage : public IMessage
 {
     TimerCancelMessage()
     {
-        type = (uint32_t)MessageType::LOGIC_TIMER_CANCEL;
+        type = MessageType::LOGIC_TIMER_CANCEL;
     }
     uint64_t timerId;
     ITimerListener *listener;

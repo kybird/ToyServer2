@@ -2,12 +2,12 @@
 
 #include "System/Dispatcher/IDispatcher.h"
 #include "System/Dispatcher/IPacketHandler.h"
+#include <atomic>
 #include <concurrentqueue/moodycamel/concurrentqueue.h>
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <vector>
-
-static constexpr size_t HIGH_WATER = 5000;
-static constexpr size_t LOW_WATER = 3000;
 
 namespace System {
 
@@ -16,8 +16,11 @@ class ISession;
 class DispatcherImpl : public IDispatcher
 {
 public:
+    static constexpr size_t HIGH_WATER = 5000;
+    static constexpr size_t LOW_WATER = 3000;
+
     DispatcherImpl(std::shared_ptr<IPacketHandler> packetHandler);
-    virtual ~DispatcherImpl();
+    virtual ~DispatcherImpl() override;
 
     void Post(IMessage *message) override;
 
@@ -37,7 +40,15 @@ public:
 private:
     void ProcessPendingDestroys();
 
-private:
+    // Message Handlers
+    void HandlePacketMessage(IMessage *msg);
+    void HandleTimerMessage(IMessage *msg);
+    void HandleTimerExpiredMessage(IMessage *msg);
+    void HandleTimerAddMessage(IMessage *msg);
+    void HandleTimerCancelMessage(IMessage *msg);
+    void HandleTimerTickMessage(IMessage *msg);
+    static void HandleLambdaMessage(IMessage *msg);
+
     moodycamel::ConcurrentQueue<IMessage *> _messageQueue;
 
     std::mutex _mutex;

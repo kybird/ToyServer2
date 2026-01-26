@@ -47,7 +47,7 @@ struct IMessage
         return refCount.fetch_sub(1, std::memory_order_acq_rel) == 1;
     }
 
-    uint32_t type; // Changed from enum class to support internal/external extension
+    MessageType type; // Changed from uint32_t to MessageType
     uint64_t sessionId;
     ISession *session = nullptr; // Changed from Session* to support GatewaySession/BackendSession
     bool isPooled = true;        // [Hybrid Strategy] Added to distinguish pool allocation
@@ -57,7 +57,7 @@ struct EventMessage : public IMessage
 {
     EventMessage()
     {
-        type = (uint32_t)MessageType::LOGIC_JOB;
+        type = MessageType::LOGIC_JOB;
     }
     // Generic event data can be added here if needed
 };
@@ -67,7 +67,7 @@ struct LambdaMessage : public IMessage
 {
     LambdaMessage()
     {
-        type = (uint32_t)MessageType::LAMBDA_JOB;
+        type = MessageType::LAMBDA_JOB;
         isPooled = false; // [Hybrid Strategy] Small objects are system allocated
     }
     std::function<void()> task;
@@ -77,7 +77,7 @@ struct PacketMessage : public IMessage
 {
     PacketMessage()
     {
-        type = (uint32_t)MessageType::PACKET;
+        type = MessageType::PACKET;
     }
     uint16_t length;
     uint8_t data[1]; // Flexible Array Member
