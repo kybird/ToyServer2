@@ -8,7 +8,6 @@
 #include <gtest/gtest.h>
 #include <mutex>
 
-
 // Mock Dispatcher to simulate Main Thread processing
 class DbTestMockDispatcher : public System::IDispatcher
 {
@@ -48,6 +47,11 @@ public:
     }
     void RegisterTimerHandler(System::ITimerHandler *handler) override
     {
+    }
+
+    void WithSession(uint64_t sessionId, std::function<void(System::SessionContext &)> callback) override
+    {
+        // Not used in DB tests
     }
 
     void ProcessAll()

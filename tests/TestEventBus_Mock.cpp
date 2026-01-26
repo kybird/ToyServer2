@@ -19,6 +19,7 @@ public:
 
     // Target Method
     MOCK_METHOD(void, Push, (std::function<void()>), (override));
+    MOCK_METHOD(void, WithSession, (uint64_t, std::function<void(System::SessionContext &)>), (override));
 };
 
 // Test Events

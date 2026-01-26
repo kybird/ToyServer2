@@ -75,6 +75,12 @@ void LoginController::OnLogin(const LoginRequestEvent &evt)
                 resMsg.set_server_tick_rate(GameConfig::TPS);
                 resMsg.set_server_tick_interval(GameConfig::TICK_INTERVAL_SEC);
 
+                // [Fix] Race Condition:
+                // Register user to Lobby BEFORE sending S_Login.
+                // Otherwise, client sends C_PING immediately and gets kicked by PingHandler because it's not in Lobby
+                // yet.
+                RoomManager::Instance().EnterLobby(sessionId);
+
                 uint32_t currentTick = 0;
                 auto room = RoomManager::Instance().GetRoom(GameConfig::DEFAULT_ROOM_ID);
                 if (room != nullptr)

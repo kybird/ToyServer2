@@ -12,6 +12,8 @@
 #include "System/Dispatcher/IDispatcher.h"
 #include "System/Packet/IPacket.h"
 #include "System/Packet/PacketBroadcast.h"
+#include "System/Packet/PacketBuilder.h" // [New]
+#include "System/Packet/PacketPtr.h"     // [New]
 #include "System/Thread/IStrand.h"
 #include <algorithm>
 #include <limits>
@@ -625,7 +627,7 @@ void Room::BroadcastPacket(const System::IPacket &pkt)
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     // Collect real sessions for optimized broadcast
-    std::vector<System::Session *> realSessions;
+    std::vector<System::ISession *> realSessions;
     realSessions.reserve(_players.size());
 
     for (auto &pair : _players)
@@ -647,11 +649,19 @@ void Room::SendToPlayer(uint64_t sessionId, const System::IPacket &pkt)
 {
     if (_dispatcher)
     {
+        // [Crash Fix] Use PacketPtr (RAII) to ensure packet lifetime in async calls
+        // Pre-serialize here to stack/heap (PacketBuilder uses MessagePool)
+        // PacketPtr manages ownership and ref-counting automatically.
+        System::PacketPtr msg = System::PacketBuilder::BuildShared(pkt);
+
         _dispatcher->WithSession(
             sessionId,
-            [&pkt](System::SessionContext &ctx)
+            [msg](System::SessionContext &ctx)
             {
-                ctx.Send(pkt);
+                // msg is copied by value (IncRef)
+                // When lambda executes, msg stays alive.
+                // ctx.Send takes msg (shares ownership or copies ref)
+                ctx.Send(msg);
             }
         );
     }

@@ -1,4 +1,5 @@
 #include "Game/DamageEmitter.h"
+#include "Common/GamePackets.h"
 #include "Core/DataManager.h"
 #include "Entity/Monster.h"
 #include "Entity/Player.h"
@@ -62,7 +63,50 @@ void DamageEmitter::Update(float dt, Room *room)
     float effectiveDamageMult = owner->GetDamageMultiplier();
     float effectiveCooldownMult = owner->GetCooldownMultiplier();
     float effectiveAreaMult = owner->GetAreaMultiplier();
-    int32_t additionalProjectiles = owner->GetAdditionalProjectileCount();
+    int32_t additionalProjectiles = owner->GetAdditionalProjectileCount(_weaponId);
+    int32_t additionalPierce = owner->GetAdditionalPierceCount(_weaponId); // [Modified] Pass WeaponID
+
+    // Apply Base Pierce + Bonus
+    // Note: _pierce is the emitter's instance variable initialized from template.
+    // If we want to dynamically update it, we should do it here or in constructor?
+    // Constructor initialized it. Here we are in Update.
+    // If we modify _pierce member here, it persists? No, _pierce is member.
+    // But Update runs every frame. If we do _pierce += bonus, it will explode.
+    // We should compute 'effectivePierce'.
+    // BUT DamageEmitter passes _pierce to ProjectileFactory.
+    // We need to calculate final pierce here and pass it.
+
+    // HOWEVER, ProjectileFactory uses _pierce member of DamageEmitter?
+    // Let's check where Projectile is created.
+    // Line 156: ProjectileFactory::Instance().CreateProjectile(..., _skillId, ...)
+    // Wait, CreateProjectile signature does NOT take 'pierce'.
+    // It takes SkillId. The Projectile usually reads stats from SkillTemplate OR we override it.
+
+    // Let's check ProjectileFactory signature in Step 689 Code.
+    /*
+    auto proj = ProjectileFactory::Instance().CreateProjectile(
+                    room->_objMgr,
+                    owner->GetId(),
+                    _skillId,
+                    _typeId,
+                    spawnX, spawnY, vx, vy,
+                    finalDamage,
+                    life
+                );
+    */
+    // It does not take 'pierce'.
+    // So the Projectile probably initializes itself from SkillTemplate inside CreateProjectile.
+    // OR we need to SET PIERCE on the created projectile.
+
+    // Let's scroll down to Line 169 in DamageEmitter.cpp
+    /*
+    if (proj) {
+       proj->SetRadius(0.2f);
+       // We should set Pierce here!
+    }
+    */
+
+    // So I need to add 'proj->SetPierce(_pierce + additionalPierce)' access.
 
     // Weapon Level Multipliers
     if (_weaponId > 0)
@@ -169,6 +213,10 @@ void DamageEmitter::Update(float dt, Room *room)
                 if (proj)
                 {
                     proj->SetRadius(0.2f);
+                    // [Pierce] Set total pierce count (Base + Bonus)
+                    // _pierce is base from SkillTemplate
+                    proj->SetPierce(_pierce + additionalPierce);
+
                     room->_objMgr.AddObject(proj);
                     room->_grid.Add(proj);
                     room->BroadcastSpawn({proj});
@@ -193,17 +241,41 @@ void DamageEmitter::Update(float dt, Room *room)
             }
 
             int count = 0;
-            // Additional projectile count for AoE might mean more targets or multiple hits?
-            // In Vampire Survivors, "Amount" (projectile count) often adds 1 base target or repeat pulses.
-            // Let's just increase maxTargetsPerTick for now.
             int32_t finalMaxTargets = _maxTargetsPerTick + additionalProjectiles;
+            std::vector<int32_t> hitTargetIds;
+            std::vector<int32_t> hitDamageValues;
 
             for (auto &monster : victims)
             {
                 if (count >= finalMaxTargets)
                     break;
+
                 monster->TakeDamage(finalDamage, room);
+                hitTargetIds.push_back(monster->GetId());
+                hitDamageValues.push_back(finalDamage);
                 count++;
+            }
+
+            if (!hitTargetIds.empty())
+            {
+                // 1. Broadcast Visual Effect
+                Protocol::S_SkillEffect skillMsg;
+                skillMsg.set_caster_id(owner->GetId());
+                skillMsg.set_skill_id(_skillId);
+                skillMsg.set_x(px);
+                skillMsg.set_y(py);
+                for (int32_t tid : hitTargetIds)
+                    skillMsg.add_target_ids(tid);
+                room->BroadcastPacket(S_SkillEffectPacket(std::move(skillMsg)));
+
+                // 2. Broadcast Damage Numbers
+                Protocol::S_DamageEffect damageMsg;
+                damageMsg.set_skill_id(_skillId);
+                for (int32_t tid : hitTargetIds)
+                    damageMsg.add_target_ids(tid);
+                for (int32_t dmg : hitDamageValues)
+                    damageMsg.add_damage_values(dmg);
+                room->BroadcastPacket(S_DamageEffectPacket(std::move(damageMsg)));
             }
         }
     }

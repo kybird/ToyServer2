@@ -15,7 +15,6 @@
 #include "System/Network/XorEncryption.h"
 #include "System/Session/BackendSession.h"
 #include "System/Session/GatewaySession.h"
-#include "System/Session/Session.h"
 #include "System/Session/SessionFactory.h"
 #include "System/Session/SessionPool.h"
 #include "System/Thread/Strand.h"
@@ -61,6 +60,15 @@ std::shared_ptr<ThreadPool> Framework::GetThreadPool() const
 Framework::Framework()
 {
 }
+
+// PImpl Definition for Signal Handling
+struct Framework::SignalImpl
+{
+    boost::asio::signal_set signals;
+    SignalImpl(boost::asio::io_context &ctx) : signals(ctx, SIGINT, SIGTERM)
+    {
+    }
+};
 
 Framework::~Framework()
 {
@@ -192,8 +200,8 @@ bool Framework::Init(std::shared_ptr<IConfig> config, std::shared_ptr<IPacketHan
     _console = std::make_shared<CommandConsole>(_config);
 
     // 7. Internal Signal Handling (Graceful Shutdown)
-    _signals = std::make_unique<boost::asio::signal_set>(_network->GetIOContext(), SIGINT, SIGTERM);
-    _signals->async_wait(
+    _signals = std::make_unique<SignalImpl>(_network->GetIOContext());
+    _signals->signals.async_wait(
         [this](const boost::system::error_code &error, int signal_number)
         {
             if (!error)
@@ -274,6 +282,14 @@ void Framework::Run()
 
 void Framework::Stop()
 {
+    // [Fix] Signal Handler Safety
+    // This function can be called from Signal Handler (IO Thread).
+    // DO NOT Join IO threads here, or it causes self-join deadlock/crash.
+    // _ioThreads are std::jthread, so they will join automatically in ~Framework().
+
+    if (!_running)
+        return; // Already stopped
+
     _running = false;
 
     if (_console)
@@ -288,15 +304,46 @@ void Framework::Stop()
     if (_dbThreadPool)
         _dbThreadPool->Stop();
     if (_network)
-        _network->Stop();
+        _network->Stop(); // Stops IO Context, IO threads will exit loop soon
 
-    // Join IO threads
+    // Do NOT join or clear _ioThreads here.
+}
+
+void Framework::Join()
+{
+    LOG_INFO("Joining Threads and Cleaning up...");
+
+    if (_console)
+        _console->Stop();
+
+    // 1. Shutdown MQ
+    System::MQ::MessageSystem::Instance().Shutdown();
+
+    // 2. Stop Thread Pools (if not already)
+    if (_threadPool)
+        _threadPool->Stop();
+    if (_dbThreadPool)
+        _dbThreadPool->Stop();
+
+    // 3. Wait for IO Threads
+    // Since we use std::jthread, they would join in destructor anyway,
+    // but explicit join allows controlled order and logging.
     for (auto &t : _ioThreads)
     {
         if (t.joinable())
-            t.join();
+        {
+            try
+            {
+                t.join();
+            } catch (const std::exception &e)
+            {
+                LOG_ERROR("Error joining IO thread: {}", e.what());
+            }
+        }
     }
     _ioThreads.clear();
+
+    LOG_INFO("Shutdown Complete.");
 }
 
 } // namespace System

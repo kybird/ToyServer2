@@ -2,76 +2,73 @@
 
 #include "System/Dispatcher/IMessage.h"
 #include "System/ISession.h"
-#include "System/Network/RateLimiter.h" // Added (Keep this if it doesn't use boost, seemingly clean)
-#include "System/Network/RecvBuffer.h"  // RecvBuffer seems to use vector, minimal deps? Check later.
-
+#include <atomic>
+#include <concurrentqueue/moodycamel/concurrentqueue.h>
 #include <memory>
 #include <string>
-#include <vector>
+#include <thread>
 
 namespace System {
 
 class IDispatcher;
-struct IPacketEncryption;
-class PacketBroadcast;
-struct SessionImpl; // Forward Declaration
+struct GatewaySessionImpl;
+struct BackendSessionImpl;
 
-/*
-    High-Performance AsioSession for MMORPG Servers.
-    (PIMPL Pattern Applied to hide Boost Asio Dependencies)
-*/
+/**
+ * @brief Base class for all Session types.
+ * Holds shared state and implements common packet sending logic.
+ * Inherits from ISession.
+ */
 class Session : public ISession
 {
-    friend class PacketBroadcast;
+    friend struct GatewaySessionImpl;
+    friend struct BackendSessionImpl;
 
 public:
     Session();
-    // [PIMPL] socket is passed as shared_ptr<void> to erase Boost type from header
-    Session(std::shared_ptr<void> socket, uint64_t sessionId, IDispatcher *dispatcher);
     virtual ~Session();
 
-    // Pool Hooks
-    void Reset() override;
-    // [PIMPL] socket is passed as shared_ptr<void>
-    void Reset(std::shared_ptr<void> socket, uint64_t sessionId, IDispatcher *dispatcher);
-    void OnRecycle() override;
-
-    // Graceful Shutdown
-    void GracefulClose();
-
-    // Callbacks
-    void OnConnect();
-    void OnDisconnect();
-
-    // ISession Interface
-    void SendPacket(const IPacket &pkt) override;
-    void Close() override;
+    // ISession Interface (Shared implementation)
     uint64_t GetId() const override;
+    void Reset() override;
+    bool IsConnected() const override;
+    bool CanDestroy() const override;
 
-    void OnError(const std::string &errorMsg);
-
-    std::thread::id GetDispatcherThreadId() const;
-    std::string GetRemoteAddress() const;
-
-    // Encryption
-    void SetEncryption(std::unique_ptr<IPacketEncryption> encryption);
-
-    // Heartbeat (Ping/Pong)
-    void ConfigHeartbeat(uint32_t intervalMs, uint32_t timeoutMs, std::function<void(Session *)> pingFunc);
-    void OnPong();
-
-    // Lifetime safety
     void IncRef() override;
     void DecRef() override;
-    bool CanDestroy() const override;
-    bool IsConnected() const;
 
-private:
-    // [PIMPL] Internal sender for PacketBroadcast
-    void SendPreSerialized(const PacketMessage *source);
+    void SendPacket(const IPacket &pkt) override;
+    void SendPacket(PacketPtr msg) override;
+    void SendPreSerialized(const PacketMessage *msg) override;
 
-private:
-    std::unique_ptr<SessionImpl> _impl;
+    // Default implementations for optional hooks
+    void OnRecycle() override
+    {
+    }
+    void OnPong() override
+    {
+    }
+
+protected:
+    // Internal Enqueue logic used by all Send methods
+    void EnqueueSend(PacketMessage *msg);
+
+    // Virtual hooks to be implemented by derived classes (using PIMPL to hide implementation)
+    virtual void Flush() = 0;
+
+protected:
+    // Shared State
+    uint64_t _id = 0;
+    IDispatcher *_dispatcher = nullptr;
+    std::atomic<bool> _connected{false};
+    std::atomic<int> _ioRef{0};
+
+    // Shared Networking State (Lock-Free)
+    moodycamel::ConcurrentQueue<PacketMessage *> _sendQueue;
+    std::atomic<bool> _isSending{false};
+
+    // Tracking for stats (can be moved or shared)
+    std::chrono::steady_clock::time_point _lastStatTime;
 };
 
 } // namespace System

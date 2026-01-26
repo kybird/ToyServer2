@@ -6,345 +6,53 @@
 
 namespace SimpleGame {
 
-// --- S_LOGIN ---
-class S_LoginPacket : public System::ProtobufPacketBase<S_LoginPacket, PacketHeader, Protocol::S_Login>
+// Generic Template for Protobuf Packets
+template <uint16_t PacketId, typename TProto>
+class ProtobufPacket : public System::ProtobufPacketBase<ProtobufPacket<PacketId, TProto>, PacketHeader, TProto>
 {
-    using Base = System::ProtobufPacketBase<S_LoginPacket, PacketHeader, Protocol::S_Login>;
-
 public:
-    static constexpr uint16_t ID = PacketID::S_LOGIN;
-    using Base::Base;
+    static constexpr uint16_t ID = PacketId;
+    using System::ProtobufPacketBase<ProtobufPacket<PacketId, TProto>, PacketHeader, TProto>::ProtobufPacketBase;
 };
 
-// --- S_CREATE_ROOM ---
-class S_CreateRoomPacket : public System::ProtobufPacketBase<S_CreateRoomPacket, PacketHeader, Protocol::S_CreateRoom>
-{
-    using Base = System::ProtobufPacketBase<S_CreateRoomPacket, PacketHeader, Protocol::S_CreateRoom>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_CREATE_ROOM;
-    using Base::Base;
-};
-
-// --- S_JOIN_ROOM ---
-class S_JoinRoomPacket : public System::ProtobufPacketBase<S_JoinRoomPacket, PacketHeader, Protocol::S_JoinRoom>
-{
-    using Base = System::ProtobufPacketBase<S_JoinRoomPacket, PacketHeader, Protocol::S_JoinRoom>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_JOIN_ROOM;
-    using Base::Base;
-};
-
-// --- S_ROOM_LIST ---
-class S_RoomListPacket : public System::ProtobufPacketBase<S_RoomListPacket, PacketHeader, Protocol::S_RoomList>
-{
-    using Base = System::ProtobufPacketBase<S_RoomListPacket, PacketHeader, Protocol::S_RoomList>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_ROOM_LIST;
-    using Base::Base;
-};
-
-// --- S_ENTER_LOBBY ---
-class S_EnterLobbyPacket : public System::ProtobufPacketBase<S_EnterLobbyPacket, PacketHeader, Protocol::S_EnterLobby>
-{
-    using Base = System::ProtobufPacketBase<S_EnterLobbyPacket, PacketHeader, Protocol::S_EnterLobby>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_ENTER_LOBBY;
-    using Base::Base;
-};
-
-// --- S_LEAVE_ROOM ---
-class S_LeaveRoomPacket : public System::ProtobufPacketBase<S_LeaveRoomPacket, PacketHeader, Protocol::S_LeaveRoom>
-{
-    using Base = System::ProtobufPacketBase<S_LeaveRoomPacket, PacketHeader, Protocol::S_LeaveRoom>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_LEAVE_ROOM;
-    using Base::Base;
-};
-
-// --- S_CHAT ---
-class S_ChatPacket : public System::ProtobufPacketBase<S_ChatPacket, PacketHeader, Protocol::S_Chat>
-{
-    using Base = System::ProtobufPacketBase<S_ChatPacket, PacketHeader, Protocol::S_Chat>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_CHAT;
-    using Base::Base;
-};
-
-// --- S_SPAWN_OBJECT ---
-class S_SpawnObjectPacket
-    : public System::ProtobufPacketBase<S_SpawnObjectPacket, PacketHeader, Protocol::S_SpawnObject>
-{
-    using Base = System::ProtobufPacketBase<S_SpawnObjectPacket, PacketHeader, Protocol::S_SpawnObject>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_SPAWN_OBJECT;
-    using Base::Base;
-};
-
-// --- S_DESPAWN_OBJECT ---
-class S_DespawnObjectPacket
-    : public System::ProtobufPacketBase<S_DespawnObjectPacket, PacketHeader, Protocol::S_DespawnObject>
-{
-    using Base = System::ProtobufPacketBase<S_DespawnObjectPacket, PacketHeader, Protocol::S_DespawnObject>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_DESPAWN_OBJECT;
-    using Base::Base;
-};
-
-// --- S_MOVE_OBJECT_BATCH ---
-class S_MoveObjectBatchPacket
-    : public System::ProtobufPacketBase<S_MoveObjectBatchPacket, PacketHeader, Protocol::S_MoveObjectBatch>
-{
-    using Base = System::ProtobufPacketBase<S_MoveObjectBatchPacket, PacketHeader, Protocol::S_MoveObjectBatch>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_MOVE_OBJECT_BATCH;
-    using Base::Base;
-};
-
-// --- S_DAMAGE_EFFECT ---
-class S_DamageEffectPacket
-    : public System::ProtobufPacketBase<S_DamageEffectPacket, PacketHeader, Protocol::S_DamageEffect>
-{
-    using Base = System::ProtobufPacketBase<S_DamageEffectPacket, PacketHeader, Protocol::S_DamageEffect>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_DAMAGE_EFFECT;
-    using Base::Base;
-};
-
-// --- S_KNOCKBACK ---
-class S_KnockbackPacket : public System::ProtobufPacketBase<S_KnockbackPacket, PacketHeader, Protocol::S_Knockback>
-{
-    using Base = System::ProtobufPacketBase<S_KnockbackPacket, PacketHeader, Protocol::S_Knockback>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_KNOCKBACK;
-    using Base::Base;
-};
-
-// --- S_PING ---
-class S_PingPacket : public System::ProtobufPacketBase<S_PingPacket, PacketHeader, Protocol::S_Ping>
-{
-    using Base = System::ProtobufPacketBase<S_PingPacket, PacketHeader, Protocol::S_Ping>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_PING;
-    using Base::Base;
-};
-
-// --- S_PLAYER_STATE_ACK ---
-class S_PlayerStateAckPacket
-    : public System::ProtobufPacketBase<S_PlayerStateAckPacket, PacketHeader, Protocol::S_PlayerStateAck>
-{
-    using Base = System::ProtobufPacketBase<S_PlayerStateAckPacket, PacketHeader, Protocol::S_PlayerStateAck>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_PLAYER_STATE_ACK;
-    using Base::Base;
-};
-
-// --- S_GAME_OVER ---
-class S_GameOverPacket : public System::ProtobufPacketBase<S_GameOverPacket, PacketHeader, Protocol::S_GameOver>
-{
-    using Base = System::ProtobufPacketBase<S_GameOverPacket, PacketHeader, Protocol::S_GameOver>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_GAME_OVER;
-    using Base::Base;
-};
-
-// --- S_GAME_WIN ---
-class S_GameWinPacket : public System::ProtobufPacketBase<S_GameWinPacket, PacketHeader, Protocol::S_GameWin>
-{
-    using Base = System::ProtobufPacketBase<S_GameWinPacket, PacketHeader, Protocol::S_GameWin>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_GAME_WIN;
-    using Base::Base;
-};
-
-// --- S_PLAYER_DEAD ---
-class S_PlayerDeadPacket : public System::ProtobufPacketBase<S_PlayerDeadPacket, PacketHeader, Protocol::S_PlayerDead>
-{
-    using Base = System::ProtobufPacketBase<S_PlayerDeadPacket, PacketHeader, Protocol::S_PlayerDead>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_PLAYER_DEAD;
-    using Base::Base;
-};
-
-// --- S_EXP_CHANGE ---
-class S_ExpChangePacket : public System::ProtobufPacketBase<S_ExpChangePacket, PacketHeader, Protocol::S_ExpChange>
-{
-    using Base = System::ProtobufPacketBase<S_ExpChangePacket, PacketHeader, Protocol::S_ExpChange>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_EXP_CHANGE;
-    using Base::Base;
-};
-
-// --- S_HP_CHANGE ---
-class S_HpChangePacket : public System::ProtobufPacketBase<S_HpChangePacket, PacketHeader, Protocol::S_HpChange>
-{
-    using Base = System::ProtobufPacketBase<S_HpChangePacket, PacketHeader, Protocol::S_HpChange>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_HP_CHANGE;
-    using Base::Base;
-};
-
-// --- S_WAVE_NOTIFY ---
-class S_WaveNotifyPacket : public System::ProtobufPacketBase<S_WaveNotifyPacket, PacketHeader, Protocol::S_WaveNotify>
-{
-    using Base = System::ProtobufPacketBase<S_WaveNotifyPacket, PacketHeader, Protocol::S_WaveNotify>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_WAVE_NOTIFY;
-    using Base::Base;
-};
-
-// --- S_LEVEL_UP_OPTION ---
-class S_LevelUpOptionPacket
-    : public System::ProtobufPacketBase<S_LevelUpOptionPacket, PacketHeader, Protocol::S_LevelUpOption>
-{
-    using Base = System::ProtobufPacketBase<S_LevelUpOptionPacket, PacketHeader, Protocol::S_LevelUpOption>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_LEVEL_UP_OPTION;
-    using Base::Base;
-};
-
-// --- C_SELECT_LEVEL_UP ---
-class C_SelectLevelUpPacket
-    : public System::ProtobufPacketBase<C_SelectLevelUpPacket, PacketHeader, Protocol::C_SelectLevelUp>
-{
-    using Base = System::ProtobufPacketBase<C_SelectLevelUpPacket, PacketHeader, Protocol::C_SelectLevelUp>;
-
-public:
-    static constexpr uint16_t ID = PacketID::C_SELECT_LEVEL_UP;
-    using Base::Base;
-};
-
-// --- CLIENT PACKETS (For Client Use) ---
-
-// --- C_LOGIN ---
-class C_LoginPacket : public System::ProtobufPacketBase<C_LoginPacket, PacketHeader, Protocol::C_Login>
-{
-    using Base = System::ProtobufPacketBase<C_LoginPacket, PacketHeader, Protocol::C_Login>;
-
-public:
-    static constexpr uint16_t ID = PacketID::C_LOGIN;
-    using Base::Base;
-};
-
-// --- C_ENTER_LOBBY ---
-class C_EnterLobbyPacket : public System::ProtobufPacketBase<C_EnterLobbyPacket, PacketHeader, Protocol::C_EnterLobby>
-{
-    using Base = System::ProtobufPacketBase<C_EnterLobbyPacket, PacketHeader, Protocol::C_EnterLobby>;
-
-public:
-    static constexpr uint16_t ID = PacketID::C_ENTER_LOBBY;
-    using Base::Base;
-};
-
-// --- C_CREATE_ROOM ---
-class C_CreateRoomPacket : public System::ProtobufPacketBase<C_CreateRoomPacket, PacketHeader, Protocol::C_CreateRoom>
-{
-    using Base = System::ProtobufPacketBase<C_CreateRoomPacket, PacketHeader, Protocol::C_CreateRoom>;
-
-public:
-    static constexpr uint16_t ID = PacketID::C_CREATE_ROOM;
-    using Base::Base;
-};
-
-// --- C_GET_ROOM_LIST ---
-class C_GetRoomListPacket
-    : public System::ProtobufPacketBase<C_GetRoomListPacket, PacketHeader, Protocol::C_GetRoomList>
-{
-    using Base = System::ProtobufPacketBase<C_GetRoomListPacket, PacketHeader, Protocol::C_GetRoomList>;
-
-public:
-    static constexpr uint16_t ID = PacketID::C_GET_ROOM_LIST;
-    using Base::Base;
-};
-
-// --- C_LEAVE_ROOM ---
-class C_LeaveRoomPacket : public System::ProtobufPacketBase<C_LeaveRoomPacket, PacketHeader, Protocol::C_LeaveRoom>
-{
-    using Base = System::ProtobufPacketBase<C_LeaveRoomPacket, PacketHeader, Protocol::C_LeaveRoom>;
-
-public:
-    static constexpr uint16_t ID = PacketID::C_LEAVE_ROOM;
-    using Base::Base;
-};
-
-// --- C_CHAT ---
-class C_ChatPacket : public System::ProtobufPacketBase<C_ChatPacket, PacketHeader, Protocol::C_Chat>
-{
-    using Base = System::ProtobufPacketBase<C_ChatPacket, PacketHeader, Protocol::C_Chat>;
-
-public:
-    static constexpr uint16_t ID = PacketID::C_CHAT;
-    using Base::Base;
-};
-
-// --- C_PONG ---
-class C_PongPacket : public System::ProtobufPacketBase<C_PongPacket, PacketHeader, Protocol::C_Pong>
-{
-    using Base = System::ProtobufPacketBase<C_PongPacket, PacketHeader, Protocol::C_Pong>;
-
-public:
-    static constexpr uint16_t ID = PacketID::C_PONG;
-    using Base::Base;
-};
-
-// --- C_PING ---
-class C_PingPacket : public System::ProtobufPacketBase<C_PingPacket, PacketHeader, Protocol::C_Ping>
-{
-    using Base = System::ProtobufPacketBase<C_PingPacket, PacketHeader, Protocol::C_Ping>;
-
-public:
-    static constexpr uint16_t ID = PacketID::C_PING;
-    using Base::Base;
-};
-
-// --- S_PONG ---
-class S_PongPacket : public System::ProtobufPacketBase<S_PongPacket, PacketHeader, Protocol::S_Pong>
-{
-    using Base = System::ProtobufPacketBase<S_PongPacket, PacketHeader, Protocol::S_Pong>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_PONG;
-    using Base::Base;
-};
-
-// --- C_GAME_READY ---
-class C_GameReadyPacket : public System::ProtobufPacketBase<C_GameReadyPacket, PacketHeader, Protocol::C_GameReady>
-{
-    using Base = System::ProtobufPacketBase<C_GameReadyPacket, PacketHeader, Protocol::C_GameReady>;
-
-public:
-    static constexpr uint16_t ID = PacketID::C_GAME_READY;
-    using Base::Base;
-};
-
-// --- S_DEBUG_SERVER_TICK ---
-class S_DebugServerTickPacket
-    : public System::ProtobufPacketBase<S_DebugServerTickPacket, PacketHeader, Protocol::S_DebugServerTick>
-{
-    using Base = System::ProtobufPacketBase<S_DebugServerTickPacket, PacketHeader, Protocol::S_DebugServerTick>;
-
-public:
-    static constexpr uint16_t ID = PacketID::S_DEBUG_SERVER_TICK;
-    using Base::Base;
-};
+using C_LoginPacket = ProtobufPacket<PacketID::C_LOGIN, Protocol::C_Login>;
+using S_LoginPacket = ProtobufPacket<PacketID::S_LOGIN, Protocol::S_Login>;
+using C_CreateRoomPacket = ProtobufPacket<PacketID::C_CREATE_ROOM, Protocol::C_CreateRoom>;
+using S_CreateRoomPacket = ProtobufPacket<PacketID::S_CREATE_ROOM, Protocol::S_CreateRoom>;
+using C_JoinRoomPacket = ProtobufPacket<PacketID::C_JOIN_ROOM, Protocol::C_JoinRoom>;
+using S_JoinRoomPacket = ProtobufPacket<PacketID::S_JOIN_ROOM, Protocol::S_JoinRoom>;
+using C_GetRoomListPacket = ProtobufPacket<PacketID::C_GET_ROOM_LIST, Protocol::C_GetRoomList>;
+using S_RoomListPacket = ProtobufPacket<PacketID::S_ROOM_LIST, Protocol::S_RoomList>;
+using C_EnterLobbyPacket = ProtobufPacket<PacketID::C_ENTER_LOBBY, Protocol::C_EnterLobby>;
+using S_EnterLobbyPacket = ProtobufPacket<PacketID::S_ENTER_LOBBY, Protocol::S_EnterLobby>;
+using C_LeaveRoomPacket = ProtobufPacket<PacketID::C_LEAVE_ROOM, Protocol::C_LeaveRoom>;
+using S_LeaveRoomPacket = ProtobufPacket<PacketID::S_LEAVE_ROOM, Protocol::S_LeaveRoom>;
+using C_GameReadyPacket = ProtobufPacket<PacketID::C_GAME_READY, Protocol::C_GameReady>;
+using C_ChatPacket = ProtobufPacket<PacketID::C_CHAT, Protocol::C_Chat>;
+using S_ChatPacket = ProtobufPacket<PacketID::S_CHAT, Protocol::S_Chat>;
+using S_SpawnObjectPacket = ProtobufPacket<PacketID::S_SPAWN_OBJECT, Protocol::S_SpawnObject>;
+using S_DespawnObjectPacket = ProtobufPacket<PacketID::S_DESPAWN_OBJECT, Protocol::S_DespawnObject>;
+using S_MoveObjectBatchPacket = ProtobufPacket<PacketID::S_MOVE_OBJECT_BATCH, Protocol::S_MoveObjectBatch>;
+using C_MoveInputPacket = ProtobufPacket<PacketID::C_MOVE_INPUT, Protocol::C_MoveInput>;
+using S_PlayerStateAckPacket = ProtobufPacket<PacketID::S_PLAYER_STATE_ACK, Protocol::S_PlayerStateAck>;
+using C_UseSkillPacket = ProtobufPacket<PacketID::C_USE_SKILL, Protocol::C_UseSkill>;
+using S_SkillEffectPacket = ProtobufPacket<PacketID::S_SKILL_EFFECT, Protocol::S_SkillEffect>;
+using S_DamageEffectPacket = ProtobufPacket<PacketID::S_DAMAGE_EFFECT, Protocol::S_DamageEffect>;
+using S_KnockbackPacket = ProtobufPacket<PacketID::S_KNOCKBACK, Protocol::S_Knockback>;
+using S_PlayerDownedPacket = ProtobufPacket<PacketID::S_PLAYER_DOWNED, Protocol::S_PlayerDowned>;
+using S_PlayerRevivePacket = ProtobufPacket<PacketID::S_PLAYER_REVIVE, Protocol::S_PlayerRevive>;
+using S_ExpChangePacket = ProtobufPacket<PacketID::S_EXP_CHANGE, Protocol::S_ExpChange>;
+using S_LevelUpOptionPacket = ProtobufPacket<PacketID::S_LEVEL_UP_OPTION, Protocol::S_LevelUpOption>;
+using C_SelectLevelUpPacket = ProtobufPacket<PacketID::C_SELECT_LEVEL_UP, Protocol::C_SelectLevelUp>;
+using S_HpChangePacket = ProtobufPacket<PacketID::S_HP_CHANGE, Protocol::S_HpChange>;
+using S_WaveNotifyPacket = ProtobufPacket<PacketID::S_WAVE_NOTIFY, Protocol::S_WaveNotify>;
+using S_GameWinPacket = ProtobufPacket<PacketID::S_GAME_WIN, Protocol::S_GameWin>;
+using S_GameOverPacket = ProtobufPacket<PacketID::S_GAME_OVER, Protocol::S_GameOver>;
+using S_PlayerDeadPacket = ProtobufPacket<PacketID::S_PLAYER_DEAD, Protocol::S_PlayerDead>;
+using S_PingPacket = ProtobufPacket<PacketID::S_PING, Protocol::S_Ping>;
+using C_PongPacket = ProtobufPacket<PacketID::C_PONG, Protocol::C_Pong>;
+using C_PingPacket = ProtobufPacket<PacketID::C_PING, Protocol::C_Ping>;
+using S_PongPacket = ProtobufPacket<PacketID::S_PONG, Protocol::S_Pong>;
+using S_DebugServerTickPacket = ProtobufPacket<PacketID::S_DEBUG_SERVER_TICK, Protocol::S_DebugServerTick>;
 
 } // namespace SimpleGame

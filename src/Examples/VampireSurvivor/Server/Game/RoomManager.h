@@ -28,6 +28,7 @@ public:
     }
 
     void Init(std::shared_ptr<System::IFramework> framework, std::shared_ptr<UserDB> userDB);
+    void Cleanup();    // [New] Explicit cleanup to break cycle
     void TestMethod(); // Test linking
 
     std::shared_ptr<Room> CreateRoom(int roomId, const std::string &title = "Default Room");

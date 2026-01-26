@@ -4,7 +4,6 @@
 #include "System/ILog.h"
 #include <algorithm>
 
-
 namespace SimpleGame {
 
 void EffectManager::ApplyEffect(int32_t targetId, Effect::StatusEffect effect)
@@ -57,15 +56,67 @@ void EffectManager::ClearEffects(int32_t targetId)
 
 void EffectManager::Update(float currentTime, Room *room)
 {
-    for (auto &[targetId, effects] : _effects)
+    // [Crash Fix] Snapshot keys to handle map modification (add/remove keys) during iteration
+    std::vector<int32_t> targets;
+    targets.reserve(_effects.size());
+    for (const auto &pair : _effects)
     {
-        for (auto &effect : effects)
+        targets.push_back(pair.first);
+    }
+
+    for (int32_t targetId : targets)
+    {
+        auto it = _effects.find(targetId);
+        if (it == _effects.end())
         {
-            // DoT 틱 처리
-            if (effect.NeedsTick(currentTime))
+            LOG_WARN("EffectManager::Update - Target {} removed during update, skipping", targetId);
+            continue; // Removed during update
+        }
+
+        auto &effects = it->second;
+
+        // [Crash Fix] Use index-based iteration
+        for (size_t i = 0; i < effects.size(); ++i)
+        {
+            // [Safety] Re-fetch reference each time
+            // Also, don't hold persistent reference if ProcessDotDamage can reallocate vector
+            // But we must pass valid object.
+            // If ApplyEffect is called on SAME target, vector reallocates.
+            // So we must NOT pass 'effects[i]' by reference if the callee can add effects.
+            // However, ProcessDotDamage just deals damage.
+            // If TakeDamage triggers something... (e.g. Reflect Damage -> AddEffect)
+            // It's safer to copy the Effect structure for processing (it's small)
+            // or ensure we don't use the reference after the call if invalid.
+
+            if (i >= effects.size())
             {
-                ProcessDotDamage(targetId, effect, currentTime, room);
-                effect.lastTickTime = currentTime;
+                LOG_ERROR("EffectManager::Update - Index {} out of bounds (size {}), breaking loop", i, effects.size());
+                break; // Logic check
+            }
+
+            Effect::StatusEffect currentEffect = effects[i]; // Copy
+
+            if (currentEffect.NeedsTick(currentTime))
+            {
+                // Pass copy to avoid dangling reference if vector reallocates
+                ProcessDotDamage(targetId, currentEffect, currentTime, room);
+
+                // [Fix] Re-verify existence. Since ProcessDotDamage might cause monster death
+                // and ClearEffects(targetId), the entry in _effects might be gone.
+                auto itCheck = _effects.find(targetId);
+                if (itCheck == _effects.end())
+                {
+                    LOG_INFO(
+                        "EffectManager::Update - Target {} died and effects cleared, breaking inner loop", targetId
+                    );
+                    break;
+                }
+
+                auto &currentEffects = itCheck->second;
+                if (i < currentEffects.size())
+                {
+                    currentEffects[i].lastTickTime = currentTime;
+                }
             }
         }
     }
@@ -104,11 +155,17 @@ void EffectManager::CleanupExpired(float currentTime)
 void EffectManager::ProcessDotDamage(int32_t targetId, Effect::StatusEffect &effect, float currentTime, Room *room)
 {
     if (!room)
+    {
+        LOG_WARN("ProcessDotDamage - Room is null");
         return;
+    }
 
     auto obj = room->GetObjectManager().GetObject(targetId);
     if (!obj)
+    {
+        LOG_WARN("ProcessDotDamage - Target {} not found in ObjectManager", targetId);
         return;
+    }
 
     int32_t damage = static_cast<int32_t>(effect.value);
     obj->TakeDamage(damage, room);

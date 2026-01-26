@@ -59,6 +59,15 @@ if %errorlevel% neq 0 (
 move /Y "%CSHARP_OUT_DIR_INTERNAL%\Game.cs" "%CSHARP_OUT_DIR_INTERNAL%\Protocol.cs"
 
 echo [SUCCESS] C# files generated in %CSHARP_OUT_DIR_INTERNAL%
+
+:: Generate GamePackets.h (Custom Wrapper)
+echo [INFO] Generating GamePackets.h...
+python generate_packets.py
+
+if %errorlevel% neq 0 (
+    echo [WARNING] GamePackets.h generation failed. Ensure Python is installed.
+)
+
 pause
 
 

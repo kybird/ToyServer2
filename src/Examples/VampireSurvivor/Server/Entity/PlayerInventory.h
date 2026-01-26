@@ -14,7 +14,7 @@ public:
     static constexpr int MAX_WEAPON_SLOTS = 6;
     static constexpr int MAX_PASSIVE_SLOTS = 6;
     static constexpr int MAX_WEAPON_LEVEL = 8;
-    static constexpr int MAX_PASSIVE_LEVEL = 5;
+    static constexpr int MAX_PASSIVE_LEVEL = 20;
 
     PlayerInventory() = default;
 

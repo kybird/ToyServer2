@@ -1,357 +1,194 @@
 #include "System/Session/BackendSession.h"
-#include "System/Debug/MemoryMetrics.h"
 #include "System/Dispatcher/IDispatcher.h"
 #include "System/Dispatcher/MessagePool.h"
 #include "System/ILog.h"
-#include "System/Packet/IPacket.h"
+#include "System/Network/RecvBuffer.h"
 #include "System/Packet/PacketHeader.h"
 #include "System/Pch.h"
-#include "System/Session/SessionCommon.h"
-#include "System/Session/SessionFactory.h"
-#include "System/Session/SessionPool.h"
 
-#include <boost/asio/bind_allocator.hpp>
-#include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/recycling_allocator.hpp>
-#include <boost/asio/steady_timer.hpp>
-#include <concurrentqueue/moodycamel/concurrentqueue.h>
+#include <boost/asio.hpp>
+#include <iostream>
 
 namespace System {
 
-BackendSession::BackendSession()
+struct BackendSessionImpl
 {
-    _lastStatTime = std::chrono::steady_clock::now();
-}
+    BackendSession *_owner;
+    std::shared_ptr<boost::asio::ip::tcp::socket> _socket;
 
-BackendSession::BackendSession(std::shared_ptr<void> socket, uint64_t sessionId, IDispatcher *dispatcher)
+    // Networking Buffers
+    RecvBuffer _recvBuffer;
+    std::vector<uint8_t> _linearBuffer;
+
+    std::unique_ptr<boost::asio::steady_timer> _flowControlTimer;
+    std::unique_ptr<boost::asio::steady_timer> _heartbeatTimer;
+
+    std::chrono::steady_clock::time_point _lastRecvTime;
+    std::chrono::steady_clock::time_point _lastPingTime;
+    uint32_t _hbInterval = 0;
+    uint32_t _hbTimeout = 0;
+    std::function<void(BackendSession *)> _hbPingFunc;
+
+    bool _readPaused = false;
+
+    BackendSessionImpl(BackendSession *owner) : _owner(owner)
+    {
+    }
+
+    void StartRead();
+    void OnReadComplete(const boost::system::error_code &ec, size_t tr);
+    void OnRecv(size_t tr);
+
+    void StartHeartbeat();
+    void OnHeartbeatTimer(const boost::system::error_code &ec);
+
+    void OnWriteComplete(const boost::system::error_code &ec, size_t tr);
+};
+
+BackendSession::BackendSession() : _impl(std::make_unique<BackendSessionImpl>(this))
 {
-    Reset(socket, sessionId, dispatcher);
-    _lastStatTime = std::chrono::steady_clock::now();
 }
-
 BackendSession::~BackendSession()
 {
-    LOG_INFO("BackendSession Destroyed: ID {}", GetId());
 }
 
 void BackendSession::Reset()
 {
-    _id = 0;
-    _connected.store(false, std::memory_order_relaxed);
-    _gracefulShutdown.store(false, std::memory_order_relaxed);
-    _ioRef.store(0, std::memory_order_relaxed);
-    _readPaused.store(false, std::memory_order_relaxed);
-    _isSending.store(false, std::memory_order_relaxed);
-    _socket.reset();
-    _recvBuffer.Reset();
-    _flowControlTimer.reset();
+    Session::Reset();
+    _impl->_socket.reset();
+    _impl->_recvBuffer.Reset();
+    _impl->_flowControlTimer.reset();
+    _impl->_heartbeatTimer.reset();
 }
 
 void BackendSession::Reset(std::shared_ptr<void> socket, uint64_t sessionId, IDispatcher *dispatcher)
 {
-    _socket = std::static_pointer_cast<boost::asio::ip::tcp::socket>(socket);
+    Session::Reset(); // Ensure base state & queue are cleared first
+
     _id = sessionId;
     _dispatcher = dispatcher;
 
-    _connected.store(false, std::memory_order_relaxed);
-    _gracefulShutdown.store(false, std::memory_order_relaxed);
-    _ioRef.store(0, std::memory_order_relaxed);
-    _readPaused.store(false, std::memory_order_relaxed);
-    _isSending.store(false, std::memory_order_relaxed);
-
-    if (_socket && _socket->is_open())
+    _impl->_socket = std::static_pointer_cast<boost::asio::ip::tcp::socket>(socket);
+    if (_impl->_socket && _impl->_socket->is_open())
     {
-        boost::asio::ip::tcp::no_delay noDelay(true);
-        boost::system::error_code ec;
-        _socket->set_option(noDelay, ec);
-
-        boost::asio::socket_base::receive_buffer_size recvOption(4 * 1024 * 1024);
-        _socket->set_option(recvOption, ec);
-
-        boost::asio::socket_base::send_buffer_size sendOption(4 * 1024 * 1024);
-        _socket->set_option(sendOption, ec);
-
-        _flowControlTimer = std::make_unique<boost::asio::steady_timer>(_socket->get_executor());
-        _heartbeatTimer = std::make_unique<boost::asio::steady_timer>(_socket->get_executor());
+        _impl->_flowControlTimer = std::make_unique<boost::asio::steady_timer>(_impl->_socket->get_executor());
+        _impl->_heartbeatTimer = std::make_unique<boost::asio::steady_timer>(_impl->_socket->get_executor());
     }
-
-    _linearBuffer.reserve(64 * 1024);
-    _recvBuffer.Reset();
-    ClearSendQueue();
-
-    _ingressLimiter.UpdateConfig(SessionFactory::GetRateLimit(), SessionFactory::GetRateBurst());
-    _violationCount = 0;
-
-    _lastRecvTime = std::chrono::steady_clock::now();
+    _impl->_recvBuffer.Reset();
+    _impl->_linearBuffer.reserve(64 * 1024);
+    _impl->_lastRecvTime = std::chrono::steady_clock::now();
 }
 
 void BackendSession::OnRecycle()
 {
-    if (_socket && _socket->is_open())
+    if (_impl->_socket && _impl->_socket->is_open())
         Close();
-    _socket.reset();
-    _dispatcher = nullptr;
+    _impl->_socket.reset();
 }
 
 void BackendSession::Close()
 {
-    if (_socket && _socket->is_open())
+    if (_impl->_socket && _impl->_socket->is_open())
     {
         boost::system::error_code ec;
-        _socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-        _socket->close(ec);
+        _impl->_socket->shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+        _impl->_socket->close(ec);
     }
-    ClearSendQueue();
     OnDisconnect();
 }
 
-void BackendSession::GracefulClose()
+void BackendSession::OnConnect()
 {
-    if (!_gracefulShutdown.exchange(true))
+    _connected.store(true);
+    System::EventMessage *msg = MessagePool::AllocateEvent();
+    msg->type = MessageType::NETWORK_CONNECT;
+    msg->sessionId = GetId();
+    msg->session = this;
+    if (_dispatcher)
     {
-        // Pending flush logic handled implicitly
+        IncRef();
+        _dispatcher->Post(msg);
     }
+    else
+        MessagePool::Free(msg);
+    _impl->StartRead();
 }
 
-void BackendSession::StartRead()
+void BackendSession::OnDisconnect()
 {
-    if (!_socket || !_socket->is_open())
-        return;
-
-    _recvBuffer.Clean();
-
-    IncRef();
-
-    _socket->async_read_some(
-        boost::asio::buffer(_recvBuffer.WritePos(), _recvBuffer.FreeSize()),
-        boost::asio::bind_allocator(
-            boost::asio::recycling_allocator<void>(),
-            [this](const boost::system::error_code &ec, size_t bytesTransferred)
-            {
-                OnReadComplete(ec, bytesTransferred);
-                DecRef();
-            }
-        )
-    );
-}
-
-void BackendSession::OnReadComplete(const boost::system::error_code &ec, size_t bytesTransferred)
-{
-    if (ec)
+    if (_connected.exchange(false))
     {
-        if (ec != boost::asio::error::eof && ec != boost::asio::error::connection_reset)
-        {
-            LOG_ERROR("Read Error: {}", ec.message());
-        }
-        Close();
-        return;
-    }
-    OnRecv(bytesTransferred);
-}
-
-// [Backend Hot Path] Zero-copy path (no encryption, direct memcpy)
-void BackendSession::OnRecv(size_t bytesTransferred)
-{
-    if (!_ingressLimiter.TryConsume(1.0))
-    {
-        LOG_WARN("Session {} Rate Limited! (violation: {})", _id, _violationCount);
-        _violationCount++;
-        if (_violationCount > 20)
-        {
-            LOG_ERROR("Session Disconnected due to Rate Limit Violated: {}", GetRemoteAddress());
-            Close();
-        }
-        return;
-    }
-
-    if (!_recvBuffer.MoveWritePos(bytesTransferred))
-    {
-        Close();
-        return;
-    }
-
-    while (true)
-    {
-        int32_t dataSize = _recvBuffer.DataSize();
-        if (dataSize < static_cast<int32_t>(sizeof(System::PacketHeader)))
-            break;
-
-        System::PacketHeader *header = SessionCommon::GetPacketHeader(_recvBuffer.ReadPos());
-
-        if (!SessionCommon::IsValidPacketSize(header->size))
-        {
-            LOG_ERROR("Session {} Packet Too Large: {}", _id, header->size);
-            Close();
-            return;
-        }
-
-        if (!SessionCommon::HasCompletePacket(dataSize, header->size))
-            break;
-
-#ifdef ENABLE_DIAGNOSTICS
-        System::Debug::MemoryMetrics::RecvPacket.fetch_add(1, std::memory_order_relaxed);
-#endif
-
-        System::PacketMessage *msg = System::MessagePool::AllocatePacket(header->size);
-        if (!msg)
-        {
-#ifdef ENABLE_DIAGNOSTICS
-            System::Debug::MemoryMetrics::AllocFail.fetch_add(1, std::memory_order_relaxed);
-#endif
-            Close();
-            return;
-        }
-
-        msg->type = System::MessageType::NETWORK_DATA; // Critical Fix
-        msg->sessionId = _id;
+        System::EventMessage *msg = MessagePool::AllocateEvent();
+        msg->type = MessageType::NETWORK_DISCONNECT;
+        msg->sessionId = GetId();
         msg->session = this;
-
-        // [Backend Path] Plain memcpy (no encryption, no branching)
-        std::memcpy(msg->Payload(), _recvBuffer.ReadPos(), header->size);
-
         if (_dispatcher)
         {
             IncRef();
             _dispatcher->Post(msg);
-#ifdef ENABLE_DIAGNOSTICS
-            System::Debug::MemoryMetrics::Posted.fetch_add(1, std::memory_order_relaxed);
-#endif
         }
         else
-            System::MessagePool::Free(msg);
-
-        _recvBuffer.MoveReadPos(header->size);
-
-        if (_dispatcher && _dispatcher->IsOverloaded())
-        {
-            if (!_readPaused.exchange(true) && _flowControlTimer)
-            {
-                IncRef();
-                _flowControlTimer->expires_after(std::chrono::milliseconds(10));
-                _flowControlTimer->async_wait(
-                    [this](const boost::system::error_code &ec)
-                    {
-                        OnResumeRead(ec);
-                        DecRef();
-                    }
-                );
-            }
-            return;
-        }
-    }
-
-    StartRead();
-}
-
-void BackendSession::OnResumeRead(const boost::system::error_code &ec)
-{
-    if (ec || !_connected.load(std::memory_order_relaxed))
-        return;
-
-    if (!_readPaused.load(std::memory_order_relaxed))
-        return;
-
-    if (_dispatcher && !_dispatcher->IsRecovered())
-    {
-        IncRef();
-        _flowControlTimer->expires_after(std::chrono::milliseconds(50));
-        _flowControlTimer->async_wait(
-            [this](const boost::system::error_code &ec)
-            {
-                OnResumeRead(ec);
-                DecRef();
-            }
-        );
-    }
-    else
-    {
-        _readPaused.store(false, std::memory_order_relaxed);
-        StartRead();
+            MessagePool::Free(msg);
     }
 }
 
-void BackendSession::EnqueueSend(PacketMessage *msg)
+void BackendSession::ConfigHeartbeat(
+    uint32_t intervalMs, uint32_t timeoutMs, std::function<void(BackendSession *)> pingFunc
+)
 {
-    _sendQueue.enqueue(msg);
-    if (_isSending.exchange(true) == false)
+    _impl->_hbInterval = intervalMs;
+    _impl->_hbTimeout = timeoutMs;
+    _impl->_hbPingFunc = pingFunc;
+    if (_impl->_hbInterval > 0 && _impl->_heartbeatTimer)
+        _impl->StartHeartbeat();
+}
+
+void BackendSession::OnPong()
+{
+    _impl->_lastRecvTime = std::chrono::steady_clock::now();
+}
+
+std::string BackendSession::GetRemoteAddress() const
+{
+    if (!_impl->_socket || !_impl->_socket->is_open())
+        return "Unknown";
+    try
     {
-        Flush();
+        return _impl->_socket->remote_endpoint().address().to_string();
+    } catch (...)
+    {
+        return "Unknown";
     }
+}
+
+void BackendSession::OnError(const std::string &err)
+{
+    LOG_ERROR("BackendSession {} Error: {}", _id, err);
+    Close();
 }
 
 void BackendSession::Flush()
 {
-    if (!_socket || !_socket->is_open())
+    if (!_impl->_socket || !_impl->_socket->is_open())
     {
         _isSending.store(false);
         return;
     }
 
-    static const size_t MAX_BATCH_SIZE = 1000;
-    PacketMessage *tempItems[MAX_BATCH_SIZE];
-
-    size_t count = _sendQueue.try_dequeue_bulk(tempItems, MAX_BATCH_SIZE);
-
-    if (count > 0)
-    {
-        _statFlushCount++;
-        _statTotalItemCount += count;
-        if (count > _statMaxBatch)
-            _statMaxBatch = count;
-
-        auto now = std::chrono::steady_clock::now();
-        if (now - _lastStatTime > std::chrono::seconds(1))
-        {
-            double avgBatch = (double)_statTotalItemCount / _statFlushCount;
-            LOG_FILE(
-                "[Backend Writer] Flush Calls: {}, Avg Batch: {:.2f}, Max Batch: {}",
-                _statFlushCount,
-                avgBatch,
-                _statMaxBatch
-            );
-
-            _statFlushCount = 0;
-            _statTotalItemCount = 0;
-            _statMaxBatch = 0;
-            _lastStatTime = now;
-        }
-    }
+    static const size_t MAX_BATCH = 1000;
+    PacketMessage *tempItems[MAX_BATCH];
+    size_t count = _sendQueue.try_dequeue_bulk(tempItems, MAX_BATCH);
 
     if (count == 0)
     {
         _isSending.store(false);
-
         PacketMessage *straggler = nullptr;
         if (_sendQueue.try_dequeue(straggler))
         {
-            bool expected = false;
-            if (_isSending.compare_exchange_strong(expected, true))
+            if (!_isSending.exchange(true))
             {
-                _linearBuffer.clear();
-                size_t size = straggler->length;
-                if (_linearBuffer.capacity() < size)
-                    _linearBuffer.reserve(size);
-                _linearBuffer.resize(size);
-
-                // [Backend Path] Plain memcpy (no encryption)
-                std::memcpy(_linearBuffer.data(), straggler->Payload(), size);
-                MessagePool::Free(straggler);
-
-                IncRef();
-
-                boost::asio::async_write(
-                    *_socket,
-                    boost::asio::buffer(_linearBuffer),
-                    boost::asio::bind_allocator(
-                        boost::asio::recycling_allocator<void>(),
-                        [this](const boost::system::error_code &ec, size_t tr)
-                        {
-                            OnWriteComplete(ec, tr);
-                            DecRef();
-                        }
-                    )
-                );
-                return;
+                _sendQueue.enqueue(straggler);
+                Flush();
             }
             else
             {
@@ -361,240 +198,140 @@ void BackendSession::Flush()
         return;
     }
 
-    // Linearize without encryption
-    size_t totalSize = 0;
+    size_t total = 0;
+    for (size_t i = 0; i < count; ++i)
+        total += tempItems[i]->length;
+
+    _impl->_linearBuffer.clear();
+    _impl->_linearBuffer.resize(total);
+
+    uint8_t *dest = _impl->_linearBuffer.data();
     for (size_t i = 0; i < count; ++i)
     {
-        totalSize += tempItems[i]->length;
-    }
-
-    _linearBuffer.clear();
-    if (_linearBuffer.capacity() < totalSize)
-    {
-        _linearBuffer.reserve(std::max(totalSize, _linearBuffer.capacity() * 2));
-    }
-    _linearBuffer.resize(totalSize);
-
-    uint8_t *destPtr = _linearBuffer.data();
-    for (size_t i = 0; i < count; ++i)
-    {
-        size_t pktSize = tempItems[i]->length;
-
-        // [Backend Path] Plain memcpy (no encryption, no branching)
-        std::memcpy(destPtr, tempItems[i]->Payload(), pktSize);
-
-        destPtr += pktSize;
+        std::memcpy(dest, tempItems[i]->Payload(), tempItems[i]->length);
+        dest += tempItems[i]->length;
         MessagePool::Free(tempItems[i]);
     }
 
     IncRef();
-
     boost::asio::async_write(
-        *_socket,
-        boost::asio::buffer(_linearBuffer),
-        boost::asio::bind_allocator(
-            boost::asio::recycling_allocator<void>(),
-            [this](const boost::system::error_code &ec, size_t bytesTransferred)
-            {
-                OnWriteComplete(ec, bytesTransferred);
-                DecRef();
-            }
-        )
-    );
-}
-
-void BackendSession::OnWriteComplete(const boost::system::error_code &ec, size_t bytesTransferred)
-{
-    if (ec)
-    {
-        _isSending.store(false);
-        ClearSendQueue();
-        return;
-    }
-    Flush();
-}
-
-void BackendSession::ClearSendQueue()
-{
-    PacketMessage *dummy = nullptr;
-    while (_sendQueue.try_dequeue(dummy))
-    {
-        MessagePool::Free(dummy);
-    }
-    _isSending.store(false);
-}
-
-std::string BackendSession::GetRemoteAddress() const
-{
-    if (!_socket || !_socket->is_open())
-        return "Unknown";
-    try
-    {
-        return _socket->remote_endpoint().address().to_string();
-    } catch (...)
-    {
-        return "Unknown";
-    }
-}
-
-void BackendSession::OnHeartbeatTimer(const boost::system::error_code &ec)
-{
-    if (ec || !_connected.load(std::memory_order_relaxed))
-        return;
-
-    auto now = std::chrono::steady_clock::now();
-    auto inactiveDuration = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastRecvTime).count();
-    if (inactiveDuration > _hbTimeout)
-    {
-        LOG_WARN("Session {} Heartbeat Timeout ({}ms).", _id, inactiveDuration);
-        Close();
-        return;
-    }
-
-    auto timeSinceLastPing = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastPingTime).count();
-    if (timeSinceLastPing >= _hbInterval)
-    {
-        if (_hbPingFunc)
+        *_impl->_socket,
+        boost::asio::buffer(_impl->_linearBuffer),
+        [this](auto ec, auto tr)
         {
-            _hbPingFunc(this);
-            _lastPingTime = now;
-        }
-    }
-
-    StartHeartbeat();
-}
-
-void BackendSession::StartHeartbeat()
-{
-    if (!_heartbeatTimer || _hbInterval == 0)
-        return;
-
-    _heartbeatTimer->expires_after(std::chrono::milliseconds(1000));
-    IncRef();
-    _heartbeatTimer->async_wait(
-        [this](const boost::system::error_code &ec)
-        {
-            OnHeartbeatTimer(ec);
+            _impl->OnWriteComplete(ec, tr);
             DecRef();
         }
     );
 }
 
-void BackendSession::OnConnect()
+void BackendSessionImpl::StartRead()
 {
-    LOG_INFO("BackendSession Connected: ID {}", GetId());
-    _connected.store(true, std::memory_order_relaxed);
+    if (!_socket || !_socket->is_open())
+        return;
+    _recvBuffer.Clean();
+    _owner->IncRef();
+    _socket->async_read_some(
+        boost::asio::buffer(_recvBuffer.WritePos(), _recvBuffer.FreeSize()),
+        [this](auto ec, auto tr)
+        {
+            OnReadComplete(ec, tr);
+            _owner->DecRef();
+        }
+    );
+}
 
-    System::EventMessage *msg = System::MessagePool::AllocateEvent();
-    msg->type = System::MessageType::NETWORK_CONNECT;
-    msg->sessionId = GetId();
-    msg->session = this;
-    if (_dispatcher)
-    {
-        IncRef();
-        _dispatcher->Post(msg);
-    }
+void BackendSessionImpl::OnReadComplete(const boost::system::error_code &ec, size_t tr)
+{
+    if (ec)
+        _owner->Close();
     else
-        System::MessagePool::Free(msg);
+        OnRecv(tr);
+}
 
+void BackendSessionImpl::OnRecv(size_t tr)
+{
+    if (!_recvBuffer.MoveWritePos(tr))
+    {
+        _owner->Close();
+        return;
+    }
+    while (true)
+    {
+        int32_t ds = _recvBuffer.DataSize();
+        if (ds < (int32_t)sizeof(PacketHeader))
+            break;
+        PacketHeader *h = (PacketHeader *)_recvBuffer.ReadPos();
+        if (h->size > 1024 * 10 || h->size == 0)
+        {
+            _owner->Close();
+            return;
+        }
+        if (ds < h->size)
+            break;
+
+        PacketMessage *msg = MessagePool::AllocatePacket(h->size);
+        if (!msg)
+        {
+            _owner->Close();
+            return;
+        }
+        msg->type = MessageType::NETWORK_DATA;
+        msg->sessionId = _owner->GetId();
+        msg->session = _owner;
+        std::memcpy(msg->Payload(), _recvBuffer.ReadPos(), h->size);
+        if (_owner->_dispatcher)
+        {
+            _owner->IncRef();
+            _owner->_dispatcher->Post(msg);
+        }
+        else
+            MessagePool::Free(msg);
+        _recvBuffer.MoveReadPos(h->size);
+    }
     StartRead();
 }
 
-void BackendSession::OnDisconnect()
+void BackendSessionImpl::StartHeartbeat()
 {
-    if (_connected.exchange(false))
-    {
-        System::EventMessage *msg = System::MessagePool::AllocateEvent();
-        msg->type = System::MessageType::NETWORK_DISCONNECT;
-        msg->sessionId = GetId();
-        msg->session = this;
-        if (_dispatcher)
+    _heartbeatTimer->expires_after(std::chrono::milliseconds(1000));
+    _owner->IncRef();
+    _heartbeatTimer->async_wait(
+        [this](auto ec)
         {
-            IncRef();
-            _dispatcher->Post(msg);
+            OnHeartbeatTimer(ec);
+            _owner->DecRef();
         }
-        else
-            System::MessagePool::Free(msg);
-    }
+    );
 }
 
-void BackendSession::SendPacket(const IPacket &pkt)
+void BackendSessionImpl::OnHeartbeatTimer(const boost::system::error_code &ec)
 {
-    if (!_connected.load(std::memory_order_relaxed))
+    if (ec || !_owner->IsConnected())
         return;
-
-    uint16_t size = pkt.GetTotalSize();
-    auto msg = MessagePool::AllocatePacket(size);
-    if (!msg)
-        return;
-
-    pkt.SerializeTo(msg->Payload());
-
-    EnqueueSend(msg);
-}
-
-void BackendSession::SendPreSerialized(const PacketMessage *source)
-{
-    if (!_connected.load(std::memory_order_relaxed))
-        return;
-
-    source->AddRef();
-    EnqueueSend(const_cast<PacketMessage *>(source));
-}
-
-uint64_t BackendSession::GetId() const
-{
-    return _id;
-}
-
-void BackendSession::OnError(const std::string &errorMsg)
-{
-    LOG_ERROR("BackendSession {} Error: {}", GetId(), errorMsg);
-    Close();
-}
-
-std::thread::id BackendSession::GetDispatcherThreadId() const
-{
-    return _dispatcherThreadId;
-}
-
-void BackendSession::ConfigHeartbeat(
-    uint32_t intervalMs, uint32_t timeoutMs, std::function<void(BackendSession *)> pingFunc
-)
-{
-    _hbInterval = intervalMs;
-    _hbTimeout = timeoutMs;
-    _hbPingFunc = pingFunc;
-
-    if (_hbInterval > 0 && _heartbeatTimer)
+    auto now = std::chrono::steady_clock::now();
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastRecvTime).count() > _hbTimeout)
     {
-        StartHeartbeat();
+        _owner->Close();
+        return;
     }
+    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastPingTime).count() >= _hbInterval)
+    {
+        if (_hbPingFunc)
+        {
+            _hbPingFunc(_owner);
+            _lastPingTime = now;
+        }
+    }
+    StartHeartbeat();
 }
 
-void BackendSession::OnPong()
+void BackendSessionImpl::OnWriteComplete(const boost::system::error_code &ec, size_t)
 {
-    _lastRecvTime = std::chrono::steady_clock::now();
-}
-
-void BackendSession::IncRef()
-{
-    _ioRef.fetch_add(1, std::memory_order_relaxed);
-}
-
-void BackendSession::DecRef()
-{
-    _ioRef.fetch_sub(1, std::memory_order_release);
-}
-
-bool BackendSession::CanDestroy() const
-{
-    return !_connected.load(std::memory_order_relaxed) && _ioRef.load(std::memory_order_acquire) == 0;
-}
-
-bool BackendSession::IsConnected() const
-{
-    return _connected.load(std::memory_order_relaxed);
+    if (ec)
+        _owner->Close();
+    else
+        _owner->Flush();
 }
 
 } // namespace System

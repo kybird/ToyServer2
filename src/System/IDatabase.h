@@ -161,6 +161,10 @@ public:
      */
     // static Create 제거: DatabaseImpl을 직접 생성하여 의존성을 주입하세요.
 
+    virtual void Init()
+    {
+    } // [New]
+
     // 단순 쿼리/실행 (내부에서 커넥션 획득 및 반환 자동 수행)
     virtual DbResult<std::unique_ptr<IResultSet>> Query(const std::string &sql) = 0;
     virtual DbStatus Execute(const std::string &sql) = 0;

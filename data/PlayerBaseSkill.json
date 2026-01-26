@@ -8,7 +8,7 @@
         "hit_radius": 0.5,
         "tick_interval": 1.0,
         "life_time": 0,
-        "pierce": 1,
+        "pierce": 0,
         "max_targets_per_tick": 1,
         "target_rule": "Nearest"
     },
@@ -21,7 +21,7 @@
         "hit_radius": 0.5,
         "tick_interval": 1.5,
         "life_time": 0,
-        "pierce": 1,
+        "pierce": 0,
         "max_targets_per_tick": 1,
         "target_rule": "Nearest",
         "effect_type": "POISON",

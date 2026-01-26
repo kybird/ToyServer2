@@ -212,6 +212,8 @@ protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_FILES})
 
 # Common Game Sources
 set(GAME_SOURCES
+    src/Examples/VampireSurvivor/Server/Core/ServerApp.cpp
+    src/Examples/VampireSurvivor/Server/Core/UserDB.cpp
     src/Examples/VampireSurvivor/Server/Core/LoginController.cpp
     src/Examples/VampireSurvivor/Server/Core/GamePacketHandler.cpp
     src/Examples/VampireSurvivor/Server/Core/Handlers/Auth/LoginHandler.cpp

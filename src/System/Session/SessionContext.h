@@ -1,5 +1,6 @@
 #pragma once
 
+#include "System/Packet/PacketPtr.h" // [New]
 #include <cstdint>
 
 namespace System {
@@ -35,6 +36,7 @@ public:
 
     // Controlled actions
     void Send(const IPacket &pkt);
+    void Send(PacketPtr msg); // [New] RAII Async Safe
     void Close();
     void OnPong(); // Heartbeat support
 

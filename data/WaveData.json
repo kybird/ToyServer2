@@ -25,5 +25,32 @@
         "count": 30,
         "interval": 1.0,
         "hp_multiplier": 2.0
+    },
+    {
+        "wave_id": 4,
+        "start_time": 90.0,
+        "duration": 999.0,
+        "monster_type_id": 2,
+        "count": 60,
+        "interval": 3.0,
+        "hp_multiplier": 2.0
+    },
+    {
+        "wave_id": 5,
+        "start_time": 120.0,
+        "duration": 999.0,
+        "monster_type_id": 2,
+        "count": 120,
+        "interval": 6.0,
+        "hp_multiplier": 3.0
+    },
+    {
+        "wave_id": 4,
+        "start_time": 150.0,
+        "duration": 999.0,
+        "monster_type_id": 2,
+        "count": 240,
+        "interval": 12.0,
+        "hp_multiplier": 4.0
     }
 ]

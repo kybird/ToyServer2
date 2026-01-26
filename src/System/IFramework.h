@@ -26,6 +26,7 @@ public:
     virtual bool Init(std::shared_ptr<IConfig> config, std::shared_ptr<IPacketHandler> packetHandler) = 0;
     virtual void Run() = 0;
     virtual void Stop() = 0;
+    virtual void Join() = 0; // [New] Wait for cleanup
 
     // Accessors
     // Accessors

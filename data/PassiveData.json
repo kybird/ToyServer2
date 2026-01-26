@@ -175,37 +175,362 @@
         ]
     },
     {
-        "id": 6,
-        "name": "Mirror of Duplication",
-        "description": "Increases Projectile Count",
-        "icon": "projectile_mirror",
-        "stat_type": "projectile_count",
-        "max_level": 5,
+        "id": 8,
+        "name": "Dagger Mastery",
+        "description": "Increases Dagger Projectile Count",
+        "icon": "dagger_mastery",
+        "stat_type": "projectile_count_1",
+        "max_level": 10,
         "levels": [
             {
                 "level": 1,
                 "bonus": 1,
-                "desc": "Projectile +1"
+                "desc": "Dagger Count +1"
             },
             {
                 "level": 2,
                 "bonus": 2,
-                "desc": "Projectile +2"
+                "desc": "Dagger Count +2"
             },
             {
                 "level": 3,
                 "bonus": 3,
-                "desc": "Projectile +3"
+                "desc": "Dagger Count +3"
             },
             {
                 "level": 4,
                 "bonus": 4,
-                "desc": "Projectile +4"
+                "desc": "Dagger Count +4"
             },
             {
                 "level": 5,
                 "bonus": 5,
-                "desc": "Projectile +5"
+                "desc": "Dagger Count +5"
+            },
+            {
+                "level": 6,
+                "bonus": 6,
+                "desc": "Dagger Count +6"
+            },
+            {
+                "level": 7,
+                "bonus": 7,
+                "desc": "Dagger Count +7"
+            },
+            {
+                "level": 8,
+                "bonus": 8,
+                "desc": "Dagger Count +8"
+            },
+            {
+                "level": 9,
+                "bonus": 9,
+                "desc": "Dagger Count +9"
+            },
+            {
+                "level": 10,
+                "bonus": 10,
+                "desc": "Dagger Count +10"
+            }
+        ]
+    },
+    {
+        "id": 9,
+        "name": "Dart Quiver",
+        "description": "Increases Poison Dart Projectile Count",
+        "icon": "dart_quiver",
+        "stat_type": "projectile_count_2",
+        "max_level": 10,
+        "levels": [
+            {
+                "level": 1,
+                "bonus": 1,
+                "desc": "Dart Count +1"
+            },
+            {
+                "level": 2,
+                "bonus": 2,
+                "desc": "Dart Count +2"
+            },
+            {
+                "level": 3,
+                "bonus": 3,
+                "desc": "Dart Count +3"
+            },
+            {
+                "level": 4,
+                "bonus": 4,
+                "desc": "Dart Count +4"
+            },
+            {
+                "level": 5,
+                "bonus": 5,
+                "desc": "Dart Count +5"
+            },
+            {
+                "level": 6,
+                "bonus": 6,
+                "desc": "Dart Count +6"
+            },
+            {
+                "level": 7,
+                "bonus": 7,
+                "desc": "Dart Count +7"
+            },
+            {
+                "level": 8,
+                "bonus": 8,
+                "desc": "Dart Count +8"
+            },
+            {
+                "level": 9,
+                "bonus": 9,
+                "desc": "Dart Count +9"
+            },
+            {
+                "level": 10,
+                "bonus": 10,
+                "desc": "Dart Count +10"
+            }
+        ]
+    },
+    {
+        "id": 10,
+        "name": "Frost Core",
+        "description": "Increases Frost Nova Projectile Count",
+        "icon": "frost_core",
+        "stat_type": "projectile_count_3",
+        "max_level": 10,
+        "levels": [
+            {
+                "level": 1,
+                "bonus": 1,
+                "desc": "Frost Count +1"
+            },
+            {
+                "level": 2,
+                "bonus": 2,
+                "desc": "Frost Count +2"
+            },
+            {
+                "level": 3,
+                "bonus": 3,
+                "desc": "Frost Count +3"
+            },
+            {
+                "level": 4,
+                "bonus": 4,
+                "desc": "Frost Count +4"
+            },
+            {
+                "level": 5,
+                "bonus": 5,
+                "desc": "Frost Count +5"
+            },
+            {
+                "level": 6,
+                "bonus": 6,
+                "desc": "Frost Count +6"
+            },
+            {
+                "level": 7,
+                "bonus": 7,
+                "desc": "Frost Count +7"
+            },
+            {
+                "level": 8,
+                "bonus": 8,
+                "desc": "Frost Count +8"
+            },
+            {
+                "level": 9,
+                "bonus": 9,
+                "desc": "Frost Count +9"
+            },
+            {
+                "level": 10,
+                "bonus": 10,
+                "desc": "Frost Count +10"
+            }
+        ]
+    },
+    {
+        "id": 11,
+        "name": "Sharpening Stone",
+        "description": "Increases Dagger Pierce Count",
+        "icon": "sharpening_stone",
+        "stat_type": "pierce_1",
+        "max_level": 10,
+        "levels": [
+            {
+                "level": 1,
+                "bonus": 1,
+                "desc": "Dagger Pierce +1"
+            },
+            {
+                "level": 2,
+                "bonus": 2,
+                "desc": "Dagger Pierce +2"
+            },
+            {
+                "level": 3,
+                "bonus": 3,
+                "desc": "Dagger Pierce +3"
+            },
+            {
+                "level": 4,
+                "bonus": 4,
+                "desc": "Dagger Pierce +4"
+            },
+            {
+                "level": 5,
+                "bonus": 5,
+                "desc": "Dagger Pierce +5"
+            },
+            {
+                "level": 6,
+                "bonus": 6,
+                "desc": "Dagger Pierce +6"
+            },
+            {
+                "level": 7,
+                "bonus": 7,
+                "desc": "Dagger Pierce +7"
+            },
+            {
+                "level": 8,
+                "bonus": 8,
+                "desc": "Dagger Pierce +8"
+            },
+            {
+                "level": 9,
+                "bonus": 9,
+                "desc": "Dagger Pierce +9"
+            },
+            {
+                "level": 10,
+                "bonus": 10,
+                "desc": "Dagger Pierce +10"
+            }
+        ]
+    },
+    {
+        "id": 12,
+        "name": "Toxic Needle",
+        "description": "Increases Dart Pierce Count",
+        "icon": "toxic_needle",
+        "stat_type": "pierce_2",
+        "max_level": 10,
+        "levels": [
+            {
+                "level": 1,
+                "bonus": 1,
+                "desc": "Dart Pierce +1"
+            },
+            {
+                "level": 2,
+                "bonus": 2,
+                "desc": "Dart Pierce +2"
+            },
+            {
+                "level": 3,
+                "bonus": 3,
+                "desc": "Dart Pierce +3"
+            },
+            {
+                "level": 4,
+                "bonus": 4,
+                "desc": "Dart Pierce +4"
+            },
+            {
+                "level": 5,
+                "bonus": 5,
+                "desc": "Dart Pierce +5"
+            },
+            {
+                "level": 6,
+                "bonus": 6,
+                "desc": "Dart Pierce +6"
+            },
+            {
+                "level": 7,
+                "bonus": 7,
+                "desc": "Dart Pierce +7"
+            },
+            {
+                "level": 8,
+                "bonus": 8,
+                "desc": "Dart Pierce +8"
+            },
+            {
+                "level": 9,
+                "bonus": 9,
+                "desc": "Dart Pierce +9"
+            },
+            {
+                "level": 10,
+                "bonus": 10,
+                "desc": "Dart Pierce +10"
+            }
+        ]
+    },
+    {
+        "id": 13,
+        "name": "Ice Shard",
+        "description": "Increases Frost Pierce Count",
+        "icon": "ice_shard",
+        "stat_type": "pierce_3",
+        "max_level": 10,
+        "levels": [
+            {
+                "level": 1,
+                "bonus": 1,
+                "desc": "Frost Pierce +1"
+            },
+            {
+                "level": 2,
+                "bonus": 2,
+                "desc": "Frost Pierce +2"
+            },
+            {
+                "level": 3,
+                "bonus": 3,
+                "desc": "Frost Pierce +3"
+            },
+            {
+                "level": 4,
+                "bonus": 4,
+                "desc": "Frost Pierce +4"
+            },
+            {
+                "level": 5,
+                "bonus": 5,
+                "desc": "Frost Pierce +5"
+            },
+            {
+                "level": 6,
+                "bonus": 6,
+                "desc": "Frost Pierce +6"
+            },
+            {
+                "level": 7,
+                "bonus": 7,
+                "desc": "Frost Pierce +7"
+            },
+            {
+                "level": 8,
+                "bonus": 8,
+                "desc": "Frost Pierce +8"
+            },
+            {
+                "level": 9,
+                "bonus": 9,
+                "desc": "Frost Pierce +9"
+            },
+            {
+                "level": 10,
+                "bonus": 10,
+                "desc": "Frost Pierce +10"
             }
         ]
     }

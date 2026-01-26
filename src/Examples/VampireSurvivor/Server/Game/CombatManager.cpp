@@ -113,7 +113,8 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
                     if (distSq <= sumRad * sumRad)
                     {
                         monster->TakeDamage(proj->GetDamage(), room);
-                        proj->SetHit();
+
+                        bool consumed = proj->OnHit();
 
                         damageEffect.add_target_ids(monster->GetId());
                         damageEffect.add_damage_values(proj->GetDamage());
@@ -134,7 +135,12 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
 
                             LOG_INFO("Monster {} died. Spawned ExpGem {}", monster->GetId(), gem->GetId());
                         }
-                        break;
+
+                        if (consumed)
+                        {
+                            break; // Projectile consumed, stop checking targets
+                        }
+                        // Else: Pierce! Continue to next target
                     }
                 }
             }

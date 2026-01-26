@@ -329,6 +329,39 @@ inline bool ObjectState_Parse(absl::string_view name, ObjectState* value) {
   return ::google::protobuf::internal::ParseNamedEnum<ObjectState>(
       ObjectState_descriptor(), name, value);
 }
+enum ItemType : int {
+  WEAPON_TYPE = 0,
+  PASSIVE_TYPE = 1,
+  ItemType_INT_MIN_SENTINEL_DO_NOT_USE_ =
+      std::numeric_limits<::int32_t>::min(),
+  ItemType_INT_MAX_SENTINEL_DO_NOT_USE_ =
+      std::numeric_limits<::int32_t>::max(),
+};
+
+bool ItemType_IsValid(int value);
+extern const uint32_t ItemType_internal_data_[];
+constexpr ItemType ItemType_MIN = static_cast<ItemType>(0);
+constexpr ItemType ItemType_MAX = static_cast<ItemType>(1);
+constexpr int ItemType_ARRAYSIZE = 1 + 1;
+const ::google::protobuf::EnumDescriptor*
+ItemType_descriptor();
+template <typename T>
+const std::string& ItemType_Name(T value) {
+  static_assert(std::is_same<T, ItemType>::value ||
+                    std::is_integral<T>::value,
+                "Incorrect type passed to ItemType_Name().");
+  return ItemType_Name(static_cast<ItemType>(value));
+}
+template <>
+inline const std::string& ItemType_Name(ItemType value) {
+  return ::google::protobuf::internal::NameOfDenseEnum<ItemType_descriptor,
+                                                 0, 1>(
+      static_cast<int>(value));
+}
+inline bool ItemType_Parse(absl::string_view name, ItemType* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<ItemType>(
+      ItemType_descriptor(), name, value);
+}
 
 // ===================================================================
 
@@ -4448,10 +4481,11 @@ class S_DamageEffect final : public ::google::protobuf::Message
 
   // accessors -------------------------------------------------------
   enum : int {
-    kTargetIdsFieldNumber = 1,
-    kDamageValuesFieldNumber = 2,
+    kTargetIdsFieldNumber = 2,
+    kDamageValuesFieldNumber = 3,
+    kSkillIdFieldNumber = 1,
   };
-  // repeated int32 target_ids = 1;
+  // repeated int32 target_ids = 2;
   int target_ids_size() const;
   private:
   int _internal_target_ids_size() const;
@@ -4469,7 +4503,7 @@ class S_DamageEffect final : public ::google::protobuf::Message
   ::google::protobuf::RepeatedField<::int32_t>* _internal_mutable_target_ids();
 
   public:
-  // repeated int32 damage_values = 2;
+  // repeated int32 damage_values = 3;
   int damage_values_size() const;
   private:
   int _internal_damage_values_size() const;
@@ -4487,12 +4521,22 @@ class S_DamageEffect final : public ::google::protobuf::Message
   ::google::protobuf::RepeatedField<::int32_t>* _internal_mutable_damage_values();
 
   public:
+  // int32 skill_id = 1;
+  void clear_skill_id() ;
+  ::int32_t skill_id() const;
+  void set_skill_id(::int32_t value);
+
+  private:
+  ::int32_t _internal_skill_id() const;
+  void _internal_set_skill_id(::int32_t value);
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.S_DamageEffect)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      1, 2, 0,
+      2, 3, 0,
       0, 2>
       _table_;
 
@@ -4514,6 +4558,7 @@ class S_DamageEffect final : public ::google::protobuf::Message
     ::google::protobuf::internal::CachedSize _target_ids_cached_byte_size_;
     ::google::protobuf::RepeatedField<::int32_t> damage_values_;
     ::google::protobuf::internal::CachedSize _damage_values_cached_byte_size_;
+    ::int32_t skill_id_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -5875,6 +5920,7 @@ class LevelUpOption final : public ::google::protobuf::Message
     kOptionIdFieldNumber = 1,
     kSkillIdFieldNumber = 2,
     kIsNewFieldNumber = 5,
+    kItemTypeFieldNumber = 6,
   };
   // string name = 3;
   void clear_name() ;
@@ -5938,12 +5984,22 @@ class LevelUpOption final : public ::google::protobuf::Message
   void _internal_set_is_new(bool value);
 
   public:
+  // .Protocol.ItemType item_type = 6;
+  void clear_item_type() ;
+  ::Protocol::ItemType item_type() const;
+  void set_item_type(::Protocol::ItemType value);
+
+  private:
+  ::Protocol::ItemType _internal_item_type() const;
+  void _internal_set_item_type(::Protocol::ItemType value);
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.LevelUpOption)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      3, 5, 0,
+      3, 6, 0,
       39, 2>
       _table_;
 
@@ -5966,6 +6022,7 @@ class LevelUpOption final : public ::google::protobuf::Message
     ::int32_t option_id_;
     ::int32_t skill_id_;
     bool is_new_;
+    int item_type_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -11158,7 +11215,29 @@ inline ::google::protobuf::RepeatedField<::int32_t>* S_SkillEffect::_internal_mu
 
 // S_DamageEffect
 
-// repeated int32 target_ids = 1;
+// int32 skill_id = 1;
+inline void S_DamageEffect::clear_skill_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.skill_id_ = 0;
+}
+inline ::int32_t S_DamageEffect::skill_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_DamageEffect.skill_id)
+  return _internal_skill_id();
+}
+inline void S_DamageEffect::set_skill_id(::int32_t value) {
+  _internal_set_skill_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_DamageEffect.skill_id)
+}
+inline ::int32_t S_DamageEffect::_internal_skill_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.skill_id_;
+}
+inline void S_DamageEffect::_internal_set_skill_id(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.skill_id_ = value;
+}
+
+// repeated int32 target_ids = 2;
 inline int S_DamageEffect::_internal_target_ids_size() const {
   return _internal_target_ids().size();
 }
@@ -11203,7 +11282,7 @@ inline ::google::protobuf::RepeatedField<::int32_t>* S_DamageEffect::_internal_m
   return &_impl_.target_ids_;
 }
 
-// repeated int32 damage_values = 2;
+// repeated int32 damage_values = 3;
 inline int S_DamageEffect::_internal_damage_values_size() const {
   return _internal_damage_values().size();
 }
@@ -11816,6 +11895,28 @@ inline void LevelUpOption::_internal_set_is_new(bool value) {
   _impl_.is_new_ = value;
 }
 
+// .Protocol.ItemType item_type = 6;
+inline void LevelUpOption::clear_item_type() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.item_type_ = 0;
+}
+inline ::Protocol::ItemType LevelUpOption::item_type() const {
+  // @@protoc_insertion_point(field_get:Protocol.LevelUpOption.item_type)
+  return _internal_item_type();
+}
+inline void LevelUpOption::set_item_type(::Protocol::ItemType value) {
+  _internal_set_item_type(value);
+  // @@protoc_insertion_point(field_set:Protocol.LevelUpOption.item_type)
+}
+inline ::Protocol::ItemType LevelUpOption::_internal_item_type() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return static_cast<::Protocol::ItemType>(_impl_.item_type_);
+}
+inline void LevelUpOption::_internal_set_item_type(::Protocol::ItemType value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.item_type_ = value;
+}
+
 // -------------------------------------------------------------------
 
 // S_LevelUpOption
@@ -12219,6 +12320,12 @@ struct is_proto_enum<::Protocol::ObjectState> : std::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor<::Protocol::ObjectState>() {
   return ::Protocol::ObjectState_descriptor();
+}
+template <>
+struct is_proto_enum<::Protocol::ItemType> : std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor<::Protocol::ItemType>() {
+  return ::Protocol::ItemType_descriptor();
 }
 
 }  // namespace protobuf

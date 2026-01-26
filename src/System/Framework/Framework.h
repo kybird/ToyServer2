@@ -27,6 +27,7 @@ public:
     bool Init(std::shared_ptr<IConfig> config, std::shared_ptr<IPacketHandler> packetHandler) override;
     void Run() override;
     void Stop() override;
+    virtual void Join(); // [New] Wait for all threads to finish
 
     // Accessors
     std::shared_ptr<ITimer> GetTimer() const override;
@@ -52,7 +53,9 @@ private:
 
     std::shared_ptr<CommandConsole> _console;
     std::shared_ptr<IConfig> _config;
-    std::unique_ptr<class boost::asio::signal_set> _signals; // Added for internal signal handling
+
+    struct SignalImpl; // Forward declaration for PImpl
+    std::unique_ptr<SignalImpl> _signals;
 };
 
 } // namespace System

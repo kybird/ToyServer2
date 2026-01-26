@@ -1,8 +1,10 @@
 #pragma once
 
+#ifndef TOY_SERVER_ISESSION_H
+#include "System/ISession.h"
+#endif
 #include "System/Network/IPacketEncryption.h"
 #include "System/Pch.h"
-#include "System/Session/Session.h"
 #include <atomic>
 #include <functional>
 

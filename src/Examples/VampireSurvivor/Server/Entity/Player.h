@@ -66,7 +66,8 @@ public:
     float GetMovementSpeedMultiplier() const;
     float GetCooldownMultiplier() const;
     float GetAreaMultiplier() const;
-    int32_t GetAdditionalProjectileCount() const;
+    int32_t GetAdditionalProjectileCount(int32_t weaponId = 0) const;
+    int32_t GetAdditionalPierceCount(int32_t weaponId = 0) const;
 
     // Invincibility
     bool IsInvincible(float currentTime) const;

@@ -1,5 +1,4 @@
 #include "System/Session/SessionFactory.h"
-#include "Session.h"
 #include "System/ILog.h"
 #include "System/Pch.h"
 #include "System/Session/BackendSession.h"

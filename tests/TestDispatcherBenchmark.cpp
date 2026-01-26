@@ -1,6 +1,7 @@
 #include "System/Dispatcher/DISPATCHER/DispatcherImpl.h"
 #include "System/Dispatcher/MessagePool.h"
 #include "System/ISession.h"
+#include "System/Session/SessionContext.h"
 #include <chrono>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -13,10 +14,10 @@ using namespace System;
 class MockPacketHandler : public IPacketHandler
 {
 public:
-    void HandlePacket(ISession *session, PacketView packet) override
+    void HandlePacket(SessionContext ctx, PacketView packet) override
     {
     }
-    void OnSessionDisconnect(ISession *session) override
+    void OnSessionDisconnect(SessionContext ctx) override
     {
     }
 };

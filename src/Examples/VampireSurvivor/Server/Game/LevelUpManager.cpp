@@ -128,6 +128,54 @@ std::vector<LevelUpOption> LevelUpManager::BuildCandidatePool(Player *player)
     {
         int currentLevel = inventory.GetPassiveLevel(passiveId);
 
+        // [Filtering] Check Weapon Dependency
+        // Format: "pierce_{weaponId}" or "projectile_count_{weaponId}"
+        std::string sType = tmpl.statType;
+        bool isPierce = (sType.find("pierce_") == 0);
+        bool isProj = (sType.find("projectile_count_") == 0);
+
+        if (isPierce || isProj)
+        {
+            size_t lastUnderscore = sType.find_last_of('_');
+            if (lastUnderscore != std::string::npos)
+            {
+                std::string suffix = sType.substr(lastUnderscore + 1);
+                if (!suffix.empty() && std::all_of(suffix.begin(), suffix.end(), ::isdigit))
+                {
+                    int reqId = std::stoi(suffix);
+                    int weaponLvl = inventory.GetWeaponLevel(reqId);
+
+                    if (weaponLvl == 0)
+                    {
+                        LOG_INFO(
+                            "  [LevelUpFilter] Player {} SKIP Passive {} ({}) - Weapon {} NOT OWNED",
+                            player->GetId(),
+                            passiveId,
+                            tmpl.name,
+                            reqId
+                        );
+                        continue;
+                    }
+                    else
+                    {
+                        LOG_INFO(
+                            "  [LevelUpFilter] Player {} ALLOW Passive {} ({}) - Weapon {} Lvl {}",
+                            player->GetId(),
+                            passiveId,
+                            tmpl.name,
+                            reqId,
+                            weaponLvl
+                        );
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Optional: Log generic passives if needed
+            // LOG_DEBUG("  [LevelUpFilter] Player {} ALLOW Generic {} ({})", player->GetId(), passiveId, tmpl.name);
+        }
+
         if (currentLevel == 0)
         {
             // 새로 획득 가능 (빈 슬롯이 있을 때만)
@@ -168,6 +216,12 @@ std::vector<LevelUpOption> LevelUpManager::BuildCandidatePool(Player *player)
     }
 
     LOG_INFO("[LevelUpManager] Built candidate pool with {} options for player {}", pool.size(), player->GetId());
+    for (const auto &opt : pool)
+    {
+        std::string typeStr = (opt.type == LevelUpOptionType::WEAPON) ? "Weapon" : "Passive";
+        LOG_INFO("  - Candidate item: {} (ID: {}, Type: {}, New: {})", opt.name, opt.itemId, typeStr, opt.isNew);
+    }
+
     return pool;
 }
 

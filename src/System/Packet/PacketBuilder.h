@@ -1,6 +1,7 @@
 #pragma once
 #include "System/Dispatcher/MessagePool.h"
 #include "System/Packet/IPacket.h"
+#include "System/Packet/PacketPtr.h"
 #include <new>
 
 namespace System {
@@ -24,6 +25,15 @@ struct PacketBuilder
         pkt.SerializeTo(msg->Payload());
 
         return msg;
+    }
+
+    // [New] RAII Support
+    static PacketPtr BuildShared(const IPacket &pkt)
+    {
+        // Build returns raw pointer with refCount=1
+        PacketMessage *raw = Build(pkt);
+        // PacketPtr takes ownership
+        return PacketPtr(raw);
     }
 };
 

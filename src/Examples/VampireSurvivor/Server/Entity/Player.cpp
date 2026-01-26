@@ -75,15 +75,15 @@ void Player::ApplyInput(uint32_t clientTick, int32_t dx, int32_t dy)
 
     SetVelocity(dir.x * _speed, dir.y * _speed);
     SetState(Protocol::MOVING);
-    LOG_DEBUG(
-        "[SetInput] Player={} ClientTick={} Dir=({:.2f}, {:.2f}) Vel=({:.2f},{:.2f})",
-        GetId(),
-        clientTick,
-        dir.x,
-        dir.y,
-        GetVX(),
-        GetVY()
-    );
+    // LOG_DEBUG(
+    //     "[SetInput] Player={} ClientTick={} Dir=({:.2f}, {:.2f}) Vel=({:.2f},{:.2f})",
+    //     GetId(),
+    //     clientTick,
+    //     dir.x,
+    //     dir.y,
+    //     GetVX(),
+    //     GetVY()
+    // );
 }
 
 void Player::TakeDamage(int32_t damage, Room *room)
@@ -283,6 +283,9 @@ void Player::AddExp(int32_t amount, Room *room)
                 protoOpt->set_name(opt.name);
                 protoOpt->set_desc(opt.desc);
                 protoOpt->set_is_new(opt.isNew);
+                protoOpt->set_item_type(
+                    opt.type == LevelUpOptionType::WEAPON ? Protocol::WEAPON_TYPE : Protocol::PASSIVE_TYPE
+                );
             }
 
             S_LevelUpOptionPacket optPkt(std::move(optionMsg));
@@ -372,9 +375,13 @@ void Player::Update(float dt, Room *room)
         return;
 
     // Update Emitters
-    for (auto &emitter : _emitters)
+    // [Crash Fix] Use index-based iteration to prevent iterator invalidation if _emitters is modified
+    for (size_t i = 0; i < _emitters.size(); ++i)
     {
-        emitter->Update(dt, room);
+        if (i < _emitters.size() && _emitters[i])
+        {
+            _emitters[i]->Update(dt, room);
+        }
     }
 
     // Remove expired emitters (e.g. temporary buffs)
@@ -606,7 +613,7 @@ float Player::GetAreaMultiplier() const
     return mult;
 }
 
-int32_t Player::GetAdditionalProjectileCount() const
+int32_t Player::GetAdditionalProjectileCount(int32_t weaponId) const
 {
     int32_t count = 0;
     if (_inventory == nullptr)
@@ -615,12 +622,80 @@ int32_t Player::GetAdditionalProjectileCount() const
     for (int id : _inventory->GetOwnedPassiveIds())
     {
         const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
-        if (tmpl && tmpl->statType == "projectile_count")
+        if (tmpl)
         {
-            int level = _inventory->GetPassiveLevel(id);
-            if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
+            // Global Projectile Count ("projectile_count") - If we kept any
+            if (tmpl->statType == "projectile_count")
             {
-                count += static_cast<int32_t>(tmpl->levels[level - 1].bonus);
+                int level = _inventory->GetPassiveLevel(id);
+                if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
+                {
+                    count += static_cast<int32_t>(tmpl->levels[level - 1].bonus);
+                }
+            }
+            // Weapon Specific ("projectile_count_1", "projectile_count_2" etc)
+            else if (weaponId > 0 && tmpl->statType.find("projectile_count_") == 0)
+            {
+                // Parse suffix
+                try
+                {
+                    int targetWeaponId = std::stoi(tmpl->statType.substr(17)); // "projectile_count_" length is 17
+                    if (targetWeaponId == weaponId)
+                    {
+                        int level = _inventory->GetPassiveLevel(id);
+                        if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
+                        {
+                            count += static_cast<int32_t>(tmpl->levels[level - 1].bonus);
+                        }
+                    }
+                } catch (...)
+                {
+                    // Ignore parse error
+                }
+            }
+        }
+    }
+    return count;
+}
+
+int32_t Player::GetAdditionalPierceCount(int32_t weaponId) const
+{
+    int32_t count = 0;
+    if (_inventory == nullptr)
+        return count;
+
+    for (int id : _inventory->GetOwnedPassiveIds())
+    {
+        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        if (tmpl)
+        {
+            // Global Pierce ("pierce") - If we kept any
+            if (tmpl->statType == "pierce")
+            {
+                int level = _inventory->GetPassiveLevel(id);
+                if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
+                {
+                    count += static_cast<int32_t>(tmpl->levels[level - 1].bonus);
+                }
+            }
+            // Weapon Specific ("pierce_1", etc)
+            else if (weaponId > 0 && tmpl->statType.find("pierce_") == 0)
+            {
+                // Parse suffix
+                try
+                {
+                    int targetWeaponId = std::stoi(tmpl->statType.substr(7)); // "pierce_" length is 7
+                    if (targetWeaponId == weaponId)
+                    {
+                        int level = _inventory->GetPassiveLevel(id);
+                        if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
+                        {
+                            count += static_cast<int32_t>(tmpl->levels[level - 1].bonus);
+                        }
+                    }
+                } catch (...)
+                {
+                }
             }
         }
     }

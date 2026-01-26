@@ -32,15 +32,13 @@ protected:
         if (!DataManager::Instance().LoadMonsterData("data/MonsterData.json"))
         {
             // If failed, manual load dummy?
-            // DataManager doesn't allow manual injection easily.
-            // But if file exists it should work.
         }
     }
 };
 
 TEST_F(SwarmPerformanceTest, StressTest500Monsters)
 {
-    auto room = std::make_shared<Room>(1, nullptr, nullptr, nullptr);
+    auto room = std::make_shared<Room>(1, nullptr, nullptr, nullptr, nullptr);
 
     // Access private members via FRIEND class
     ObjectManager &objMgr = room->_objMgr;
@@ -59,9 +57,9 @@ TEST_F(SwarmPerformanceTest, StressTest500Monsters)
     }
 
     // Add Dummy Player to trigger AI
-    auto player = std::make_shared<Player>(1000, nullptr); // ID 1000, Session null
-    player->Initialize(1000, nullptr, 100, 5.0f);          // Fixed: Added hp and speed
-    player->SetPos(1000.0f, 1000.0f);                      // Center
+    auto player = std::make_shared<Player>(1000, 0ULL);
+    player->Initialize(1000, 0ULL, 100, 5.0f);
+    player->SetPos(1000.0f, 1000.0f); // Center
     room->Enter(player);
 
     // Run Loop
@@ -81,15 +79,7 @@ TEST_F(SwarmPerformanceTest, StressTest500Monsters)
     std::cout << "Average per tick: " << (double)duration / 1000.0 << " ms" << std::endl;
 
     // Assert Performance expectation
-    // Target: 30 FPS => 33ms per tick.
-    // 1000 ticks should be < 33000ms.
-    // Real target: < 10ms per tick for logic (leaving room for network/other)
     EXPECT_LT(duration, 33000);
-
-    // Check bandwidth/packet generation?
-    // Room::Update broadcasts packets.
-    // Without players, it broadcasts nothing!
-    // We need a dummy player to trigger broadcast.
 }
 
 } // namespace SimpleGame

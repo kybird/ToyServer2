@@ -40,6 +40,14 @@ void SessionContext::Send(const IPacket &pkt)
     }
 }
 
+void SessionContext::Send(PacketPtr msg)
+{
+    if (_session != nullptr && _session->IsConnected())
+    {
+        _session->SendPacket(msg);
+    }
+}
+
 void SessionContext::Close()
 {
     if (_session != nullptr)

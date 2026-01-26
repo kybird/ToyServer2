@@ -78,10 +78,32 @@ public:
         _lifetime = life;
     }
 
+    void SetPierce(int32_t count)
+    {
+        _pierceCount = count;
+    }
+
+    // Returns true if projectile is consumed (expired)
+    bool OnHit()
+    {
+        if (_pierceCount > 0)
+        {
+            _pierceCount--;
+            return false; // Not expired yet (Pierced)
+        }
+        else
+        {
+            _isHit = true;
+            return true; // Expired
+        }
+    }
+
+    // Deprecated: Use OnHit logic instead or keep for backward compatibility checking IsHit
     void SetHit()
     {
-        _isHit = true;
+        OnHit();
     }
+
     bool IsHit() const
     {
         return _isHit;
@@ -94,6 +116,7 @@ private:
     int32_t _damage = 0;
     float _lifetime = 5.0f;
     bool _isHit = false;
+    int32_t _pierceCount = 0; // [New]
 };
 
 } // namespace SimpleGame

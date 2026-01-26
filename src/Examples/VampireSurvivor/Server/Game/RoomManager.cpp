@@ -22,6 +22,30 @@ void RoomManager::Init(std::shared_ptr<System::IFramework> framework, std::share
     {
         CreateRoom(1);
     }
+    if (_rooms.empty())
+    {
+        CreateRoom(1);
+    }
+}
+
+void RoomManager::Cleanup()
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    LOG_INFO("RoomManager Cleaning up...");
+
+    // Stop all rooms
+    for (auto &pair : _rooms)
+    {
+        pair.second->Stop();
+    }
+    _rooms.clear();
+    _players.clear();
+    _lobbySessions.clear();
+
+    _framework.reset(); // Release Framework ownership
+    _timer.reset();
+    _userDB.reset();
+    LOG_INFO("RoomManager Cleanup Done.");
 }
 
 void RoomManager::TestMethod()

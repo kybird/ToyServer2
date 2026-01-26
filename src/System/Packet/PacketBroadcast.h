@@ -1,18 +1,19 @@
 #pragma once
 #include "System/ILog.h"
+#include "System/ISession.h"
 #include "System/Packet/IPacket.h"
 #include "System/Packet/PacketBuilder.h"
-#include "System/Session/Session.h"
 #include <memory>
 #include <span>
 #include <vector>
+
 
 namespace System {
 
 class PacketBroadcast
 {
 public:
-    static void Broadcast(const IPacket &pkt, std::span<Session *> sessions)
+    static void Broadcast(const IPacket &pkt, std::span<ISession *> sessions)
     {
         // LOG_INFO("Packet::Broadcast");
         if (sessions.empty())
@@ -24,7 +25,7 @@ public:
             return;
 
         // 2. Loop & Send (Copy)
-        for (Session *s : sessions)
+        for (ISession *s : sessions)
         {
             if (s && s->CanDestroy() == false)
             {
@@ -38,7 +39,7 @@ public:
     }
 
     // Helper for shared_ptr
-    static void Broadcast(const IPacket &pkt, const std::vector<std::shared_ptr<Session>> &sessions)
+    static void Broadcast(const IPacket &pkt, const std::vector<std::shared_ptr<ISession>> &sessions)
     {
         if (sessions.empty())
             return;
