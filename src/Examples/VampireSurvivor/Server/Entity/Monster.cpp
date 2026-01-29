@@ -17,7 +17,7 @@ void Monster::Update(float dt, Room *room)
     UpdateStateExpiry(room->GetTotalRunTime());
 
     // Update Modifier expiration
-    _modifiers.Update(_aliveTime);
+    _modifiers.Update(room->GetTotalRunTime());
 
     if (_ai != nullptr && !IsDead())
     {
@@ -67,6 +67,16 @@ void Monster::AddLevelUpSlow(float currentTime, float duration)
 void Monster::RemoveLevelUpSlow()
 {
     _modifiers.RemoveBySourceId(LEVELUP_SLOW_SOURCE_ID);
+}
+
+void Monster::AddStatusEffect(const std::string &type, float value, float duration, float currentTime)
+{
+    if (type == "SLOW")
+    {
+        // sourceId 2000+ for general status effects to avoid conflict with levelup slow(1000)
+        StatModifier mod(StatType::Speed, ModifierOp::PercentMult, value, 2000, currentTime + duration);
+        _modifiers.AddModifier(mod);
+    }
 }
 
 } // namespace SimpleGame

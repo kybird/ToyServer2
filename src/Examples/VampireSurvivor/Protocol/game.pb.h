@@ -739,6 +739,8 @@ class S_SkillEffect final : public ::google::protobuf::Message
     kSkillIdFieldNumber = 2,
     kXFieldNumber = 3,
     kYFieldNumber = 4,
+    kRadiusFieldNumber = 6,
+    kDurationSecondsFieldNumber = 7,
   };
   // repeated int32 target_ids = 5;
   int target_ids_size() const;
@@ -798,12 +800,32 @@ class S_SkillEffect final : public ::google::protobuf::Message
   void _internal_set_y(float value);
 
   public:
+  // float radius = 6;
+  void clear_radius() ;
+  float radius() const;
+  void set_radius(float value);
+
+  private:
+  float _internal_radius() const;
+  void _internal_set_radius(float value);
+
+  public:
+  // float duration_seconds = 7;
+  void clear_duration_seconds() ;
+  float duration_seconds() const;
+  void set_duration_seconds(float value);
+
+  private:
+  float _internal_duration_seconds() const;
+  void _internal_set_duration_seconds(float value);
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.S_SkillEffect)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      3, 5, 0,
+      3, 7, 0,
       0, 2>
       _table_;
 
@@ -827,6 +849,8 @@ class S_SkillEffect final : public ::google::protobuf::Message
     ::int32_t skill_id_;
     float x_;
     float y_;
+    float radius_;
+    float duration_seconds_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -11209,6 +11233,50 @@ S_SkillEffect::_internal_target_ids() const {
 inline ::google::protobuf::RepeatedField<::int32_t>* S_SkillEffect::_internal_mutable_target_ids() {
   ::google::protobuf::internal::TSanRead(&_impl_);
   return &_impl_.target_ids_;
+}
+
+// float radius = 6;
+inline void S_SkillEffect::clear_radius() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.radius_ = 0;
+}
+inline float S_SkillEffect::radius() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_SkillEffect.radius)
+  return _internal_radius();
+}
+inline void S_SkillEffect::set_radius(float value) {
+  _internal_set_radius(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_SkillEffect.radius)
+}
+inline float S_SkillEffect::_internal_radius() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.radius_;
+}
+inline void S_SkillEffect::_internal_set_radius(float value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.radius_ = value;
+}
+
+// float duration_seconds = 7;
+inline void S_SkillEffect::clear_duration_seconds() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.duration_seconds_ = 0;
+}
+inline float S_SkillEffect::duration_seconds() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_SkillEffect.duration_seconds)
+  return _internal_duration_seconds();
+}
+inline void S_SkillEffect::set_duration_seconds(float value) {
+  _internal_set_duration_seconds(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_SkillEffect.duration_seconds)
+}
+inline float S_SkillEffect::_internal_duration_seconds() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.duration_seconds_;
+}
+inline void S_SkillEffect::_internal_set_duration_seconds(float value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.duration_seconds_ = value;
 }
 
 // -------------------------------------------------------------------

@@ -295,6 +295,16 @@ void WaveManager::SpawnMonster(int32_t monsterTypeId, float hpMultiplier, Room *
     if (tmpl)
     {
         finalHp = static_cast<int32_t>(tmpl->hp * hpMultiplier);
+        LOG_INFO(
+            "[WaveManager] Spawning Monster ID:{} Type:{} HP:{} (Base:{} * Mult:{:.1f}) at ({:.1f}, {:.1f})",
+            monsterTypeId,
+            tmpl->name,
+            finalHp,
+            tmpl->hp,
+            hpMultiplier,
+            x,
+            y
+        );
     }
 
     auto monster = MonsterFactory::Instance().CreateMonster(_objMgr, monsterTypeId, x, y, finalHp);

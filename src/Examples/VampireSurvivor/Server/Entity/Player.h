@@ -66,6 +66,7 @@ public:
     float GetMovementSpeedMultiplier() const;
     float GetCooldownMultiplier() const;
     float GetAreaMultiplier() const;
+    float GetDurationMultiplier() const;
     int32_t GetAdditionalProjectileCount(int32_t weaponId = 0) const;
     int32_t GetAdditionalPierceCount(int32_t weaponId = 0) const;
 

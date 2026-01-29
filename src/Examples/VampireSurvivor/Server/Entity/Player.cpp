@@ -613,6 +613,27 @@ float Player::GetAreaMultiplier() const
     return mult;
 }
 
+float Player::GetDurationMultiplier() const
+{
+    float mult = 1.0f;
+    if (_inventory == nullptr)
+        return mult;
+
+    for (int id : _inventory->GetOwnedPassiveIds())
+    {
+        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        if (tmpl && tmpl->statType == "duration")
+        {
+            int level = _inventory->GetPassiveLevel(id);
+            if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
+            {
+                mult += tmpl->levels[level - 1].bonus;
+            }
+        }
+    }
+    return mult;
+}
+
 int32_t Player::GetAdditionalProjectileCount(int32_t weaponId) const
 {
     int32_t count = 0;

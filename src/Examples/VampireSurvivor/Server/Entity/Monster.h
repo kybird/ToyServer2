@@ -71,6 +71,7 @@ public:
     // Speed Control (via Modifier System)
     void AddLevelUpSlow(float currentTime, float duration);
     void RemoveLevelUpSlow();
+    void AddStatusEffect(const std::string &type, float value, float duration, float currentTime);
 
     // Called by Room::Update
     void Update(float dt, Room *room) override;

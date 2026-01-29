@@ -2,14 +2,14 @@
   {
     "id": 1,
     "name": "Zombie",
-    "hp": 1,
+    "hp": 10,
     "speed": 1.5,
     "ai_type": "CHASER"
   },
   {
     "id": 2,
     "name": "Bat",
-    "hp": 1,
+    "hp": 10,
     "speed": 3.0,
     "ai_type": "SWARM"
   }

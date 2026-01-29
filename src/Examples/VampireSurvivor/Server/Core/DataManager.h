@@ -48,6 +48,10 @@ struct SkillTemplate
     float effectValue;      // Damage for DoT, Scale for Slow (e.g. 0.5)
     float effectDuration;   // Duration in seconds
     float effectInterval;   // Tick interval for DoT
+
+    // Field/Persistent Skill Stats
+    float activeDuration; // How long the field stays active (0 = pulse)
+    float dotInterval;    // Tick interval for damage/effect while active
 };
 
 struct WaveData
@@ -67,6 +71,7 @@ struct WeaponLevelData
     int32_t skillId;
     float damageMult = 1.0f;
     float cooldownMult = 1.0f;
+    float durationMult = 1.0f; // New field for scaling active duration
     std::string desc;
 };
 

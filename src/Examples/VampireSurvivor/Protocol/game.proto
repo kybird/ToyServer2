@@ -236,6 +236,8 @@ message S_SkillEffect {
     float x = 3;
     float y = 4;
     repeated int32 target_ids = 5; // Who got hit
+    float radius = 6;              // 이펙트 반경
+    float duration_seconds = 7;    // 이펙트 지속 시간
 }
 
 message S_DamageEffect {

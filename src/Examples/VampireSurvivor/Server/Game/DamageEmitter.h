@@ -32,6 +32,8 @@ public:
     }
 
 private:
+    enum class EmitterState { COOLING, ACTIVE };
+
     int32_t _skillId;
     int32_t _weaponId = 0;
     int32_t _level = 1;
@@ -43,11 +45,17 @@ private:
     float _hitRadius = 1.0f;
     float _timer = 0.0f;
 
+    // Field/Persistent Stats
+    float _activeDuration = 0.0f;
+    float _dotInterval = 0.5f;
+    float _dotTimer = 0.0f;
+    EmitterState _state = EmitterState::COOLING;
+
     std::string _emitterType = "AoE";
     int32_t _pierce = 1;
     int32_t _maxTargetsPerTick = 1;
     std::string _targetRule = "Nearest";
-    float _lifeTime = 0.0f; // 0 = infinite
+    float _lifeTime = 0.0f; // 0 = infinite (Overall emitter life)
     float _elapsedTime = 0.0f;
     bool _active = true;
 };

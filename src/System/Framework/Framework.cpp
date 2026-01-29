@@ -274,7 +274,7 @@ void Framework::Run()
         auto now = std::chrono::steady_clock::now();
         if (std::chrono::duration_cast<std::chrono::seconds>(now - lastLog).count() >= 5)
         {
-            LOG_ERROR("[DEBUG] Server Main Loop Alive...");
+            // LOG_ERROR("[DEBUG] Server Main Loop Alive...");
             lastLog = now;
         }
     }

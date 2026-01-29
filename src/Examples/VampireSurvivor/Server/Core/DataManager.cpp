@@ -142,6 +142,10 @@ bool DataManager::LoadSkillData(const std::string &path)
             data.effectDuration = item.value("effect_duration", 0.0f);
             data.effectInterval = item.value("effect_interval", 0.0f);
 
+            // Field Stats
+            data.activeDuration = item.value("active_duration", 0.0f);
+            data.dotInterval = item.value("dot_interval", 0.5f);
+
             _skills[data.id] = data;
             LOG_INFO(
                 "  - Skill ID: {} | Name: {} | Type: {} | typeId: {}", data.id, data.name, data.emitterType, data.typeId
@@ -241,6 +245,7 @@ bool DataManager::LoadWeaponData(const std::string &path)
                     levelData.skillId = lvl["skill_id"];
                     levelData.damageMult = lvl.value("damage_mult", 1.0f);
                     levelData.cooldownMult = lvl.value("cooldown_mult", 1.0f);
+                    levelData.durationMult = lvl.value("duration_mult", 1.0f);
                     levelData.desc = lvl.value("desc", "");
                     data.levels.push_back(levelData);
                 }
