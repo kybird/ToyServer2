@@ -8,6 +8,7 @@
 #include "Game/GameConfig.h"
 #include "Game/RoomManager.h"
 #include "GamePackets.h"
+#include "Math/Vector2.h"
 #include "Protocol/game.pb.h"
 #include "System/Dispatcher/IDispatcher.h"
 #include "System/Packet/IPacket.h"
@@ -16,6 +17,7 @@
 #include "System/Packet/PacketPtr.h"     // [New]
 #include "System/Thread/IStrand.h"
 #include <algorithm>
+#include <chrono>
 #include <limits>
 
 namespace SimpleGame {
@@ -401,6 +403,7 @@ void Room::Leave(uint64_t sessionId)
 
 void Room::Update(float deltaTime)
 {
+    auto startTime = std::chrono::steady_clock::now();
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     // [Stage 0 Verification] Broadcast S_DEBUG_SERVER_TICK every 1s (Real Time Accumulator)
@@ -441,20 +444,40 @@ void Room::Update(float deltaTime)
         UpdateObject(obj, deltaTime, monsterMoves, playerMoves);
     }
 
-    // === 2. Broadcast Monsters (Throttled: 3 TPS) ===
-    // 3 TPS = 0.333s interval.
-    // Logic TPS remains at 25.
+    // === 2. Broadcast Monsters (Reactive Sync) ===
+    // 5 TPS = Every 5 ticks (0.2s interval)
+    bool isSyncTick = (_serverTick % 5 == 0);
+    std::vector<Protocol::ObjectPos> priorityMoves;
+    std::vector<Protocol::ObjectPos> periodicMoves;
 
-    // Better: use _serverTick based modulo if TPS is fixed.
-    // TPS 25. 3 times/sec = every 8 ticks (25/3 = 8.33).
-    // Let's use Tick Count for stability.
-    // Every 8 ticks = 0.32s (approx 3.125 Hz)
-
-    if (_serverTick % 8 == 0 && !monsterMoves.empty())
+    for (const auto &move : monsterMoves)
     {
-        // [Optim] Split into Batches of 50
+        auto obj = _objMgr.GetObject(move.object_id());
+        if (!obj)
+            continue;
+
+        // Detect significant velocity change (especially STOPPING)
+        bool wasMoving = (std::abs(obj->GetLastSentVX()) > 0.01f || std::abs(obj->GetLastSentVY()) > 0.01f);
+        bool isMoving = (std::abs(move.vx()) > 0.01f || std::abs(move.vy()) > 0.01f);
+
+        if (wasMoving != isMoving)
+        {
+            priorityMoves.push_back(move);
+        }
+        else if (isSyncTick)
+        {
+            periodicMoves.push_back(move);
+        }
+    }
+
+    // Combine and send in batches
+    std::vector<Protocol::ObjectPos> allMovesToSync = std::move(priorityMoves);
+    allMovesToSync.insert(allMovesToSync.end(), periodicMoves.begin(), periodicMoves.end());
+
+    if (!allMovesToSync.empty())
+    {
         const size_t BATCH_SIZE = 50;
-        size_t totalMoves = monsterMoves.size();
+        size_t totalMoves = allMovesToSync.size();
         size_t processed = 0;
 
         while (processed < totalMoves)
@@ -465,7 +488,13 @@ void Room::Update(float deltaTime)
             size_t count = std::min(BATCH_SIZE, totalMoves - processed);
             for (size_t i = 0; i < count; ++i)
             {
-                *batch.add_moves() = monsterMoves[processed + i];
+                auto &m = allMovesToSync[processed + i];
+                *batch.add_moves() = m;
+
+                // Update last sent state to track changes
+                auto obj = _objMgr.GetObject(m.object_id());
+                if (obj)
+                    obj->UpdateLastSentState(_totalRunTime, _serverTick);
             }
 
             BroadcastPacket(S_MoveObjectBatchPacket(std::move(batch)));
@@ -482,8 +511,79 @@ void Room::Update(float deltaTime)
     // === [NEW] 효과 업데이트 (Physics 후, Combat 전) ===
     _effectMgr->Update(_totalRunTime, this);
 
+    // === 5. Overlap Resolution (Push apart overlapping monsters) ===
+    // We only process monsters here as players have client-side prediction/logic.
+    for (auto &obj : objects)
+    {
+        if (obj->GetType() != Protocol::ObjectType::MONSTER || obj->GetState() == Protocol::ObjectState::DEAD)
+            continue;
+
+        auto monstersInRange = GetMonstersInRange(obj->GetX(), obj->GetY(), obj->GetRadius() * 2.1f);
+        int resolveCount = 0;
+        for (auto &other : monstersInRange)
+        {
+            if (obj->GetId() == other->GetId() || other->GetState() == Protocol::ObjectState::DEAD)
+                continue;
+
+            float dx = obj->GetX() - other->GetX();
+            float dy = obj->GetY() - other->GetY();
+            float distSq = dx * dx + dy * dy;
+            float minDist = obj->GetRadius() + other->GetRadius() + 0.1f;
+
+            if (distSq < minDist * minDist && distSq > 0.0001f)
+            {
+                float dist = std::sqrt(distSq);
+                float overlap = minDist - dist;
+
+                // Push away extremely softly (Hard Blocking mode)
+                // We rely more on velocity adjustment in Monster::Update
+                float pushX = (dx / dist) * overlap * 0.01f;
+                float pushY = (dy / dist) * overlap * 0.01f;
+
+                obj->SetPos(obj->GetX() + pushX, obj->GetY() + pushY);
+                other->SetPos(other->GetX() - pushX, other->GetY() - pushY);
+
+                // Update Grid (slow but necessary for immediate correction)
+                _grid.Update(obj, obj->GetX() - pushX, obj->GetY() - pushY);
+                _grid.Update(other, other->GetX() + pushX, other->GetY() + pushY);
+
+                if (++resolveCount >= 8)
+                    break;
+            }
+        }
+    }
+
     // 3. Combat & Collision Resolution (Refactored)
     _combatMgr->Update(deltaTime, this);
+
+    // --- Performance Tracking ---
+    auto endTime = std::chrono::steady_clock::now();
+    float elapsedSec = std::chrono::duration<float>(endTime - startTime).count();
+    _totalUpdateSec += elapsedSec;
+    _updateCount++;
+    _maxUpdateSec = std::max(_maxUpdateSec, elapsedSec);
+
+    if (_totalRunTime - _lastPerfLogTime >= 5.0f)
+    {
+        float avgMs = (_totalUpdateSec / _updateCount) * 1000.0f;
+        float maxMs = _maxUpdateSec * 1000.0f;
+        int monsterCount = static_cast<int>(_objMgr.GetAliveMonsterCount());
+        int projCount = 0; // Could iterate or track if needed
+
+        LOG_INFO(
+            "[Performance] Room:{} | Alive Monsters:{} | AvgUpdate:{:.2f}ms | MaxUpdate:{:.2f}ms | Tick:{}",
+            _roomId,
+            monsterCount,
+            avgMs,
+            maxMs,
+            _serverTick
+        );
+
+        _lastPerfLogTime = _totalRunTime;
+        _totalUpdateSec = 0.0f;
+        _updateCount = 0;
+        _maxUpdateSec = 0.0f;
+    }
 }
 
 void Room::UpdateObject(
@@ -619,6 +719,82 @@ std::vector<std::shared_ptr<Monster>> Room::GetMonstersInRange(float x, float y,
         }
     }
     return found;
+}
+
+Vector2
+Room::GetSeparationVector(float x, float y, float radius, int32_t excludeId, const Vector2 &velocity, int maxNeighbors)
+{
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    Vector2 separation(0.0f, 0.0f);
+    int count = 0;
+
+    // Directional check optimization
+    bool useDirectionalCheck = !velocity.IsZero();
+
+    auto neighbors = _grid.QueryRange(x, y, radius);
+    for (auto &obj : neighbors)
+    {
+        if (obj->GetId() == excludeId || obj->GetType() != Protocol::ObjectType::MONSTER)
+            continue;
+
+        float dx = x - obj->GetX();
+        float dy = y - obj->GetY();
+
+        // [Optimization] Directional Filter: Ignore monsters behind me
+        // Only if I am moving
+        if (useDirectionalCheck)
+        {
+            // Vector pointing to neighbor from me is (-dx, -dy)
+            // But we want to check if the neighbor is "in front" of my velocity.
+            // If neighbor is relative pos P_other, my pos P_me.
+            // Relative vector T = P_other - P_me = (obj->GetX() - x, obj->GetY() - y) = (-dx, -dy)
+            // Dot(velocity, T) > 0 means in front (roughly).
+            // User code: if (toOther.Dot(velocity) < 0) continue; // Behind
+
+            float toOtherX = obj->GetX() - x;
+            float toOtherY = obj->GetY() - y;
+            // No need to normalize for sign check
+            if ((velocity.x * toOtherX + velocity.y * toOtherY) < 0)
+                continue;
+        }
+
+        float distSq = dx * dx + dy * dy;
+
+        if (distSq > 0.0001f && distSq < radius * radius)
+        {
+            float dist = std::sqrt(distSq);
+
+            // [Request #2] Distance-based weighting
+            // Closer = Stronger. Linear falloff.
+            float weight = 1.0f - (dist / radius);
+            if (weight < 0)
+                weight = 0;
+
+            // Normalized direction * weight
+            separation.x += (dx / dist) * weight;
+            separation.y += (dy / dist) * weight;
+            count++;
+
+            // [Optimization] Limit neighbor checks
+            if (count >= maxNeighbors)
+                break;
+        }
+    }
+
+    if (count > 0)
+    {
+        // Don't normalize yet, let the force magnitude speak
+        // but clamp to manageable levels
+        float magSq = separation.MagnitudeSq();
+        if (magSq > 1.0f)
+        {
+            float mag = std::sqrt(magSq);
+            separation.x /= mag;
+            separation.y /= mag;
+        }
+    }
+
+    return separation;
 }
 
 // [Phase 3] Broadcast Optimization

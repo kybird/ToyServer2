@@ -291,6 +291,16 @@ void ServerApp::RegisterConsoleCommands()
              }
          }}
     );
+
+    console->RegisterCommand(
+        {"/god",
+         "Toggle God Mode for all players",
+         [](const std::vector<std::string> &args)
+         {
+             if (auto r = RoomManager::Instance().GetRoom(1))
+                 r->DebugToggleGodMode();
+         }}
+    );
 }
 
 } // namespace SimpleGame

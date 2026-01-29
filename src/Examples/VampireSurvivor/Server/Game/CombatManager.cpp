@@ -133,7 +133,7 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
                             spawns.push_back(gem);
                             room->BroadcastSpawn(spawns);
 
-                            LOG_INFO("Monster {} died. Spawned ExpGem {}", monster->GetId(), gem->GetId());
+                            // LOG_INFO("Monster {} died. Spawned ExpGem {}", monster->GetId(), gem->GetId());
                         }
 
                         if (consumed)
@@ -263,9 +263,9 @@ void CombatManager::ResolveItemCollisions(float dt, Room *room)
             gem->SetPickerId(nearestPlayer->GetId());
             gem->MarkAsPickedUp();
 
-            LOG_DEBUG(
-                "Player {} magnetized ExpGem {}. EXP +{}", nearestPlayer->GetId(), gem->GetId(), gem->GetExpAmount()
-            );
+            // LOG_DEBUG(
+            //     "Player {} magnetized ExpGem {}. EXP +{}", nearestPlayer->GetId(), gem->GetId(), gem->GetExpAmount()
+            // );
         }
     }
 }

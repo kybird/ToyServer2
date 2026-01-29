@@ -114,6 +114,16 @@ struct Vector2
         return (a - b).MagnitudeSq();
     }
 
+    float Dot(const Vector2 &other) const
+    {
+        return x * other.x + y * other.y;
+    }
+
+    static float Dot(const Vector2 &a, const Vector2 &b)
+    {
+        return a.x * b.x + a.y * b.y;
+    }
+
     static Vector2 Zero()
     {
         return {0.0f, 0.0f};

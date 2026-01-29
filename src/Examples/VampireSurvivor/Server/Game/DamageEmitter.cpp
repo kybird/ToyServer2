@@ -298,6 +298,18 @@ void DamageEmitter::Update(float dt, Room *room)
                 count++;
             }
 
+            // 1. Broadcast Visual Effect (Always fire visual for feedback)
+            Protocol::S_SkillEffect skillMsg;
+            skillMsg.set_caster_id(owner->GetId());
+            skillMsg.set_skill_id(_skillId);
+            skillMsg.set_x(px);
+            skillMsg.set_y(py);
+            skillMsg.set_radius(finalRadius);
+            skillMsg.set_duration_seconds(currentTickInterval);
+            for (int32_t tid : hitTargetIds)
+                skillMsg.add_target_ids(tid);
+            room->BroadcastPacket(S_SkillEffectPacket(std::move(skillMsg)));
+
             if (!hitTargetIds.empty())
             {
                 // [DEBUG LOG]
@@ -311,18 +323,6 @@ void DamageEmitter::Update(float dt, Room *room)
                         py
                     );
                 }
-
-                // 1. Broadcast Visual Effect
-                Protocol::S_SkillEffect skillMsg;
-                skillMsg.set_caster_id(owner->GetId());
-                skillMsg.set_skill_id(_skillId);
-                skillMsg.set_x(px);
-                skillMsg.set_y(py);
-                skillMsg.set_radius(finalRadius);
-                skillMsg.set_duration_seconds(currentTickInterval);
-                for (int32_t tid : hitTargetIds)
-                    skillMsg.add_target_ids(tid);
-                room->BroadcastPacket(S_SkillEffectPacket(std::move(skillMsg)));
 
                 // 2. Broadcast Damage Numbers
                 Protocol::S_DamageEffect damageMsg;

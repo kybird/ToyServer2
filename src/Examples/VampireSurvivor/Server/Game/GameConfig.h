@@ -43,6 +43,9 @@ struct GameConfig
     static constexpr float EXP_GEM_PICKUP_RADIUS = 0.5f; // 습득 반경
     static constexpr float EXP_GEM_MAGNET_RADIUS = 5.0f; // 자석(끌당) 시작 반경
     static constexpr float EXP_GEM_FLY_SPEED = 15.0f;    // 플레이어에게 날아오는 속도
+
+    // Monster Population Limit
+    static constexpr size_t MAX_MONSTERS_PER_ROOM = 20000;
 };
 
 } // namespace SimpleGame

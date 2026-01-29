@@ -62,10 +62,9 @@ void WaveManager::Update(float dt, Room *room)
         if (it->timer <= 0)
         {
             // [CPU Optimization] Cap monster population
-            static const size_t MAX_MONSTERS_PER_ROOM = 500;
-            size_t currentCount = _objMgr.GetObjectCount(); // Approximate
+            size_t currentCount = _objMgr.GetObjectCount();
 
-            if (currentCount < MAX_MONSTERS_PER_ROOM && totalPlayers > 0)
+            if (currentCount < GameConfig::MAX_MONSTERS_PER_ROOM && totalPlayers > 0)
             {
                 // Distribute batch count among clusters
                 int remainingBatch = it->batchCount;
@@ -295,16 +294,16 @@ void WaveManager::SpawnMonster(int32_t monsterTypeId, float hpMultiplier, Room *
     if (tmpl)
     {
         finalHp = static_cast<int32_t>(tmpl->hp * hpMultiplier);
-        LOG_INFO(
-            "[WaveManager] Spawning Monster ID:{} Type:{} HP:{} (Base:{} * Mult:{:.1f}) at ({:.1f}, {:.1f})",
-            monsterTypeId,
-            tmpl->name,
-            finalHp,
-            tmpl->hp,
-            hpMultiplier,
-            x,
-            y
-        );
+        // LOG_INFO(
+        //     "[WaveManager] Spawning Monster ID:{} Type:{} HP:{} (Base:{} * Mult:{:.1f}) at ({:.1f}, {:.1f})",
+        //     monsterTypeId,
+        //     tmpl->name,
+        //     finalHp,
+        //     tmpl->hp,
+        //     hpMultiplier,
+        //     x,
+        //     y
+        // );
     }
 
     auto monster = MonsterFactory::Instance().CreateMonster(_objMgr, monsterTypeId, x, y, finalHp);

@@ -7,9 +7,11 @@
 #include "System/ITimer.h"
 
 #include "Game/Effect/EffectManager.h"
+#include "Game/GameConfig.h" // [Added] For NEAR_GRID_CELL_SIZE
 #include "Game/ObjectManager.h"
 #include "Game/SpatialGrid.h"
 #include "Game/WaveManager.h"
+
 
 namespace System {
 class IPacket;
@@ -73,6 +75,12 @@ public:
     std::shared_ptr<Player> GetNearestPlayer(float x, float y);
     std::vector<std::shared_ptr<Monster>> GetMonstersInRange(float x, float y, float radius);
 
+    // [Optimization] Added velocity check and max neighbors limit
+    Vector2 GetSeparationVector(
+        float x, float y, float radius, int32_t excludeId, const Vector2 &velocity = Vector2::Zero(),
+        int maxNeighbors = 6
+    );
+
     std::shared_ptr<System::IStrand> GetStrand() const
     {
         return _strand;
@@ -131,13 +139,19 @@ private:
 
     // Game Logic Components
     ObjectManager _objMgr;
-    SpatialGrid _grid{2000.0f}; // [Phase 1] Large cell for Full Broadcast
+    SpatialGrid _grid{GameConfig::NEAR_GRID_CELL_SIZE}; // [Optimized] Use correct cell size
     WaveManager _waveMgr;
     std::shared_ptr<System::IDispatcher> _dispatcher;
     std::shared_ptr<UserDB> _userDB;
     float _totalRunTime = 0.0f;
     uint32_t _serverTick = 0;
     float _debugBroadcastTimer = 0.0f; // Stage 0 Verification Timer
+
+    // Performance Monitoring
+    float _lastPerfLogTime = 0.0f;
+    float _totalUpdateSec = 0.0f;
+    uint32_t _updateCount = 0;
+    float _maxUpdateSec = 0.0f;
 
 public:
     uint32_t GetServerTick() const

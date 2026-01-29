@@ -31,9 +31,31 @@ void Monster::Update(float dt, Room *room)
         _ai->Think(this, room, _aliveTime);
         _ai->Execute(this, dt);
 
-        // Speed multiplier is now naturally handled by AI using GetSpeed() inside Execute()
+        // --- Centralized Avoidance & Steering (Hard Blocking Mode) ---
+        // --- Soft Separation (Velocity Projection Mode) ---
+        // [Optimized] Pass velocity for directional filtering, Limit 6 neighbors
+        // [Fix] Radius multiplier 2.5f (Search Radius)
+        // Self Radius 0.5 + Other Radius 0.5 = 1.0 (Touching Distance)
+        // Search Radius 1.25 means we start separating BEFORE touching (Gap ~0.25)
+        Vector2 velocity(GetVX(), GetVY());
+        Vector2 sep = room->GetSeparationVector(GetX(), GetY(), GetRadius() * 2.5f, GetId(), velocity, 6);
+
+        if (!sep.IsZero())
+        {
+            // [Request #1] Soft Separation: Remove velocity component moving towards neighbors
+            Vector2 n = sep.Normalized();
+            float proj = velocity.Dot(n);
+
+            // If proj < 0, it means we are moving OPPOSITE to separation force (into the crowd)
+            // We want to cancel that "inward" component, but keep lateral movement.
+            // v_new = v_old - (n * proj)
+            if (proj < 0.0f)
+            {
+                velocity -= n * proj;
+                SetVelocity(velocity.x, velocity.y);
+            }
+        }
     }
-    // If no AI assigned, monster stays idle
 }
 
 void Monster::TakeDamage(int32_t damage, Room *room)

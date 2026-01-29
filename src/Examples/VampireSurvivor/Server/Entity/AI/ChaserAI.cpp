@@ -23,7 +23,7 @@ void ChaserAI::Execute(Monster *monster, float dt)
 {
     (void)dt;
     float speed = monster->GetSpeed(); // AI now respects dynamic speed from monster
-    if (!_hasTarget || !_room)
+    if (!_hasTarget || _room == nullptr)
     {
         monster->SetVelocity(0, 0);
         return;
@@ -31,7 +31,7 @@ void ChaserAI::Execute(Monster *monster, float dt)
 
     // Find nearest player EVERY tick for accurate tracking
     auto target = _room->GetNearestPlayer(monster->GetX(), monster->GetY());
-    if (!target)
+    if (target == nullptr)
     {
         monster->SetVelocity(0, 0);
         return;
@@ -55,7 +55,7 @@ void ChaserAI::Execute(Monster *monster, float dt)
         }
         else
         {
-            // 직선 방향으로만 이동
+            // 직선 방향으로만 이동 (Separation is handled in Monster::Update)
             float nx = dx / dist;
             float ny = dy / dist;
             monster->SetVelocity(nx * speed, ny * speed);
