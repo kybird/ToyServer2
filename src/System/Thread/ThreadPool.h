@@ -7,6 +7,7 @@
 #include <limits>
 #include <memory>
 #include <semaphore>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -16,7 +17,7 @@ class ThreadPool
 {
 public:
     // Constructor
-    ThreadPool(int threadCount, std::string name = "ThreadPool (Task)");
+    ThreadPool(int threadCount, const std::string &name = "ThreadPool (Task)");
     ~ThreadPool();
 
     // Initialize and start workers

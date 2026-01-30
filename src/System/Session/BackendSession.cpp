@@ -4,6 +4,7 @@
 #include "System/ILog.h"
 #include "System/Network/RecvBuffer.h"
 #include "System/Packet/PacketHeader.h"
+#include "System/Packet/PacketPtr.h"
 #include "System/Pch.h"
 
 #include <boost/asio.hpp>
@@ -18,7 +19,10 @@ struct BackendSessionImpl
 
     // Networking Buffers
     RecvBuffer _recvBuffer;
-    std::vector<uint8_t> _linearBuffer;
+
+    // Scatter-gather buffers
+    std::vector<boost::asio::const_buffer> _gatherBuffers;
+    std::vector<PacketPtr> _sendingPackets;
 
     std::unique_ptr<boost::asio::steady_timer> _flowControlTimer;
     std::unique_ptr<boost::asio::steady_timer> _heartbeatTimer;
@@ -59,11 +63,16 @@ void BackendSession::Reset()
     _impl->_recvBuffer.Reset();
     _impl->_flowControlTimer.reset();
     _impl->_heartbeatTimer.reset();
+    _impl->_gatherBuffers.clear();
+    _impl->_sendingPackets.clear();
 }
 
 void BackendSession::Reset(const std::shared_ptr<void> &socket, uint64_t sessionId, IDispatcher *dispatcher)
 {
     Session::Reset(); // Ensure base state & queue are cleared first
+
+    _impl->_gatherBuffers.clear();
+    _impl->_sendingPackets.clear();
 
     _id = sessionId;
     _dispatcher = dispatcher;
@@ -75,15 +84,23 @@ void BackendSession::Reset(const std::shared_ptr<void> &socket, uint64_t session
         _impl->_heartbeatTimer = std::make_unique<boost::asio::steady_timer>(_impl->_socket->get_executor());
     }
     _impl->_recvBuffer.Reset();
-    _impl->_linearBuffer.reserve(64 * 1024);
+    _impl->_gatherBuffers.reserve(1000);
+    _impl->_sendingPackets.reserve(1000);
     _impl->_lastRecvTime = std::chrono::steady_clock::now();
 }
 
 void BackendSession::OnRecycle()
 {
     if (_impl->_socket && _impl->_socket->is_open())
+    {
         Close();
+    }
+
+    _impl->_gatherBuffers.clear();
+    _impl->_sendingPackets.clear();
     _impl->_socket.reset();
+
+    Session::Reset();
 }
 
 void BackendSession::Close()
@@ -104,7 +121,7 @@ void BackendSession::OnConnect()
     msg->type = MessageType::NETWORK_CONNECT;
     msg->sessionId = GetId();
     msg->session = this;
-    if (_dispatcher)
+    if (_dispatcher != nullptr)
     {
         IncRef();
         _dispatcher->Post(msg);
@@ -122,7 +139,7 @@ void BackendSession::OnDisconnect()
         msg->type = MessageType::NETWORK_DISCONNECT;
         msg->sessionId = GetId();
         msg->session = this;
-        if (_dispatcher)
+        if (_dispatcher != nullptr)
         {
             IncRef();
             _dispatcher->Post(msg);
@@ -198,27 +215,24 @@ void BackendSession::Flush()
         return;
     }
 
-    size_t total = 0;
-    for (size_t i = 0; i < count; ++i)
-        total += tempItems[i]->length;
+    _impl->_gatherBuffers.clear();
+    _impl->_sendingPackets.clear();
 
-    _impl->_linearBuffer.clear();
-    _impl->_linearBuffer.resize(total);
-
-    uint8_t *dest = _impl->_linearBuffer.data();
     for (size_t i = 0; i < count; ++i)
     {
-        std::memcpy(dest, tempItems[i]->Payload(), tempItems[i]->length);
-        dest += tempItems[i]->length;
-        MessagePool::Free(tempItems[i]);
+        PacketMessage *msg = tempItems[i];
+        _impl->_gatherBuffers.push_back(boost::asio::buffer(msg->Payload(), msg->length));
+        _impl->_sendingPackets.emplace_back(msg);
     }
 
     IncRef();
     boost::asio::async_write(
         *_impl->_socket,
-        boost::asio::buffer(_impl->_linearBuffer),
+        _impl->_gatherBuffers,
         [this](auto ec, auto tr)
         {
+            _impl->_gatherBuffers.clear();
+            _impl->_sendingPackets.clear();
             _impl->OnWriteComplete(ec, tr);
             DecRef();
         }

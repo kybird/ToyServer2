@@ -58,11 +58,21 @@ void Room::Start()
 
 void Room::Stop()
 {
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    LOG_INFO("Room {} STOP initiated. (Players: {})", _roomId, _players.size());
+
     if (_timer != nullptr && _timerHandle != 0)
     {
         _timer->CancelTimer(_timerHandle);
         _timerHandle = 0;
     }
+
+    // Clear players and notify them if necessary
+    // During server shutdown, we just clear the map to release shared_ptrs
+    _players.clear();
+    _objMgr.Clear();
+
+    LOG_INFO("Room {} STOP finished.", _roomId);
 }
 
 void Room::StartGame()

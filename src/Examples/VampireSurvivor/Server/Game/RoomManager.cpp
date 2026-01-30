@@ -31,20 +31,21 @@ void RoomManager::Init(std::shared_ptr<System::IFramework> framework, std::share
 void RoomManager::Cleanup()
 {
     std::lock_guard<std::mutex> lock(_mutex);
-    LOG_INFO("RoomManager Cleaning up...");
+    LOG_INFO("RoomManager Cleaning up (Total {} rooms)...", _rooms.size());
 
-    // Stop all rooms
+    // Stop all rooms (Cancel timers and strands)
     for (auto &pair : _rooms)
     {
+        LOG_INFO("Stopping Room {}...", pair.first);
         pair.second->Stop();
     }
     _rooms.clear();
     _players.clear();
     _lobbySessions.clear();
 
-    _framework.reset(); // Release Framework ownership
-    _timer.reset();
     _userDB.reset();
+    _timer.reset();
+    _framework.reset();
     LOG_INFO("RoomManager Cleanup Done.");
 }
 

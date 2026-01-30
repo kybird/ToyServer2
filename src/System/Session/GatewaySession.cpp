@@ -231,22 +231,26 @@ void GatewaySession::Flush()
     for (size_t i = 0; i < count; ++i)
         totalSize += tempItems[i]->length;
 
+    if (_impl->_linearBuffer.capacity() < totalSize)
+        _impl->_linearBuffer.reserve(totalSize);
+
     _impl->_linearBuffer.clear();
     _impl->_linearBuffer.resize(totalSize);
 
     uint8_t *destPtr = _impl->_linearBuffer.data();
     for (size_t i = 0; i < count; ++i)
     {
-        size_t pktSize = tempItems[i]->length;
+        PacketMessage *msg = tempItems[i];
+        size_t pktSize = msg->length;
         if (_impl->_encryption)
         {
             // Copy Header (Plain)
-            std::memcpy(destPtr, tempItems[i]->Payload(), sizeof(PacketHeader));
+            std::memcpy(destPtr, msg->Payload(), sizeof(PacketHeader));
             // Encrypt Payload
             if (pktSize > sizeof(PacketHeader))
             {
                 _impl->_encryption->Encrypt(
-                    tempItems[i]->Payload() + sizeof(PacketHeader),
+                    msg->Payload() + sizeof(PacketHeader),
                     destPtr + sizeof(PacketHeader),
                     pktSize - sizeof(PacketHeader)
                 );
@@ -254,10 +258,10 @@ void GatewaySession::Flush()
         }
         else
         {
-            std::memcpy(destPtr, tempItems[i]->Payload(), pktSize);
+            std::memcpy(destPtr, msg->Payload(), pktSize);
         }
         destPtr += pktSize;
-        MessagePool::Free(tempItems[i]);
+        MessagePool::Free(msg);
     }
 
     IncRef();

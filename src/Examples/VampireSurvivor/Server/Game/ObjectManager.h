@@ -52,6 +52,13 @@ public:
         }
     }
 
+    void Clear()
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _objects.clear();
+        _aliveMonsterCount = 0;
+    }
+
     std::shared_ptr<GameObject> GetObject(int32_t id)
     {
         std::lock_guard<std::mutex> lock(_mutex);

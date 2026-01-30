@@ -34,6 +34,7 @@ private:
     boost::asio::io_context _ioContext;
     boost::asio::ip::tcp::acceptor _acceptor;
     IDispatcher *_dispatcher = nullptr;
+    std::atomic<bool> _isStopping{false};
 };
 
 } // namespace System

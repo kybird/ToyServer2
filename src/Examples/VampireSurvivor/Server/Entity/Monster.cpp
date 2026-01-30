@@ -31,24 +31,18 @@ void Monster::Update(float dt, Room *room)
         _ai->Think(this, room, _aliveTime);
         _ai->Execute(this, dt);
 
-        // --- Centralized Avoidance & Steering (Hard Blocking Mode) ---
-        // --- Soft Separation (Velocity Projection Mode) ---
-        // [Optimized] Pass velocity for directional filtering, Limit 6 neighbors
-        // [Fix] Radius multiplier 2.5f (Search Radius)
-        // Self Radius 0.5 + Other Radius 0.5 = 1.0 (Touching Distance)
-        // Search Radius 1.25 means we start separating BEFORE touching (Gap ~0.25)
+        // --- 중앙 집중식 회피 및 스티어링 (매 프레임 처리) ---
+        // 비주얼 개선을 위해 디더링을 제거하고 매 틱마다 주변 몬스터를 체크합니다.
         Vector2 velocity(GetVX(), GetVY());
         Vector2 sep = room->GetSeparationVector(GetX(), GetY(), GetRadius() * 2.5f, GetId(), velocity, 6);
 
         if (!sep.IsZero())
         {
-            // [Request #1] Soft Separation: Remove velocity component moving towards neighbors
+            // 소프트 분리: 근접한 대상 쪽으로 이동하는 속도 성분을 제거합니다.
             Vector2 n = sep.Normalized();
             float proj = velocity.Dot(n);
 
-            // If proj < 0, it means we are moving OPPOSITE to separation force (into the crowd)
-            // We want to cancel that "inward" component, but keep lateral movement.
-            // v_new = v_old - (n * proj)
+            // 해당 방향으로 이동 중인 경우에만 속도 보정 수행 (서로 밀어내는 효과)
             if (proj < 0.0f)
             {
                 velocity -= n * proj;

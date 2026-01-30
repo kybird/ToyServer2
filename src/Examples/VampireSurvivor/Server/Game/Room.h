@@ -12,7 +12,6 @@
 #include "Game/SpatialGrid.h"
 #include "Game/WaveManager.h"
 
-
 namespace System {
 class IPacket;
 class IStrand;
@@ -23,6 +22,25 @@ namespace SimpleGame {
 class UserDB;
 class DamageEmitter;
 class CombatManager;
+
+struct RoomPerformanceProfile
+{
+    // 1. Overlap Resolution Optimization
+    bool enableThrottledOverlap = true;
+    int overlapThrottleFactor = 5;
+
+    // 2. Broadcast Optimization
+    bool enableDistributedSync = true;
+    int syncIntervalTicks = 5;
+    int broadcastBatchSize = 500;
+
+    // 3. Interest Management (Field of View Cutting)
+    bool enableInterestManagement = true;
+    float interestRadius = 30.0f;
+
+    // 4. Debug/Stress Test
+    bool logPerformance = true;
+};
 
 class Room : public System::ITimerListener, public std::enable_shared_from_this<Room>
 {
@@ -164,6 +182,12 @@ private:
     bool _isGameOver = false;  // Track if game is over
     std::unique_ptr<CombatManager> _combatMgr;
     std::unique_ptr<EffectManager> _effectMgr;
+
+    // Standard Performance Strategies
+    void ResolveMonsterOverlap(const std::vector<std::shared_ptr<GameObject>> &objects);
+    void SyncMonsterStates(const std::vector<Protocol::ObjectPos> &monsterMoves);
+
+    RoomPerformanceProfile _perfProfile;
 };
 
 } // namespace SimpleGame

@@ -17,8 +17,8 @@ public:
     bool TryConsume(double amount = 1.0)
     {
         auto now = std::chrono::steady_clock::now();
-        // Calculate duration in seconds (double)
-        std::chrono::duration<double> delta = now - _lastRefillTime;
+        // Calculate duration in seconds
+        auto delta = std::chrono::duration_cast<std::chrono::duration<double>>(now - _lastRefillTime);
 
         // Refill tokens (Lazy Calculation)
         double newTokens = delta.count() * _refillRate;

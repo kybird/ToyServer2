@@ -4,7 +4,7 @@
 
 namespace System {
 
-ThreadPool::ThreadPool(int threadCount, std::string name) : _threadCount(threadCount), _name(name), _stop(false)
+ThreadPool::ThreadPool(int threadCount, const std::string &name) : _threadCount(threadCount), _name(name), _stop(false)
 {
     if (threadCount <= 0)
     {

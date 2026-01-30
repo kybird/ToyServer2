@@ -73,8 +73,7 @@ void Session::SendPacket(PacketPtr msg)
     if (!IsConnected() || !msg)
         return;
 
-    msg->AddRef();
-    EnqueueSend(msg.Get());
+    EnqueueSend(msg.Release());
 }
 
 void Session::SendPreSerialized(const PacketMessage *msg)

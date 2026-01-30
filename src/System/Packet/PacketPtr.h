@@ -87,12 +87,16 @@ public:
     {
         if (_ptr)
         {
-            if (_ptr->DecRef())
-            {
-                MessagePool::Free(_ptr);
-            }
+            MessagePool::Free(_ptr);
             _ptr = nullptr;
         }
+    }
+
+    PacketMessage *Release()
+    {
+        PacketMessage *temp = _ptr;
+        _ptr = nullptr;
+        return temp;
     }
 
     PacketMessage *Get() const

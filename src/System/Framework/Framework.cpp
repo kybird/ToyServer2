@@ -287,26 +287,45 @@ void Framework::Stop()
     // DO NOT Join IO threads here, or it causes self-join deadlock/crash.
     // _ioThreads are std::jthread, so they will join automatically in ~Framework().
 
-    if (!_running)
-        return; // Already stopped
+    if (!_running.exchange(false))
+    {
+        LOG_INFO("Framework::Stop() called but already stopping/stopped.");
+        return;
+    }
 
-    _running = false;
+    LOG_INFO("Framework::Stop() initiated...");
 
+    // 1. Block Network FIRST (Immediate Firewall)
+    if (_network)
+    {
+        LOG_INFO("Stopping Network Acceptor (Blocking new connections)...");
+        _network->Stop(); // Sets _isStopping = true and closes acceptor
+    }
+
+    // 2. Stop Console
     if (_console)
+    {
+        LOG_INFO("Stopping Console...");
         _console->Stop();
+    }
 
-    // Shutdown MQ System before stopping ThreadPool
-    // This ensures poll tasks can exit gracefully
+    // 3. Shutdown MQ System
+    LOG_INFO("Stopping MQ System...");
     System::MQ::MessageSystem::Instance().Shutdown();
 
+    // 4. Stop Thread Pools (Will wait for current tasks to finish)
     if (_threadPool)
+    {
+        LOG_INFO("Stopping ThreadPool...");
         _threadPool->Stop();
+    }
     if (_dbThreadPool)
+    {
+        LOG_INFO("Stopping DBThreadPool...");
         _dbThreadPool->Stop();
-    if (_network)
-        _network->Stop(); // Stops IO Context, IO threads will exit loop soon
+    }
 
-    // Do NOT join or clear _ioThreads here.
+    LOG_INFO("Framework::Stop() sequence finished.");
 }
 
 void Framework::Join()

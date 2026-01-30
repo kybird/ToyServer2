@@ -186,13 +186,10 @@ private:
         if (list.empty())
             return;
 
-        // Move list to temp to iterate safely
-        std::list<std::shared_ptr<Node>> temp;
-        temp.splice(temp.begin(), list);
-
-        for (auto &node : temp)
+        for (auto it = list.begin(); it != list.end();)
         {
-            Add(node); // Re-insert (will fall to lower level)
+            Add(*it);
+            it = list.erase(it);
         }
     }
 
