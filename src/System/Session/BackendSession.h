@@ -23,7 +23,7 @@ public:
 
     // Pool Hooks
     void Reset() override;
-    void Reset(std::shared_ptr<void> socket, uint64_t sessionId, IDispatcher *dispatcher);
+    void Reset(const std::shared_ptr<void> &socket, uint64_t sessionId, IDispatcher *dispatcher);
     void OnRecycle() override;
 
     // ISession Overrides

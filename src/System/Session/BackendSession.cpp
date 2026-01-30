@@ -61,7 +61,7 @@ void BackendSession::Reset()
     _impl->_heartbeatTimer.reset();
 }
 
-void BackendSession::Reset(std::shared_ptr<void> socket, uint64_t sessionId, IDispatcher *dispatcher)
+void BackendSession::Reset(const std::shared_ptr<void> &socket, uint64_t sessionId, IDispatcher *dispatcher)
 {
     Session::Reset(); // Ensure base state & queue are cleared first
 
