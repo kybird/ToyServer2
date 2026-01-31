@@ -34,7 +34,7 @@ CommandConsole::CommandConsole(std::shared_ptr<IConfig> config) : _config(config
          [this](const std::vector<std::string> &args)
          {
              LOG_INFO("Reloading Config...");
-             if (_config->Load("data/server_config.json"))
+             if (_config->Load("data/vampire_server_config.json"))
              {
                  LOG_INFO("Config Reloaded.");
              }

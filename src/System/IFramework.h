@@ -34,6 +34,7 @@ public:
     virtual std::shared_ptr<IStrand> CreateStrand() = 0;
     virtual size_t GetDispatcherQueueSize() const = 0;
     virtual std::shared_ptr<IDispatcher> GetDispatcher() const = 0;
+    virtual std::shared_ptr<IDatabase> GetDatabase() const = 0;
     virtual std::shared_ptr<ThreadPool> GetThreadPool() const = 0;
 
     // Command Console Accessor

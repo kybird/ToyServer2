@@ -315,4 +315,10 @@ void DispatcherImpl::Push(std::function<void()> task)
     Post(msg);
 }
 
+void DispatcherImpl::Shutdown()
+{
+    // Wake up any threads waiting in Wait()
+    _cv.notify_all();
+}
+
 } // namespace System

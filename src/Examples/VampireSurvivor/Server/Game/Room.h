@@ -65,7 +65,7 @@ public:
     void Enter(const std::shared_ptr<Player> &player);
     void Leave(uint64_t sessionId);
     void OnPlayerReady(uint64_t sessionId); // Called when client finishes loading
-    void BroadcastPacket(const System::IPacket &pkt);
+    void BroadcastPacket(const System::IPacket &pkt, uint64_t excludeSessionId = 0);
     void BroadcastSpawn(const std::vector<std::shared_ptr<GameObject>> &objects);
     void BroadcastDespawn(const std::vector<int32_t> &objectIds, const std::vector<int32_t> &pickerIds = {});
     void SendToPlayer(uint64_t sessionId, const System::IPacket &pkt);
@@ -157,6 +157,10 @@ private:
 
     // Game Logic Components
     ObjectManager _objMgr;
+    // Optimized query buffers to avoid per-tick allocations
+    std::vector<std::shared_ptr<GameObject>> _queryBuffer;
+    std::vector<std::shared_ptr<Monster>> _monsterBuffer;
+
     SpatialGrid _grid{GameConfig::NEAR_GRID_CELL_SIZE}; // [Optimized] Use correct cell size
     WaveManager _waveMgr;
     std::shared_ptr<System::IDispatcher> _dispatcher;
@@ -170,6 +174,12 @@ private:
     float _totalUpdateSec = 0.0f;
     uint32_t _updateCount = 0;
     float _maxUpdateSec = 0.0f;
+
+    // Detailed Profiling
+    float _physicsTimeSec = 0.0f;
+    float _networkTimeSec = 0.0f;
+    float _overlapTimeSec = 0.0f;
+    float _combatTimeSec = 0.0f;
 
 public:
     uint32_t GetServerTick() const

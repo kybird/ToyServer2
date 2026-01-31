@@ -41,6 +41,9 @@ public:
     // Generic Task Submission
     void Push(std::function<void()> task) override;
 
+    // Graceful Shutdown
+    void Shutdown() override;
+
 private:
     void ProcessPendingDestroys();
 

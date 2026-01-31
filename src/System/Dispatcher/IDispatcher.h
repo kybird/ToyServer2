@@ -28,6 +28,9 @@ public:
 
     // Generic Task Submission
     virtual void Push(std::function<void()> task) = 0;
+
+    // Graceful Shutdown
+    virtual void Shutdown() = 0;
 };
 
 // Global Access Removed. Use Dependency Injection.

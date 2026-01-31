@@ -23,8 +23,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # ==========================================
 # Options
 # ==========================================
-option(ENABLE_DRIVER_SQLITE "Enable SQLite Driver" ON)
-option(ENABLE_DRIVER_MYSQL "Enable MySQL Driver" ON)
+option(ENABLE_DRIVER_MYSQL "Enable MySQL Database Driver" OFF)
 
 # Dependencies
 find_package(Boost CONFIG REQUIRED COMPONENTS system)
@@ -34,12 +33,11 @@ find_package(fmt CONFIG REQUIRED)
 find_package(concurrentqueue CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)
 find_package(Protobuf REQUIRED)
-
-if(ENABLE_DRIVER_SQLITE)
-    find_package(unofficial-sqlite3 CONFIG REQUIRED)
-endif()
+find_package(unofficial-sqlite3 CONFIG REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 if(ENABLE_DRIVER_MYSQL)
+    find_package(MySQL REQUIRED)
     find_package(unofficial-libmysql CONFIG REQUIRED)
 endif()
 
@@ -65,33 +63,10 @@ target_link_libraries(Share PRIVATE
 )
 
 # ==========================================
-# Drivers
+# Drivers (Integrated into System)
 # ==========================================
-set(DRIVER_LIBS "")
-
-if(ENABLE_DRIVER_SQLITE)
-    add_library(DriverSQLite SHARED)
-    set_target_properties(DriverSQLite PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-    target_sources(DriverSQLite PRIVATE
-        src/System/Drivers/SQLite/SQLiteConnection.cpp
-    )
-    target_include_directories(DriverSQLite PUBLIC src)
-    target_link_libraries(DriverSQLite PUBLIC unofficial::sqlite3::sqlite3 System)
-    list(APPEND DRIVER_LIBS DriverSQLite)
-    add_compile_definitions(USE_SQLITE)
-endif()
-
-if(ENABLE_DRIVER_MYSQL)
-    add_library(DriverMySQL SHARED)
-    set_target_properties(DriverMySQL PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-    target_sources(DriverMySQL PRIVATE
-        src/System/Drivers/MySQL/MySQLConnection.cpp
-    )
-    target_include_directories(DriverMySQL PUBLIC src)
-    target_link_libraries(DriverMySQL PUBLIC unofficial::libmysql::libmysql System)
-    list(APPEND DRIVER_LIBS DriverMySQL)
-    add_compile_definitions(USE_MYSQL)
-endif()
+# Drivers are now statically linked into System library.
+# See System target definition below.
 
 
 
@@ -121,11 +96,14 @@ target_sources(System PRIVATE
     src/System/Network/INetwork.h
     src/System/Network/NetworkImpl.cpp
     src/System/Network/RecvBuffer.cpp
-    src/System/Network/RateLimiter.h # Added
+    src/System/Network/RateLimiter.h
     src/System/Events/EventBus.h
-    src/System/Network/ByteBuffer.h # Added
+    src/System/Network/ByteBuffer.h
+    
     src/System/Database/DatabaseImpl.cpp
-    # src/System/Database/SQLite/SQLiteConnection.cpp # Moved to DriverSQLite
+    src/System/Database/DatabaseRegistry.h
+    src/System/Database/DatabaseRegistry.cpp
+    
     src/System/Framework/Framework.cpp
     src/System/Thread/ThreadPool.cpp
     src/System/Dispatcher/DISPATCHER/DispatcherImpl.cpp
@@ -135,10 +113,9 @@ target_sources(System PRIVATE
     src/System/Timer/TimerImpl.cpp
     src/System/ITimer.h
     src/System/Timer/TimerHandle.h
-    src/System/Console/CommandConsole.h # Added
-    src/System/Console/CommandConsole.cpp # Added
+    src/System/Console/CommandConsole.h
+    src/System/Console/CommandConsole.cpp
     
-    # New Refactoring
     src/System/ToyServerSystem.h
     src/System/Network/PacketUtils.cpp
     src/System/Network/PacketUtils.h
@@ -148,15 +125,12 @@ target_sources(System PRIVATE
     src/System/Network/AesEncryption.h
     src/System/Network/AesEncryption.cpp
     
-    # Phase 3 Internal
     src/System/Internal/PacketStorage.h
     src/System/Internal/PacketStorage.cpp
     src/System/Packet/PacketBuilder.h
     src/System/Packet/SharedPacket.h
     src/System/Packet/PacketBroadcast.h
-    src/System/Packet/PacketBroadcast.h
     
-    # MQ System
     src/System/MQ/IMessageDriver.h
     src/System/MQ/MessageQoS.h
     src/System/MQ/NatsDriver.h
@@ -165,16 +139,42 @@ target_sources(System PRIVATE
     src/System/MQ/RedisStreamDriver.cpp
     src/System/MQ/MessageSystem.h
     src/System/MQ/MessageSystem.cpp
+
+    # SQLite (Always Included)
+    src/System/Drivers/SQLite/SQLiteConnection.cpp
+    src/System/Drivers/SQLite/SQLiteDriver.cpp
 )
+
+# MySQL (Optional)
+if(ENABLE_DRIVER_MYSQL)
+    target_sources(System PRIVATE
+        src/System/Drivers/MySQL/MySQLConnection.cpp
+        src/System/Drivers/MySQL/MySQLDriver.cpp
+    )
+    target_compile_definitions(System PUBLIC USE_MYSQL)
+endif()
+
+# Always define USE_SQLITE as it is default
+target_compile_definitions(System PUBLIC USE_SQLITE)
+
 target_include_directories(System PUBLIC src/System src)
 target_precompile_headers(System PRIVATE src/System/Pch.h)
-target_link_libraries(System PUBLIC Share dbghelp unofficial::sqlite3::sqlite3 cnats::nats redis++::redis++ PRIVATE Boost::system)
+target_link_libraries(System PUBLIC Share unofficial::sqlite3::sqlite3 cnats::nats redis++::redis++ PRIVATE Boost::system)
+
+# Windows-specific dependencies
+if(WIN32)
+    target_link_libraries(System PUBLIC dbghelp)
+endif()
+
+if(ENABLE_DRIVER_MYSQL)
+    target_link_libraries(System PUBLIC unofficial::libmysql::libmysql)
+endif()
 
 # GameServer Executable
 add_executable(GameServer src/GameServer/main.cpp)
 target_include_directories(GameServer PRIVATE src/GameServer src)
 target_precompile_headers(GameServer PRIVATE src/System/Pch.h)
-target_link_libraries(GameServer PRIVATE System Share ${DRIVER_LIBS})
+target_link_libraries(GameServer PRIVATE System Share)
 
 
 
@@ -267,7 +267,7 @@ target_include_directories(VampireSurvivorServer PRIVATE
 
 target_precompile_headers(VampireSurvivorServer PRIVATE src/System/Pch.h)
 
-target_link_libraries(VampireSurvivorServer PRIVATE System Share protobuf::libprotobuf ${DRIVER_LIBS})
+target_link_libraries(VampireSurvivorServer PRIVATE System Share protobuf::libprotobuf)
 
 
 
@@ -347,7 +347,7 @@ target_include_directories(UnitTests PRIVATE
     src/Examples/VampireSurvivor/Server/Core
 )
 target_precompile_headers(UnitTests PRIVATE src/System/Pch.h)
-target_link_libraries(UnitTests PRIVATE System Share GTest::gtest GTest::gmock protobuf::libprotobuf ${DRIVER_LIBS})
+target_link_libraries(UnitTests PRIVATE System Share GTest::gtest GTest::gmock protobuf::libprotobuf)
 
 
 

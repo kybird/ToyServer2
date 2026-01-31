@@ -89,8 +89,9 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
                 continue;
 
             // Use radius for collision query
-            auto nearby = room->_grid.QueryRange(proj->GetX(), proj->GetY(), proj->GetRadius() + 0.5f);
-            for (auto &target : nearby)
+            room->_queryBuffer.clear();
+            room->_grid.QueryRange(proj->GetX(), proj->GetY(), proj->GetRadius() + 0.5f, room->_queryBuffer);
+            for (auto &target : room->_queryBuffer)
             {
                 if (target->GetId() == proj->GetId())
                     continue;
@@ -118,6 +119,10 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
 
                         damageEffect.add_target_ids(monster->GetId());
                         damageEffect.add_damage_values(proj->GetDamage());
+
+                        // [Debug] Log what we hit
+                        // LOG_INFO("Projectile {} hit Monster {} (State: {}, HP: {})", proj->GetId(), monster->GetId(),
+                        // (int)monster->GetState(), monster->GetHp());
 
                         if (monster->IsDead())
                         {

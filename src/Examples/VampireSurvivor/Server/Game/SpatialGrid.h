@@ -1,82 +1,176 @@
 #pragma once
 #include "Entity/GameObject.h"
-#include <vector>
-#include <unordered_map>
-#include <unordered_set>
 #include <cmath>
-#include <mutex>
+#include <unordered_map>
+#include <vector>
 
 namespace SimpleGame {
 
 // Sparse Grid
-class SpatialGrid {
+class SpatialGrid
+{
 public:
-    SpatialGrid(float cellSize) : _cellSize(cellSize) {}
-
-    void Add(std::shared_ptr<GameObject> obj) {
-        if(!obj) return;
-        long long key = GetCellKey(obj->GetX(), obj->GetY());
-        std::lock_guard<std::mutex> lock(_mutex);
-        _cells[key].insert(obj);
+    SpatialGrid(float cellSize) : _cellSize(cellSize)
+    {
     }
 
-    void Remove(std::shared_ptr<GameObject> obj) {
-         if(!obj) return;
+    // [Optimization] Removed Internal Mutex (Room already locks this via Strand/RoomMutex)
+    void Add(std::shared_ptr<GameObject> obj)
+    {
+        if (!obj || obj->IsInGrid())
+            return;
+
         long long key = GetCellKey(obj->GetX(), obj->GetY());
-        std::lock_guard<std::mutex> lock(_mutex);
-        _cells[key].erase(obj);
+        auto &vec = _cells[key];
+
+        // Double check uniqueness (though obj->IsInGrid() should handle it)
+        for (const auto &existing : vec)
+        {
+            if (existing == obj)
+                return;
+        }
+
+        vec.push_back(obj);
+        obj->SetGridInfo(key, true);
     }
 
-    void Update(std::shared_ptr<GameObject> obj, float oldX, float oldY) {
-         if(!obj) return;
-        long long oldKey = GetCellKey(oldX, oldY);
+    void Remove(std::shared_ptr<GameObject> obj)
+    {
+        if (!obj || !obj->IsInGrid())
+            return;
+
+        long long key = obj->GetGridCellKey();
+        auto it = _cells.find(key);
+        if (it != _cells.end())
+        {
+            auto &vec = it->second;
+            for (size_t i = 0; i < vec.size(); ++i)
+            {
+                if (vec[i] == obj)
+                {
+                    if (i != vec.size() - 1)
+                    {
+                        std::swap(vec[i], vec.back());
+                    }
+                    vec.pop_back();
+                    if (vec.empty())
+                    {
+                        _cells.erase(it);
+                    }
+                    break;
+                }
+            }
+        }
+        obj->SetGridInfo(0, false);
+    }
+
+    void Update(std::shared_ptr<GameObject> obj)
+    {
+        if (!obj)
+            return;
+
+        // If not in grid, just Add it
+        if (!obj->IsInGrid())
+        {
+            Add(obj);
+            return;
+        }
+
+        long long oldKey = obj->GetGridCellKey();
         long long newKey = GetCellKey(obj->GetX(), obj->GetY());
 
-        if (oldKey != newKey) {
-            std::lock_guard<std::mutex> lock(_mutex);
-            _cells[oldKey].erase(obj);
-            if (_cells[oldKey].empty()) {
-                _cells.erase(oldKey); // Cleanup empty cells
+        if (oldKey != newKey)
+        {
+            // Remove from old cell (using stored key)
+            auto oldIt = _cells.find(oldKey);
+            if (oldIt != _cells.end())
+            {
+                auto &vec = oldIt->second;
+                for (size_t i = 0; i < vec.size(); ++i)
+                {
+                    if (vec[i] == obj)
+                    {
+                        if (i != vec.size() - 1)
+                        {
+                            std::swap(vec[i], vec.back());
+                        }
+                        vec.pop_back();
+                        if (vec.empty())
+                        {
+                            _cells.erase(oldIt);
+                        }
+                        break;
+                    }
+                }
             }
-            _cells[newKey].insert(obj);
+
+            // Add to new cell
+            auto &newVec = _cells[newKey];
+            newVec.push_back(obj);
+            obj->SetGridInfo(newKey, true);
         }
     }
 
-    std::vector<std::shared_ptr<GameObject>> QueryRange(float x, float y, float radius) {
-        std::vector<std::shared_ptr<GameObject>> result;
+    void QueryRange(float x, float y, float radius, std::vector<std::shared_ptr<GameObject>> &outResults)
+    {
+        outResults.clear();
+        // Reserve some space to avoid reallocations
+        if (outResults.capacity() < 64)
+            outResults.reserve(64);
+
         int minX = (int)std::floor((x - radius) / _cellSize);
         int maxX = (int)std::floor((x + radius) / _cellSize);
         int minY = (int)std::floor((y - radius) / _cellSize);
         int maxY = (int)std::floor((y + radius) / _cellSize);
 
-        std::lock_guard<std::mutex> lock(_mutex);
-        for (int cx = minX; cx <= maxX; cx++) {
-            for (int cy = minY; cy <= maxY; cy++) {
+        float radiusSq = radius * radius;
+
+        for (int cx = minX; cx <= maxX; cx++)
+        {
+            for (int cy = minY; cy <= maxY; cy++)
+            {
                 long long key = ((long long)cx << 32) | (unsigned int)cy;
                 auto it = _cells.find(key);
-                if (it != _cells.end()) {
-                    for (auto& obj : it->second) {
+                if (it != _cells.end())
+                {
+                    const auto &vec = it->second;
+                    for (const auto &obj : vec)
+                    {
                         float dx = obj->GetX() - x;
                         float dy = obj->GetY() - y;
-                        if (dx*dx + dy*dy <= radius*radius) {
-                            result.push_back(obj);
+                        if (dx * dx + dy * dy <= radiusSq)
+                        {
+                            outResults.push_back(obj);
                         }
                     }
                 }
             }
         }
-        return result;
+    }
+
+    void Clear()
+    {
+        // When clearing grid, reset all objects' grid info
+        for (auto &pair : _cells)
+        {
+            for (auto &obj : pair.second)
+            {
+                obj->SetGridInfo(0, false);
+            }
+        }
+        _cells.clear();
     }
 
 private:
     float _cellSize;
-    
-    // Key: (x << 32) | y
-    // Value: Set of objects in that cell
-    std::unordered_map<long long, std::unordered_set<std::shared_ptr<GameObject>>> _cells;
-    std::mutex _mutex;
 
-    long long GetCellKey(float x, float y) {
+    // Key: (x << 32) | y
+    // Value: Vector of objects (Cache friendly)
+    // Using unordered_map for spatial hashing with vector for fast local iteration.
+    std::unordered_map<long long, std::vector<std::shared_ptr<GameObject>>> _cells;
+
+    long long GetCellKey(float x, float y) const
+    {
         int cx = (int)std::floor(x / _cellSize);
         int cy = (int)std::floor(y / _cellSize);
         return ((long long)cx << 32) | (unsigned int)cy;

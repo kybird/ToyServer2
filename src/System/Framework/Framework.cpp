@@ -2,6 +2,7 @@
 #include "System/Console/CommandConsole.h"
 #include "System/MQ/MessageSystem.h"
 
+#include "System/Database/DatabaseRegistry.h"
 #include "System/Debug/CrashHandler.h"
 #include "System/Dispatcher/DISPATCHER/DispatcherImpl.h"
 #include "System/Dispatcher/MessagePool.h"
@@ -42,19 +43,29 @@ std::shared_ptr<IStrand> Framework::CreateStrand()
     return std::make_shared<Strand>(_threadPool);
 }
 
+size_t Framework::GetDispatcherQueueSize() const
+{
+    return _dispatcher ? _dispatcher->GetQueueSize() : 0;
+}
+
 std::shared_ptr<IDispatcher> Framework::GetDispatcher() const
 {
     return _dispatcher;
 }
 
-std::shared_ptr<ICommandConsole> Framework::GetCommandConsole() const
+std::shared_ptr<IDatabase> Framework::GetDatabase() const
 {
-    return _console;
+    return _db;
 }
 
 std::shared_ptr<ThreadPool> Framework::GetThreadPool() const
 {
     return _threadPool;
+}
+
+std::shared_ptr<ICommandConsole> Framework::GetCommandConsole() const
+{
+    return _console;
 }
 
 Framework::Framework()
@@ -184,6 +195,24 @@ bool Framework::Init(std::shared_ptr<IConfig> config, std::shared_ptr<IPacketHan
     if (dbThreads <= 0)
         dbThreads = 1;
     _dbThreadPool = std::make_shared<ThreadPool>(dbThreads, "DB Thread");
+
+    // 4.6 Init Database (Automation)
+    // Database Initialization (Explicit)
+    System::Database::Registry::Instance().Initialize();
+
+    System::Database::DatabaseContext dbCtx{serverConfig, _dbThreadPool, _dispatcher};
+    _db = System::Database::Registry::Instance().Create(serverConfig.dbType, dbCtx);
+
+    if (_db)
+    {
+        _db->Init();
+        LOG_INFO("Database Initialized: type={}", serverConfig.dbType);
+    }
+    else
+    {
+        LOG_WARN("Database Driver NOT FOUND or Failed to create: type={}", serverConfig.dbType);
+    }
+    // For now, just log warning.
 
     // 5. Init Network
     int port = serverConfig.port;
@@ -323,6 +352,14 @@ void Framework::Stop()
     {
         LOG_INFO("Stopping DBThreadPool...");
         _dbThreadPool->Stop();
+    }
+
+    LOG_INFO("[Shutdown] FrameWork Stop sequence finished.");
+
+    // 5. Wake up Main Loop
+    if (_dispatcher)
+    {
+        _dispatcher->Shutdown();
     }
 
     LOG_INFO("Framework::Stop() sequence finished.");

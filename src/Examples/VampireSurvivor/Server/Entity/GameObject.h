@@ -183,6 +183,25 @@ protected:
 
     // Stat Modifier System
     ModifierContainer _modifiers;
+
+    // Spatial Grid Tracking
+    long long _gridCellKey = 0;
+    bool _isInGrid = false;
+
+public:
+    void SetGridInfo(long long key, bool inGrid)
+    {
+        _gridCellKey = key;
+        _isInGrid = inGrid;
+    }
+    long long GetGridCellKey() const
+    {
+        return _gridCellKey;
+    }
+    bool IsInGrid() const
+    {
+        return _isInGrid;
+    }
 };
 
 } // namespace SimpleGame

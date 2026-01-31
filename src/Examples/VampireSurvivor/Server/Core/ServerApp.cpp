@@ -6,25 +6,16 @@
 #include "Core/UserDB.h"
 #include "Game/RoomManager.h"
 #include "Protocol/game.pb.h"
-#include "System/Database/DatabaseImpl.h"
+#include "System/Drivers/MySQL/MySQLDriver.h"
+#include "System/Drivers/SQLite/SQLiteDriver.h"
 #include "System/Framework/Framework.h" // Needed for Framework implementation
 #include "System/ICommandConsole.h"
 #include "System/ILog.h"
 #include "System/MQ/MessageQoS.h"
 #include "System/MQ/MessageSystem.h"
 #include "System/Session/SessionFactory.h"
-#include "System/Thread/ThreadPool.h"
-
-#ifdef USE_SQLITE
-#include "System/Drivers/SQLite/SQLiteConnectionFactory.h"
-#endif
-#ifdef USE_MYSQL
-#include "System/Drivers/MySQL/MySQLConnectionFactory.h"
-#endif
 
 #include "System/Debug/CrashHandler.h"
-#include <iostream>
-
 namespace SimpleGame {
 
 ServerApp::ServerApp()
@@ -95,7 +86,7 @@ void ServerApp::Run()
 bool ServerApp::LoadConfig()
 {
     _config = System::IConfig::Create();
-    if (!_config->Load("data/simple_game_config.json"))
+    if (!_config->Load("data/vampire_server_config.json"))
     {
         LOG_ERROR("Failed to load config.");
         return false;
@@ -155,54 +146,15 @@ bool ServerApp::InitFramework()
 
 bool ServerApp::InitDatabase()
 {
-    // DB Thread Pool
-    _dbThreadPool = std::make_shared<System::ThreadPool>(4);
-    _dbThreadPool->Start();
-
-    // Factory
-    std::unique_ptr<System::IConnectionFactory> dbFactory;
-    const auto &cfg = _config->GetConfig();
-
-    bool factoryCreated = false;
-
-    if (cfg.dbType == "mysql")
-    {
-#ifdef USE_MYSQL
-        System::MySQLConfig mysqlCfg;
-        mysqlCfg.Host = cfg.dbAddress;
-        mysqlCfg.Port = cfg.dbPort;
-        mysqlCfg.User = cfg.dbUser;
-        mysqlCfg.Password = cfg.dbPassword;
-        mysqlCfg.Database = cfg.dbSchema;
-        dbFactory = std::make_unique<System::MySQLConnectionFactory>(mysqlCfg);
-        factoryCreated = true;
-#else
-        LOG_ERROR("MySQL not compiled.");
-#endif
-    }
-    else
-    {
-#ifdef USE_SQLITE
-        dbFactory = std::make_unique<System::SQLiteConnectionFactory>();
-        factoryCreated = true;
-#else
-        LOG_ERROR("SQLite not compiled.");
-#endif
-    }
-
-    if (!factoryCreated)
-        return false;
-
-    _db = std::make_shared<System::DatabaseImpl>(
-        cfg.dbAddress, cfg.dbWorkerCount, 5000, std::move(dbFactory), _dbThreadPool, _framework->GetDispatcher()
-    );
+    _db = _framework->GetDatabase();
 
     if (!_db)
+    {
+        LOG_ERROR("Database initialization failed (Framework did not provide IDatabase).");
         return false;
+    }
 
-    _db->Init();
-
-    LOG_INFO("Database Initialized.");
+    LOG_INFO("Database Instance obtained from Framework.");
     return true;
 }
 

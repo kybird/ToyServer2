@@ -4,7 +4,6 @@
 #include <memory>
 #include <vector>
 
-
 using namespace SimpleGame;
 
 class MockObject : public GameObject
@@ -53,10 +52,8 @@ TEST(SpatialGridTest, UpdatePosition)
     grid.Add(obj1);
 
     // Move to 200, 200 (Cell 2,2)
-    float oldX = obj1->GetX();
-    float oldY = obj1->GetY();
     obj1->SetPos(250.0f, 250.0f);
-    grid.Update(obj1, oldX, oldY);
+    grid.Update(obj1);
 
     // Query old location -> Empty
     auto resOld = grid.QueryRange(10.0f, 10.0f, 50.0f);

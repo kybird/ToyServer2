@@ -5,7 +5,6 @@
 #include "System/IFramework.h"
 #include <memory>
 
-
 namespace SimpleGame {
 
 class GamePacketHandler;
@@ -32,7 +31,6 @@ private:
     std::shared_ptr<System::IFramework> _framework;
     std::shared_ptr<System::IConfig> _config;
     std::shared_ptr<System::IDatabase> _db;
-    std::shared_ptr<System::ThreadPool> _dbThreadPool;
 
     std::shared_ptr<GamePacketHandler> _packetHandler;
     std::shared_ptr<UserDB> _userDB;

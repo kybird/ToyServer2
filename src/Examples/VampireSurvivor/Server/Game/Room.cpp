@@ -97,13 +97,22 @@ void Room::Reset()
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
     // 1. Clear all objects (monsters, projectiles, etc.) except players
+    // 1. Clear all objects (monsters, projectiles, etc.) except players
     auto allObjects = _objMgr.GetAllObjects();
+    // Force clear Grid first to remove all ghosts
+    _grid.Clear();
+
     for (const auto &obj : allObjects)
     {
         if (obj->GetType() != Protocol::ObjectType::PLAYER)
         {
-            _grid.Remove(obj);
+            // _grid.Remove(obj); // No need, we cleared all
             _objMgr.RemoveObject(obj->GetId());
+        }
+        else
+        {
+            // Re-add players to grid
+            _grid.Add(obj);
         }
     }
 
@@ -318,9 +327,8 @@ void Room::OnPlayerReady(uint64_t sessionId)
         existingObjects.set_server_tick(_serverTick); // Anchor for Tick Sync
         for (const auto &obj : allObjects)
         {
-            // Skip self (the new player was just added, but client already knows about itself)
-            if (obj->GetId() == player->GetId())
-                continue;
+            // [Fix] Include self to ensure client spawns its own character.
+            // Client relies on S_SpawnObject to create the local player object.
 
             auto *info = existingObjects.add_objects();
             info->set_object_id(obj->GetId());
@@ -373,8 +381,8 @@ void Room::OnPlayerReady(uint64_t sessionId)
     info->set_max_hp(player->GetMaxHp());
     info->set_state(Protocol::ObjectState::IDLE);
 
-    BroadcastPacket(S_SpawnObjectPacket(std::move(newPlayerSpawn)));
-    LOG_INFO("Broadcasted ready player {} spawn to all players in room", sessionId);
+    BroadcastPacket(S_SpawnObjectPacket(std::move(newPlayerSpawn)), sessionId);
+    LOG_INFO("Broadcasted ready player {} spawn to other players in room", sessionId);
 }
 
 void Room::Leave(uint64_t sessionId)
@@ -433,16 +441,11 @@ void Room::Update(float deltaTime)
     if (!_isGameOver)
     {
         _waveMgr.Update(deltaTime, this);
-
-        // [NEW] 승리 조건 체크
-        if (CheckWinCondition())
-        {
-            HandleGameOver(true);
-        }
     }
     _totalRunTime += deltaTime;
 
     // 1. Physics & Logic Update
+    auto t0 = std::chrono::steady_clock::now();
     auto objects = _objMgr.GetAllObjects();
 
     // Separate updates for batching
@@ -453,6 +456,7 @@ void Room::Update(float deltaTime)
     {
         UpdateObject(obj, deltaTime, monsterMoves, playerMoves);
     }
+    auto t1 = std::chrono::steady_clock::now();
 
     // === 2. Broadcast Monsters (Reactive Sync) ===
     // 5 TPS = Every 5 ticks (0.2s interval)
@@ -517,20 +521,38 @@ void Room::Update(float deltaTime)
 
     // === 4. Send Player Ack (authoritative snapshot) ===
     SendPlayerAcks();
+    auto t2 = std::chrono::steady_clock::now();
 
     // === [NEW] 효과 업데이트 (Physics 후, Combat 전) ===
     _effectMgr->Update(_totalRunTime, this);
 
     // === 5. Overlap Resolution (Push apart overlapping monsters) ===
+    auto t3 = std::chrono::steady_clock::now();
     // We only process monsters here as players have client-side prediction/logic.
     for (auto &obj : objects)
     {
         if (obj->GetType() != Protocol::ObjectType::MONSTER || obj->GetState() == Protocol::ObjectState::DEAD)
             continue;
 
-        auto monstersInRange = GetMonstersInRange(obj->GetX(), obj->GetY(), obj->GetRadius() * 2.1f);
+        _monsterBuffer.clear();
+        _queryBuffer.clear();
+        _grid.QueryRange(obj->GetX(), obj->GetY(), obj->GetRadius() * 2.1f, _queryBuffer);
+        for (auto &q : _queryBuffer)
+        {
+            if (q->GetType() == Protocol::ObjectType::MONSTER)
+            {
+                auto monster = std::dynamic_pointer_cast<Monster>(q);
+                if (monster != nullptr && !monster->IsDead())
+                {
+                    _monsterBuffer.push_back(monster);
+                }
+            }
+        }
+
         int resolveCount = 0;
-        for (auto &other : monstersInRange)
+        float myRadius = obj->GetRadius();
+
+        for (auto &other : _monsterBuffer)
         {
             if (obj->GetId() == other->GetId() || other->GetState() == Protocol::ObjectState::DEAD)
                 continue;
@@ -538,24 +560,26 @@ void Room::Update(float deltaTime)
             float dx = obj->GetX() - other->GetX();
             float dy = obj->GetY() - other->GetY();
             float distSq = dx * dx + dy * dy;
-            float minDist = obj->GetRadius() + other->GetRadius() + 0.1f;
 
-            if (distSq < minDist * minDist && distSq > 0.0001f)
+            float minDist = myRadius + other->GetRadius() + 0.1f;
+            float minDistSq = minDist * minDist;
+
+            if (distSq < minDistSq && distSq > 0.0001f)
             {
                 float dist = std::sqrt(distSq);
+                float invDist = 1.0f / dist;
                 float overlap = minDist - dist;
 
                 // Push away extremely softly (Hard Blocking mode)
-                // We rely more on velocity adjustment in Monster::Update
-                float pushX = (dx / dist) * overlap * 0.01f;
-                float pushY = (dy / dist) * overlap * 0.01f;
+                float pushX = (dx * invDist) * overlap * 0.01f;
+                float pushY = (dy * invDist) * overlap * 0.01f;
 
                 obj->SetPos(obj->GetX() + pushX, obj->GetY() + pushY);
                 other->SetPos(other->GetX() - pushX, other->GetY() - pushY);
 
-                // Update Grid (slow but necessary for immediate correction)
-                _grid.Update(obj, obj->GetX() - pushX, obj->GetY() - pushY);
-                _grid.Update(other, other->GetX() + pushX, other->GetY() + pushY);
+                // Update Grid (Now uses internal object tracking)
+                _grid.Update(obj);
+                _grid.Update(other);
 
                 if (++resolveCount >= 8)
                     break;
@@ -564,7 +588,15 @@ void Room::Update(float deltaTime)
     }
 
     // 3. Combat & Collision Resolution (Refactored)
+    auto t4 = std::chrono::steady_clock::now();
     _combatMgr->Update(deltaTime, this);
+    auto t5 = std::chrono::steady_clock::now();
+
+    // Accumulate detailed times
+    _physicsTimeSec += std::chrono::duration<float>(t1 - t0).count();
+    _networkTimeSec += std::chrono::duration<float>(t2 - t1).count();
+    _overlapTimeSec += std::chrono::duration<float>(t4 - t3).count();
+    _combatTimeSec += std::chrono::duration<float>(t5 - t4).count();
 
     // --- Performance Tracking ---
     auto endTime = std::chrono::steady_clock::now();
@@ -575,24 +607,35 @@ void Room::Update(float deltaTime)
 
     if (_totalRunTime - _lastPerfLogTime >= 5.0f)
     {
-        float avgMs = (_totalUpdateSec / _updateCount) * 1000.0f;
-        float maxMs = _maxUpdateSec * 1000.0f;
+        float total = _updateCount > 0 ? _updateCount : 1;
+        float avgMs = (_totalUpdateSec / total) * 1000.0f;
+        float physMs = (_physicsTimeSec / total) * 1000.0f;
+        float netMs = (_networkTimeSec / total) * 1000.0f;
+        float overMs = (_overlapTimeSec / total) * 1000.0f;
+        float combatMs = (_combatTimeSec / total) * 1000.0f;
+
         int monsterCount = static_cast<int>(_objMgr.GetAliveMonsterCount());
-        int projCount = 0; // Could iterate or track if needed
 
         LOG_INFO(
-            "[Performance] Room:{} | Alive Monsters:{} | AvgUpdate:{:.2f}ms | MaxUpdate:{:.2f}ms | Tick:{}",
+            "[Performance] Room:{} | Monsters:{} | Total:{:.2f}ms (Phys:{:.2f}, Net:{:.2f}, Overlap:{:.2f}, "
+            "Combat:{:.2f})",
             _roomId,
             monsterCount,
             avgMs,
-            maxMs,
-            _serverTick
+            physMs,
+            netMs,
+            overMs,
+            combatMs
         );
 
-        _lastPerfLogTime = _totalRunTime;
         _totalUpdateSec = 0.0f;
+        _physicsTimeSec = 0.0f;
+        _networkTimeSec = 0.0f;
+        _overlapTimeSec = 0.0f;
+        _combatTimeSec = 0.0f;
         _updateCount = 0;
         _maxUpdateSec = 0.0f;
+        _lastPerfLogTime = _totalRunTime;
     }
 }
 
@@ -618,7 +661,7 @@ void Room::UpdateObject(
         // Map Bounds Check (TODO)
 
         obj->SetPos(newX, newY);
-        _grid.Update(obj, oldX, oldY);
+        _grid.Update(obj);
     }
 
     Protocol::ObjectPos move;
@@ -712,37 +755,37 @@ std::shared_ptr<Player> Room::GetNearestPlayer(float x, float y)
 
 std::vector<std::shared_ptr<Monster>> Room::GetMonstersInRange(float x, float y, float radius)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-    std::vector<std::shared_ptr<Monster>> found;
+    _monsterBuffer.clear();
+    _queryBuffer.clear();
 
     // SpatialGrid is used for optimized query
-    auto objects = _grid.QueryRange(x, y, radius);
-    for (auto &obj : objects)
+    _grid.QueryRange(x, y, radius, _queryBuffer);
+    for (auto &obj : _queryBuffer)
     {
         if (obj->GetType() == Protocol::ObjectType::MONSTER)
         {
             auto monster = std::dynamic_pointer_cast<Monster>(obj);
             if (monster != nullptr && !monster->IsDead())
             {
-                found.push_back(monster);
+                _monsterBuffer.push_back(monster);
             }
         }
     }
-    return found;
+    return _monsterBuffer;
 }
 
 Vector2
 Room::GetSeparationVector(float x, float y, float radius, int32_t excludeId, const Vector2 &velocity, int maxNeighbors)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
     Vector2 separation(0.0f, 0.0f);
     int count = 0;
 
     // Directional check optimization
     bool useDirectionalCheck = !velocity.IsZero();
 
-    auto neighbors = _grid.QueryRange(x, y, radius);
-    for (auto &obj : neighbors)
+    _queryBuffer.clear();
+    _grid.QueryRange(x, y, radius, _queryBuffer);
+    for (auto &obj : _queryBuffer)
     {
         if (obj->GetId() == excludeId || obj->GetType() != Protocol::ObjectType::MONSTER)
             continue;
@@ -769,23 +812,21 @@ Room::GetSeparationVector(float x, float y, float radius, int32_t excludeId, con
         }
 
         float distSq = dx * dx + dy * dy;
+        float radiusSq = radius * radius;
 
-        if (distSq > 0.0001f && distSq < radius * radius)
+        if (distSq > 0.0001f && distSq < radiusSq)
         {
             float dist = std::sqrt(distSq);
+            float invDist = 1.0f / dist;
 
-            // [Request #2] Distance-based weighting
-            // Closer = Stronger. Linear falloff.
+            // Closer = Stronger weight (1.0 - dist/radius)
             float weight = 1.0f - (dist / radius);
-            if (weight < 0)
-                weight = 0;
 
-            // Normalized direction * weight
-            separation.x += (dx / dist) * weight;
-            separation.y += (dy / dist) * weight;
+            // Normalized direction (dx * invDist) * weight
+            separation.x += dx * (invDist * weight);
+            separation.y += dy * (invDist * weight);
             count++;
 
-            // [Optimization] Limit neighbor checks
             if (count >= maxNeighbors)
                 break;
         }
@@ -808,27 +849,21 @@ Room::GetSeparationVector(float x, float y, float radius, int32_t excludeId, con
 }
 
 // [Phase 3] Broadcast Optimization
-void Room::BroadcastPacket(const System::IPacket &pkt)
+void Room::BroadcastPacket(const System::IPacket &pkt, uint64_t excludeSessionId)
 {
     std::lock_guard<std::recursive_mutex> lock(_mutex);
 
-    // Collect real sessions for optimized broadcast
-    std::vector<System::ISession *> realSessions;
-    realSessions.reserve(_players.size());
-
     for (auto &pair : _players)
     {
+        if (pair.first == excludeSessionId)
+            continue;
+
         auto &player = pair.second;
         if (!player->IsReady())
             continue;
 
-        // [Phase 2] Broadcast is now handled via Session Registry in Dispatcher
-        // or through individual SendToPlayer if optimization is not used.
-        // For now, fallback to individual sends as Broadcast needs real Session*
         SendToPlayer(pair.first, pkt);
     }
-
-    // [Phase 2 TODO] Implement optimized multicast in Dispatcher
 }
 
 void Room::SendToPlayer(uint64_t sessionId, const System::IPacket &pkt)
