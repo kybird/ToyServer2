@@ -150,6 +150,7 @@ void Player::Reset()
     }
     _pendingLevelUpOptions.clear();
     _slowedMonsterIds.clear();
+    _emitters.clear(); // [Fix] Clear emitters to prevent reuse of stale emitters in object pooling
 }
 
 uint64_t Player::GetSessionId() const

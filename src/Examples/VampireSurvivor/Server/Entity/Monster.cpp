@@ -27,28 +27,28 @@ void Monster::Update(float dt, Room *room)
             return;
         }
 
-        // Hybrid AI: Think (periodic) + Execute (every tick)
+        // Create AI based on template
         _ai->Think(this, room, _aliveTime);
         _ai->Execute(this, dt);
 
+        /*
         // --- 중앙 집중식 회피 및 스티어링 (매 프레임 처리) ---
-        // 비주얼 개선을 위해 디더링을 제거하고 매 틱마다 주변 몬스터를 체크합니다.
+        // [Optimization] Individual query is removed. Cell-centric loop in Room::Update handles this now.
         Vector2 velocity(GetVX(), GetVY());
         Vector2 sep = room->GetSeparationVector(GetX(), GetY(), GetRadius() * 2.5f, GetId(), velocity, 6);
 
         if (!sep.IsZero())
         {
-            // 소프트 분리: 근접한 대상 쪽으로 이동하는 속도 성분을 제거합니다.
             Vector2 n = sep.Normalized();
             float proj = velocity.Dot(n);
 
-            // 해당 방향으로 이동 중인 경우에만 속도 보정 수행 (서로 밀어내는 효과)
             if (proj < 0.0f)
             {
                 velocity -= n * proj;
                 SetVelocity(velocity.x, velocity.y);
             }
         }
+        */
     }
 }
 

@@ -230,6 +230,7 @@ set(GAME_SOURCES
     src/Examples/VampireSurvivor/Server/Core/Handlers/System/PongHandler.cpp
     src/Examples/VampireSurvivor/Server/Core/DataManager.cpp
     src/Examples/VampireSurvivor/Server/Game/Room.cpp
+    src/Examples/VampireSurvivor/Server/Game/SpatialGrid.cpp
     src/Examples/VampireSurvivor/Server/Game/RoomManager.cpp
     src/Examples/VampireSurvivor/Server/Game/WaveManager.cpp
     src/Examples/VampireSurvivor/Server/Game/DamageEmitter.cpp

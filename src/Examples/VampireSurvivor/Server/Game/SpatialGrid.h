@@ -1,180 +1,123 @@
 #pragma once
 #include "Entity/GameObject.h"
+#include "Protocol/game.pb.h"
+#include <algorithm>
+#include <array>
 #include <cmath>
-#include <unordered_map>
 #include <vector>
 
 namespace SimpleGame {
 
-// Sparse Grid
+// Forward declaration
+class ObjectManager;
+
+struct CellData
+{
+    std::vector<int32_t> monsterIds; // 몬스터 ID 저장 (ObjectManager API와 일치)
+};
+
 class SpatialGrid
 {
 public:
+    // 격자 크기 및 오프셋 정의
+    static constexpr int GRID_SIZE = 256;  // 256x256 격자
+    static constexpr int OFFSET = 1000000; // 음수 좌표 처리를 위한 오프셋
+    static constexpr int TOTAL_CELLS = GRID_SIZE * GRID_SIZE;
+
     SpatialGrid(float cellSize) : _cellSize(cellSize)
     {
+        _cells.resize(TOTAL_CELLS);
     }
 
-    // [Optimization] Removed Internal Mutex (Room already locks this via Strand/RoomMutex)
+    // [Optimization] 모든 객체를 격자에 일괄 재배치 (O(N))
+    void Rebuild(const std::vector<std::shared_ptr<GameObject>> &objects)
+    {
+        // 1. 기존 데이터 초기화 (메모리 재할당 방지를 위해 clear만 수행)
+        for (auto &cell : _cells)
+        {
+            cell.monsterIds.clear();
+        }
+
+        // 2. 살아있는 몬스터들을 격자에 추가
+        for (const auto &obj : objects)
+        {
+            if (!obj || obj->GetType() != Protocol::ObjectType::MONSTER ||
+                obj->GetState() == Protocol::ObjectState::DEAD)
+                continue;
+
+            int idx = GetIndex(obj->GetX(), obj->GetY());
+            _cells[static_cast<size_t>(idx)].monsterIds.push_back(obj->GetId());
+        }
+    }
+
+    // 좌표를 격자 인덱스로 변환 (Wrap-around 방식 지원)
+    inline int GetIndex(float x, float y) const
+    {
+        int cx = static_cast<int>(std::floor(x / _cellSize));
+        int cy = static_cast<int>(std::floor(y / _cellSize));
+
+        unsigned int ux = static_cast<unsigned int>(cx + OFFSET) % GRID_SIZE;
+        unsigned int uy = static_cast<unsigned int>(cy + OFFSET) % GRID_SIZE;
+        return static_cast<int>(ux * GRID_SIZE + uy);
+    }
+
+    // 인덱스를 통해 인접한 9개 셀(자신 포함)의 인덱스를 가져옴
+    void GetNeighborCells(int cellIdx, std::array<int, 9> &outNeighbors) const
+    {
+        int cx = cellIdx / GRID_SIZE;
+        int cy = cellIdx % GRID_SIZE;
+
+        int count = 0;
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                unsigned int ux = static_cast<unsigned int>(cx + dx) % GRID_SIZE;
+                unsigned int uy = static_cast<unsigned int>(cy + dy) % GRID_SIZE;
+                outNeighbors[count++] = static_cast<int>(ux * GRID_SIZE + uy);
+            }
+        }
+    }
+
+    const std::vector<int32_t> &GetMonsterIds(int cellIdx) const
+    {
+        return _cells[static_cast<size_t>(cellIdx)].monsterIds;
+    }
+
+    // 하위 호환성을 위한 QueryRange (CombatManager 등에서 사용)
+    void QueryRange(
+        float x, float y, float radius, std::vector<std::shared_ptr<GameObject>> &outResults, ObjectManager &objMgr
+    );
+
+    // [Legacy/Compatibility] 기존 코드 유지를 위한 더미 함수들
     void Add(std::shared_ptr<GameObject> obj)
     {
-        if (!obj || obj->IsInGrid())
-            return;
-
-        long long key = GetCellKey(obj->GetX(), obj->GetY());
-        auto &vec = _cells[key];
-
-        // Double check uniqueness (though obj->IsInGrid() should handle it)
-        for (const auto &existing : vec)
-        {
-            if (existing == obj)
-                return;
-        }
-
-        vec.push_back(obj);
-        obj->SetGridInfo(key, true);
-    }
-
+    } // Rebuild에서 처리
     void Remove(std::shared_ptr<GameObject> obj)
     {
-        if (!obj || !obj->IsInGrid())
-            return;
-
-        long long key = obj->GetGridCellKey();
-        auto it = _cells.find(key);
-        if (it != _cells.end())
-        {
-            auto &vec = it->second;
-            for (size_t i = 0; i < vec.size(); ++i)
-            {
-                if (vec[i] == obj)
-                {
-                    if (i != vec.size() - 1)
-                    {
-                        std::swap(vec[i], vec.back());
-                    }
-                    vec.pop_back();
-                    if (vec.empty())
-                    {
-                        _cells.erase(it);
-                    }
-                    break;
-                }
-            }
-        }
-        obj->SetGridInfo(0, false);
     }
-
     void Update(std::shared_ptr<GameObject> obj)
     {
-        if (!obj)
-            return;
-
-        // If not in grid, just Add it
-        if (!obj->IsInGrid())
-        {
-            Add(obj);
-            return;
-        }
-
-        long long oldKey = obj->GetGridCellKey();
-        long long newKey = GetCellKey(obj->GetX(), obj->GetY());
-
-        if (oldKey != newKey)
-        {
-            // Remove from old cell (using stored key)
-            auto oldIt = _cells.find(oldKey);
-            if (oldIt != _cells.end())
-            {
-                auto &vec = oldIt->second;
-                for (size_t i = 0; i < vec.size(); ++i)
-                {
-                    if (vec[i] == obj)
-                    {
-                        if (i != vec.size() - 1)
-                        {
-                            std::swap(vec[i], vec.back());
-                        }
-                        vec.pop_back();
-                        if (vec.empty())
-                        {
-                            _cells.erase(oldIt);
-                        }
-                        break;
-                    }
-                }
-            }
-
-            // Add to new cell
-            auto &newVec = _cells[newKey];
-            newVec.push_back(obj);
-            obj->SetGridInfo(newKey, true);
-        }
     }
-
-    void QueryRange(float x, float y, float radius, std::vector<std::shared_ptr<GameObject>> &outResults)
-    {
-        outResults.clear();
-        // Reserve some space to avoid reallocations
-        if (outResults.capacity() < 64)
-            outResults.reserve(64);
-
-        int minX = (int)std::floor((x - radius) / _cellSize);
-        int maxX = (int)std::floor((x + radius) / _cellSize);
-        int minY = (int)std::floor((y - radius) / _cellSize);
-        int maxY = (int)std::floor((y + radius) / _cellSize);
-
-        float radiusSq = radius * radius;
-
-        for (int cx = minX; cx <= maxX; cx++)
-        {
-            for (int cy = minY; cy <= maxY; cy++)
-            {
-                long long key = ((long long)cx << 32) | (unsigned int)cy;
-                auto it = _cells.find(key);
-                if (it != _cells.end())
-                {
-                    const auto &vec = it->second;
-                    for (const auto &obj : vec)
-                    {
-                        float dx = obj->GetX() - x;
-                        float dy = obj->GetY() - y;
-                        if (dx * dx + dy * dy <= radiusSq)
-                        {
-                            outResults.push_back(obj);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     void Clear()
     {
-        // When clearing grid, reset all objects' grid info
-        for (auto &pair : _cells)
+        for (auto &cell : _cells)
+            cell.monsterIds.clear();
+    }
+
+    // [New] 메모리까지 완전히 해제 (방 리셋 시 사용)
+    void HardClear()
+    {
+        for (auto &cell : _cells)
         {
-            for (auto &obj : pair.second)
-            {
-                obj->SetGridInfo(0, false);
-            }
+            cell.monsterIds.clear();
+            cell.monsterIds.shrink_to_fit();
         }
-        _cells.clear();
     }
 
 private:
     float _cellSize;
-
-    // Key: (x << 32) | y
-    // Value: Vector of objects (Cache friendly)
-    // Using unordered_map for spatial hashing with vector for fast local iteration.
-    std::unordered_map<long long, std::vector<std::shared_ptr<GameObject>>> _cells;
-
-    long long GetCellKey(float x, float y) const
-    {
-        int cx = (int)std::floor(x / _cellSize);
-        int cy = (int)std::floor(y / _cellSize);
-        return ((long long)cx << 32) | (unsigned int)cy;
-    }
+    std::vector<CellData> _cells;
 };
 
 } // namespace SimpleGame

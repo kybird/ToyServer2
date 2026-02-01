@@ -90,7 +90,9 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
 
             // Use radius for collision query
             room->_queryBuffer.clear();
-            room->_grid.QueryRange(proj->GetX(), proj->GetY(), proj->GetRadius() + 0.5f, room->_queryBuffer);
+            room->_grid.QueryRange(
+                proj->GetX(), proj->GetY(), proj->GetRadius() + 0.5f, room->_queryBuffer, room->_objMgr
+            );
             for (auto &target : room->_queryBuffer)
             {
                 if (target->GetId() == proj->GetId())
