@@ -110,6 +110,10 @@ target_sources(System PRIVATE
     src/System/Network/UDPNetworkImpl.h
     src/System/Network/UDPEndpointRegistry.cpp
     src/System/Network/UDPEndpointRegistry.h
+    src/System/Network/WebSocketNetworkImpl.cpp
+    src/System/Network/WebSocketNetworkImpl.h
+    src/System/Network/WebSocketSession.cpp
+    src/System/Network/WebSocketSession.h
     src/System/Network/RecvBuffer.cpp
     src/System/Network/RateLimiter.h
     src/System/Events/EventBus.h
@@ -246,14 +250,10 @@ set(GAME_SOURCES
     src/Examples/VampireSurvivor/Server/Core/DataManager.cpp
     src/Examples/VampireSurvivor/Server/Game/Room.cpp
     src/Examples/VampireSurvivor/Server/Game/Room_Update.cpp
-    src/Examples/VampireSurvivor/Server/Game/Room_Network.cpp
-    src/Examples/VampireSurvivor/Server/Game/Room_Debug.cpp
+    src/Examples/VampireSurvivor/Server/Game/Room_Broadcast.cpp
+
     src/Examples/VampireSurvivor/Server/Game/SpatialGrid.cpp
-    src/Examples/VampireSurvivor/Server/Game/MonsterSystem.cpp
-    src/Examples/VampireSurvivor/Server/Game/SIMDCollisionEngine.cpp
-    src/Examples/VampireSurvivor/Server/Game/MonsterSwarmData.cpp
-    src/Examples/VampireSurvivor/Server/Game/MonsterSwarmAI.cpp
-    src/Examples/VampireSurvivor/Server/Game/MonsterSwarmManager.cpp
+
     src/Examples/VampireSurvivor/Server/Game/RoomManager.cpp
     src/Examples/VampireSurvivor/Server/Game/WaveManager.cpp
     src/Examples/VampireSurvivor/Server/Game/DamageEmitter.cpp
@@ -271,6 +271,9 @@ set(GAME_SOURCES
     src/Examples/VampireSurvivor/Server/Entity/AI/WanderAI.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/SwarmAI.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/BossAI.cpp
+    src/Examples/VampireSurvivor/Server/Entity/AI/Movement/FluidStackingStrategy.cpp
+    src/Examples/VampireSurvivor/Server/Entity/AI/Movement/SmartFlockingStrategy.cpp
+    src/Examples/VampireSurvivor/Server/Entity/AI/Movement/StrictSeparationStrategy.cpp
     src/Examples/VampireSurvivor/Server/Entity/ProjectileFactory.cpp
     ${PROTO_SRCS} ${PROTO_HDRS}
 )

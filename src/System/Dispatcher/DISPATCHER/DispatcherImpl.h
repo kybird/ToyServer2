@@ -71,6 +71,10 @@ private:
 
     // [Optimization] Smart Notify using wait count
     std::atomic<int32_t> _waitingCount{0};
+
+    // [Thread Safety] Logic owner thread tracking
+    std::atomic<std::thread::id> _ownerThreadId;
+    bool IsInDispatcherThread() const;
 };
 
 } // namespace System

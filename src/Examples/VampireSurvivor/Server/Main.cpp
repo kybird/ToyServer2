@@ -11,7 +11,7 @@ int main()
     }
     else
     {
-        std::cerr << "ServerApp Initialization Failed.\n";
+        std::cerr << "Failed to initialize server application." << std::endl;
         return 1;
     }
 

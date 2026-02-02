@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+        h1 { color: #4ec9b0; }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .connected { background: #0e639c; color: white; }
+        .disconnected { background: #d16969; color: white; }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #3c3c3c;
+            background: #252526;
+            color: #d4d4d4;
+            border-radius: 4px;
+        }
+        button {
+            cursor: pointer;
+            background: #0e639c;
+            color: white;
+        }
+        button:hover { background: #1177bb; }
+        #log {
+            background: #252526;
+            border: 1px solid #3c3c3c;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+        .log-info { color: #4ec9b0; }
+        .log-error { color: #f48771; }
+        .log-message { color: #ce9178; }
+    </style>
+</head>
+<body>
+    <h1>🔌 WebSocket 테스트 클라이언트</h1>
+    
+    <div id="status" class="status disconnected">연결 안됨</div>
+    
+    <div>
+        <input type="text" id="url" value="ws://localhost:9002" style="width: 300px;">
+        <button onclick="connect()">연결</button>
+        <button onclick="disconnect()">연결 해제</button>
+    </div>
+    
+    <div style="margin-top: 20px;">
+        <input type="text" id="message" placeholder="메시지 입력..." style="width: 500px;">
+        <button onclick="sendMessage()">전송</button>
+    </div>
+    
+    <div id="log"></div>
+
+    <script>
+        let ws = null;
+        const logDiv = document.getElementById('log');
+        const statusDiv = document.getElementById('status');
+
+        function log(message, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            const className = `log-${type}`;
+            logDiv.innerHTML += `<div class="${className}">[${time}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(connected) {
+            if (connected) {
+                statusDiv.textContent = '✅ 연결됨';
+                statusDiv.className = 'status connected';
+            } else {
+                statusDiv.textContent = '❌ 연결 안됨';
+                statusDiv.className = 'status disconnected';
+            }
+        }
+
+        function connect() {
+            const url = document.getElementById('url').value;
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                log('이미 연결되어 있습니다.', 'error');
+                return;
+            }
+
+            log(`연결 시도: ${url}`, 'info');
+            ws = new WebSocket(url);
+
+            ws.onopen = () => {
+                log('WebSocket 연결 성공!', 'info');
+                updateStatus(true);
+            };
+
+            ws.onmessage = (event) => {
+                log(`서버로부터 수신: ${event.data}`, 'message');
+            };
+
+            ws.onerror = (error) => {
+                log('WebSocket 오류 발생', 'error');
+                console.error(error);
+            };
+
+            ws.onclose = () => {
+                log('WebSocket 연결 종료', 'info');
+                updateStatus(false);
+            };
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+
+        function sendMessage() {
+            const message = document.getElementById('message').value;
+            
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                log('먼저 연결해주세요!', 'error');
+                return;
+            }
+
+            if (!message) {
+                log('메시지를 입력해주세요!', 'error');
+                return;
+            }
+
+            ws.send(message);
+            log(`전송: ${message}`, 'info');
+            document.getElementById('message').value = '';
+        }
+
+        // Enter 키로 메시지 전송
+        document.getElementById('message').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // 페이지 로드 시 자동 연결
+        window.onload = () => {
+            log('WebSocket 테스트 클라이언트 준비 완료', 'info');
+        };
+    </script>
+</body>
+</html>

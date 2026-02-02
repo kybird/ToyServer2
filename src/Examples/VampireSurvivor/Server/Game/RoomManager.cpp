@@ -73,7 +73,7 @@ std::shared_ptr<Room> RoomManager::CreateRoom(int roomId, const std::string &tit
 
     std::cout << "[DEBUG] Creating Room Object..." << std::endl;
     std::shared_ptr<Room> newRoom =
-        std::make_shared<Room>(roomId, _framework->GetDispatcher(), _timer, strand, _userDB);
+        std::make_shared<Room>(roomId, _framework, _framework->GetDispatcher(), _timer, strand, _userDB);
     newRoom->SetTitle(title);
 
     std::cout << "[DEBUG] Room Object Created. Adding to map..." << std::endl;

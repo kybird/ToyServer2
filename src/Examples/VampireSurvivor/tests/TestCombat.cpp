@@ -23,11 +23,13 @@ TEST(CombatTest, ProjectileHitsMonster)
     tmpl.aiType = MonsterAIType::CHASER;
     DataManager::Instance().AddMonsterTemplate(tmpl);
 
-    auto room = std::make_shared<Room>(1, nullptr, nullptr, nullptr, nullptr);
+    // Room 생성자 인자 수정 (6개)
+    auto room = std::make_shared<Room>(1, nullptr, nullptr, nullptr, nullptr, nullptr);
 
     auto monster = MonsterFactory::Instance().CreateMonster(room->GetObjectManager(), 1, 2.0f, 0.0f);
     room->GetObjectManager().AddObject(monster);
-    room->_grid.Add(monster);
+
+    // grid.Add 기능이 삭제되었으므로 직접 추가하는 테스트 로직 제거 (Update 호출 시 처리됨)
     int32_t initialHp = monster->GetHp();
 
     auto proj = ProjectileFactory::Instance().CreateProjectile(
@@ -35,7 +37,6 @@ TEST(CombatTest, ProjectileHitsMonster)
     );
     proj->SetDamage(50);
     room->GetObjectManager().AddObject(proj);
-    room->_grid.Add(proj);
 
     room->Update(0.1f);
 
@@ -55,19 +56,17 @@ TEST(CombatTest, MonsterDies)
     tmpl.aiType = MonsterAIType::CHASER;
     DataManager::Instance().AddMonsterTemplate(tmpl);
 
-    auto room = std::make_shared<Room>(2, nullptr, nullptr, nullptr, nullptr);
+    auto room = std::make_shared<Room>(2, nullptr, nullptr, nullptr, nullptr, nullptr);
 
     auto monster = MonsterFactory::Instance().CreateMonster(room->GetObjectManager(), 1, 0.0f, 0.0f);
     monster->SetHp(10);
     room->GetObjectManager().AddObject(monster);
-    room->_grid.Add(monster);
 
     auto proj = ProjectileFactory::Instance().CreateProjectile(
         room->GetObjectManager(), 999, 1, 1, 0.1f, 0.1f, 0.0f, 0.0f, 20, 2.0f
     );
     proj->SetDamage(20);
     room->GetObjectManager().AddObject(proj);
-    room->_grid.Add(proj);
 
     room->Update(0.05f);
 
@@ -92,17 +91,17 @@ TEST(CombatTest, MonsterContactsPlayer)
     pTmpl.speed = 5.0f;
     DataManager::Instance().AddPlayerTemplate(pTmpl);
 
-    auto room = std::make_shared<Room>(3, nullptr, nullptr, nullptr, nullptr);
+    auto room = std::make_shared<Room>(3, nullptr, nullptr, nullptr, nullptr, nullptr);
 
     auto player = PlayerFactory::Instance().CreatePlayer(100, 0ULL);
     player->SetPos(0.0f, 0.0f);
-    room->_players[100] = player;
-    room->GetObjectManager().AddObject(player);
-    room->_grid.Add(player);
+
+    // Room::Enter를 통해 간접적으로 추가 (private 맵 접근 대신 사용)
+    player->SetReady(true);
+    room->Enter(player);
 
     auto monster = MonsterFactory::Instance().CreateMonster(room->GetObjectManager(), 1, 0.5f, 0.0f);
     room->GetObjectManager().AddObject(monster);
-    room->_grid.Add(monster);
 
     EXPECT_EQ(player->GetHp(), 100);
 
@@ -114,7 +113,7 @@ TEST(CombatTest, MonsterContactsPlayer)
 
 TEST(CombatTest, OverkillDoesNotResultInNegativeHp)
 {
-    auto room = std::make_shared<Room>(4, nullptr, nullptr, nullptr, nullptr);
+    auto room = std::make_shared<Room>(4, nullptr, nullptr, nullptr, nullptr, nullptr);
 
     auto player = std::make_shared<Player>(100, 0ULL);
     player->Initialize(100, 0ULL, 100, 5.0f);
@@ -160,7 +159,7 @@ TEST(CombatTest, LinearEmitterHitsNearestMonster)
     mTmpl.attackCooldown = 1.0f;
     DataManager::Instance().AddMonsterTemplate(mTmpl);
 
-    auto room = std::make_shared<Room>(5, nullptr, nullptr, nullptr, nullptr);
+    auto room = std::make_shared<Room>(5, nullptr, nullptr, nullptr, nullptr, nullptr);
 
     auto player = std::make_shared<Player>(100, 0ULL);
     player->Initialize(100, 0ULL, 100, 5.0f);
@@ -173,11 +172,9 @@ TEST(CombatTest, LinearEmitterHitsNearestMonster)
 
     auto m1 = MonsterFactory::Instance().CreateMonster(room->GetObjectManager(), 1, 1.0f, 0.0f);
     room->GetObjectManager().AddObject(m1);
-    room->_grid.Add(m1);
 
     auto m2 = MonsterFactory::Instance().CreateMonster(room->GetObjectManager(), 1, 1.5f, 0.0f);
     room->GetObjectManager().AddObject(m2);
-    room->_grid.Add(m2);
 
     room->Update(0.6f);
 
@@ -199,7 +196,7 @@ TEST(CombatTest, LinearEmitterRespectsLifetime)
     sTmpl.targetRule = "Nearest";
     DataManager::Instance().AddSkillTemplate(sTmpl);
 
-    auto room = std::make_shared<Room>(6, nullptr, nullptr, nullptr, nullptr);
+    auto room = std::make_shared<Room>(6, nullptr, nullptr, nullptr, nullptr, nullptr);
     auto player = std::make_shared<Player>(100, 0ULL);
     player->Initialize(100, 0ULL, 100, 5.0f);
     player->SetReady(true);
@@ -236,7 +233,7 @@ TEST(CombatTest, LinearEmitterSpawnsProjectile)
     sTmpl.targetRule = "Nearest";
     DataManager::Instance().AddSkillTemplate(sTmpl);
 
-    auto room = std::make_shared<Room>(10, nullptr, nullptr, nullptr, nullptr);
+    auto room = std::make_shared<Room>(10, nullptr, nullptr, nullptr, nullptr, nullptr);
 
     auto player = std::make_shared<Player>(100, 0ULL);
     player->Initialize(100, 0ULL, 100, 5.0f);

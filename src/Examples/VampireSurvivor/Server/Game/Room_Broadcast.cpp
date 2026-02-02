@@ -1,0 +1,92 @@
+#include "Entity/Monster.h"
+#include "Entity/Player.h"
+#include "Game/Room.h"
+#include "System/Framework/Framework.h"
+#include "System/Network/NetworkImpl.h"
+#include "System/Network/WebSocketNetworkImpl.h"
+#include "System/Utility/Json.h"
+
+namespace SimpleGame {
+
+void Room::BroadcastDebugState()
+{
+    // Throttle broadcast (e.g., 20 FPS = 0.05s)
+    if (_totalRunTime - _debugBroadcastTimer < 0.05f)
+        return;
+
+    _debugBroadcastTimer = _totalRunTime;
+
+    if (!_framework)
+        return;
+
+    // Safety check for Network casting
+    auto network = std::dynamic_pointer_cast<System::NetworkImpl>(_framework->GetNetwork());
+    if (!network)
+        return;
+
+    auto *ws = network->GetWebSocket();
+    if (ws == nullptr)
+        return;
+
+    // Prepare JSON Data using System::Json
+    System::Json root;
+    root["t"] = _serverTick;
+
+    // Players
+    std::vector<System::Json> players;
+    {
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
+        for (const auto &pair : _players)
+        {
+            auto p = pair.second;
+            players.push_back({{"id", p->GetId()}, {"x", p->GetX()}, {"y", p->GetY()}, {"hp", p->GetHp()}});
+        }
+    }
+    root["p"] = players;
+
+    // Monsters & Projectiles
+    std::vector<System::Json> monsters;
+    std::vector<System::Json> projectiles;
+    const auto &objects = _objMgr.GetAllObjects();
+    for (const auto &obj : objects)
+    {
+        if (obj->IsDead())
+            continue;
+
+        if (obj->GetType() == Protocol::ObjectType::MONSTER)
+        {
+            monsters.push_back({
+                {"id", obj->GetId()}, {"x", obj->GetX()}, {"y", obj->GetY()}, {"t", 1} // Type ID placeholder
+            });
+        }
+        else if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
+        {
+            projectiles.push_back({{"id", obj->GetId()}, {"x", obj->GetX()}, {"y", obj->GetY()}});
+        }
+    }
+    root["m"] = monsters;
+    root["pr"] = projectiles; // "pr" for projectiles
+
+    // Broadcast
+    ws->Broadcast(System::ToJsonString(root));
+}
+
+void Room::BroadcastDebugClear()
+{
+    if (!_framework)
+        return;
+
+    auto network = std::dynamic_pointer_cast<System::NetworkImpl>(_framework->GetNetwork());
+    if (!network)
+        return;
+
+    auto *ws = network->GetWebSocket();
+    if (ws == nullptr)
+        return;
+
+    System::Json root;
+    root["reset"] = true;
+    ws->Broadcast(System::ToJsonString(root));
+}
+
+} // namespace SimpleGame

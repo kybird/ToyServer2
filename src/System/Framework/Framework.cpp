@@ -13,6 +13,7 @@
 #include "System/Metrics/IMetrics.h"
 #include "System/Network/AesEncryption.h"
 #include "System/Network/NetworkImpl.h"
+#include "System/Network/WebSocketNetworkImpl.h"
 #include "System/Network/XorEncryption.h"
 #include "System/Session/BackendSession.h"
 #include "System/Session/GatewaySession.h"
@@ -225,6 +226,19 @@ bool Framework::Init(std::shared_ptr<IConfig> config, std::shared_ptr<IPacketHan
     }
     LOG_ERROR("[DEBUG] Network->Start returned TRUE!");
 
+    // 5.5 WebSocket Server (디버그/웹 클라이언트용)
+    if (serverConfig.webSocketEnabled && _network->GetWebSocket())
+    {
+        if (!_network->GetWebSocket()->Start(serverConfig.webSocketPort))
+        {
+            LOG_WARN("Failed to start WebSocket server on port {}", serverConfig.webSocketPort);
+        }
+        else
+        {
+            LOG_INFO("WebSocket Server started on port {}", serverConfig.webSocketPort);
+        }
+    }
+
     // 6. Console
     _console = std::make_shared<CommandConsole>(_config);
 
@@ -400,6 +414,11 @@ void Framework::Join()
     _ioThreads.clear();
 
     LOG_INFO("Shutdown Complete.");
+}
+
+std::shared_ptr<INetwork> Framework::GetNetwork() const
+{
+    return _network;
 }
 
 } // namespace System

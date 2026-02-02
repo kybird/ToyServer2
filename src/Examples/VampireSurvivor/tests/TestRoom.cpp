@@ -67,8 +67,8 @@ private:
 
 TEST(RoomTest, EnterAndLeave)
 {
-    // Fix: Room ctor needs 5 args
-    auto room = std::make_shared<Room>(1, nullptr, nullptr, nullptr, nullptr);
+    // Room 생성자 인자 수정 (6개)
+    auto room = std::make_shared<Room>(1, nullptr, nullptr, nullptr, nullptr, nullptr);
     EXPECT_EQ(room->GetId(), 1);
     EXPECT_EQ(room->GetPlayerCount(), 0);
 
@@ -88,7 +88,7 @@ TEST(RoomTest, EnterAndLeave)
 
 TEST(RoomTest, MultiplePlayers)
 {
-    auto room = std::make_shared<Room>(2, nullptr, nullptr, nullptr, nullptr);
+    auto room = std::make_shared<Room>(2, nullptr, nullptr, nullptr, nullptr, nullptr);
 
     MockSession s1(101);
     MockSession s2(102);
@@ -206,7 +206,7 @@ TEST(SendPacketTest, MockSessionSendPacketNoCrash)
 
 TEST(SendPacketTest, BroadcastPacketToEmptyRoomNoCrash)
 {
-    auto room = std::make_shared<Room>(999, nullptr, nullptr, nullptr, nullptr);
+    auto room = std::make_shared<Room>(999, nullptr, nullptr, nullptr, nullptr, nullptr);
     MockPacket packet;
 
     room->BroadcastPacket(packet);
@@ -216,7 +216,7 @@ TEST(SendPacketTest, BroadcastPacketToEmptyRoomNoCrash)
 
 TEST(SendPacketTest, BroadcastPacketToRoomWithPlayers)
 {
-    auto room = std::make_shared<Room>(998, nullptr, nullptr, nullptr, nullptr);
+    auto room = std::make_shared<Room>(998, nullptr, nullptr, nullptr, nullptr, nullptr);
 
     TrackingMockSession s1(201);
     TrackingMockSession s2(202);

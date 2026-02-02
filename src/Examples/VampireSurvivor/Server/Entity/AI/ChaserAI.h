@@ -1,12 +1,14 @@
 #pragma once
 
+#include "Entity/AI/Movement/IMovementStrategy.h"
+#include "Entity/Monster.h" // [Fix] Include for GetMovementStrategy
 #include "IAIBehavior.h"
 #include <cmath>
 
 namespace SimpleGame {
 
 // Forward declarations
-class Monster;
+// class Monster; // Now included
 class Room;
 
 /**

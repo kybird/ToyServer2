@@ -5,7 +5,7 @@
 
 ---
 
-## 📊 현재 완료 상태
+## 📊 현재 완료 상태 (2026-02-02 업데이트)
 
 ### ✅ 완료된 기능 (P1: 엔진 검증)
 | 기능 | 상태 | 비고 |
@@ -13,10 +13,12 @@
 | TCP/IP 접속 및 세션 관리 | ✅ | 자동 등록 로그인 |
 | 방 생성/입장/퇴장 | ✅ | RoomManager 구현 |
 | 500+ 몬스터 스폰 | ✅ | SpawnBatch, SpatialGrid |
-| 이동 동기화 | ✅ | S_MoveObjectBatch, Delta Sync |
+| 이동 동기화 | ✅ | S_MoveObjectBatch |
 | 웨이브 시스템 (기본) | ✅ | WaveManager, JSON 데이터 |
 | Protobuf 패킷 시스템 | ✅ | game.proto 정의 완료 |
 | 비동기 DB 시스템 | ✅ | QueryAsync, RunInTransaction |
+| **몬스터 충돌 (AABB)** | ✅ | **AABB Sliding (Bounce 해결)** |
+| **스탯/버프 시스템** | ✅ | **ModifierContainer 구현 완료** |
 
 ---
 

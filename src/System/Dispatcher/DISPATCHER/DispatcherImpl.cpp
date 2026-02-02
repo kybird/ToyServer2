@@ -37,6 +37,12 @@ bool DispatcherImpl::Process()
 
     size_t count = _messageQueue.try_dequeue_bulk(msgs, BATCH_SIZE);
 
+    // [Thread Safety] Record the thread ID that actually processes the logic
+    if (_ownerThreadId.load(std::memory_order_relaxed) == std::thread::id())
+    {
+        _ownerThreadId.store(std::this_thread::get_id(), std::memory_order_relaxed);
+    }
+
     if (count > 0)
     {
         for (size_t i = 0; i < count; ++i)
@@ -290,6 +296,19 @@ void DispatcherImpl::RegisterTimerHandler(ITimerHandler *handler)
 
 void DispatcherImpl::WithSession(uint64_t sessionId, std::function<void(SessionContext &)> callback)
 {
+    // [Optimization/Safety] If we are already in the Dispatcher thread, execute IMMEDIATELY.
+    // This protects local references (like IPacket&) from being captured into an async lambda.
+    if (IsInDispatcherThread())
+    {
+        auto it = _sessions.find(sessionId);
+        if (it != _sessions.end() && it->second->IsConnected())
+        {
+            SessionContext ctx(it->second);
+            callback(ctx);
+        }
+        return;
+    }
+
     // [SessionContext Refactoring] Use Push to ensure callback runs in Dispatcher's logic context (serial)
     Push(
         [this, sessionId, callback = std::move(callback)]()
@@ -302,6 +321,11 @@ void DispatcherImpl::WithSession(uint64_t sessionId, std::function<void(SessionC
             }
         }
     );
+}
+
+bool DispatcherImpl::IsInDispatcherThread() const
+{
+    return std::this_thread::get_id() == _ownerThreadId.load(std::memory_order_relaxed);
 }
 
 void DispatcherImpl::Push(std::function<void()> task)

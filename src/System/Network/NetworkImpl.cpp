@@ -1,7 +1,8 @@
 #include "System/Network/NetworkImpl.h"
-#include "System/Network/UDPNetworkImpl.h"
-#include "System/Network/UDPEndpointRegistry.h"
 #include "System/ILog.h"
+#include "System/Network/UDPEndpointRegistry.h"
+#include "System/Network/UDPNetworkImpl.h"
+#include "System/Network/WebSocketNetworkImpl.h"
 #include "System/Pch.h"
 #include "System/Session/SessionFactory.h"
 
@@ -10,6 +11,7 @@ namespace System {
 NetworkImpl::NetworkImpl() : _acceptor(_ioContext)
 {
     _udpNetwork = new UDPNetworkImpl(_ioContext);
+    _wsNetwork = new WebSocketNetworkImpl(_ioContext);
 }
 
 NetworkImpl::~NetworkImpl()
@@ -19,6 +21,11 @@ NetworkImpl::~NetworkImpl()
     {
         delete _udpNetwork;
         _udpNetwork = nullptr;
+    }
+    if (_wsNetwork)
+    {
+        delete _wsNetwork;
+        _wsNetwork = nullptr;
     }
 }
 
@@ -79,6 +86,11 @@ void NetworkImpl::Stop()
     if (_acceptor.is_open())
     {
         _acceptor.close(ec);
+    }
+
+    if (_wsNetwork)
+    {
+        _wsNetwork->Stop();
     }
 
     if (!_ioContext.stopped())

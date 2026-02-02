@@ -24,9 +24,12 @@ public:
         _typeId = typeId;
         _damage = 0;
         _lifetime = 5.0f;
-        _vx = _vy = 0;
-        _x = _y = 0;
+        _vx = 0.0f;
+        _vy = 0.0f;
+        _x = 0.0f;
+        _y = 0.0f;
         _isHit = false;
+        SetState(Protocol::ObjectState::IDLE); // [Fix] Reset state for pooled object
     }
 
     void Reset()
@@ -36,8 +39,11 @@ public:
         _skillId = 0;
         _typeId = 0;
         _damage = 0;
-        _lifetime = 0;
+        _lifetime = 0.0f;
+        _vx = 0.0f;
+        _vy = 0.0f;
         _isHit = false;
+        SetState(Protocol::ObjectState::IDLE);
     }
 
     int32_t GetOwnerId() const
@@ -64,14 +70,22 @@ public:
 
     void Update(float dt, Room *room) override
     {
+        if (IsDead())
+            return;
+
         // Movement is handled by Room::Update via GameObject::GetVX/VY
         // We only handle logic (lifetime)
         _lifetime -= dt;
+
+        if (_lifetime <= 0 || _isHit)
+        {
+            SetState(Protocol::ObjectState::DEAD);
+        }
     }
 
     bool IsExpired() const
     {
-        return _lifetime <= 0 || _isHit;
+        return _lifetime <= 0 || _isHit || IsDead();
     }
     void SetLifetime(float life)
     {

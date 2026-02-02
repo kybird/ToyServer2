@@ -1,54 +1,51 @@
 #include "Monster.h"
 #include "AI/IAIBehavior.h"
+#include "Entity/AI/Movement/IMovementStrategy.h"
+#include "Entity/AI/Movement/SmartFlockingStrategy.h"
 #include "Game/Room.h"
 
 namespace SimpleGame {
 
-// LevelUp Slow Source ID (고유 식별자)
+Monster::Monster(int32_t id, int32_t monsterTypeId)
+    : GameObject(id, Protocol::ObjectType::MONSTER), _monsterTypeId(monsterTypeId)
+{
+    _movementStrategy = std::make_shared<SmartFlockingStrategy>();
+}
+
+Monster::Monster() : GameObject(0, Protocol::ObjectType::MONSTER)
+{
+    _movementStrategy = std::make_shared<SmartFlockingStrategy>();
+}
+
+void Monster::SetMovementStrategy(std::shared_ptr<IMovementStrategy> strategy)
+{
+    _movementStrategy = strategy;
+}
+
+std::shared_ptr<IMovementStrategy> Monster::GetMovementStrategy()
+{
+    return _movementStrategy;
+}
+
 constexpr int32_t LEVELUP_SLOW_SOURCE_ID = 1000;
 
 void Monster::Update(float dt, Room *room)
 {
-    // Update lifetime
     _aliveTime += dt;
+    if (_stuckTimer > 0.0f)
+    {
+        _stuckTimer -= dt;
+    }
 
-    // Update state expiry
-    // [Fix] Use room->GetTotalRunTime() because state expiration is set based on room time
     UpdateStateExpiry(room->GetTotalRunTime());
-
-    // Update Modifier expiration
     _modifiers.Update(room->GetTotalRunTime());
 
     if (_ai != nullptr && !IsDead())
     {
-        // Skip AI if control is disabled (e.g. Knockback, Stun)
         if (IsControlDisabled())
-        {
             return;
-        }
-
-        // Create AI based on template
         _ai->Think(this, room, _aliveTime);
         _ai->Execute(this, dt);
-
-        /*
-        // --- 중앙 집중식 회피 및 스티어링 (매 프레임 처리) ---
-        // [Optimization] Individual query is removed. Cell-centric loop in Room::Update handles this now.
-        Vector2 velocity(GetVX(), GetVY());
-        Vector2 sep = room->GetSeparationVector(GetX(), GetY(), GetRadius() * 2.5f, GetId(), velocity, 6);
-
-        if (!sep.IsZero())
-        {
-            Vector2 n = sep.Normalized();
-            float proj = velocity.Dot(n);
-
-            if (proj < 0.0f)
-            {
-                velocity -= n * proj;
-                SetVelocity(velocity.x, velocity.y);
-            }
-        }
-        */
     }
 }
 
@@ -56,7 +53,6 @@ void Monster::TakeDamage(int32_t damage, Room *room)
 {
     if (IsDead())
         return;
-
     _hp -= damage;
     if (_hp <= 0)
     {
@@ -67,16 +63,9 @@ void Monster::TakeDamage(int32_t damage, Room *room)
 
 void Monster::AddLevelUpSlow(float currentTime, float duration)
 {
-    // 15% 속도로 감소 (PercentMult 0.15)
     StatModifier slowMod(
-        StatType::Speed,
-        ModifierOp::PercentMult,
-        0.15f, // 15% of normal speed
-        LEVELUP_SLOW_SOURCE_ID,
-        currentTime + duration, // 만료 시각
-        false                   // Refresh 정책
+        StatType::Speed, ModifierOp::PercentMult, 0.15f, LEVELUP_SLOW_SOURCE_ID, currentTime + duration, false
     );
-
     _modifiers.AddModifier(slowMod);
 }
 
@@ -89,10 +78,44 @@ void Monster::AddStatusEffect(const std::string &type, float value, float durati
 {
     if (type == "SLOW")
     {
-        // sourceId 2000+ for general status effects to avoid conflict with levelup slow(1000)
         StatModifier mod(StatType::Speed, ModifierOp::PercentMult, value, 2000, currentTime + duration);
         _modifiers.AddModifier(mod);
     }
+}
+
+void Monster::Reset()
+{
+    _id = 0;
+    _monsterTypeId = 0;
+    _targetId = 0;
+    _x = _y = _vx = _vy = 0;
+    _hp = _maxHp = 100;
+    _aliveTime = 0.0f;
+    _radius = GameConfig::MONSTER_COLLISION_RADIUS;
+    _damageOnContact = 10;
+    _attackCooldown = 1.0f;
+    _lastAttackTime = -100.0f;
+    _state = Protocol::ObjectState::IDLE;
+    _stateExpiresAt = 0.0f;
+    if (_ai)
+        _ai->Reset();
+    _modifiers.Clear();
+}
+
+void Monster::Initialize(
+    int32_t id, int32_t monsterTypeId, int32_t hp, float radius, int32_t damage, float cooldown, float speed
+)
+{
+    _id = id;
+    _monsterTypeId = monsterTypeId;
+    _hp = _maxHp = hp;
+    _radius = GameConfig::MONSTER_COLLISION_RADIUS;
+    _damageOnContact = damage;
+    _attackCooldown = cooldown;
+    _lastAttackTime = -100.0f;
+    _aliveTime = 0.0f;
+    _state = Protocol::ObjectState::IDLE;
+    _modifiers.SetBaseStat(StatType::Speed, speed);
 }
 
 } // namespace SimpleGame

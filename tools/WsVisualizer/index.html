@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToyServer2 Real-Time Visualizer</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* 기본 스타일은 style.css에 있지만 로딩 실패 시를 대비한 최소 스타일 */
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #1e1e1e;
+            color: #fff;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="ui-layer">
+        <div class="panel header">
+            <h1>Server Visualizer</h1>
+            <div id="connection-status" class="status disconnected">Disconnected</div>
+        </div>
+
+        <div class="panel stats">
+            <div>TPS: <span id="fps">0</span></div>
+            <div>Ping: <span id="ping">0</span>ms</div>
+            <div>Tick: <span id="tick">0</span></div>
+            <hr>
+            <div>Players: <span id="player-count">0</span></div>
+            <div>Monsters: <span id="monster-count">0</span></div>
+        </div>
+
+        <div class="panel controls">
+            <label><input type="checkbox" id="chk-players" checked> Players</label>
+            <label><input type="checkbox" id="chk-monsters" checked> Monsters</label>
+            <label><input type="checkbox" id="chk-projectiles" checked> Projectiles</label>
+            <label><input type="checkbox" id="chk-hitboxes"> Hitboxes</label>
+            <label><input type="checkbox" id="chk-grid" checked> Grid</label>
+            <button onclick="app.resetView()">Reset View</button>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>

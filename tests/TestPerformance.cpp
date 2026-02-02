@@ -38,11 +38,11 @@ protected:
 
 TEST_F(SwarmPerformanceTest, StressTest500Monsters)
 {
-    auto room = std::make_shared<Room>(1, nullptr, nullptr, nullptr, nullptr);
+    // Room 생성자 인자 수정 (6개)
+    auto room = std::make_shared<Room>(1, nullptr, nullptr, nullptr, nullptr, nullptr);
 
-    // Access private members via FRIEND class
-    ObjectManager &objMgr = room->_objMgr;
-    SpatialGrid &grid = room->_grid;
+    // Private 멤버 접근 에러 수정: 인터페이스 사용
+    ObjectManager &objMgr = room->GetObjectManager();
 
     // Spawn 500 Monsters
     int count = 500;
@@ -50,16 +50,14 @@ TEST_F(SwarmPerformanceTest, StressTest500Monsters)
 
     ASSERT_EQ(monsters.size(), count);
 
-    // Add to Grid manually (Simulating WaveManager)
-    for (auto &m : monsters)
-    {
-        grid.Add(m);
-    }
+    // Grid 직접 추가 로직 제거 (Update에서 Rebuild됨)
+    // DOD 최적화 기능이 삭제되었으므로, 기존의 수동 Grid 관리는 의미가 없어짐
 
     // Add Dummy Player to trigger AI
     auto player = std::make_shared<Player>(1000, 0ULL);
     player->Initialize(1000, 0ULL, 100, 5.0f);
     player->SetPos(1000.0f, 1000.0f); // Center
+    player->SetReady(true);
     room->Enter(player);
 
     // Run Loop

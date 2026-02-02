@@ -1,5 +1,8 @@
 #include "Game/Room.h"
 #include "Core/UserDB.h"
+#include "Entity/AI/Movement/FluidStackingStrategy.h"
+#include "Entity/AI/Movement/SmartFlockingStrategy.h"
+#include "Entity/AI/Movement/StrictSeparationStrategy.h"
 #include "Entity/Monster.h"
 #include "Entity/Player.h"
 #include "Entity/Projectile.h"
@@ -9,16 +12,17 @@
 #include "GamePackets.h"
 #include "Protocol/game.pb.h"
 #include "System/Dispatcher/IDispatcher.h"
+#include "System/IFramework.h"
 #include "System/Thread/IStrand.h"
 
 namespace SimpleGame {
 
 Room::Room(
-    int roomId, std::shared_ptr<System::IDispatcher> dispatcher, std::shared_ptr<System::ITimer> timer,
-    std::shared_ptr<System::IStrand> strand, std::shared_ptr<UserDB> userDB
+    int roomId, std::shared_ptr<System::IFramework> framework, std::shared_ptr<System::IDispatcher> dispatcher,
+    std::shared_ptr<System::ITimer> timer, std::shared_ptr<System::IStrand> strand, std::shared_ptr<UserDB> userDB
 )
-    : _roomId(roomId), _timer(std::move(timer)), _strand(std::move(strand)), _waveMgr(_objMgr, _grid, roomId),
-      _dispatcher(std::move(dispatcher)), _userDB(std::move(userDB))
+    : _roomId(roomId), _framework(std::move(framework)), _timer(std::move(timer)), _strand(std::move(strand)),
+      _waveMgr(_objMgr, _grid, roomId), _dispatcher(std::move(dispatcher)), _userDB(std::move(userDB))
 {
     _combatMgr = std::make_unique<CombatManager>();
     _effectMgr = std::make_unique<EffectManager>();
@@ -56,6 +60,8 @@ void Room::Stop()
         _timerHandle = 0;
     }
 
+    BroadcastDebugClear();
+
     _players.clear();
     _objMgr.Clear();
 
@@ -88,6 +94,8 @@ void Room::Reset()
 
     _waveMgr.Reset();
 
+    BroadcastDebugClear();
+
     _gameStarted = false;
     _isGameOver = false;
     _totalRunTime = 0.0f;
@@ -97,10 +105,6 @@ void Room::Reset()
     _totalUpdateSec = 0.0f;
     _updateCount = 0;
     _maxUpdateSec = 0.0f;
-    _physicsTimeSec = 0.0f;
-    _networkTimeSec = 0.0f;
-    _overlapTimeSec = 0.0f;
-    _combatTimeSec = 0.0f;
 
     LOG_INFO("Room {} has been reset. Ready for new game.", _roomId);
 }
@@ -366,6 +370,56 @@ void Room::HandleGameOver(bool isWin)
 bool Room::CheckWinCondition() const
 {
     return _waveMgr.IsAllWavesComplete() && _objMgr.GetAliveMonsterCount() == 0;
+}
+
+void Room::DebugToggleGodMode()
+{
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    for (auto &[sid, p] : _players)
+    {
+        p->SetGodMode(!p->IsGodMode());
+        LOG_INFO("Debug: GodMode toggled for Player {} -> {}", sid, p->IsGodMode());
+    }
+}
+
+void Room::SetMonsterStrategy(const std::string &strategyName)
+{
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+
+    std::shared_ptr<IMovementStrategy> strategy;
+    if (strategyName == "smart")
+    {
+        strategy = std::make_shared<SmartFlockingStrategy>();
+    }
+    else if (strategyName == "fluid")
+    {
+        strategy = std::make_shared<FluidStackingStrategy>();
+    }
+    else if (strategyName == "strict")
+    {
+        strategy = std::make_shared<StrictSeparationStrategy>();
+    }
+    else
+    {
+        LOG_WARN("Unknown strategy name: {}", strategyName);
+        return;
+    }
+
+    auto objects = _objMgr.GetAllObjects();
+    int count = 0;
+    for (auto &obj : objects)
+    {
+        if (obj->GetType() == Protocol::ObjectType::MONSTER)
+        {
+            auto monster = std::dynamic_pointer_cast<Monster>(obj);
+            if (monster)
+            {
+                monster->SetMovementStrategy(strategy);
+                count++;
+            }
+        }
+    }
+    LOG_INFO("Changed strategy to {} for {} monsters", strategyName, count);
 }
 
 } // namespace SimpleGame

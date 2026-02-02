@@ -253,6 +253,24 @@ void ServerApp::RegisterConsoleCommands()
                  r->DebugToggleGodMode();
          }}
     );
+
+    console->RegisterCommand(
+        {"/ai",
+         "Change Monster AI Strategy (/ai strict | /ai smart | /ai fluid)",
+         [](const std::vector<std::string> &args)
+         {
+             if (args.empty())
+                 return;
+             std::string strategy = args[0];
+             if (strategy == "strict" || strategy == "smart" || strategy == "fluid")
+             {
+                 if (auto r = RoomManager::Instance().GetRoom(1))
+                 {
+                     r->SetMonsterStrategy(strategy);
+                 }
+             }
+         }}
+    );
 }
 
 } // namespace SimpleGame

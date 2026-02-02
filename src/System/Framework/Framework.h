@@ -37,6 +37,7 @@ public:
     std::shared_ptr<IDatabase> GetDatabase() const override;
     std::shared_ptr<ThreadPool> GetThreadPool() const override;
     std::shared_ptr<ICommandConsole> GetCommandConsole() const override;
+    std::shared_ptr<INetwork> GetNetwork() const override;
 
 protected:
 private:

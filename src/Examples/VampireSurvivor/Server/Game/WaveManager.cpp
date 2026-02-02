@@ -65,13 +65,13 @@ void WaveManager::Update(float dt, Room *room)
 
         if (it->timer <= 0)
         {
-            // [50마리 제한] 현재 몬스터 수 체크
+            // [Optimization] 현재 몬스터 수 체크
             size_t currentMonsterCount = room->GetObjectManager().GetAliveMonsterCount();
-            const size_t MAX_MONSTERS = 50;
+            const size_t MAX_MONSTERS = 500; // [Fix] 50 -> 500으로 상향
 
             if (currentMonsterCount >= MAX_MONSTERS)
             {
-                // 50마리 이상이면 스폰 안 함
+                // 제한 초과 시 스폰 안 함
                 it->timer = it->interval; // 다음 틱에 다시 시도
                 ++it;
                 continue;
@@ -296,11 +296,11 @@ void WaveManager::StartSpawner(Room *room, const WaveData &wave)
 
 void WaveManager::SpawnMonster(int32_t monsterTypeId, float hpMultiplier, Room *room, float x, float y)
 {
-    // [50마리 제한] 재확인
+    // [Optimization] 최대 몬스터 수 재확인 (상향: 500)
     size_t currentMonsterCount = room->GetObjectManager().GetAliveMonsterCount();
-    if (currentMonsterCount >= 50)
+    if (currentMonsterCount >= 500)
     {
-        return; // 50마리 이상이면 스폰 안 함
+        return;
     }
 
     // Apply HP Multiplier from WaveData

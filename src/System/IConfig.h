@@ -32,6 +32,10 @@ struct ServerConfig
 
     // Server Role (gateway, backend)
     std::string serverRole = "gateway";
+
+    // WebSocket (디버그/웹 클라이언트용)
+    bool webSocketEnabled = false;
+    int webSocketPort = 9001;
 };
 
 class IConfig

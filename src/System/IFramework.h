@@ -12,7 +12,9 @@ class ITimer;
 class IPacketHandler;
 class IStrand;
 class IDatabase;
+class IDatabase;
 class ThreadPool;
+class INetwork;
 
 class IFramework
 {
@@ -39,6 +41,9 @@ public:
 
     // Command Console Accessor
     virtual std::shared_ptr<class ICommandConsole> GetCommandConsole() const = 0;
+
+    // Network Accessor
+    virtual std::shared_ptr<INetwork> GetNetwork() const = 0;
 
     // Event Subscription Helper (Hides IDispatcher)
     template <typename EventType, typename CallbackType> void Subscribe(CallbackType callback)

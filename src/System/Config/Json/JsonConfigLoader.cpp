@@ -68,6 +68,10 @@ bool JsonConfigLoader::Load(const std::string &filePath)
             _config.encryptionIV = server.value("encryption_iv", server.value("encryptionIV", ""));
             _config.logLevel = server.value("log_level", "info");
             _config.serverRole = server.value("server_role", server.value("serverRole", "gateway"));
+
+            // WebSocket
+            _config.webSocketEnabled = server.value("websocket_enabled", server.value("webSocketEnabled", false));
+            _config.webSocketPort = server.value("websocket_port", server.value("webSocketPort", 9001));
         }
 
         return true;

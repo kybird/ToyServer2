@@ -90,15 +90,18 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
             if (proj->IsExpired())
                 continue;
 
-            // Use radius for collision query
+            // [Optimization] Increase query radius for fast-moving projectiles
             room->_queryBuffer.clear();
             room->_grid.QueryRange(
-                proj->GetX(), proj->GetY(), proj->GetRadius() + 0.5f, room->_queryBuffer, room->_objMgr
+                proj->GetX(), proj->GetY(), proj->GetRadius() + 1.5f, room->_queryBuffer, room->_objMgr
             );
 
             // Use GameObject (Single Path)
             for (auto &target : room->_queryBuffer)
             {
+                if (proj->IsExpired())
+                    break;
+
                 if (target->GetId() == proj->GetId())
                     continue;
 
@@ -117,7 +120,8 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
                     float distSq = dx * dx + dy * dy;
                     float sumRad = proj->GetRadius() + monster->GetRadius();
 
-                    if (distSq <= sumRad * sumRad)
+                    // [Precision] Using a slight margin for hit detection stability
+                    if (distSq <= (sumRad + 0.1f) * (sumRad + 0.1f))
                     {
                         monster->TakeDamage(proj->GetDamage(), room);
 

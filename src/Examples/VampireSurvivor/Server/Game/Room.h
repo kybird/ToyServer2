@@ -16,6 +16,7 @@ namespace System {
 class IPacket;
 class IStrand;
 class IDispatcher;
+class IFramework;
 } // namespace System
 
 namespace SimpleGame {
@@ -42,8 +43,8 @@ class Room : public System::ITimerListener, public std::enable_shared_from_this<
 
 public:
     Room(
-        int roomId, std::shared_ptr<System::IDispatcher> dispatcher, std::shared_ptr<System::ITimer> timer,
-        std::shared_ptr<System::IStrand> strand, std::shared_ptr<UserDB> userDB
+        int roomId, std::shared_ptr<System::IFramework> framework, std::shared_ptr<System::IDispatcher> dispatcher,
+        std::shared_ptr<System::ITimer> timer, std::shared_ptr<System::IStrand> strand, std::shared_ptr<UserDB> userDB
     );
     virtual ~Room() override;
 
@@ -61,7 +62,11 @@ public:
     void OnTimer(uint32_t timerId, void *pParam) override;
     void Update(float deltaTime);
 
-    int GetId() const
+    // AI Control
+    void SetMonsterStrategy(const std::string &strategyName);
+
+    // Getters
+    int32_t GetId() const
     {
         return _roomId;
     }
@@ -77,11 +82,6 @@ public:
 
     std::shared_ptr<Player> GetNearestPlayer(float x, float y);
     std::vector<std::shared_ptr<Monster>> GetMonstersInRange(float x, float y, float radius);
-
-    Vector2 GetSeparationVector(
-        float x, float y, float radius, int32_t excludeId, const Vector2 &velocity = Vector2::Zero(),
-        int maxNeighbors = 6
-    );
 
     std::shared_ptr<System::IStrand> GetStrand() const
     {
@@ -130,17 +130,13 @@ public:
     bool CheckWinCondition() const;
 
 private:
-    // [Refactored Update Methods]
-    void UpdateObjectAI(const std::shared_ptr<GameObject> &obj, float deltaTime);
     void UpdatePhysics(float deltaTime, const std::vector<std::shared_ptr<GameObject>> &objects);
-    void ApplyObjectMovement(
-        const std::shared_ptr<GameObject> &obj, float deltaTime, std::vector<Protocol::ObjectPos> &monsterMoves,
-        std::vector<Protocol::ObjectPos> &playerMoves
-    );
     void SyncNetwork();
-    void LogPerformance(std::chrono::steady_clock::time_point startTime);
+    void BroadcastDebugState();
+    void BroadcastDebugClear();
 
 private:
+    std::shared_ptr<System::IFramework> _framework;
     int _roomId;
     std::string _title;
     std::unordered_map<uint64_t, std::shared_ptr<Player>> _players;
@@ -152,10 +148,6 @@ private:
 
     ObjectManager _objMgr;
     std::vector<std::shared_ptr<GameObject>> _queryBuffer;
-    std::vector<std::shared_ptr<Monster>> _monsterBuffer;
-
-    std::vector<Protocol::ObjectPos> _monsterMoves;
-    std::vector<Protocol::ObjectPos> _playerMoves;
 
     SpatialGrid _grid{GameConfig::NEAR_GRID_CELL_SIZE};
     WaveManager _waveMgr;
@@ -171,17 +163,13 @@ private:
     uint32_t _updateCount = 0;
     float _maxUpdateSec = 0.0f;
 
-    float _physicsTimeSec = 0.0f;
-    float _networkTimeSec = 0.0f;
-    float _overlapTimeSec = 0.0f;
-    float _combatTimeSec = 0.0f;
-
     bool _gameStarted = false;
     bool _isGameOver = false;
     std::unique_ptr<CombatManager> _combatMgr;
     std::unique_ptr<EffectManager> _effectMgr;
 
     RoomPerformanceProfile _perfProfile;
+    bool _enableMonsterPhysics = false; // [New] Toggle for monster-to-monster physical collisions
 };
 
 } // namespace SimpleGame
