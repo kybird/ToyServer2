@@ -1,4 +1,6 @@
 #include "System/Network/NetworkImpl.h"
+#include "System/Network/UDPNetworkImpl.h"
+#include "System/Network/UDPEndpointRegistry.h"
 #include "System/ILog.h"
 #include "System/Pch.h"
 #include "System/Session/SessionFactory.h"
@@ -7,11 +9,17 @@ namespace System {
 
 NetworkImpl::NetworkImpl() : _acceptor(_ioContext)
 {
+    _udpNetwork = new UDPNetworkImpl(_ioContext);
 }
 
 NetworkImpl::~NetworkImpl()
 {
     Stop();
+    if (_udpNetwork)
+    {
+        delete _udpNetwork;
+        _udpNetwork = nullptr;
+    }
 }
 
 bool NetworkImpl::Start(uint16_t port)
@@ -43,6 +51,17 @@ bool NetworkImpl::Start(uint16_t port)
                 }
             }
         );
+
+        // Start UDP on port + 1 (or could be configurable)
+        if (_udpNetwork)
+        {
+            _udpNetwork->SetDispatcher(_dispatcher);
+            _udpNetwork->SetRegistry(new UDPEndpointRegistry());
+            if (!_udpNetwork->Start(port + 1))
+            {
+                LOG_ERROR("Failed to start UDP network on port {}", port + 1);
+            }
+        }
 
         return true;
     } catch (const std::exception &e)

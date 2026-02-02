@@ -103,6 +103,11 @@ public:
         return _maxHp;
     }
 
+    bool IsDead() const
+    {
+        return _state == Protocol::ObjectState::DEAD;
+    }
+
     // Network Sync State
     float GetLastSentVX() const
     {

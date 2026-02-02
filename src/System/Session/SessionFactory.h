@@ -24,6 +24,9 @@ public:
     // [Updated] Returns ISession* to support both Gateway and Backend sessions
     static ISession *CreateSession(std::shared_ptr<boost::asio::ip::tcp::socket> socket, IDispatcher *dispatcher);
 
+    // [UDP] Create UDP session for given endpoint
+    static ISession *CreateUDPSession(const boost::asio::ip::udp::endpoint &endpoint, IDispatcher *dispatcher);
+
     // [Restored] Required by DispatcherImpl
     static void Destroy(ISession *session);
 

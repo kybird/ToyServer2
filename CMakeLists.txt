@@ -43,6 +43,7 @@ endif()
 
 find_package(cnats CONFIG REQUIRED)
 find_package(redis++ CONFIG REQUIRED)
+find_package(kcp CONFIG REQUIRED)
 
 
 
@@ -88,6 +89,15 @@ target_sources(System PRIVATE
     src/System/Session/GatewaySession.h
     src/System/Session/BackendSession.cpp
     src/System/Session/BackendSession.h
+    src/System/Session/UDPSession.cpp
+    src/System/Session/UDPSession.h
+    src/System/Session/UDPSession.cpp
+    src/System/Session/UDP/IKCPAdapter.h
+    src/System/Session/UDP/IKCPWrapper.h
+    src/System/Session/UDP/KCPAdapter.h
+    src/System/Session/UDP/KCPAdapter.cpp
+    src/System/Session/UDP/IKCPWrapper.h
+    src/System/Session/UDP/KCPWrapper.cpp
     src/System/Session/SessionCommon.h
     src/System/Session/SessionContext.cpp
     src/System/Session/SessionContext.h
@@ -95,6 +105,11 @@ target_sources(System PRIVATE
 
     src/System/Network/INetwork.h
     src/System/Network/NetworkImpl.cpp
+    src/System/Network/NetworkImpl.h
+    src/System/Network/UDPNetworkImpl.cpp
+    src/System/Network/UDPNetworkImpl.h
+    src/System/Network/UDPEndpointRegistry.cpp
+    src/System/Network/UDPEndpointRegistry.h
     src/System/Network/RecvBuffer.cpp
     src/System/Network/RateLimiter.h
     src/System/Events/EventBus.h
@@ -159,7 +174,7 @@ target_compile_definitions(System PUBLIC USE_SQLITE)
 
 target_include_directories(System PUBLIC src/System src)
 target_precompile_headers(System PRIVATE src/System/Pch.h)
-target_link_libraries(System PUBLIC Share unofficial::sqlite3::sqlite3 cnats::nats redis++::redis++ PRIVATE Boost::system)
+target_link_libraries(System PUBLIC Share unofficial::sqlite3::sqlite3 cnats::nats redis++::redis++ kcp::kcp PRIVATE Boost::system)
 
 # Windows-specific dependencies
 if(WIN32)
@@ -230,7 +245,15 @@ set(GAME_SOURCES
     src/Examples/VampireSurvivor/Server/Core/Handlers/System/PongHandler.cpp
     src/Examples/VampireSurvivor/Server/Core/DataManager.cpp
     src/Examples/VampireSurvivor/Server/Game/Room.cpp
+    src/Examples/VampireSurvivor/Server/Game/Room_Update.cpp
+    src/Examples/VampireSurvivor/Server/Game/Room_Network.cpp
+    src/Examples/VampireSurvivor/Server/Game/Room_Debug.cpp
     src/Examples/VampireSurvivor/Server/Game/SpatialGrid.cpp
+    src/Examples/VampireSurvivor/Server/Game/MonsterSystem.cpp
+    src/Examples/VampireSurvivor/Server/Game/SIMDCollisionEngine.cpp
+    src/Examples/VampireSurvivor/Server/Game/MonsterSwarmData.cpp
+    src/Examples/VampireSurvivor/Server/Game/MonsterSwarmAI.cpp
+    src/Examples/VampireSurvivor/Server/Game/MonsterSwarmManager.cpp
     src/Examples/VampireSurvivor/Server/Game/RoomManager.cpp
     src/Examples/VampireSurvivor/Server/Game/WaveManager.cpp
     src/Examples/VampireSurvivor/Server/Game/DamageEmitter.cpp

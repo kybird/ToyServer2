@@ -124,6 +124,7 @@ void DamageEmitter::Update(float dt, Room *room)
                 float finalRadius = _hitRadius * effectiveAreaMult;
                 int32_t finalDamage = static_cast<int32_t>(_damage * effectiveDamageMult);
 
+                // Use GetMonstersInRange (Single Path)
                 auto victims = room->GetMonstersInRange(px, py, finalRadius);
                 std::vector<int32_t> hitTargetIds;
                 std::vector<int32_t> hitDamageValues;
@@ -181,37 +182,35 @@ void DamageEmitter::Update(float dt, Room *room)
             Vector2 direction = owner->GetFacingDirection();
 
             // Auto-Targeting
-            if (_targetRule == "Nearest")
+            // Use GetMonstersInRange (Single Path)
+            auto monsters = room->GetMonstersInRange(px, py, 30.0f); // Search 30m
+            if (!monsters.empty())
             {
-                auto monsters = room->GetMonstersInRange(px, py, 30.0f); // Search 30m
-                if (!monsters.empty())
+                std::shared_ptr<Monster> nearest = nullptr;
+                float minDistSq = std::numeric_limits<float>::max();
+
+                for (auto &monster : monsters)
                 {
-                    std::shared_ptr<Monster> nearest = nullptr;
-                    float minDistSq = std::numeric_limits<float>::max();
-
-                    for (auto &monster : monsters)
+                    if (monster->IsDead())
+                        continue;
+                    float dSq = Vector2::DistanceSq(Vector2(px, py), Vector2(monster->GetX(), monster->GetY()));
+                    if (dSq < minDistSq)
                     {
-                        if (monster->IsDead())
-                            continue;
-                        float dSq = Vector2::DistanceSq(Vector2(px, py), Vector2(monster->GetX(), monster->GetY()));
-                        if (dSq < minDistSq)
-                        {
-                            minDistSq = dSq;
-                            nearest = monster;
-                        }
+                        minDistSq = dSq;
+                        nearest = monster;
                     }
+                }
 
-                    if (nearest)
+                if (nearest)
+                {
+                    direction = Vector2(nearest->GetX() - px, nearest->GetY() - py);
+                    if (!direction.IsZero())
                     {
-                        direction = Vector2(nearest->GetX() - px, nearest->GetY() - py);
-                        if (!direction.IsZero())
-                        {
-                            direction.Normalize();
-                        }
-                        else
-                        {
-                            direction = owner->GetFacingDirection();
-                        }
+                        direction.Normalize();
+                    }
+                    else
+                    {
+                        direction = owner->GetFacingDirection();
                     }
                 }
             }
@@ -268,7 +267,8 @@ void DamageEmitter::Update(float dt, Room *room)
         else
         {
             // AoE Damage logic
-            auto victims = room->GetMonstersInRange(px, py, finalRadius);
+            std::vector<std::shared_ptr<Monster>> victims = room->GetMonstersInRange(px, py, finalRadius);
+
             if (_targetRule == "Nearest")
             {
                 std::sort(

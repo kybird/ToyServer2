@@ -54,6 +54,11 @@ public:
         // Not used in DB tests
     }
 
+    void Shutdown() override
+    {
+        _cv.notify_all();
+    }
+
     void ProcessAll()
     {
         // Simple loop to process currently queued tasks

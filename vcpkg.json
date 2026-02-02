@@ -13,6 +13,7 @@
         "protobuf",
         "libmysql",
         "cnats",
-        "redis-plus-plus"
+        "redis-plus-plus",
+        "kcp"
     ]
 }

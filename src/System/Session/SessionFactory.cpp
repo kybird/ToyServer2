@@ -1,4 +1,5 @@
 #include "System/Session/SessionFactory.h"
+#include "System/Session/UDPSession.h"
 #include "System/ILog.h"
 #include "System/Pch.h"
 #include "System/Session/BackendSession.h"
@@ -91,6 +92,23 @@ ISession *SessionFactory::CreateSession(std::shared_ptr<boost::asio::ip::tcp::so
 
         return static_cast<ISession *>(backendSess);
     }
+}
+
+ISession *SessionFactory::CreateUDPSession(const boost::asio::ip::udp::endpoint &endpoint, IDispatcher *dispatcher)
+{
+    uint64_t id = _nextSessionId.fetch_add(1);
+
+    // For now, create a UDPSession directly
+    // In future, this might use a session pool like Gateway/Backend sessions
+    UDPSession *udpSess = new UDPSession();
+
+    // Create a null shared_ptr for socket (UDP uses endpoint, not socket)
+    std::shared_ptr<void> socketPtr = nullptr;
+
+    udpSess->Reset(socketPtr, id, dispatcher, endpoint);
+    udpSess->OnConnect();
+
+    return static_cast<ISession *>(udpSess);
 }
 
 void SessionFactory::Destroy(ISession *session)

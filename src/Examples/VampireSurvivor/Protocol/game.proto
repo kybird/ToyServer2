@@ -60,6 +60,16 @@ enum MsgId {
   C_PING = 902;
   S_PONG = 903;
   S_DEBUG_SERVER_TICK = 904;
+  S_DEBUG_DRAW_BOX = 905;
+}
+
+message S_DebugDrawBox {
+    float x = 1;
+    float y = 2;
+    float w = 3;
+    float h = 4;
+    float duration = 5;
+    uint32 color_hex = 6; // ARGB or RGB
 }
 
 // ==========================================================

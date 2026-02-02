@@ -7,7 +7,7 @@
 #include "System/ITimer.h"
 
 #include "Game/Effect/EffectManager.h"
-#include "Game/GameConfig.h" // [Added] For NEAR_GRID_CELL_SIZE
+#include "Game/GameConfig.h"
 #include "Game/ObjectManager.h"
 #include "Game/SpatialGrid.h"
 #include "Game/WaveManager.h"
@@ -25,33 +25,18 @@ class CombatManager;
 
 struct RoomPerformanceProfile
 {
-    // 1. Overlap Resolution Optimization
     bool enableThrottledOverlap = true;
     int overlapThrottleFactor = 5;
-
-    // 2. Broadcast Optimization
     bool enableDistributedSync = true;
     int syncIntervalTicks = 5;
     int broadcastBatchSize = 500;
-
-    // 3. Interest Management (Field of View Cutting)
     bool enableInterestManagement = true;
     float interestRadius = 30.0f;
-
-    // 4. Debug/Stress Test
     bool logPerformance = true;
 };
 
 class Room : public System::ITimerListener, public std::enable_shared_from_this<Room>
 {
-    friend class CombatTest_ProjectileHitsMonster_Test;
-    friend class CombatTest_MonsterDies_Test;
-    friend class CombatTest_MonsterContactsPlayer_Test;
-    friend class SwarmPerformanceTest_StressTest500Monsters_Test;
-    friend class CombatTest_LinearEmitterHitsNearestMonster_Test;
-    friend class CombatTest_LinearEmitterRespectsLifetime_Test;
-    friend class CombatTest_MonsterKnockback_Test;
-    friend class CombatTest_LinearEmitterSpawnsProjectile_Test;
     friend class CombatManager;
     friend class DamageEmitter;
 
@@ -64,7 +49,7 @@ public:
 
     void Enter(const std::shared_ptr<Player> &player);
     void Leave(uint64_t sessionId);
-    void OnPlayerReady(uint64_t sessionId); // Called when client finishes loading
+    void OnPlayerReady(uint64_t sessionId);
     void BroadcastPacket(const System::IPacket &pkt, uint64_t excludeSessionId = 0);
     void BroadcastSpawn(const std::vector<std::shared_ptr<GameObject>> &objects);
     void BroadcastDespawn(const std::vector<int32_t> &objectIds, const std::vector<int32_t> &pickerIds = {});
@@ -84,7 +69,7 @@ public:
     static size_t GetMaxPlayers()
     {
         return 4;
-    } // TODO: Make configurable
+    }
     bool IsPlaying() const
     {
         return _gameStarted;
@@ -93,7 +78,6 @@ public:
     std::shared_ptr<Player> GetNearestPlayer(float x, float y);
     std::vector<std::shared_ptr<Monster>> GetMonstersInRange(float x, float y, float radius);
 
-    // [Optimization] Added velocity check and max neighbors limit
     Vector2 GetSeparationVector(
         float x, float y, float radius, int32_t excludeId, const Vector2 &velocity = Vector2::Zero(),
         int maxNeighbors = 6
@@ -104,8 +88,8 @@ public:
         return _strand;
     }
 
-    void StartGame(); // Start wave manager when first player enters
-    void Reset();     // Reset room state when all players leave
+    void StartGame();
+    void Reset();
     void HandleGameOver(bool isWin);
 
     void SetTitle(const std::string &title)
@@ -125,10 +109,17 @@ public:
     {
         return _objMgr;
     }
-
+    const SpatialGrid &GetSpatialGrid() const
+    {
+        return _grid;
+    }
     float GetTotalRunTime() const
     {
         return _totalRunTime;
+    }
+    uint32_t GetServerTick() const
+    {
+        return _serverTick;
     }
 
     // Debug Commands
@@ -136,38 +127,43 @@ public:
     void DebugSpawnMonster(int32_t monsterId, int32_t count);
     void DebugToggleGodMode();
 
-    // void HandleGameOver(bool isWin); (Removed duplicate)
-    void UpdateObject(
+    bool CheckWinCondition() const;
+
+private:
+    // [Refactored Update Methods]
+    void UpdateObjectAI(const std::shared_ptr<GameObject> &obj, float deltaTime);
+    void UpdatePhysics(float deltaTime, const std::vector<std::shared_ptr<GameObject>> &objects);
+    void ApplyObjectMovement(
         const std::shared_ptr<GameObject> &obj, float deltaTime, std::vector<Protocol::ObjectPos> &monsterMoves,
         std::vector<Protocol::ObjectPos> &playerMoves
     );
-    void BroadcastPlayerMoves(const std::vector<Protocol::ObjectPos> &playerMoves);
-    void SendPlayerAcks();
-    bool CheckWinCondition() const;
+    void SyncNetwork();
+    void LogPerformance(std::chrono::steady_clock::time_point startTime);
 
 private:
     int _roomId;
     std::string _title;
-    std::unordered_map<uint64_t, std::shared_ptr<Player>> _players; // SessionID -> Player
+    std::unordered_map<uint64_t, std::shared_ptr<Player>> _players;
     std::recursive_mutex _mutex;
 
     std::shared_ptr<System::ITimer> _timer;
     System::ITimer::TimerHandle _timerHandle = 0;
     std::shared_ptr<System::IStrand> _strand;
 
-    // Game Logic Components
     ObjectManager _objMgr;
-    // Optimized query buffers to avoid per-tick allocations
     std::vector<std::shared_ptr<GameObject>> _queryBuffer;
     std::vector<std::shared_ptr<Monster>> _monsterBuffer;
 
-    SpatialGrid _grid{GameConfig::NEAR_GRID_CELL_SIZE}; // [Optimized] Use correct cell size
+    std::vector<Protocol::ObjectPos> _monsterMoves;
+    std::vector<Protocol::ObjectPos> _playerMoves;
+
+    SpatialGrid _grid{GameConfig::NEAR_GRID_CELL_SIZE};
     WaveManager _waveMgr;
     std::shared_ptr<System::IDispatcher> _dispatcher;
     std::shared_ptr<UserDB> _userDB;
     float _totalRunTime = 0.0f;
     uint32_t _serverTick = 0;
-    float _debugBroadcastTimer = 0.0f; // Stage 0 Verification Timer
+    float _debugBroadcastTimer = 0.0f;
 
     // Performance Monitoring
     float _lastPerfLogTime = 0.0f;
@@ -175,27 +171,15 @@ private:
     uint32_t _updateCount = 0;
     float _maxUpdateSec = 0.0f;
 
-    // Detailed Profiling
     float _physicsTimeSec = 0.0f;
     float _networkTimeSec = 0.0f;
     float _overlapTimeSec = 0.0f;
     float _combatTimeSec = 0.0f;
 
-public:
-    uint32_t GetServerTick() const
-    {
-        return _serverTick;
-    }
-
-private:
-    bool _gameStarted = false; // Track if game has started
-    bool _isGameOver = false;  // Track if game is over
+    bool _gameStarted = false;
+    bool _isGameOver = false;
     std::unique_ptr<CombatManager> _combatMgr;
     std::unique_ptr<EffectManager> _effectMgr;
-
-    // Standard Performance Strategies
-    void ResolveMonsterOverlap(const std::vector<std::shared_ptr<GameObject>> &objects);
-    void SyncMonsterStates(const std::vector<Protocol::ObjectPos> &monsterMoves);
 
     RoomPerformanceProfile _perfProfile;
 };

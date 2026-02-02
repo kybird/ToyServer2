@@ -1,4 +1,4 @@
-#include "Entity/GameObject.h"
+#include "Game/ObjectManager.h"
 #include "Game/SpatialGrid.h"
 #include <gtest/gtest.h>
 #include <memory>
@@ -9,27 +9,31 @@ using namespace SimpleGame;
 class MockObject : public GameObject
 {
 public:
-    MockObject(int id, float x, float y) : GameObject(id, Protocol::ObjectType::UNKNOWN)
+    MockObject(int id, float x, float y) : GameObject(id, Protocol::ObjectType::MONSTER)
     {
         SetPos(x, y);
+        SetState(Protocol::ObjectState::IDLE);
     }
 };
 
 TEST(SpatialGridTest, InsertAndQuery)
 {
+    ObjectManager objMgr;
     SpatialGrid grid(100.0f);
+
     auto obj1 = std::make_shared<MockObject>(1, 50.0f, 50.0f);
-    auto obj2 = std::make_shared<MockObject>(2, 150.0f, 50.0f); // Different cell
-    auto obj3 = std::make_shared<MockObject>(3, 60.0f, 60.0f);  // Same cell as obj1
+    auto obj2 = std::make_shared<MockObject>(2, 150.0f, 50.0f);
+    auto obj3 = std::make_shared<MockObject>(3, 60.0f, 60.0f);
 
-    grid.Add(obj1);
-    grid.Add(obj2);
-    grid.Add(obj3);
+    objMgr.AddObject(obj1);
+    objMgr.AddObject(obj2);
+    objMgr.AddObject(obj3);
 
-    // Query covers obj1 and obj3, but not obj2
-    auto results = grid.QueryRange(50.0f, 50.0f, 20.0f);
+    grid.Rebuild(objMgr.GetAllObjects());
 
-    // obj1 (dist 0), obj3 (dist ~14.14) -> Both within 20
+    std::vector<std::shared_ptr<GameObject>> results;
+    grid.QueryRange(50.0f, 50.0f, 20.0f, results, objMgr);
+
     EXPECT_EQ(results.size(), 2);
 
     bool found1 = false;
@@ -47,34 +51,43 @@ TEST(SpatialGridTest, InsertAndQuery)
 
 TEST(SpatialGridTest, UpdatePosition)
 {
-    SpatialGrid grid(100.0f); // Cell 0,0 is [0, 100)
+    ObjectManager objMgr;
+    SpatialGrid grid(100.0f);
+
     auto obj1 = std::make_shared<MockObject>(1, 10.0f, 10.0f);
-    grid.Add(obj1);
+    objMgr.AddObject(obj1);
+    grid.Rebuild(objMgr.GetAllObjects());
 
-    // Move to 200, 200 (Cell 2,2)
     obj1->SetPos(250.0f, 250.0f);
-    grid.Update(obj1);
+    grid.Rebuild(objMgr.GetAllObjects());
 
-    // Query old location -> Empty
-    auto resOld = grid.QueryRange(10.0f, 10.0f, 50.0f);
+    std::vector<std::shared_ptr<GameObject>> resOld;
+    grid.QueryRange(10.0f, 10.0f, 50.0f, resOld, objMgr);
     EXPECT_EQ(resOld.size(), 0);
 
-    // Query new location -> Found
-    auto resNew = grid.QueryRange(250.0f, 250.0f, 50.0f);
+    std::vector<std::shared_ptr<GameObject>> resNew;
+    grid.QueryRange(250.0f, 250.0f, 50.0f, resNew, objMgr);
     EXPECT_EQ(resNew.size(), 1);
     EXPECT_EQ(resNew[0]->GetId(), 1);
 }
 
 TEST(SpatialGridTest, Remove)
 {
+    ObjectManager objMgr;
     SpatialGrid grid(100.0f);
-    auto obj1 = std::make_shared<MockObject>(1, 50.0f, 50.0f);
-    grid.Add(obj1);
 
-    auto res = grid.QueryRange(50.0f, 50.0f, 10.0f);
+    auto obj1 = std::make_shared<MockObject>(1, 50.0f, 50.0f);
+    objMgr.AddObject(obj1);
+    grid.Rebuild(objMgr.GetAllObjects());
+
+    std::vector<std::shared_ptr<GameObject>> res;
+    grid.QueryRange(50.0f, 50.0f, 10.0f, res, objMgr);
     EXPECT_EQ(res.size(), 1);
 
-    grid.Remove(obj1);
-    auto resEmpty = grid.QueryRange(50.0f, 50.0f, 10.0f);
+    objMgr.RemoveObject(obj1->GetId());
+    grid.Rebuild(objMgr.GetAllObjects());
+
+    std::vector<std::shared_ptr<GameObject>> resEmpty;
+    grid.QueryRange(50.0f, 50.0f, 10.0f, resEmpty, objMgr);
     EXPECT_EQ(resEmpty.size(), 0);
 }

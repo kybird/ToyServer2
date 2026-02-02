@@ -24,7 +24,11 @@ void WaveManager::Reset()
     _currentWaveIndex = 0;
     _nextSpawnTime = 0.0f;
     _activeSpawners.clear();
-    LOG_INFO("WaveManager reset for Room {}", _roomId);
+
+    // FIX: 웨이브 데이터 재로드
+    _waves = DataManager::Instance().GetWaves();
+
+    LOG_INFO("WaveManager reset for Room {} (reloaded {} waves)", _roomId, _waves.size());
 }
 
 void WaveManager::Update(float dt, Room *room)
@@ -61,13 +65,26 @@ void WaveManager::Update(float dt, Room *room)
 
         if (it->timer <= 0)
         {
-            // [CPU Optimization] Cap monster population
-            size_t currentCount = _objMgr.GetObjectCount();
+            // [50마리 제한] 현재 몬스터 수 체크
+            size_t currentMonsterCount = room->GetObjectManager().GetAliveMonsterCount();
+            const size_t MAX_MONSTERS = 50;
 
-            if (currentCount < GameConfig::MAX_MONSTERS_PER_ROOM && totalPlayers > 0)
+            if (currentMonsterCount >= MAX_MONSTERS)
             {
+                // 50마리 이상이면 스폰 안 함
+                it->timer = it->interval; // 다음 틱에 다시 시도
+                ++it;
+                continue;
+            }
+
+            if (totalPlayers > 0)
+            {
+                // 스폰 가능한 수량 계산
+                int maxSpawnable = static_cast<int>(MAX_MONSTERS - currentMonsterCount);
+                int actualBatch = std::min(it->batchCount, maxSpawnable);
+
                 // Distribute batch count among clusters
-                int remainingBatch = it->batchCount;
+                int remainingBatch = actualBatch;
 
                 for (const auto &cluster : clusters)
                 {
@@ -75,20 +92,11 @@ void WaveManager::Update(float dt, Room *room)
                         break;
 
                     // Proportional spawn count
-                    // Minimal 1 per cluster if batch allows, else proportional
-                    int clusterSpawnCount = (int)((float)cluster.players.size() / totalPlayers * it->batchCount);
+                    int clusterSpawnCount = (int)((float)cluster.players.size() / totalPlayers * actualBatch);
                     if (clusterSpawnCount == 0 && remainingBatch > 0)
-                        clusterSpawnCount = 1; // Ensure at least one if possible
+                        clusterSpawnCount = 1;
                     if (clusterSpawnCount > remainingBatch)
                         clusterSpawnCount = remainingBatch;
-
-                    // Spawn for this cluster
-                    // We can reuse the spawn pos for a few monsters or recalculate
-                    // For "Gap" logic, usually we want to fill gaps.
-                    // Let's recalculate or scatter slightly for each monster?
-                    // To be safe and fill gaps, let's just pick a random gap-based pos for EACH monster.
-                    // Or efficient: Pick central gap pos and jitter.
-                    // User said: "Angular Gap Spawn is a cluster logic".
 
                     for (int i = 0; i < clusterSpawnCount; ++i)
                     {
@@ -288,24 +296,24 @@ void WaveManager::StartSpawner(Room *room, const WaveData &wave)
 
 void WaveManager::SpawnMonster(int32_t monsterTypeId, float hpMultiplier, Room *room, float x, float y)
 {
+    // [50마리 제한] 재확인
+    size_t currentMonsterCount = room->GetObjectManager().GetAliveMonsterCount();
+    if (currentMonsterCount >= 50)
+    {
+        return; // 50마리 이상이면 스폰 안 함
+    }
+
     // Apply HP Multiplier from WaveData
     int32_t finalHp = 0;
+    int32_t maxHp = 100;
     const auto *tmpl = DataManager::Instance().GetMonsterTemplate(monsterTypeId);
     if (tmpl)
     {
         finalHp = static_cast<int32_t>(tmpl->hp * hpMultiplier);
-        // LOG_INFO(
-        //     "[WaveManager] Spawning Monster ID:{} Type:{} HP:{} (Base:{} * Mult:{:.1f}) at ({:.1f}, {:.1f})",
-        //     monsterTypeId,
-        //     tmpl->name,
-        //     finalHp,
-        //     tmpl->hp,
-        //     hpMultiplier,
-        //     x,
-        //     y
-        // );
+        maxHp = tmpl->hp;
     }
 
+    // GameObject 시스템 사용 (단일 경로)
     auto monster = MonsterFactory::Instance().CreateMonster(_objMgr, monsterTypeId, x, y, finalHp);
     if (monster)
     {
@@ -314,7 +322,7 @@ void WaveManager::SpawnMonster(int32_t monsterTypeId, float hpMultiplier, Room *
 
         // Broadcast Spawn
         Protocol::S_SpawnObject msg;
-        msg.set_server_tick(room->GetServerTick()); // [중요] 틱 동기화를 위해 server_tick 설정
+        msg.set_server_tick(room->GetServerTick());
         auto *info = msg.add_objects();
         info->set_object_id(monster->GetId());
         info->set_type(Protocol::ObjectType::MONSTER);
@@ -323,7 +331,7 @@ void WaveManager::SpawnMonster(int32_t monsterTypeId, float hpMultiplier, Room *
         info->set_y(y);
         info->set_hp(monster->GetHp());
         info->set_max_hp(monster->GetMaxHp());
-        info->set_state(Protocol::ObjectState::IDLE); // Explicit state
+        info->set_state(Protocol::ObjectState::IDLE);
 
         BroadcastProto(room, PacketID::S_SPAWN_OBJECT, msg);
     }

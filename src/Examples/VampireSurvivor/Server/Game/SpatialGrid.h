@@ -8,7 +8,7 @@
 
 namespace SimpleGame {
 
-// Forward declaration
+// Forward declarations
 class ObjectManager;
 
 struct CellData
@@ -84,7 +84,7 @@ public:
         return _cells[static_cast<size_t>(cellIdx)].monsterIds;
     }
 
-    // 하위 호환성을 위한 QueryRange (CombatManager 등에서 사용)
+    // QueryRange (CombatManager 등에서 사용)
     void QueryRange(
         float x, float y, float radius, std::vector<std::shared_ptr<GameObject>> &outResults, ObjectManager &objMgr
     );
@@ -92,7 +92,7 @@ public:
     // [Legacy/Compatibility] 기존 코드 유지를 위한 더미 함수들
     void Add(std::shared_ptr<GameObject> obj)
     {
-    } // Rebuild에서 처리
+    }
     void Remove(std::shared_ptr<GameObject> obj)
     {
     }

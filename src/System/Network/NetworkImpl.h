@@ -6,6 +6,7 @@
 namespace System {
 
 class IDispatcher;
+class UDPNetworkImpl;
 
 class NetworkImpl : public INetwork
 {
@@ -33,6 +34,7 @@ private:
 private:
     boost::asio::io_context _ioContext;
     boost::asio::ip::tcp::acceptor _acceptor;
+    UDPNetworkImpl *_udpNetwork = nullptr;
     IDispatcher *_dispatcher = nullptr;
     std::atomic<bool> _isStopping{false};
 };
