@@ -210,6 +210,7 @@ message ObjectPos {
   float y = 3;
   float vx = 4; // Velocity for client-side prediction
   float vy = 5;
+  ObjectState state = 6; // NEW: Sync animation state
 }
 
 message S_MoveObjectBatch {

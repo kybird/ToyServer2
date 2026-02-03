@@ -5650,6 +5650,7 @@ class ObjectPos final : public ::google::protobuf::Message
     kYFieldNumber = 3,
     kVxFieldNumber = 4,
     kVyFieldNumber = 5,
+    kStateFieldNumber = 6,
   };
   // int32 object_id = 1;
   void clear_object_id() ;
@@ -5701,12 +5702,22 @@ class ObjectPos final : public ::google::protobuf::Message
   void _internal_set_vy(float value);
 
   public:
+  // .Protocol.ObjectState state = 6;
+  void clear_state() ;
+  ::Protocol::ObjectState state() const;
+  void set_state(::Protocol::ObjectState value);
+
+  private:
+  ::Protocol::ObjectState _internal_state() const;
+  void _internal_set_state(::Protocol::ObjectState value);
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.ObjectPos)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      3, 5, 0,
+      3, 6, 0,
       0, 2>
       _table_;
 
@@ -5729,6 +5740,7 @@ class ObjectPos final : public ::google::protobuf::Message
     float y_;
     float vx_;
     float vy_;
+    int state_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -11179,6 +11191,28 @@ inline float ObjectPos::_internal_vy() const {
 inline void ObjectPos::_internal_set_vy(float value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.vy_ = value;
+}
+
+// .Protocol.ObjectState state = 6;
+inline void ObjectPos::clear_state() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.state_ = 0;
+}
+inline ::Protocol::ObjectState ObjectPos::state() const {
+  // @@protoc_insertion_point(field_get:Protocol.ObjectPos.state)
+  return _internal_state();
+}
+inline void ObjectPos::set_state(::Protocol::ObjectState value) {
+  _internal_set_state(value);
+  // @@protoc_insertion_point(field_set:Protocol.ObjectPos.state)
+}
+inline ::Protocol::ObjectState ObjectPos::_internal_state() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return static_cast<::Protocol::ObjectState>(_impl_.state_);
+}
+inline void ObjectPos::_internal_set_state(::Protocol::ObjectState value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.state_ = value;
 }
 
 // -------------------------------------------------------------------

@@ -286,6 +286,7 @@ void Room::SyncNetwork()
         pos->set_y(obj->GetY());
         pos->set_vx(obj->GetVX());
         pos->set_vy(obj->GetVY());
+        pos->set_state(obj->GetState());
     }
 
     if (moveBatch.moves_size() > 0)
