@@ -7,7 +7,7 @@
 
 namespace System {
 
-constexpr size_t MaxPacketSize = 65535;
+constexpr size_t MaxPacketSize = 1048576; // 65535 -> 1MB
 
 template <typename T>
 concept PacketHeaderConcept = requires(T t) {

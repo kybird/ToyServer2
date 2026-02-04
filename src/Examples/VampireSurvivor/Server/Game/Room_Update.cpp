@@ -70,11 +70,43 @@ void Room::Update(float deltaTime)
     if (_totalRunTime - _lastPerfLogTime >= 1.0f)
     {
         float avgSec = _updateCount > 0 ? _totalUpdateSec / _updateCount : 0.0f;
+
+        // Count by type
+        int monsterCount = 0;
+        int projectileCount = 0;
+        int itemCount = 0; // EXP Gems
+        int otherCount = 0;
+
+        for (const auto &obj : currentObjects)
+        {
+            if (obj->IsDead())
+                continue;
+            switch (obj->GetType())
+            {
+            case Protocol::ObjectType::MONSTER:
+                monsterCount++;
+                break;
+            case Protocol::ObjectType::PROJECTILE:
+                projectileCount++;
+                break;
+            case Protocol::ObjectType::ITEM:
+                itemCount++;
+                break;
+            default:
+                otherCount++;
+                break;
+            }
+        }
+
         LOG_INFO(
-            "[Perf] Room Use: Avg {:.4f}ms, Max {:.4f}ms, Objs {}",
+            "[Perf] Room Use: Avg {:.4f}ms, Max {:.4f}ms | Total: {} (M: {}, P: {}, I: {}, O: {})",
             avgSec * 1000.0f,
             _maxUpdateSec * 1000.0f,
-            currentObjects.size()
+            currentObjects.size(),
+            monsterCount,
+            projectileCount,
+            itemCount,
+            otherCount
         );
 
         _lastPerfLogTime = _totalRunTime;
@@ -230,6 +262,7 @@ void Room::BroadcastSpawn(const std::vector<std::shared_ptr<GameObject>> &object
         info->set_state(obj->GetState());
         info->set_vx(obj->GetVX());
         info->set_vy(obj->GetVY());
+        info->set_look_left(obj->GetLookLeft());
 
         if (obj->GetType() == Protocol::ObjectType::MONSTER)
         {
@@ -294,6 +327,7 @@ void Room::SyncNetwork()
         pos->set_vx(obj->GetVX());
         pos->set_vy(obj->GetVY());
         pos->set_state(obj->GetState());
+        pos->set_look_left(obj->GetLookLeft());
     }
 
     if (moveBatch.moves_size() > 0)

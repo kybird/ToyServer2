@@ -190,6 +190,7 @@ message ObjectInfo {
   // [Fix] Initial Sync for DeadReckoning
   float vx = 10;
   float vy = 11;
+  bool look_left = 12;
 }
 
 message S_SpawnObject {
@@ -211,6 +212,7 @@ message ObjectPos {
   float vx = 4; // Velocity for client-side prediction
   float vy = 5;
   ObjectState state = 6; // NEW: Sync animation state
+  bool look_left = 7;
 }
 
 message S_MoveObjectBatch {

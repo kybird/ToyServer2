@@ -5651,6 +5651,7 @@ class ObjectPos final : public ::google::protobuf::Message
     kVxFieldNumber = 4,
     kVyFieldNumber = 5,
     kStateFieldNumber = 6,
+    kLookLeftFieldNumber = 7,
   };
   // int32 object_id = 1;
   void clear_object_id() ;
@@ -5712,12 +5713,22 @@ class ObjectPos final : public ::google::protobuf::Message
   void _internal_set_state(::Protocol::ObjectState value);
 
   public:
+  // bool look_left = 7;
+  void clear_look_left() ;
+  bool look_left() const;
+  void set_look_left(bool value);
+
+  private:
+  bool _internal_look_left() const;
+  void _internal_set_look_left(bool value);
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.ObjectPos)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      3, 6, 0,
+      3, 7, 0,
       0, 2>
       _table_;
 
@@ -5741,6 +5752,7 @@ class ObjectPos final : public ::google::protobuf::Message
     float vx_;
     float vy_;
     int state_;
+    bool look_left_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -5906,6 +5918,7 @@ class ObjectInfo final : public ::google::protobuf::Message
     kOwnerIdFieldNumber = 9,
     kVxFieldNumber = 10,
     kVyFieldNumber = 11,
+    kLookLeftFieldNumber = 12,
   };
   // int32 object_id = 1;
   void clear_object_id() ;
@@ -6017,12 +6030,22 @@ class ObjectInfo final : public ::google::protobuf::Message
   void _internal_set_vy(float value);
 
   public:
+  // bool look_left = 12;
+  void clear_look_left() ;
+  bool look_left() const;
+  void set_look_left(bool value);
+
+  private:
+  bool _internal_look_left() const;
+  void _internal_set_look_left(bool value);
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.ObjectInfo)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      4, 11, 0,
+      4, 12, 0,
       0, 2>
       _table_;
 
@@ -6051,6 +6074,7 @@ class ObjectInfo final : public ::google::protobuf::Message
     ::int32_t owner_id_;
     float vx_;
     float vy_;
+    bool look_left_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -10910,6 +10934,28 @@ inline void ObjectInfo::_internal_set_vy(float value) {
   _impl_.vy_ = value;
 }
 
+// bool look_left = 12;
+inline void ObjectInfo::clear_look_left() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.look_left_ = false;
+}
+inline bool ObjectInfo::look_left() const {
+  // @@protoc_insertion_point(field_get:Protocol.ObjectInfo.look_left)
+  return _internal_look_left();
+}
+inline void ObjectInfo::set_look_left(bool value) {
+  _internal_set_look_left(value);
+  // @@protoc_insertion_point(field_set:Protocol.ObjectInfo.look_left)
+}
+inline bool ObjectInfo::_internal_look_left() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.look_left_;
+}
+inline void ObjectInfo::_internal_set_look_left(bool value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.look_left_ = value;
+}
+
 // -------------------------------------------------------------------
 
 // S_SpawnObject
@@ -11213,6 +11259,28 @@ inline ::Protocol::ObjectState ObjectPos::_internal_state() const {
 inline void ObjectPos::_internal_set_state(::Protocol::ObjectState value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.state_ = value;
+}
+
+// bool look_left = 7;
+inline void ObjectPos::clear_look_left() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.look_left_ = false;
+}
+inline bool ObjectPos::look_left() const {
+  // @@protoc_insertion_point(field_get:Protocol.ObjectPos.look_left)
+  return _internal_look_left();
+}
+inline void ObjectPos::set_look_left(bool value) {
+  _internal_set_look_left(value);
+  // @@protoc_insertion_point(field_set:Protocol.ObjectPos.look_left)
+}
+inline bool ObjectPos::_internal_look_left() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.look_left_;
+}
+inline void ObjectPos::_internal_set_look_left(bool value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.look_left_ = value;
 }
 
 // -------------------------------------------------------------------

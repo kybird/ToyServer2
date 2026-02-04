@@ -60,6 +60,19 @@ public:
     {
         _vx = vx;
         _vy = vy;
+        if (vx < -0.01f)
+            _lookLeft = true;
+        else if (vx > 0.01f)
+            _lookLeft = false;
+    }
+
+    bool GetLookLeft() const
+    {
+        return _lookLeft;
+    }
+    void SetLookLeft(bool lookLeft)
+    {
+        _lookLeft = lookLeft;
     }
 
     float GetRadius() const
@@ -170,6 +183,7 @@ protected:
     float _vx = 0.0f;
     float _vy = 0.0f;
     float _radius = 0.5f;
+    bool _lookLeft = false;
 
     int32_t _hp = 100;
     int32_t _maxHp = 100;
