@@ -73,7 +73,10 @@ void Player::ApplyInput(uint32_t clientTick, int32_t dx, int32_t dy)
     _facingDirX = dir.x;
     _facingDirY = dir.y;
 
-    SetVelocity(dir.x * _speed, dir.y * _speed);
+    // [이동 동기화] 패시브 아이템 등으로 인한 이동 속도 배율을 적용합니다.
+    float finalSpeed = _speed * GetMovementSpeedMultiplier();
+    SetVelocity(dir.x * finalSpeed, dir.y * finalSpeed);
+
     SetState(Protocol::MOVING);
     // LOG_DEBUG(
     //     "[SetInput] Player={} ClientTick={} Dir=({:.2f}, {:.2f}) Vel=({:.2f},{:.2f})",

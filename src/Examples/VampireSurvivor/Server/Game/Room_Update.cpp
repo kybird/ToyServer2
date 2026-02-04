@@ -300,6 +300,22 @@ void Room::SyncNetwork()
     {
         BroadcastPacket(S_MoveObjectBatchPacket(std::move(moveBatch)));
     }
+
+    // [이동 동기화] 클라이언트 측 추측 이동(CSP) 정정을 위해 각 플레이어에게 Ack 패킷 전송
+    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    for (auto &[sid, player] : _players)
+    {
+        if (player->IsDead())
+            continue;
+
+        Protocol::S_PlayerStateAck ack;
+        ack.set_server_tick(_serverTick);
+        ack.set_client_tick(player->GetLastProcessedClientTick());
+        ack.set_x(player->GetX());
+        ack.set_y(player->GetY());
+
+        SendToPlayer(sid, S_PlayerStateAckPacket(std::move(ack)));
+    }
 }
 
 // [Spatial Queries]

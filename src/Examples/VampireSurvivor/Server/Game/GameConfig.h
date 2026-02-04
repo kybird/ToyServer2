@@ -44,6 +44,10 @@ struct GameConfig
     static constexpr float EXP_GEM_MAGNET_RADIUS = 5.0f; // 자석(끌당) 시작 반경
     static constexpr float EXP_GEM_FLY_SPEED = 15.0f;    // 플레이어에게 날아오는 속도
 
+    // Player Settings
+    static constexpr int32_t DEFAULT_PLAYER_HP = 100;
+    static constexpr float DEFAULT_PLAYER_SPEED = 5.0f;
+
     // Monster Population Limit
     static constexpr size_t MAX_MONSTERS_PER_ROOM = 20000;
 };
