@@ -304,43 +304,39 @@ void Player::Update(float dt, Room *room)
 {
     if (_isLevelingUp)
     {
-        // Continuous slow field while leveling up (30m Radius)
+        // [이동 동기화 수정보완] 레벨업 상태에서의 슬로우 오라 부하 최적화
+        // 매 몬스터마다 BroadcastPacket을 호출하면 네트워크 큐 오버플로우 및 업데이트 스레드 지연이 발생합니다.
         if (room != nullptr)
         {
-            float slowRadius = 10.0f; // Aligned with client AoE visual indicator
+            float slowRadius = 10.0f;
             auto monstersInRange = room->GetMonstersInRange(GetX(), GetY(), slowRadius);
 
-            // Collect IDs for efficient containment check
             std::set<int32_t> currentInRangeIds;
-            for (auto &m : monstersInRange)
-            {
-                currentInRangeIds.insert(m->GetId());
-            }
+            Protocol::S_MoveObjectBatch moveBatch;
+            moveBatch.set_server_tick(room->GetServerTick());
 
-            // 1. Handle monsters entering the aura
+            // 1. 새로 오라 범위에 들어온 몬스터 처리
             for (auto &m : monstersInRange)
             {
-                if (_slowedMonsterIds.find(m->GetId()) == _slowedMonsterIds.end())
+                int32_t mId = m->GetId();
+                currentInRangeIds.insert(mId);
+
+                if (_slowedMonsterIds.find(mId) == _slowedMonsterIds.end())
                 {
-                    // Apply slow with duration (will auto-expire if player exits levelup state)
-                    float slowDuration = 999.0f; // Very long duration, will be manually removed on exit
-                    m->AddLevelUpSlow(room->GetTotalRunTime(), slowDuration);
-                    _slowedMonsterIds.insert(m->GetId());
+                    m->AddLevelUpSlow(room->GetTotalRunTime(), 999.0f);
+                    _slowedMonsterIds.insert(mId);
 
-                    // Immediate packet sync for speed change
-                    Protocol::S_MoveObjectBatch moveBatch;
-                    moveBatch.set_server_tick(room->GetServerTick());
+                    // 배칠 패킷에 추가
                     auto *move = moveBatch.add_moves();
-                    move->set_object_id(m->GetId());
+                    move->set_object_id(mId);
                     move->set_x(m->GetX());
                     move->set_y(m->GetY());
                     move->set_vx(m->GetVX());
                     move->set_vy(m->GetVY());
-                    room->BroadcastPacket(S_MoveObjectBatchPacket(std::move(moveBatch)));
                 }
             }
 
-            // 2. Handle monsters exiting the aura
+            // 2. 오라 범위를 벗어난 몬스터 처리
             for (auto it = _slowedMonsterIds.begin(); it != _slowedMonsterIds.end();)
             {
                 int32_t id = *it;
@@ -352,16 +348,13 @@ void Player::Update(float dt, Room *room)
                         auto m = std::static_pointer_cast<Monster>(obj);
                         m->RemoveLevelUpSlow();
 
-                        // Immediate packet sync for speed restoration
-                        Protocol::S_MoveObjectBatch moveBatch;
-                        moveBatch.set_server_tick(room->GetServerTick());
+                        // 배치 패킷에 추가
                         auto *pMove = moveBatch.add_moves();
-                        pMove->set_object_id(m->GetId());
+                        pMove->set_object_id(id);
                         pMove->set_x(m->GetX());
                         pMove->set_y(m->GetY());
                         pMove->set_vx(m->GetVX());
                         pMove->set_vy(m->GetVY());
-                        room->BroadcastPacket(S_MoveObjectBatchPacket(std::move(moveBatch)));
                     }
                     it = _slowedMonsterIds.erase(it);
                 }
@@ -370,9 +363,26 @@ void Player::Update(float dt, Room *room)
                     ++it;
                 }
             }
+
+            // 변동 사항이 있을 때만 단 한 번 브로드캐스트
+            if (moveBatch.moves_size() > 0)
+            {
+                room->BroadcastPacket(S_MoveObjectBatchPacket(std::move(moveBatch)));
+            }
+
+            // [이동 동기화 수정보완] 서버측 레벨업 타임아웃 강제 해제 (안전장치)
+            // 클라이언트 패킷 유실이나 크래시 등으로 인해 32초 이상 머물면 강제로 해제합니다.
+            float elapsed = room->GetTotalRunTime() - _levelUpStartedAt;
+            if (elapsed > (GameConfig::LEVEL_UP_TIMEOUT_SEC + 2.0f))
+            {
+                LOG_WARN("[Player] Level-up timeout forced exit for player {}", GetId());
+                ExitLevelUpState(room);
+            }
         }
-        return;
     }
+
+    // [이동 동기화 수정보완] 레벨업 상태여도 월드는 흐르므로 무기 등의 로직은 계속 업데이트되어야 합니다.
+    // 기존에 실수로 들어간 return;을 제거하여 아래 에미터 업데이트가 정상 동작하게 합니다.
 
     // Don't update logic (emitters) until player is ready in the room
     if (!IsReady())
@@ -447,6 +457,9 @@ void Player::SetInvincible(float untilTime)
 void Player::EnterLevelUpState(Room *room)
 {
     _isLevelingUp = true;
+    _levelUpStartedAt = room ? room->GetTotalRunTime() : 0.0f;
+    _invincibleUntil = _levelUpStartedAt + 999.0f; // 레벨업 중 무적 설정
+
     SetVelocity(0, 0);
     SetState(Protocol::IDLE);
     LOG_DEBUG("[Player] Player {} entered level-up state", GetId());
@@ -495,7 +508,7 @@ void Player::ExitLevelUpState(Room *room)
 
     if (room != nullptr && !_slowedMonsterIds.empty())
     {
-        // Restore speed for tracked monsters
+        // 추적 중이던 몬스터들의 속도를 복구합니다.
         for (int32_t id : _slowedMonsterIds)
         {
             auto obj = room->GetObjectManager().GetObject(id);
@@ -508,6 +521,9 @@ void Player::ExitLevelUpState(Room *room)
         LOG_INFO("[Player] Removed LevelUp Slow from {} monsters", _slowedMonsterIds.size());
     }
     _slowedMonsterIds.clear();
+
+    // [이동 동기화 수정보완] 레벨업 종료 시 무적 상태를 즉시 해제합니다.
+    _invincibleUntil = 0.0f;
 }
 
 float Player::GetDamageMultiplier() const

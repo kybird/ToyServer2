@@ -128,6 +128,7 @@ private:
 
     float _invincibleUntil = 0.0f;
     bool _isLevelingUp = false;
+    float _levelUpStartedAt = 0.0f;
 
     // Auto-Attack
     std::vector<std::shared_ptr<DamageEmitter>> _emitters;

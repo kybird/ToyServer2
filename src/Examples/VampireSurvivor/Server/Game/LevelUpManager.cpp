@@ -34,37 +34,36 @@ void LevelUpManager::ApplySelection(Player *player, int optionIndex, Room *room)
         return;
     }
 
-    const auto &selected = options[optionIndex];
+    // [Crash Fix] 레벨업 옵션을 복사하여 사용합니다. (Clear 시 참조 무효화 방지)
+    const LevelUpOption selected = options[optionIndex];
     auto &inventory = player->GetInventory();
 
     bool success = false;
     if (selected.type == LevelUpOptionType::WEAPON)
     {
         success = inventory.AddOrUpgradeWeapon(selected.itemId);
-        if (success)
-        {
-            // TODO: DamageEmitter 갱신 (Phase 3)
-            LOG_INFO("[LevelUpManager] Player {} selected weapon {}", player->GetId(), selected.itemId);
-        }
     }
     else // PASSIVE
     {
         success = inventory.AddOrUpgradePassive(selected.itemId);
-        if (success)
-        {
-            // TODO: 패시브 효과 적용 (Phase 3)
-            LOG_INFO("[LevelUpManager] Player {} selected passive {}", player->GetId(), selected.itemId);
-        }
     }
 
     if (success)
     {
         player->RefreshInventoryEffects();
-        LOG_INFO("[LevelUpManager] Player {} selected {} (ID: {})", player->GetId(), selected.name, selected.itemId);
+        LOG_INFO(
+            "[LevelUpManager] Player {} successfully applied {} (ID: {}, Type: {})",
+            player->GetId(),
+            selected.name,
+            selected.itemId,
+            (selected.type == LevelUpOptionType::WEAPON ? "Weapon" : "Passive")
+        );
     }
     else
     {
-        LOG_ERROR("[LevelUpManager] Failed to apply selection for player {}", player->GetId());
+        LOG_ERROR(
+            "[LevelUpManager] Failed to apply selection (ID: {}) for player {}", selected.itemId, player->GetId()
+        );
     }
 
     // 선택지 초기화
