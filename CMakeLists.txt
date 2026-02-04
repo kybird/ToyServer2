@@ -2,7 +2,16 @@ cmake_minimum_required(VERSION 3.16)
 
 # Setup VCPKG (Must be before project() to activate toolchain)
 set(VCPKG_INSTALLED_DIR "${CMAKE_SOURCE_DIR}/vcpkg_installed" CACHE PATH "vcpkg installed directory")
-set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake")
+
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+    if(DEFINED ENV{VCPKG_ROOT})
+        set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+    else()
+        # Default fallback
+        set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+    endif()
+endif()
+
 set(VCPKG_TARGET_TRIPLET "x64-windows" CACHE STRING "Vcpkg target triplet")
 
 project(HGSF VERSION 0.1.0 LANGUAGES CXX)
@@ -37,7 +46,6 @@ find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
 
 if(ENABLE_DRIVER_MYSQL)
-    find_package(MySQL REQUIRED)
     find_package(unofficial-libmysql CONFIG REQUIRED)
 endif()
 
