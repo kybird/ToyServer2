@@ -254,11 +254,18 @@ void Room::BroadcastDespawn(const std::vector<int32_t> &objectIds, const std::ve
         return;
 
     Protocol::S_DespawnObject msg;
-    for (int id : objectIds)
-        msg.add_object_ids(id);
-    // pickerIds ignored in simple proto? Check definition.
-    (void)pickerIds;
-    // Assuming S_DespawnObject doesn't strictly require picker info or it's handled differently.
+    for (size_t i = 0; i < objectIds.size(); ++i)
+    {
+        msg.add_object_ids(objectIds[i]);
+        if (i < pickerIds.size())
+        {
+            msg.add_picker_ids(pickerIds[i]);
+        }
+        else
+        {
+            msg.add_picker_ids(0);
+        }
+    }
 
     BroadcastPacket(S_DespawnObjectPacket(msg));
 }

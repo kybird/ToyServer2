@@ -3,6 +3,7 @@
 #include "Entity/AI/Movement/FluidStackingStrategy.h"
 #include "Entity/AI/Movement/SmartFlockingStrategy.h"
 #include "Entity/AI/Movement/StrictSeparationStrategy.h"
+#include "Entity/AI/Movement/SurroundingFlockingStrategy.h"
 #include "Entity/Monster.h"
 #include "Entity/Player.h"
 #include "Entity/Projectile.h"
@@ -398,6 +399,10 @@ void Room::SetMonsterStrategy(const std::string &strategyName)
     else if (strategyName == "strict")
     {
         strategy = std::make_shared<StrictSeparationStrategy>();
+    }
+    else if (strategyName == "surround")
+    {
+        strategy = std::make_shared<SurroundingFlockingStrategy>();
     }
     else
     {

@@ -1,7 +1,7 @@
 #include "Monster.h"
 #include "AI/IAIBehavior.h"
 #include "Entity/AI/Movement/IMovementStrategy.h"
-#include "Entity/AI/Movement/SmartFlockingStrategy.h"
+#include "Entity/AI/Movement/SurroundingFlockingStrategy.h"
 #include "Game/Room.h"
 
 namespace SimpleGame {
@@ -9,12 +9,12 @@ namespace SimpleGame {
 Monster::Monster(int32_t id, int32_t monsterTypeId)
     : GameObject(id, Protocol::ObjectType::MONSTER), _monsterTypeId(monsterTypeId)
 {
-    _movementStrategy = std::make_shared<SmartFlockingStrategy>();
+    _movementStrategy = std::make_shared<SurroundingFlockingStrategy>();
 }
 
 Monster::Monster() : GameObject(0, Protocol::ObjectType::MONSTER)
 {
-    _movementStrategy = std::make_shared<SmartFlockingStrategy>();
+    _movementStrategy = std::make_shared<SurroundingFlockingStrategy>();
 }
 
 void Monster::SetMovementStrategy(std::shared_ptr<IMovementStrategy> strategy)

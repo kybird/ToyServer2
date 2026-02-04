@@ -282,6 +282,7 @@ set(GAME_SOURCES
     src/Examples/VampireSurvivor/Server/Entity/AI/Movement/FluidStackingStrategy.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/Movement/SmartFlockingStrategy.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/Movement/StrictSeparationStrategy.cpp
+    src/Examples/VampireSurvivor/Server/Entity/AI/Movement/SurroundingFlockingStrategy.cpp
     src/Examples/VampireSurvivor/Server/Entity/ProjectileFactory.cpp
     ${PROTO_SRCS} ${PROTO_HDRS}
 )

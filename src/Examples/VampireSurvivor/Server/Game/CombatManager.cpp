@@ -290,22 +290,38 @@ void CombatManager::ResolveItemCollisions(float dt, Room *room)
         // 가장 가까운 플레이어 찾기
         auto nearestPlayer = room->GetNearestPlayer(gem->GetX(), gem->GetY());
         if (nearestPlayer == nullptr || nearestPlayer->IsDead())
+        {
+            // 플레이어가 없거나 죽었으면 속도 초기화 (자석 풀림)
+            gem->SetVelocity(0, 0);
             continue;
+        }
 
         float dx = nearestPlayer->GetX() - gem->GetX();
         float dy = nearestPlayer->GetY() - gem->GetY();
         float distSq = dx * dx + dy * dy;
+        float dist = std::sqrt(distSq);
 
-        // 자석 범위 안이면 즉시 습득 처리 (연출은 클라이언트가 담당)
-        if (distSq <= GameConfig::EXP_GEM_MAGNET_RADIUS * GameConfig::EXP_GEM_MAGNET_RADIUS)
+        if (distSq <= GameConfig::EXP_GEM_PICKUP_RADIUS * GameConfig::EXP_GEM_PICKUP_RADIUS)
         {
+            // [Pickup] 습득 반경 안이면 즉시 습득 처리
             nearestPlayer->AddExp(gem->GetExpAmount(), room);
             gem->SetPickerId(nearestPlayer->GetId());
             gem->MarkAsPickedUp();
-
-            // LOG_DEBUG(
-            //     "Player {} magnetized ExpGem {}. EXP +{}", nearestPlayer->GetId(), gem->GetId(), gem->GetExpAmount()
-            // );
+        }
+        else if (distSq <= GameConfig::EXP_GEM_MAGNET_RADIUS * GameConfig::EXP_GEM_MAGNET_RADIUS)
+        {
+            // [Magnet] 자석 범위 안이면 플레이어 쪽으로 이동 (속도 설정)
+            if (dist > 0.001f)
+            {
+                float nx = dx / dist;
+                float ny = dy / dist;
+                gem->SetVelocity(nx * GameConfig::EXP_GEM_FLY_SPEED, ny * GameConfig::EXP_GEM_FLY_SPEED);
+            }
+        }
+        else
+        {
+            // 범위를 벗어나면 속도 초기화
+            gem->SetVelocity(0, 0);
         }
     }
 }
