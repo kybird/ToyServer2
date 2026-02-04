@@ -1,6 +1,6 @@
 #include "Game/Room.h"
 #include "Core/UserDB.h"
-// #include "Entity/AI/Movement/FluidStackingStrategy.h"
+#include "Entity/AI/Movement/FluidStackingStrategy.h"
 #include "Entity/AI/Movement/SmartFlockingStrategy.h"
 #include "Entity/AI/Movement/StrictSeparationStrategy.h"
 #include "Entity/Monster.h"
@@ -393,7 +393,7 @@ void Room::SetMonsterStrategy(const std::string &strategyName)
     }
     else if (strategyName == "fluid")
     {
-        // strategy = std::make_shared<FluidStackingStrategy>();
+        strategy = std::make_shared<FluidStackingStrategy>();
     }
     else if (strategyName == "strict")
     {
