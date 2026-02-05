@@ -8,6 +8,7 @@
 #include "Game/Room.h"
 #include "Math/Vector2.h"
 #include "System/ILog.h"
+#include "System/Utility/FastRandom.h"
 #include <algorithm>
 #include <limits>
 
@@ -297,16 +298,13 @@ void DamageEmitter::Update(float dt, Room *room)
             std::vector<int32_t> hitDamageValues;
             std::vector<bool> hitCriticals;
 
-            // Check critical hit
+            // Check critical hit using FastRandom
             bool isCritical = false;
             float critMultiplier = 1.0f;
             float critChance = owner->GetCriticalChance();
 
-            static std::random_device rd;
-            static std::mt19937 gen(rd());
-            std::uniform_real_distribution<float> dis(0.0f, 1.0f);
-
-            if (dis(gen) < critChance)
+            static thread_local System::Utility::FastRandom rng;
+            if (rng.NextFloat() < critChance)
             {
                 isCritical = true;
                 critMultiplier = owner->GetCriticalDamageMultiplier();
@@ -366,6 +364,11 @@ void DamageEmitter::Update(float dt, Room *room)
             skillMsg.set_y(py);
             skillMsg.set_radius(finalRadius);
             skillMsg.set_duration_seconds(0.3f); // Short visual duration
+            skillMsg.set_arc_degrees(_arcDegrees);
+
+            float rotDeg = std::atan2(facingDir.y, facingDir.x) * (180.0f / 3.14159265f);
+            skillMsg.set_rotation_degrees(rotDeg);
+
             room->BroadcastPacket(S_SkillEffectPacket(std::move(skillMsg)));
         }
         else

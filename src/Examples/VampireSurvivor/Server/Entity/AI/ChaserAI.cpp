@@ -3,6 +3,7 @@
 #include "Entity/Monster.h"
 #include "Game/GameConfig.h"
 #include "Game/Room.h"
+#include "System/Utility/FastRandom.h"
 
 namespace SimpleGame {
 
@@ -45,8 +46,8 @@ void ChaserAI::Reset()
 {
     _hasTarget = false;
     _room = nullptr;
-    float r = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-    _nextThinkTime = r * _thinkInterval;
+    static thread_local System::Utility::FastRandom rng;
+    _nextThinkTime = rng.NextFloat(0.0f, _thinkInterval);
 }
 
 } // namespace SimpleGame

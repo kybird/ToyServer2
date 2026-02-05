@@ -1,5 +1,6 @@
 #include "Entity/AI/WanderAI.h"
 #include "Entity/Monster.h"
+#include "System/Utility/FastRandom.h"
 
 namespace SimpleGame {
 
@@ -13,7 +14,8 @@ void WanderAI::Think(Monster *monster, Room *room, float currentTime)
     _nextDirectionChangeTime = currentTime + _directionChangeInterval;
 
     // Pick random direction
-    float angle = (float)(rand() % 360) * 3.14159f / 180.0f;
+    static thread_local System::Utility::FastRandom rng;
+    float angle = rng.NextFloat(0.0f, 2.0f * 3.14159265f);
     _dirX = std::cos(angle);
     _dirY = std::sin(angle);
 }

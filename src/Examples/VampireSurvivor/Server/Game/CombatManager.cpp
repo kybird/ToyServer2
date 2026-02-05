@@ -9,6 +9,7 @@
 #include "GamePackets.h"
 #include "Protocol/game.pb.h"
 #include "System/ILog.h"
+#include "System/Utility/FastRandom.h"
 #include <random>
 
 namespace SimpleGame {
@@ -135,12 +136,9 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
                             auto player = std::static_pointer_cast<Player>(ownerObj);
                             float critChance = player->GetCriticalChance();
 
-                            // Random critical check
-                            static std::random_device rd;
-                            static std::mt19937 gen(rd());
-                            std::uniform_real_distribution<float> dis(0.0f, 1.0f);
-
-                            if (dis(gen) < critChance)
+                            // Random critical check using FastRandom
+                            static thread_local System::Utility::FastRandom rng;
+                            if (rng.NextFloat() < critChance)
                             {
                                 isCritical = true;
                                 critMultiplier = player->GetCriticalDamageMultiplier();

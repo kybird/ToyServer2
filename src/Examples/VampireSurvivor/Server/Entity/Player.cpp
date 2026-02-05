@@ -839,4 +839,36 @@ float Player::GetCriticalDamageMultiplier() const
     return multiplier;
 }
 
+void Player::SyncInventory(Room *room)
+{
+    if (room == nullptr || _inventory == nullptr)
+        return;
+
+    Protocol::S_UpdateInventory msg;
+
+    // Collect Weapons
+    for (int id : _inventory->GetOwnedWeaponIds())
+    {
+        auto *item = msg.add_items();
+        item->set_id(id);
+        item->set_level(_inventory->GetWeaponLevel(id));
+        item->set_is_passive(false);
+    }
+
+    // Collect Passives
+    for (int id : _inventory->GetOwnedPassiveIds())
+    {
+        auto *item = msg.add_items();
+        item->set_id(id);
+        item->set_level(_inventory->GetPassiveLevel(id));
+        item->set_is_passive(true);
+    }
+
+    // Send only to the owner (this player)
+    S_UpdateInventoryPacket pkt(msg);
+    room->SendToPlayer(_sessionId, pkt);
+
+    LOG_INFO("[Player] Synced inventory to Player {} ({} items)", _id, msg.items_size());
+}
+
 } // namespace SimpleGame

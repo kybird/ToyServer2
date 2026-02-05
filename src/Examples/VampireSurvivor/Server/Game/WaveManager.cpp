@@ -4,6 +4,7 @@
 #include "GameConfig.h"
 #include "GamePackets.h"
 #include "System/ILog.h"
+#include "System/Utility/FastRandom.h"
 
 namespace SimpleGame {
 
@@ -221,11 +222,12 @@ std::pair<float, float> WaveManager::GetAngularGapSpawnPos(const PlayerCluster &
 
     // 2. Angular Gap Logic
     float spawnAngle = 0.0f;
+    static thread_local System::Utility::FastRandom rng;
 
     if (cluster.players.size() <= 1)
     {
         // Random angle if single player
-        spawnAngle = ((rand() % 360) / 180.0f) * 3.14159f;
+        spawnAngle = rng.NextFloat(0.0f, 2.0f * 3.14159f);
     }
     else
     {
@@ -263,10 +265,10 @@ std::pair<float, float> WaveManager::GetAngularGapSpawnPos(const PlayerCluster &
 
     // 3. Calc Position with Jitter
     // Add small random jitter to radius and angle to prevent stacking
-    float jitterAngle = ((rand() % 100) / 100.0f - 0.5f) * 0.5f; // +/- 0.25 rad
+    float jitterAngle = rng.NextFloat(-0.5f, 0.5f); // +/- 0.5 rad (~28 degrees)
     float finalAngle = spawnAngle + jitterAngle;
 
-    float jitterDist = ((rand() % 100) / 100.0f) * 2.0f; // 0~2m variation
+    float jitterDist = rng.NextFloat(0.0f, 3.0f); // 0~3m variation
     float finalRadius = spawnRadius + jitterDist;
 
     return {cluster.centerX + std::cos(finalAngle) * finalRadius, cluster.centerY + std::sin(finalAngle) * finalRadius};
@@ -362,9 +364,11 @@ void WaveManager::DebugSpawn(Room *room, int32_t monsterTypeId, int32_t count)
     }
 
     // Distribute among clusters or just pick first
+    static thread_local System::Utility::FastRandom rng;
     for (int i = 0; i < count; ++i)
     {
-        const auto &cluster = clusters[rand() % clusters.size()];
+        size_t index = static_cast<size_t>(rng.NextInt(0, static_cast<int>(clusters.size()) - 1));
+        const auto &cluster = clusters[index];
         auto pos = GetAngularGapSpawnPos(cluster);
         SpawnMonster(monsterTypeId, 1.0f, room, pos.first, pos.second);
     }

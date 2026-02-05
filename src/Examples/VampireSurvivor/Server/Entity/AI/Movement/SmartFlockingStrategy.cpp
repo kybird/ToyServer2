@@ -1,6 +1,7 @@
 #include "SmartFlockingStrategy.h"
 #include "Entity/Monster.h"
 #include "Game/Room.h"
+#include "System/Utility/FastRandom.h"
 
 namespace SimpleGame {
 
@@ -63,8 +64,9 @@ void SmartFlockingStrategy::CalculateMovement(
 
                 if (l < 0.001f)
                 {
-                    sepX += ((rand() % 100) - 50) / 50.0f;
-                    sepY += ((rand() % 100) - 50) / 50.0f;
+                    static thread_local System::Utility::FastRandom rng;
+                    sepX += rng.NextFloat(-1.0f, 1.0f);
+                    sepY += rng.NextFloat(-1.0f, 1.0f);
                 }
                 else
                 {

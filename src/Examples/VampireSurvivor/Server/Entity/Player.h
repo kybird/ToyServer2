@@ -81,6 +81,7 @@ public:
     }
     void EnterLevelUpState(Room *room);
     void ExitLevelUpState(Room *room);
+    void SyncInventory(Room *room); // [New] Synchronize inventory to client
 
     // Auto-Attack
     void Update(float dt, Room *room) override;

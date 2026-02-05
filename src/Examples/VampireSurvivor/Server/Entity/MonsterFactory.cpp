@@ -8,6 +8,7 @@
 #include "Game/ObjectManager.h"
 #include "System/ILog.h"
 #include "System/Memory/SimplePool.h"
+#include "System/Utility/FastRandom.h"
 
 namespace SimpleGame {
 
@@ -76,12 +77,11 @@ std::vector<std::shared_ptr<Monster>> MonsterFactory::SpawnBatch(
     monsters.reserve(count);
 
     // Naive Random for now (Can be improved with proper C++ random if needed)
+    static thread_local System::Utility::FastRandom rng;
     for (int i = 0; i < count; ++i)
     {
-        float r1 = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        float r2 = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
-        float x = minX + r1 * (maxX - minX);
-        float y = minY + r2 * (maxY - minY);
+        float x = rng.NextFloat(minX, maxX);
+        float y = rng.NextFloat(minY, maxY);
 
         auto monster = CreateMonster(objMgr, monsterTypeId, x, y);
         if (monster)

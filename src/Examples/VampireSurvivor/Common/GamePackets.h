@@ -54,6 +54,6 @@ using C_PongPacket = ProtobufPacket<PacketID::C_PONG, Protocol::C_Pong>;
 using C_PingPacket = ProtobufPacket<PacketID::C_PING, Protocol::C_Ping>;
 using S_PongPacket = ProtobufPacket<PacketID::S_PONG, Protocol::S_Pong>;
 using S_DebugServerTickPacket = ProtobufPacket<PacketID::S_DEBUG_SERVER_TICK, Protocol::S_DebugServerTick>;
-using S_DebugDrawBoxPacket = ProtobufPacket<PacketID::S_DEBUG_DRAW_BOX, Protocol::S_DebugDrawBox>;
+using S_UpdateInventoryPacket = ProtobufPacket<PacketID::S_UPDATE_INVENTORY, Protocol::S_UpdateInventory>;
 
 } // namespace SimpleGame
