@@ -30,6 +30,7 @@ void Room::BroadcastDebugState()
 
     // Prepare JSON Data using System::Json
     System::Json root;
+    root["rid"] = _roomId;
     root["t"] = _serverTick;
 
     // Players
@@ -39,7 +40,13 @@ void Room::BroadcastDebugState()
         for (const auto &pair : _players)
         {
             auto p = pair.second;
-            players.push_back({{"id", p->GetId()}, {"x", p->GetX()}, {"y", p->GetY()}, {"hp", p->GetHp()}});
+            players.push_back({
+                {"id", p->GetId()},
+                {"x", p->GetX()},
+                {"y", p->GetY()},
+                {"hp", p->GetHp()},
+                {"l", p->GetLookLeft()} // Direction: 1 for Left, 0 for Right
+            });
         }
     }
     root["p"] = players;
@@ -85,6 +92,7 @@ void Room::BroadcastDebugClear()
         return;
 
     System::Json root;
+    root["rid"] = _roomId;
     root["reset"] = true;
     ws->Broadcast(System::ToJsonString(root));
 }

@@ -50,8 +50,12 @@ struct SkillTemplate
     float effectInterval;   // Tick interval for DoT
 
     // Field/Persistent Skill Stats
-    float activeDuration; // How long the field stays active (0 = pulse)
-    float dotInterval;    // Tick interval for damage/effect while active
+    float activeDuration;     // How long the field stays active (0 = pulse)
+    float dotInterval;        // Tick interval for damage/effect while active
+    float arcDegrees = 30.0f; // [New] Arc angle for Arc emitter type
+
+    // Traits (Categories)
+    std::vector<std::string> traits; // "PROJECTILE", "AOE", "DURATION", "PIERCE", etc.
 };
 
 struct WaveData

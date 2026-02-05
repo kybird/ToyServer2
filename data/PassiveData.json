@@ -1,114 +1,114 @@
 [
     {
         "id": 1,
-        "name": "Ring of Power",
-        "description": "Increases Damage",
-        "icon": "power_ring",
+        "name": "Spinach",
+        "description": "Increases Damage for all weapons",
+        "icon": "spinach",
         "stat_type": "damage",
         "max_level": 5,
         "levels": [
             {
                 "level": 1,
-                "bonus": 0.10,
+                "bonus": 0.1,
                 "desc": "Damage +10%"
             },
             {
                 "level": 2,
-                "bonus": 0.20,
+                "bonus": 0.2,
                 "desc": "Damage +20%"
             },
             {
                 "level": 3,
-                "bonus": 0.30,
+                "bonus": 0.3,
                 "desc": "Damage +30%"
             },
             {
                 "level": 4,
-                "bonus": 0.40,
+                "bonus": 0.4,
                 "desc": "Damage +40%"
             },
             {
                 "level": 5,
-                "bonus": 0.50,
+                "bonus": 0.5,
                 "desc": "Damage +50%"
             }
         ]
     },
     {
         "id": 2,
-        "name": "Chalice of Life",
+        "name": "Hollow Heart",
         "description": "Increases Max HP",
-        "icon": "hp_chalice",
+        "icon": "hollow_heart",
         "stat_type": "max_hp",
         "max_level": 5,
         "levels": [
             {
                 "level": 1,
-                "bonus": 0.10,
-                "desc": "Max HP +10%"
-            },
-            {
-                "level": 2,
-                "bonus": 0.20,
+                "bonus": 0.2,
                 "desc": "Max HP +20%"
             },
             {
-                "level": 3,
-                "bonus": 0.30,
-                "desc": "Max HP +30%"
-            },
-            {
-                "level": 4,
-                "bonus": 0.40,
+                "level": 2,
+                "bonus": 0.4,
                 "desc": "Max HP +40%"
             },
             {
+                "level": 3,
+                "bonus": 0.6,
+                "desc": "Max HP +60%"
+            },
+            {
+                "level": 4,
+                "bonus": 0.8,
+                "desc": "Max HP +80%"
+            },
+            {
                 "level": 5,
-                "bonus": 0.50,
-                "desc": "Max HP +50%"
+                "bonus": 1.0,
+                "desc": "Max HP +100%"
             }
         ]
     },
     {
         "id": 3,
-        "name": "Boots of Speed",
+        "name": "Wings",
         "description": "Increases Movement Speed",
-        "icon": "speed_boots",
+        "icon": "wings",
         "stat_type": "speed",
         "max_level": 5,
         "levels": [
             {
                 "level": 1,
-                "bonus": 0.10,
+                "bonus": 0.1,
                 "desc": "Move Speed +10%"
             },
             {
                 "level": 2,
-                "bonus": 0.20,
+                "bonus": 0.2,
                 "desc": "Move Speed +20%"
             },
             {
                 "level": 3,
-                "bonus": 0.30,
+                "bonus": 0.3,
                 "desc": "Move Speed +30%"
             },
             {
                 "level": 4,
-                "bonus": 0.40,
+                "bonus": 0.4,
                 "desc": "Move Speed +40%"
             },
             {
                 "level": 5,
-                "bonus": 0.50,
+                "bonus": 0.5,
                 "desc": "Move Speed +50%"
             }
         ]
     },
     {
         "id": 4,
-        "name": "Hourglass of Time",
+        "name": "Empty Tome",
         "description": "Reduces Skill Cooldown",
-        "icon": "cooldown_hourglass",
+        "icon": "empty_tome",
         "stat_type": "cooldown",
         "max_level": 5,
         "levels": [
@@ -141,396 +141,126 @@
     },
     {
         "id": 5,
-        "name": "Orb of Expansion",
+        "name": "Candelabrador",
         "description": "Increases Attack Area",
-        "icon": "area_orb",
+        "icon": "candelabrador",
         "stat_type": "area",
         "max_level": 5,
         "levels": [
             {
                 "level": 1,
-                "bonus": 0.10,
+                "bonus": 0.1,
                 "desc": "Area +10%"
             },
             {
                 "level": 2,
-                "bonus": 0.20,
+                "bonus": 0.2,
                 "desc": "Area +20%"
             },
             {
                 "level": 3,
-                "bonus": 0.30,
+                "bonus": 0.3,
                 "desc": "Area +30%"
             },
             {
                 "level": 4,
-                "bonus": 0.40,
+                "bonus": 0.4,
                 "desc": "Area +40%"
             },
             {
                 "level": 5,
-                "bonus": 0.50,
+                "bonus": 0.5,
                 "desc": "Area +50%"
             }
         ]
     },
     {
-        "id": 8,
-        "name": "Dagger Mastery",
-        "description": "Increases Dagger Projectile Count",
-        "icon": "dagger_mastery",
-        "stat_type": "projectile_count_1",
-        "max_level": 10,
+        "id": 6,
+        "name": "Spellbinder",
+        "description": "Increases Effect Duration",
+        "icon": "spellbinder",
+        "stat_type": "duration",
+        "max_level": 5,
         "levels": [
             {
                 "level": 1,
-                "bonus": 1,
-                "desc": "Dagger Count +1"
+                "bonus": 0.1,
+                "desc": "Duration +10%"
             },
             {
                 "level": 2,
-                "bonus": 2,
-                "desc": "Dagger Count +2"
+                "bonus": 0.2,
+                "desc": "Duration +20%"
             },
             {
                 "level": 3,
-                "bonus": 3,
-                "desc": "Dagger Count +3"
+                "bonus": 0.3,
+                "desc": "Duration +30%"
             },
             {
                 "level": 4,
-                "bonus": 4,
-                "desc": "Dagger Count +4"
+                "bonus": 0.4,
+                "desc": "Duration +40%"
             },
             {
                 "level": 5,
-                "bonus": 5,
-                "desc": "Dagger Count +5"
-            },
-            {
-                "level": 6,
-                "bonus": 6,
-                "desc": "Dagger Count +6"
-            },
-            {
-                "level": 7,
-                "bonus": 7,
-                "desc": "Dagger Count +7"
-            },
-            {
-                "level": 8,
-                "bonus": 8,
-                "desc": "Dagger Count +8"
-            },
-            {
-                "level": 9,
-                "bonus": 9,
-                "desc": "Dagger Count +9"
-            },
-            {
-                "level": 10,
-                "bonus": 10,
-                "desc": "Dagger Count +10"
+                "bonus": 0.5,
+                "desc": "Duration +50%"
             }
         ]
     },
     {
-        "id": 9,
-        "name": "Dart Quiver",
-        "description": "Increases Poison Dart Projectile Count",
-        "icon": "dart_quiver",
-        "stat_type": "projectile_count_2",
-        "max_level": 10,
+        "id": 7,
+        "name": "Duplicator",
+        "description": "Increases Projectile Count",
+        "icon": "duplicator",
+        "stat_type": "projectile_count",
+        "max_level": 2,
         "levels": [
             {
                 "level": 1,
                 "bonus": 1,
-                "desc": "Dart Count +1"
+                "desc": "Projectile Count +1"
             },
             {
                 "level": 2,
                 "bonus": 2,
-                "desc": "Dart Count +2"
-            },
-            {
-                "level": 3,
-                "bonus": 3,
-                "desc": "Dart Count +3"
-            },
-            {
-                "level": 4,
-                "bonus": 4,
-                "desc": "Dart Count +4"
-            },
-            {
-                "level": 5,
-                "bonus": 5,
-                "desc": "Dart Count +5"
-            },
-            {
-                "level": 6,
-                "bonus": 6,
-                "desc": "Dart Count +6"
-            },
-            {
-                "level": 7,
-                "bonus": 7,
-                "desc": "Dart Count +7"
-            },
-            {
-                "level": 8,
-                "bonus": 8,
-                "desc": "Dart Count +8"
-            },
-            {
-                "level": 9,
-                "bonus": 9,
-                "desc": "Dart Count +9"
-            },
-            {
-                "level": 10,
-                "bonus": 10,
-                "desc": "Dart Count +10"
-            }
-        ]
-    },
-    {
-        "id": 10,
-        "name": "Frost Core",
-        "description": "Increases Frost Nova Projectile Count",
-        "icon": "frost_core",
-        "stat_type": "projectile_count_3",
-        "max_level": 10,
-        "levels": [
-            {
-                "level": 1,
-                "bonus": 1,
-                "desc": "Frost Count +1"
-            },
-            {
-                "level": 2,
-                "bonus": 2,
-                "desc": "Frost Count +2"
-            },
-            {
-                "level": 3,
-                "bonus": 3,
-                "desc": "Frost Count +3"
-            },
-            {
-                "level": 4,
-                "bonus": 4,
-                "desc": "Frost Count +4"
-            },
-            {
-                "level": 5,
-                "bonus": 5,
-                "desc": "Frost Count +5"
-            },
-            {
-                "level": 6,
-                "bonus": 6,
-                "desc": "Frost Count +6"
-            },
-            {
-                "level": 7,
-                "bonus": 7,
-                "desc": "Frost Count +7"
-            },
-            {
-                "level": 8,
-                "bonus": 8,
-                "desc": "Frost Count +8"
-            },
-            {
-                "level": 9,
-                "bonus": 9,
-                "desc": "Frost Count +9"
-            },
-            {
-                "level": 10,
-                "bonus": 10,
-                "desc": "Frost Count +10"
+                "desc": "Projectile Count +2"
             }
         ]
     },
     {
         "id": 11,
-        "name": "Sharpening Stone",
-        "description": "Increases Dagger Pierce Count",
-        "icon": "sharpening_stone",
-        "stat_type": "pierce_1",
-        "max_level": 10,
+        "name": "Magic Bindi",
+        "description": "Increases Pierce Count",
+        "icon": "magic_bindi",
+        "stat_type": "pierce",
+        "max_level": 5,
         "levels": [
             {
                 "level": 1,
                 "bonus": 1,
-                "desc": "Dagger Pierce +1"
+                "desc": "Pierce +1"
             },
             {
                 "level": 2,
                 "bonus": 2,
-                "desc": "Dagger Pierce +2"
+                "desc": "Pierce +2"
             },
             {
                 "level": 3,
                 "bonus": 3,
-                "desc": "Dagger Pierce +3"
+                "desc": "Pierce +3"
             },
             {
                 "level": 4,
                 "bonus": 4,
-                "desc": "Dagger Pierce +4"
+                "desc": "Pierce +4"
             },
             {
                 "level": 5,
                 "bonus": 5,
-                "desc": "Dagger Pierce +5"
-            },
-            {
-                "level": 6,
-                "bonus": 6,
-                "desc": "Dagger Pierce +6"
-            },
-            {
-                "level": 7,
-                "bonus": 7,
-                "desc": "Dagger Pierce +7"
-            },
-            {
-                "level": 8,
-                "bonus": 8,
-                "desc": "Dagger Pierce +8"
-            },
-            {
-                "level": 9,
-                "bonus": 9,
-                "desc": "Dagger Pierce +9"
-            },
-            {
-                "level": 10,
-                "bonus": 10,
-                "desc": "Dagger Pierce +10"
-            }
-        ]
-    },
-    {
-        "id": 12,
-        "name": "Toxic Needle",
-        "description": "Increases Dart Pierce Count",
-        "icon": "toxic_needle",
-        "stat_type": "pierce_2",
-        "max_level": 10,
-        "levels": [
-            {
-                "level": 1,
-                "bonus": 1,
-                "desc": "Dart Pierce +1"
-            },
-            {
-                "level": 2,
-                "bonus": 2,
-                "desc": "Dart Pierce +2"
-            },
-            {
-                "level": 3,
-                "bonus": 3,
-                "desc": "Dart Pierce +3"
-            },
-            {
-                "level": 4,
-                "bonus": 4,
-                "desc": "Dart Pierce +4"
-            },
-            {
-                "level": 5,
-                "bonus": 5,
-                "desc": "Dart Pierce +5"
-            },
-            {
-                "level": 6,
-                "bonus": 6,
-                "desc": "Dart Pierce +6"
-            },
-            {
-                "level": 7,
-                "bonus": 7,
-                "desc": "Dart Pierce +7"
-            },
-            {
-                "level": 8,
-                "bonus": 8,
-                "desc": "Dart Pierce +8"
-            },
-            {
-                "level": 9,
-                "bonus": 9,
-                "desc": "Dart Pierce +9"
-            },
-            {
-                "level": 10,
-                "bonus": 10,
-                "desc": "Dart Pierce +10"
-            }
-        ]
-    },
-    {
-        "id": 13,
-        "name": "Ice Shard",
-        "description": "Increases Frost Pierce Count",
-        "icon": "ice_shard",
-        "stat_type": "pierce_3",
-        "max_level": 10,
-        "levels": [
-            {
-                "level": 1,
-                "bonus": 1,
-                "desc": "Frost Pierce +1"
-            },
-            {
-                "level": 2,
-                "bonus": 2,
-                "desc": "Frost Pierce +2"
-            },
-            {
-                "level": 3,
-                "bonus": 3,
-                "desc": "Frost Pierce +3"
-            },
-            {
-                "level": 4,
-                "bonus": 4,
-                "desc": "Frost Pierce +4"
-            },
-            {
-                "level": 5,
-                "bonus": 5,
-                "desc": "Frost Pierce +5"
-            },
-            {
-                "level": 6,
-                "bonus": 6,
-                "desc": "Frost Pierce +6"
-            },
-            {
-                "level": 7,
-                "bonus": 7,
-                "desc": "Frost Pierce +7"
-            },
-            {
-                "level": 8,
-                "bonus": 8,
-                "desc": "Frost Pierce +8"
-            },
-            {
-                "level": 9,
-                "bonus": 9,
-                "desc": "Frost Pierce +9"
-            },
-            {
-                "level": 10,
-                "bonus": 10,
-                "desc": "Frost Pierce +10"
+                "desc": "Pierce +5"
             }
         ]
     }

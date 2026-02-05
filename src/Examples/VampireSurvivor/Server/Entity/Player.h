@@ -67,8 +67,8 @@ public:
     float GetCooldownMultiplier() const;
     float GetAreaMultiplier() const;
     float GetDurationMultiplier() const;
-    int32_t GetAdditionalProjectileCount(int32_t weaponId = 0) const;
-    int32_t GetAdditionalPierceCount(int32_t weaponId = 0) const;
+    int32_t GetAdditionalProjectileCount() const;
+    int32_t GetAdditionalPierceCount() const;
 
     // Invincibility
     bool IsInvincible(float currentTime) const;
@@ -111,6 +111,10 @@ public:
     void SetGodMode(bool enable);
     bool IsGodMode() const;
 
+    // Critical Hit
+    float GetCriticalChance() const;
+    float GetCriticalDamageMultiplier() const;
+
 private:
     uint64_t _sessionId = 0;
     std::string _name;
@@ -120,6 +124,9 @@ private:
     uint32_t _lastInputTick = 0;
     float _facingDirX = 1.0f;
     float _facingDirY = 0.0f;
+
+    // HP
+    int32_t _baseMaxHp = 100;
 
     // Experience & Level
     int32_t _exp = 0;

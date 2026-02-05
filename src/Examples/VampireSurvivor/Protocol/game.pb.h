@@ -4761,6 +4761,7 @@ class S_DamageEffect final : public ::google::protobuf::Message
   enum : int {
     kTargetIdsFieldNumber = 2,
     kDamageValuesFieldNumber = 3,
+    kIsCriticalFieldNumber = 4,
     kSkillIdFieldNumber = 1,
   };
   // repeated int32 target_ids = 2;
@@ -4799,6 +4800,24 @@ class S_DamageEffect final : public ::google::protobuf::Message
   ::google::protobuf::RepeatedField<::int32_t>* _internal_mutable_damage_values();
 
   public:
+  // repeated bool is_critical = 4;
+  int is_critical_size() const;
+  private:
+  int _internal_is_critical_size() const;
+
+  public:
+  void clear_is_critical() ;
+  bool is_critical(int index) const;
+  void set_is_critical(int index, bool value);
+  void add_is_critical(bool value);
+  const ::google::protobuf::RepeatedField<bool>& is_critical() const;
+  ::google::protobuf::RepeatedField<bool>* mutable_is_critical();
+
+  private:
+  const ::google::protobuf::RepeatedField<bool>& _internal_is_critical() const;
+  ::google::protobuf::RepeatedField<bool>* _internal_mutable_is_critical();
+
+  public:
   // int32 skill_id = 1;
   void clear_skill_id() ;
   ::int32_t skill_id() const;
@@ -4814,7 +4833,7 @@ class S_DamageEffect final : public ::google::protobuf::Message
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      2, 3, 0,
+      2, 4, 0,
       0, 2>
       _table_;
 
@@ -4836,6 +4855,7 @@ class S_DamageEffect final : public ::google::protobuf::Message
     ::google::protobuf::internal::CachedSize _target_ids_cached_byte_size_;
     ::google::protobuf::RepeatedField<::int32_t> damage_values_;
     ::google::protobuf::internal::CachedSize _damage_values_cached_byte_size_;
+    ::google::protobuf::RepeatedField<bool> is_critical_;
     ::int32_t skill_id_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
@@ -11885,6 +11905,51 @@ S_DamageEffect::_internal_damage_values() const {
 inline ::google::protobuf::RepeatedField<::int32_t>* S_DamageEffect::_internal_mutable_damage_values() {
   ::google::protobuf::internal::TSanRead(&_impl_);
   return &_impl_.damage_values_;
+}
+
+// repeated bool is_critical = 4;
+inline int S_DamageEffect::_internal_is_critical_size() const {
+  return _internal_is_critical().size();
+}
+inline int S_DamageEffect::is_critical_size() const {
+  return _internal_is_critical_size();
+}
+inline void S_DamageEffect::clear_is_critical() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.is_critical_.Clear();
+}
+inline bool S_DamageEffect::is_critical(int index) const {
+  // @@protoc_insertion_point(field_get:Protocol.S_DamageEffect.is_critical)
+  return _internal_is_critical().Get(index);
+}
+inline void S_DamageEffect::set_is_critical(int index, bool value) {
+  _internal_mutable_is_critical()->Set(index, value);
+  // @@protoc_insertion_point(field_set:Protocol.S_DamageEffect.is_critical)
+}
+inline void S_DamageEffect::add_is_critical(bool value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _internal_mutable_is_critical()->Add(value);
+  // @@protoc_insertion_point(field_add:Protocol.S_DamageEffect.is_critical)
+}
+inline const ::google::protobuf::RepeatedField<bool>& S_DamageEffect::is_critical() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_list:Protocol.S_DamageEffect.is_critical)
+  return _internal_is_critical();
+}
+inline ::google::protobuf::RepeatedField<bool>* S_DamageEffect::mutable_is_critical()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_mutable_list:Protocol.S_DamageEffect.is_critical)
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _internal_mutable_is_critical();
+}
+inline const ::google::protobuf::RepeatedField<bool>&
+S_DamageEffect::_internal_is_critical() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.is_critical_;
+}
+inline ::google::protobuf::RepeatedField<bool>* S_DamageEffect::_internal_mutable_is_critical() {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return &_impl_.is_critical_;
 }
 
 // -------------------------------------------------------------------

@@ -24,6 +24,8 @@ public:
         _typeId = typeId;
         _damage = 0;
         _lifetime = 5.0f;
+        _maxRange = 50.0f; // Default max range
+        _traveledDistance = 0.0f;
         _vx = 0.0f;
         _vy = 0.0f;
         _x = 0.0f;
@@ -40,6 +42,8 @@ public:
         _typeId = 0;
         _damage = 0;
         _lifetime = 0.0f;
+        _maxRange = 50.0f;
+        _traveledDistance = 0.0f;
         _vx = 0.0f;
         _vy = 0.0f;
         _isHit = false;
@@ -73,10 +77,19 @@ public:
         if (IsDead())
             return;
 
-        // Movement is handled by Room::Update via GameObject::GetVX/VY
-        // We only handle logic (lifetime)
-        _lifetime -= dt;
+        // Track traveled distance
+        float speed = std::sqrt(_vx * _vx + _vy * _vy);
+        _traveledDistance += speed * dt;
 
+        // Check max range
+        if (_traveledDistance >= _maxRange)
+        {
+            SetState(Protocol::ObjectState::DEAD);
+            return;
+        }
+
+        // Lifetime check
+        _lifetime -= dt;
         if (_lifetime <= 0 || _isHit)
         {
             SetState(Protocol::ObjectState::DEAD);
@@ -123,14 +136,31 @@ public:
         return _isHit;
     }
 
+    void SetMaxRange(float range)
+    {
+        _maxRange = range;
+    }
+
+    float GetTraveledDistance() const
+    {
+        return _traveledDistance;
+    }
+
+    int32_t GetPierceCount() const
+    {
+        return _pierceCount;
+    }
+
 private:
     int32_t _ownerId = 0;
     int32_t _skillId = 0;
     int32_t _typeId = 0;
     int32_t _damage = 0;
     float _lifetime = 5.0f;
+    float _maxRange = 50.0f;        // [New] Maximum travel distance
+    float _traveledDistance = 0.0f; // [New] Accumulated travel distance
     bool _isHit = false;
-    int32_t _pierceCount = 0; // [New]
+    int32_t _pierceCount = 0;
 };
 
 } // namespace SimpleGame

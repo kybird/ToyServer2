@@ -571,6 +571,7 @@ inline constexpr S_DamageEffect::Impl_::Impl_(
         _target_ids_cached_byte_size_{0},
         damage_values_{},
         _damage_values_cached_byte_size_{0},
+        is_critical_{},
         skill_id_{0},
         _cached_size_{0} {}
 
@@ -1507,6 +1508,7 @@ const ::uint32_t
         PROTOBUF_FIELD_OFFSET(::Protocol::S_DamageEffect, _impl_.skill_id_),
         PROTOBUF_FIELD_OFFSET(::Protocol::S_DamageEffect, _impl_.target_ids_),
         PROTOBUF_FIELD_OFFSET(::Protocol::S_DamageEffect, _impl_.damage_values_),
+        PROTOBUF_FIELD_OFFSET(::Protocol::S_DamageEffect, _impl_.is_critical_),
         ~0u,  // no _has_bits_
         PROTOBUF_FIELD_OFFSET(::Protocol::S_Knockback, _internal_metadata_),
         ~0u,  // no _extensions_
@@ -1710,23 +1712,23 @@ static const ::_pbi::MigrationSchema
         {259, -1, -1, sizeof(::Protocol::C_UseSkill)},
         {270, -1, -1, sizeof(::Protocol::S_SkillEffect)},
         {285, -1, -1, sizeof(::Protocol::S_DamageEffect)},
-        {296, -1, -1, sizeof(::Protocol::S_Knockback)},
-        {309, -1, -1, sizeof(::Protocol::S_PlayerDowned)},
-        {318, -1, -1, sizeof(::Protocol::S_PlayerRevive)},
-        {327, -1, -1, sizeof(::Protocol::S_ExpChange)},
-        {338, -1, -1, sizeof(::Protocol::S_HpChange)},
-        {349, -1, -1, sizeof(::Protocol::S_WaveNotify)},
-        {360, -1, -1, sizeof(::Protocol::LevelUpOption)},
-        {374, -1, -1, sizeof(::Protocol::S_LevelUpOption)},
-        {385, -1, -1, sizeof(::Protocol::C_SelectLevelUp)},
-        {394, -1, -1, sizeof(::Protocol::S_GameWin)},
-        {404, -1, -1, sizeof(::Protocol::S_GameOver)},
-        {414, -1, -1, sizeof(::Protocol::S_PlayerDead)},
-        {423, -1, -1, sizeof(::Protocol::S_Ping)},
-        {432, -1, -1, sizeof(::Protocol::C_Pong)},
-        {441, -1, -1, sizeof(::Protocol::C_Ping)},
-        {450, -1, -1, sizeof(::Protocol::S_Pong)},
-        {459, -1, -1, sizeof(::Protocol::S_DebugServerTick)},
+        {297, -1, -1, sizeof(::Protocol::S_Knockback)},
+        {310, -1, -1, sizeof(::Protocol::S_PlayerDowned)},
+        {319, -1, -1, sizeof(::Protocol::S_PlayerRevive)},
+        {328, -1, -1, sizeof(::Protocol::S_ExpChange)},
+        {339, -1, -1, sizeof(::Protocol::S_HpChange)},
+        {350, -1, -1, sizeof(::Protocol::S_WaveNotify)},
+        {361, -1, -1, sizeof(::Protocol::LevelUpOption)},
+        {375, -1, -1, sizeof(::Protocol::S_LevelUpOption)},
+        {386, -1, -1, sizeof(::Protocol::C_SelectLevelUp)},
+        {395, -1, -1, sizeof(::Protocol::S_GameWin)},
+        {405, -1, -1, sizeof(::Protocol::S_GameOver)},
+        {415, -1, -1, sizeof(::Protocol::S_PlayerDead)},
+        {424, -1, -1, sizeof(::Protocol::S_Ping)},
+        {433, -1, -1, sizeof(::Protocol::C_Pong)},
+        {442, -1, -1, sizeof(::Protocol::C_Ping)},
+        {451, -1, -1, sizeof(::Protocol::S_Pong)},
+        {460, -1, -1, sizeof(::Protocol::S_DebugServerTick)},
 };
 static const ::_pb::Message* const file_default_instances[] = {
     &::Protocol::_S_DebugDrawBox_default_instance_._instance,
@@ -1822,65 +1824,65 @@ const char descriptor_table_protodef_game_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIA
     "\010target_y\030\003 \001(\002\"\210\001\n\rS_SkillEffect\022\021\n\tcas"
     "ter_id\030\001 \001(\005\022\020\n\010skill_id\030\002 \001(\005\022\t\n\001x\030\003 \001("
     "\002\022\t\n\001y\030\004 \001(\002\022\022\n\ntarget_ids\030\005 \003(\005\022\016\n\006radi"
-    "us\030\006 \001(\002\022\030\n\020duration_seconds\030\007 \001(\002\"M\n\016S_"
+    "us\030\006 \001(\002\022\030\n\020duration_seconds\030\007 \001(\002\"b\n\016S_"
     "DamageEffect\022\020\n\010skill_id\030\001 \001(\005\022\022\n\ntarget"
-    "_ids\030\002 \003(\005\022\025\n\rdamage_values\030\003 \003(\005\"_\n\013S_K"
-    "nockback\022\021\n\tobject_id\030\001 \001(\005\022\r\n\005dir_x\030\002 \001"
-    "(\002\022\r\n\005dir_y\030\003 \001(\002\022\r\n\005force\030\004 \001(\002\022\020\n\010dura"
-    "tion\030\005 \001(\002\"#\n\016S_PlayerDowned\022\021\n\tplayer_i"
-    "d\030\001 \001(\005\"#\n\016S_PlayerRevive\022\021\n\tplayer_id\030\001"
-    " \001(\005\"B\n\013S_ExpChange\022\023\n\013current_exp\030\001 \001(\005"
-    "\022\017\n\007max_exp\030\002 \001(\005\022\r\n\005level\030\003 \001(\005\"C\n\nS_Hp"
-    "Change\022\021\n\tobject_id\030\001 \001(\005\022\022\n\ncurrent_hp\030"
-    "\002 \001(\002\022\016\n\006max_hp\030\003 \001(\002\"K\n\014S_WaveNotify\022\022\n"
-    "\nwave_index\030\001 \001(\005\022\r\n\005title\030\002 \001(\t\022\030\n\020dura"
-    "tion_seconds\030\003 \001(\002\"\207\001\n\rLevelUpOption\022\021\n\t"
-    "option_id\030\001 \001(\005\022\020\n\010skill_id\030\002 \001(\005\022\014\n\004nam"
-    "e\030\003 \001(\t\022\014\n\004desc\030\004 \001(\t\022\016\n\006is_new\030\005 \001(\010\022%\n"
-    "\titem_type\030\006 \001(\0162\022.Protocol.ItemType\"i\n\017"
-    "S_LevelUpOption\022(\n\007options\030\001 \003(\0132\027.Proto"
-    "col.LevelUpOption\022\027\n\017timeout_seconds\030\002 \001"
-    "(\002\022\023\n\013slow_radius\030\003 \001(\002\"\'\n\017C_SelectLevel"
-    "Up\022\024\n\014option_index\030\001 \001(\005\"6\n\tS_GameWin\022\025\n"
-    "\rtotal_time_ms\030\001 \001(\003\022\022\n\nkill_count\030\002 \001(\005"
-    "\"6\n\nS_GameOver\022\030\n\020survived_time_ms\030\001 \001(\003"
-    "\022\016\n\006is_win\030\002 \001(\010\"!\n\014S_PlayerDead\022\021\n\tplay"
-    "er_id\030\001 \001(\005\"\033\n\006S_Ping\022\021\n\ttimestamp\030\001 \001(\003"
-    "\"\033\n\006C_Pong\022\021\n\ttimestamp\030\001 \001(\003\"\033\n\006C_Ping\022"
-    "\021\n\ttimestamp\030\001 \001(\003\"\033\n\006S_Pong\022\021\n\ttimestam"
-    "p\030\001 \001(\003\"(\n\021S_DebugServerTick\022\023\n\013server_t"
-    "ick\030\001 \001(\r*\377\005\n\005MsgId\022\010\n\004NONE\020\000\022\013\n\007C_LOGIN"
-    "\020d\022\013\n\007S_LOGIN\020e\022\021\n\rC_CREATE_ROOM\020f\022\021\n\rS_"
-    "CREATE_ROOM\020g\022\017\n\013C_JOIN_ROOM\020h\022\017\n\013S_JOIN"
-    "_ROOM\020i\022\023\n\017C_GET_ROOM_LIST\020j\022\017\n\013S_ROOM_L"
-    "IST\020k\022\021\n\rC_ENTER_LOBBY\020n\022\021\n\rS_ENTER_LOBB"
-    "Y\020o\022\020\n\014C_LEAVE_ROOM\020p\022\020\n\014S_LEAVE_ROOM\020q\022"
-    "\020\n\014C_GAME_READY\020r\022\n\n\006C_CHAT\020x\022\n\n\006S_CHAT\020"
-    "y\022\023\n\016S_SPAWN_OBJECT\020\310\001\022\025\n\020S_DESPAWN_OBJE"
-    "CT\020\311\001\022\030\n\023S_MOVE_OBJECT_BATCH\020\312\001\022\021\n\014C_MOV"
-    "E_INPUT\020\313\001\022\027\n\022S_PLAYER_STATE_ACK\020\314\001\022\020\n\013C"
-    "_USE_SKILL\020\254\002\022\023\n\016S_SKILL_EFFECT\020\255\002\022\024\n\017S_"
-    "DAMAGE_EFFECT\020\256\002\022\020\n\013S_KNOCKBACK\020\261\002\022\024\n\017S_"
-    "PLAYER_DOWNED\020\262\002\022\024\n\017S_PLAYER_REVIVE\020\263\002\022\021"
-    "\n\014S_EXP_CHANGE\020\220\003\022\026\n\021S_LEVEL_UP_OPTION\020\221"
-    "\003\022\026\n\021C_SELECT_LEVEL_UP\020\222\003\022\020\n\013S_HP_CHANGE"
-    "\020\223\003\022\022\n\rS_WAVE_NOTIFY\020\224\003\022\017\n\nS_GAME_WIN\020\364\003"
-    "\022\020\n\013S_GAME_OVER\020\365\003\022\022\n\rS_PLAYER_DEAD\020\366\003\022\013"
-    "\n\006S_PING\020\204\007\022\013\n\006C_PONG\020\205\007\022\013\n\006C_PING\020\206\007\022\013\n"
-    "\006S_PONG\020\207\007\022\030\n\023S_DEBUG_SERVER_TICK\020\210\007\022\025\n\020"
-    "S_DEBUG_DRAW_BOX\020\211\007*L\n\nObjectType\022\013\n\007UNK"
-    "NOWN\020\000\022\n\n\006PLAYER\020\001\022\013\n\007MONSTER\020\002\022\016\n\nPROJE"
-    "CTILE\020\003\022\010\n\004ITEM\020\004*d\n\013ObjectState\022\010\n\004IDLE"
-    "\020\000\022\n\n\006MOVING\020\001\022\r\n\tATTACKING\020\002\022\010\n\004DEAD\020\003\022"
-    "\n\n\006DOWNED\020\004\022\r\n\tKNOCKBACK\020\005\022\013\n\007STUNNED\020\006*"
-    "-\n\010ItemType\022\017\n\013WEAPON_TYPE\020\000\022\020\n\014PASSIVE_"
-    "TYPE\020\001b\006proto3"
+    "_ids\030\002 \003(\005\022\025\n\rdamage_values\030\003 \003(\005\022\023\n\013is_"
+    "critical\030\004 \003(\010\"_\n\013S_Knockback\022\021\n\tobject_"
+    "id\030\001 \001(\005\022\r\n\005dir_x\030\002 \001(\002\022\r\n\005dir_y\030\003 \001(\002\022\r"
+    "\n\005force\030\004 \001(\002\022\020\n\010duration\030\005 \001(\002\"#\n\016S_Pla"
+    "yerDowned\022\021\n\tplayer_id\030\001 \001(\005\"#\n\016S_Player"
+    "Revive\022\021\n\tplayer_id\030\001 \001(\005\"B\n\013S_ExpChange"
+    "\022\023\n\013current_exp\030\001 \001(\005\022\017\n\007max_exp\030\002 \001(\005\022\r"
+    "\n\005level\030\003 \001(\005\"C\n\nS_HpChange\022\021\n\tobject_id"
+    "\030\001 \001(\005\022\022\n\ncurrent_hp\030\002 \001(\002\022\016\n\006max_hp\030\003 \001"
+    "(\002\"K\n\014S_WaveNotify\022\022\n\nwave_index\030\001 \001(\005\022\r"
+    "\n\005title\030\002 \001(\t\022\030\n\020duration_seconds\030\003 \001(\002\""
+    "\207\001\n\rLevelUpOption\022\021\n\toption_id\030\001 \001(\005\022\020\n\010"
+    "skill_id\030\002 \001(\005\022\014\n\004name\030\003 \001(\t\022\014\n\004desc\030\004 \001"
+    "(\t\022\016\n\006is_new\030\005 \001(\010\022%\n\titem_type\030\006 \001(\0162\022."
+    "Protocol.ItemType\"i\n\017S_LevelUpOption\022(\n\007"
+    "options\030\001 \003(\0132\027.Protocol.LevelUpOption\022\027"
+    "\n\017timeout_seconds\030\002 \001(\002\022\023\n\013slow_radius\030\003"
+    " \001(\002\"\'\n\017C_SelectLevelUp\022\024\n\014option_index\030"
+    "\001 \001(\005\"6\n\tS_GameWin\022\025\n\rtotal_time_ms\030\001 \001("
+    "\003\022\022\n\nkill_count\030\002 \001(\005\"6\n\nS_GameOver\022\030\n\020s"
+    "urvived_time_ms\030\001 \001(\003\022\016\n\006is_win\030\002 \001(\010\"!\n"
+    "\014S_PlayerDead\022\021\n\tplayer_id\030\001 \001(\005\"\033\n\006S_Pi"
+    "ng\022\021\n\ttimestamp\030\001 \001(\003\"\033\n\006C_Pong\022\021\n\ttimes"
+    "tamp\030\001 \001(\003\"\033\n\006C_Ping\022\021\n\ttimestamp\030\001 \001(\003\""
+    "\033\n\006S_Pong\022\021\n\ttimestamp\030\001 \001(\003\"(\n\021S_DebugS"
+    "erverTick\022\023\n\013server_tick\030\001 \001(\r*\377\005\n\005MsgId"
+    "\022\010\n\004NONE\020\000\022\013\n\007C_LOGIN\020d\022\013\n\007S_LOGIN\020e\022\021\n\r"
+    "C_CREATE_ROOM\020f\022\021\n\rS_CREATE_ROOM\020g\022\017\n\013C_"
+    "JOIN_ROOM\020h\022\017\n\013S_JOIN_ROOM\020i\022\023\n\017C_GET_RO"
+    "OM_LIST\020j\022\017\n\013S_ROOM_LIST\020k\022\021\n\rC_ENTER_LO"
+    "BBY\020n\022\021\n\rS_ENTER_LOBBY\020o\022\020\n\014C_LEAVE_ROOM"
+    "\020p\022\020\n\014S_LEAVE_ROOM\020q\022\020\n\014C_GAME_READY\020r\022\n"
+    "\n\006C_CHAT\020x\022\n\n\006S_CHAT\020y\022\023\n\016S_SPAWN_OBJECT"
+    "\020\310\001\022\025\n\020S_DESPAWN_OBJECT\020\311\001\022\030\n\023S_MOVE_OBJ"
+    "ECT_BATCH\020\312\001\022\021\n\014C_MOVE_INPUT\020\313\001\022\027\n\022S_PLA"
+    "YER_STATE_ACK\020\314\001\022\020\n\013C_USE_SKILL\020\254\002\022\023\n\016S_"
+    "SKILL_EFFECT\020\255\002\022\024\n\017S_DAMAGE_EFFECT\020\256\002\022\020\n"
+    "\013S_KNOCKBACK\020\261\002\022\024\n\017S_PLAYER_DOWNED\020\262\002\022\024\n"
+    "\017S_PLAYER_REVIVE\020\263\002\022\021\n\014S_EXP_CHANGE\020\220\003\022\026"
+    "\n\021S_LEVEL_UP_OPTION\020\221\003\022\026\n\021C_SELECT_LEVEL"
+    "_UP\020\222\003\022\020\n\013S_HP_CHANGE\020\223\003\022\022\n\rS_WAVE_NOTIF"
+    "Y\020\224\003\022\017\n\nS_GAME_WIN\020\364\003\022\020\n\013S_GAME_OVER\020\365\003\022"
+    "\022\n\rS_PLAYER_DEAD\020\366\003\022\013\n\006S_PING\020\204\007\022\013\n\006C_PO"
+    "NG\020\205\007\022\013\n\006C_PING\020\206\007\022\013\n\006S_PONG\020\207\007\022\030\n\023S_DEB"
+    "UG_SERVER_TICK\020\210\007\022\025\n\020S_DEBUG_DRAW_BOX\020\211\007"
+    "*L\n\nObjectType\022\013\n\007UNKNOWN\020\000\022\n\n\006PLAYER\020\001\022"
+    "\013\n\007MONSTER\020\002\022\016\n\nPROJECTILE\020\003\022\010\n\004ITEM\020\004*d"
+    "\n\013ObjectState\022\010\n\004IDLE\020\000\022\n\n\006MOVING\020\001\022\r\n\tA"
+    "TTACKING\020\002\022\010\n\004DEAD\020\003\022\n\n\006DOWNED\020\004\022\r\n\tKNOC"
+    "KBACK\020\005\022\013\n\007STUNNED\020\006*-\n\010ItemType\022\017\n\013WEAP"
+    "ON_TYPE\020\000\022\020\n\014PASSIVE_TYPE\020\001b\006proto3"
 };
 static ::absl::once_flag descriptor_table_game_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_game_2eproto = {
     false,
     false,
-    3934,
+    3955,
     descriptor_table_protodef_game_2eproto,
     "game.proto",
     &descriptor_table_game_2eproto_once,
@@ -8644,6 +8646,7 @@ inline PROTOBUF_NDEBUG_INLINE S_DamageEffect::Impl_::Impl_(
         _target_ids_cached_byte_size_{0},
         damage_values_{visibility, arena, from.damage_values_},
         _damage_values_cached_byte_size_{0},
+        is_critical_{visibility, arena, from.is_critical_},
         _cached_size_{0} {}
 
 S_DamageEffect::S_DamageEffect(
@@ -8670,6 +8673,7 @@ inline PROTOBUF_NDEBUG_INLINE S_DamageEffect::Impl_::Impl_(
         _target_ids_cached_byte_size_{0},
         damage_values_{visibility, arena},
         _damage_values_cached_byte_size_{0},
+        is_critical_{visibility, arena},
         _cached_size_{0} {}
 
 inline void S_DamageEffect::SharedCtor(::_pb::Arena* arena) {
@@ -8699,6 +8703,10 @@ constexpr auto S_DamageEffect::InternalNewImpl_() {
                   ::google::protobuf::Message::internal_visibility()),
       PROTOBUF_FIELD_OFFSET(S_DamageEffect, _impl_.damage_values_) +
           decltype(S_DamageEffect::_impl_.damage_values_)::
+              InternalGetArenaOffset(
+                  ::google::protobuf::Message::internal_visibility()),
+      PROTOBUF_FIELD_OFFSET(S_DamageEffect, _impl_.is_critical_) +
+          decltype(S_DamageEffect::_impl_.is_critical_)::
               InternalGetArenaOffset(
                   ::google::protobuf::Message::internal_visibility()),
   });
@@ -8739,15 +8747,15 @@ const ::google::protobuf::internal::ClassData* S_DamageEffect::GetClassData() co
   return _class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<2, 3, 0, 0, 2> S_DamageEffect::_table_ = {
+const ::_pbi::TcParseTable<2, 4, 0, 0, 2> S_DamageEffect::_table_ = {
   {
     0,  // no _has_bits_
     0, // no _extensions_
-    3, 24,  // max_field_number, fast_idx_mask
+    4, 24,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967288,  // skipmap
+    4294967280,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    3,  // num_field_entries
+    4,  // num_field_entries
     0,  // num_aux_entries
     offsetof(decltype(_table_), field_names),  // no aux_entries
     _class_data_.base(),
@@ -8757,7 +8765,9 @@ const ::_pbi::TcParseTable<2, 3, 0, 0, 2> S_DamageEffect::_table_ = {
     ::_pbi::TcParser::GetTable<::Protocol::S_DamageEffect>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
-    {::_pbi::TcParser::MiniParse, {}},
+    // repeated bool is_critical = 4;
+    {::_pbi::TcParser::FastV8P1,
+     {34, 63, 0, PROTOBUF_FIELD_OFFSET(S_DamageEffect, _impl_.is_critical_)}},
     // int32 skill_id = 1;
     {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(S_DamageEffect, _impl_.skill_id_), 63>(),
      {8, 63, 0, PROTOBUF_FIELD_OFFSET(S_DamageEffect, _impl_.skill_id_)}},
@@ -8779,6 +8789,9 @@ const ::_pbi::TcParseTable<2, 3, 0, 0, 2> S_DamageEffect::_table_ = {
     // repeated int32 damage_values = 3;
     {PROTOBUF_FIELD_OFFSET(S_DamageEffect, _impl_.damage_values_), 0, 0,
     (0 | ::_fl::kFcRepeated | ::_fl::kPackedInt32)},
+    // repeated bool is_critical = 4;
+    {PROTOBUF_FIELD_OFFSET(S_DamageEffect, _impl_.is_critical_), 0, 0,
+    (0 | ::_fl::kFcRepeated | ::_fl::kPackedBool)},
   }},
   // no aux_entries
   {{
@@ -8794,6 +8807,7 @@ PROTOBUF_NOINLINE void S_DamageEffect::Clear() {
 
   _impl_.target_ids_.Clear();
   _impl_.damage_values_.Clear();
+  _impl_.is_critical_.Clear();
   _impl_.skill_id_ = 0;
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
 }
@@ -8838,6 +8852,11 @@ PROTOBUF_NOINLINE void S_DamageEffect::Clear() {
             }
           }
 
+          // repeated bool is_critical = 4;
+          if (this_._internal_is_critical_size() > 0) {
+            target = stream->WriteFixedPacked(4, this_._internal_is_critical(), target);
+          }
+
           if (PROTOBUF_PREDICT_FALSE(this_._internal_metadata_.have_unknown_fields())) {
             target =
                 ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
@@ -8877,6 +8896,16 @@ PROTOBUF_NOINLINE void S_DamageEffect::Clear() {
                       this_._internal_damage_values(), 1,
                       this_._impl_._damage_values_cached_byte_size_);
             }
+            // repeated bool is_critical = 4;
+            {
+              std::size_t data_size = std::size_t{1} *
+                  ::_pbi::FromIntSize(this_._internal_is_critical_size());
+              std::size_t tag_size = data_size == 0
+                  ? 0
+                  : 1 + ::_pbi::WireFormatLite::Int32Size(
+                                      static_cast<int32_t>(data_size));
+              total_size += tag_size + data_size;
+            }
           }
            {
             // int32 skill_id = 1;
@@ -8899,6 +8928,7 @@ void S_DamageEffect::MergeImpl(::google::protobuf::MessageLite& to_msg, const ::
 
   _this->_internal_mutable_target_ids()->MergeFrom(from._internal_target_ids());
   _this->_internal_mutable_damage_values()->MergeFrom(from._internal_damage_values());
+  _this->_internal_mutable_is_critical()->MergeFrom(from._internal_is_critical());
   if (from._internal_skill_id() != 0) {
     _this->_impl_.skill_id_ = from._impl_.skill_id_;
   }
@@ -8918,6 +8948,7 @@ void S_DamageEffect::InternalSwap(S_DamageEffect* PROTOBUF_RESTRICT other) {
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   _impl_.target_ids_.InternalSwap(&other->_impl_.target_ids_);
   _impl_.damage_values_.InternalSwap(&other->_impl_.damage_values_);
+  _impl_.is_critical_.InternalSwap(&other->_impl_.is_critical_);
         swap(_impl_.skill_id_, other->_impl_.skill_id_);
 }
 

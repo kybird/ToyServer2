@@ -294,28 +294,6 @@ void Room::OnPlayerReady(uint64_t sessionId)
 
     BroadcastPacket(S_SpawnObjectPacket(std::move(newPlayerSpawn)), sessionId);
     LOG_INFO("Broadcasted ready player {} spawn to other players in room", sessionId);
-
-    for (float r = 10.0f; r <= 40.0f; r += 10.0f)
-    {
-        Protocol::S_DebugDrawBox box;
-        box.set_x(0);
-        box.set_y(0);
-        box.set_w(r * 2.0f);
-        box.set_h(r * 2.0f);
-        box.set_duration(9999.0f);
-        uint32_t color = 0xFFFFFFFF;
-        if (std::abs(r - 10.0f) < 0.1f)
-            color = 0xFFFF0000;
-        else if (std::abs(r - 20.0f) < 0.1f)
-            color = 0xFF00FF00;
-        else if (std::abs(r - 30.0f) < 0.1f)
-            color = 0xFF0000FF;
-
-        box.set_color_hex(color);
-
-        S_DebugDrawBoxPacket pkt(box);
-        SendToPlayer(sessionId, pkt);
-    }
 }
 
 void Room::Leave(uint64_t sessionId)

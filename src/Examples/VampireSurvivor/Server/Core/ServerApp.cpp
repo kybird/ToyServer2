@@ -220,8 +220,13 @@ void ServerApp::RegisterConsoleCommands()
                  } catch (...)
                  {
                  }
-             if (auto r = RoomManager::Instance().GetRoom(1))
+
+             auto rooms = RoomManager::Instance().GetAllRooms();
+             for (auto &r : rooms)
+             {
                  r->DebugAddExpToAll(exp);
+             }
+             LOG_INFO("Debug: Added {} EXP to all players in all rooms.", exp);
          }}
     );
 
@@ -249,8 +254,11 @@ void ServerApp::RegisterConsoleCommands()
          "Toggle God Mode for all players",
          [](const std::vector<std::string> &args)
          {
-             if (auto r = RoomManager::Instance().GetRoom(1))
+             auto rooms = RoomManager::Instance().GetAllRooms();
+             for (auto &r : rooms)
+             {
                  r->DebugToggleGodMode();
+             }
          }}
     );
 

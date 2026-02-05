@@ -9,6 +9,7 @@
 #include "GamePackets.h"
 #include "Protocol/game.pb.h"
 #include "System/ILog.h"
+#include <random>
 
 namespace SimpleGame {
 
@@ -123,12 +124,43 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
                     // [Precision] Using a slight margin for hit detection stability
                     if (distSq <= (sumRad + 0.1f) * (sumRad + 0.1f))
                     {
-                        monster->TakeDamage(proj->GetDamage(), room);
+                        // [Critical Hit] Check for critical hit
+                        bool isCritical = false;
+                        float critMultiplier = 1.0f;
+
+                        // Get projectile owner (player)
+                        auto ownerObj = room->GetObjectManager().GetObject(proj->GetOwnerId());
+                        if (ownerObj && ownerObj->GetType() == Protocol::ObjectType::PLAYER)
+                        {
+                            auto player = std::static_pointer_cast<Player>(ownerObj);
+                            float critChance = player->GetCriticalChance();
+
+                            // Random critical check
+                            static std::random_device rd;
+                            static std::mt19937 gen(rd());
+                            std::uniform_real_distribution<float> dis(0.0f, 1.0f);
+
+                            if (dis(gen) < critChance)
+                            {
+                                isCritical = true;
+                                critMultiplier = player->GetCriticalDamageMultiplier();
+                            }
+                        }
+
+                        // [Pierce Damage Decay] Calculate damage based on pierce count
+                        // Each pierce reduces damage by 10%
+                        int32_t baseDamage = proj->GetDamage();
+                        int32_t pierceCount = proj->GetPierceCount();
+                        int32_t actualDamage =
+                            static_cast<int32_t>(baseDamage * std::pow(0.9, pierceCount) * critMultiplier);
+
+                        monster->TakeDamage(actualDamage, room);
 
                         bool consumed = proj->OnHit();
 
                         damageEffect.add_target_ids(monster->GetId());
-                        damageEffect.add_damage_values(proj->GetDamage());
+                        damageEffect.add_damage_values(actualDamage);
+                        damageEffect.add_is_critical(isCritical);
 
                         if (monster->IsDead())
                         {

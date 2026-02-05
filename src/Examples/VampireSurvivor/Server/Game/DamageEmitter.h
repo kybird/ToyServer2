@@ -57,6 +57,7 @@ private:
     std::string _targetRule = "Nearest";
     float _lifeTime = 0.0f; // 0 = infinite (Overall emitter life)
     float _elapsedTime = 0.0f;
+    float _arcDegrees = 30.0f; // [New] Arc angle for Arc emitter type
     bool _active = true;
 };
 

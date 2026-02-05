@@ -28,6 +28,7 @@ void Player::Initialize(int32_t gameId, uint64_t sessionId, int32_t hp, float sp
 {
     _id = gameId;
     _sessionId = sessionId;
+    _baseMaxHp = hp;
     _maxHp = hp;
     _hp = hp;
     _radius = GameConfig::PLAYER_COLLISION_RADIUS; // Lag Compensation: Visual(0.5) - BufferDelay
@@ -524,6 +525,9 @@ void Player::ExitLevelUpState(Room *room)
 
     // [이동 동기화 수정보완] 레벨업 종료 시 무적 상태를 즉시 해제합니다.
     _invincibleUntil = 0.0f;
+
+    // 패시브 효과 갱신 (Max HP 상승 등 반영)
+    RefreshInventoryEffects();
 }
 
 float Player::GetDamageMultiplier() const
@@ -603,12 +607,10 @@ float Player::GetCooldownMultiplier() const
             int level = _inventory->GetPassiveLevel(id);
             if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
             {
-                // Cooldown bonus is usually negative (e.g. -0.1) to reduce cooldown
-                mult += tmpl->levels[level - 1].bonus;
+                mult -= tmpl->levels[level - 1].bonus;
             }
         }
     }
-    // Clamp to minimum 0.1 to avoid instant fire or divide by zero if used as divider
     return std::max(0.1f, mult);
 }
 
@@ -654,7 +656,7 @@ float Player::GetDurationMultiplier() const
     return mult;
 }
 
-int32_t Player::GetAdditionalProjectileCount(int32_t weaponId) const
+int32_t Player::GetAdditionalProjectileCount() const
 {
     int32_t count = 0;
     if (_inventory == nullptr)
@@ -663,43 +665,19 @@ int32_t Player::GetAdditionalProjectileCount(int32_t weaponId) const
     for (int id : _inventory->GetOwnedPassiveIds())
     {
         const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
-        if (tmpl)
+        if (tmpl && tmpl->statType == "projectile_count")
         {
-            // Global Projectile Count ("projectile_count") - If we kept any
-            if (tmpl->statType == "projectile_count")
+            int level = _inventory->GetPassiveLevel(id);
+            if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
             {
-                int level = _inventory->GetPassiveLevel(id);
-                if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
-                {
-                    count += static_cast<int32_t>(tmpl->levels[level - 1].bonus);
-                }
-            }
-            // Weapon Specific ("projectile_count_1", "projectile_count_2" etc)
-            else if (weaponId > 0 && tmpl->statType.find("projectile_count_") == 0)
-            {
-                // Parse suffix
-                try
-                {
-                    int targetWeaponId = std::stoi(tmpl->statType.substr(17)); // "projectile_count_" length is 17
-                    if (targetWeaponId == weaponId)
-                    {
-                        int level = _inventory->GetPassiveLevel(id);
-                        if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
-                        {
-                            count += static_cast<int32_t>(tmpl->levels[level - 1].bonus);
-                        }
-                    }
-                } catch (...)
-                {
-                    // Ignore parse error
-                }
+                count += static_cast<int32_t>(tmpl->levels[level - 1].bonus);
             }
         }
     }
     return count;
 }
 
-int32_t Player::GetAdditionalPierceCount(int32_t weaponId) const
+int32_t Player::GetAdditionalPierceCount() const
 {
     int32_t count = 0;
     if (_inventory == nullptr)
@@ -708,35 +686,12 @@ int32_t Player::GetAdditionalPierceCount(int32_t weaponId) const
     for (int id : _inventory->GetOwnedPassiveIds())
     {
         const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
-        if (tmpl)
+        if (tmpl && tmpl->statType == "pierce")
         {
-            // Global Pierce ("pierce") - If we kept any
-            if (tmpl->statType == "pierce")
+            int level = _inventory->GetPassiveLevel(id);
+            if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
             {
-                int level = _inventory->GetPassiveLevel(id);
-                if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
-                {
-                    count += static_cast<int32_t>(tmpl->levels[level - 1].bonus);
-                }
-            }
-            // Weapon Specific ("pierce_1", etc)
-            else if (weaponId > 0 && tmpl->statType.find("pierce_") == 0)
-            {
-                // Parse suffix
-                try
-                {
-                    int targetWeaponId = std::stoi(tmpl->statType.substr(7)); // "pierce_" length is 7
-                    if (targetWeaponId == weaponId)
-                    {
-                        int level = _inventory->GetPassiveLevel(id);
-                        if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
-                        {
-                            count += static_cast<int32_t>(tmpl->levels[level - 1].bonus);
-                        }
-                    }
-                } catch (...)
-                {
-                }
+                count += static_cast<int32_t>(tmpl->levels[level - 1].bonus);
             }
         }
     }
@@ -772,6 +727,22 @@ void Player::RefreshInventoryEffects()
     if (_inventory == nullptr)
         return;
 
+    // 1. Update Stats based on passives
+    int32_t oldMaxHp = _maxHp;
+    _maxHp = static_cast<int32_t>(static_cast<double>(_baseMaxHp) * static_cast<double>(GetMaxHpMultiplier()));
+
+    if (_maxHp > oldMaxHp && oldMaxHp > 0)
+    {
+        // When Max HP increases, increase current HP by the same amount (or proportionally)
+        // Here we just add the difference.
+        _hp += (_maxHp - oldMaxHp);
+    }
+    else if (_hp > _maxHp)
+    {
+        _hp = _maxHp;
+    }
+
+    // 2. Refresh weapon emitters
     const auto &weaponIds = _inventory->GetOwnedWeaponIds();
     for (int weaponId : weaponIds)
     {
@@ -818,6 +789,54 @@ void Player::SetGodMode(bool enable)
 bool Player::IsGodMode() const
 {
     return _godMode;
+}
+
+float Player::GetCriticalChance() const
+{
+    float chance = 0.05f; // Base 5% critical chance
+
+    // [Future] Add passive bonuses here
+    if (_inventory == nullptr)
+        return chance;
+
+    for (int id : _inventory->GetOwnedPassiveIds())
+    {
+        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        if (tmpl && tmpl->statType == "critical_chance")
+        {
+            int level = _inventory->GetPassiveLevel(id);
+            if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
+            {
+                chance += tmpl->levels[level - 1].bonus;
+            }
+        }
+    }
+
+    return chance;
+}
+
+float Player::GetCriticalDamageMultiplier() const
+{
+    float multiplier = 1.5f; // Base 150% critical damage
+
+    // [Future] Add passive bonuses here
+    if (_inventory == nullptr)
+        return multiplier;
+
+    for (int id : _inventory->GetOwnedPassiveIds())
+    {
+        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        if (tmpl && tmpl->statType == "critical_damage")
+        {
+            int level = _inventory->GetPassiveLevel(id);
+            if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
+            {
+                multiplier += tmpl->levels[level - 1].bonus;
+            }
+        }
+    }
+
+    return multiplier;
 }
 
 } // namespace SimpleGame

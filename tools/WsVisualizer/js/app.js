@@ -5,48 +5,47 @@ class App {
         this.width = window.innerWidth;
         this.height = window.innerHeight;
 
-        // Settings
-        this.resetView(); // [Fix] Set initial scale based on view 40
-        this.wsUrl = 'ws://localhost:9002';
+        // View State
+        this.scale = 20.0;
+        this.offsetX = this.width / 2;
+        this.offsetY = this.height / 2;
         this.isDragging = false;
         this.lastMouseX = 0;
         this.lastMouseY = 0;
 
-        // Data
+        // Data Management
         this.latestState = null;
         this.lastFrameTime = 0;
         this.frameCount = 0;
-        this.fps = 0;
+        this.followingPlayerId = null;
+        this.selectedRoomId = null; // null means auto-pick room with players
 
-        // Connection
+        // WebSocket
+        this.wsUrl = 'ws://localhost:9002';
         this.ws = null;
         this.reconnectTimer = null;
 
         this.init();
+        this.resetView();
     }
 
     init() {
-        // Apply control panel styling
-        const controlPanel = document.getElementById('control-panel');
-        if (controlPanel) { // [Fix] Defensive check for control panel existence
-            controlPanel.style.display = 'flex';
-            controlPanel.style.gap = '15px';
-            controlPanel.style.alignItems = 'center';
-            controlPanel.style.flexWrap = 'wrap'; // [Fix] Allow wrapping if many controls
-            controlPanel.style.justifyContent = 'center';
-            controlPanel.style.maxWidth = '90vw';
-        }
-
-        // Resinze Handler
         window.addEventListener('resize', () => this.resize());
         this.resize();
 
-        // Mouse Controls
+        // Mouse Events
         this.canvas.addEventListener('mousedown', (e) => {
             this.isDragging = true;
             this.lastMouseX = e.clientX;
             this.lastMouseY = e.clientY;
             this.canvas.style.cursor = 'grabbing';
+
+            // Turn off follow if user starts dragging
+            const chkFollow = document.getElementById('chk-follow');
+            if (chkFollow && chkFollow.checked) {
+                chkFollow.checked = false;
+                this.updateFollowIndicator();
+            }
         });
 
         window.addEventListener('mouseup', () => {
@@ -65,20 +64,26 @@ class App {
 
         this.canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
-            const zoomSensitivity = 0.001;
+            const zoomSensitivity = 0.0015;
             const delta = -e.deltaY * zoomSensitivity;
-            const newScale = Math.max(0.1, Math.min(5.0, this.scale + delta));
-
-            // Zoom towards mouse
-            // Simple zoom for now (center based) - can improve later
-            this.scale = newScale;
+            this.scale = Math.max(0.05, Math.min(100.0, this.scale * (1 + delta)));
         });
 
-        // Initialize Connection
-        this.connect();
+        // Toggle Listeners
+        document.getElementById('chk-follow').addEventListener('change', () => {
+            this.updateFollowIndicator();
+        });
 
-        // Start Loop
+        this.connect();
         requestAnimationFrame((t) => this.loop(t));
+    }
+
+    updateFollowIndicator() {
+        const indicator = document.getElementById('follow-indicator');
+        const chk = document.getElementById('chk-follow');
+        if (indicator && chk) {
+            indicator.style.display = chk.checked ? 'block' : 'none';
+        }
     }
 
     resize() {
@@ -90,15 +95,13 @@ class App {
 
     connect() {
         if (this.ws) return;
-
-        console.log(`Connecting to ${this.wsUrl}...`);
         this.updateStatus(false);
+        console.log("Attempting to connect to", this.wsUrl);
 
         this.ws = new WebSocket(this.wsUrl);
-        this.ws.binaryType = "arraybuffer"; // For future optimization
 
         this.ws.onopen = () => {
-            console.log('Connected!');
+            console.log("Connected to server");
             this.updateStatus(true);
             if (this.reconnectTimer) {
                 clearInterval(this.reconnectTimer);
@@ -107,7 +110,7 @@ class App {
         };
 
         this.ws.onclose = () => {
-            console.warn('Disconnected. Reconnecting in 3s...');
+            console.warn("Disconnected from server. Reconnecting...");
             this.updateStatus(false);
             this.ws = null;
             if (!this.reconnectTimer) {
@@ -115,49 +118,61 @@ class App {
             }
         };
 
-        this.ws.onerror = (err) => {
-            console.error('WebSocket Error:', err);
-            this.ws.close();
-        };
-
         this.ws.onmessage = (event) => {
             try {
-                // Currently expecting JSON text
                 const data = JSON.parse(event.data);
 
+                // Management for multiple rooms
                 if (data.reset) {
-                    this.latestState = null;
-                    this.updateStats({ t: 0, p: [], m: [] });
+                    if (this.selectedRoomId === null || data.rid === this.selectedRoomId) {
+                        this.latestState = null;
+                        this.updateStats({ t: 0, p: [], m: [] });
+                    }
                     return;
                 }
 
-                this.latestState = data;
-                this.updateStats(data);
+                // If no room selected, pick the first one with players
+                if (this.selectedRoomId === null) {
+                    if (data.p && data.p.length > 0) {
+                        this.selectedRoomId = data.rid;
+                        console.log("Auto-selected Room:", this.selectedRoomId);
+                    }
+                }
+
+                // Only update if it's the selected room or we are in auto mode
+                if (this.selectedRoomId === null || data.rid === this.selectedRoomId) {
+                    this.latestState = data;
+                    this.updateStats(data);
+                }
             } catch (e) {
-                console.error('Data parsing error:', e);
+                console.error("Parse Error:", e, event.data);
             }
+        };
+
+        this.ws.onerror = (err) => {
+            console.error("WebSocket Error:", err);
         };
     }
 
     updateStatus(connected) {
         const el = document.getElementById('connection-status');
-        if (connected) {
-            el.textContent = 'Connected';
-            el.className = 'status connected';
-        } else {
-            el.textContent = 'Disconnected';
-            el.className = 'status disconnected';
+        if (el) {
+            el.textContent = connected ? 'Connected' : 'Disconnected';
+            el.className = 'status ' + (connected ? 'connected' : 'disconnected');
         }
     }
 
     updateStats(data) {
-        if (data.t) document.getElementById('tick').textContent = data.t;
+        if (data.t !== undefined) document.getElementById('tick').textContent = data.t;
         if (data.p) document.getElementById('player-count').textContent = data.p.length;
         if (data.m) document.getElementById('monster-count').textContent = data.m.length;
+
+        // Show Room ID in UI
+        const ridEl = document.getElementById('room-id');
+        if (ridEl) ridEl.textContent = data.rid || "N/A";
     }
 
     loop(timestamp) {
-        // FPS Calc
         if (timestamp - this.lastFrameTime >= 1000) {
             document.getElementById('fps').textContent = this.frameCount;
             this.frameCount = 0;
@@ -167,81 +182,75 @@ class App {
 
         this.update();
         this.render();
-
         requestAnimationFrame((t) => this.loop(t));
     }
 
     update() {
-        // Interpolation or prediction logic will go here
+        const chkFollow = document.getElementById('chk-follow');
+        if (chkFollow && chkFollow.checked && this.latestState && this.latestState.p && this.latestState.p.length > 0) {
+            let target = this.latestState.p.find(p => p.id === this.followingPlayerId);
+            if (!target) {
+                target = this.latestState.p[0];
+                this.followingPlayerId = target.id;
+            }
+
+            this.offsetX = (this.width / 2) - (target.x * this.scale);
+            this.offsetY = (this.height / 2) + (target.y * this.scale);
+        }
     }
 
     render() {
-        // Clear
-        this.ctx.fillStyle = '#1e1e1e';
+        this.ctx.fillStyle = '#1a1a1a';
         this.ctx.fillRect(0, 0, this.width, this.height);
 
         this.ctx.save();
-
-        // Transform Camera
         this.ctx.translate(this.offsetX, this.offsetY);
-        this.ctx.scale(this.scale, -this.scale); // [Fix] Invert Y to match Unity (Y+ is Up)
+        this.ctx.scale(this.scale, -this.scale);
 
-        // Draw Grid
         this.drawGrid();
 
-        // Draw Game Objects if data exists
         if (this.latestState) {
-            if (document.getElementById('chk-monsters').checked && this.latestState.m) {
+            if (this.latestState.m && document.getElementById('chk-monsters').checked) {
                 this.drawMonsters(this.latestState.m);
             }
-            if (document.getElementById('chk-players').checked && this.latestState.p) {
+            if (this.latestState.pr) {
+                this.drawProjectiles(this.latestState.pr);
+            }
+            if (this.latestState.p && document.getElementById('chk-players').checked) {
                 this.drawPlayers(this.latestState.p);
             }
-            if (this.latestState.pr) {
-                // [Fix] Defensive check for element existence
-                const chk = document.getElementById('chk-projectiles');
-                if (!chk || chk.checked) {
-                    this.drawProjectiles(this.latestState.pr);
-                }
-            }
+        } else {
+            // No data message
+            this.ctx.save();
+            this.ctx.scale(1 / this.scale, -1 / this.scale);
+            this.ctx.fillStyle = "#666";
+            this.ctx.font = "20px Arial";
+            this.ctx.textAlign = "center";
+            this.ctx.fillText("WAITING FOR LIVE DATA...", 0, 0);
+            this.ctx.restore();
         }
 
         this.ctx.restore();
     }
 
-    drawProjectiles(projectiles) {
-        this.ctx.fillStyle = '#2196f3'; // Blue
-        projectiles.forEach(pr => {
-            this.ctx.beginPath();
-            // Projectile size approx 0.2 radius
-            this.ctx.arc(pr.x, pr.y, 0.2, 0, Math.PI * 2);
-            this.ctx.fill();
-        });
-    }
-
     drawGrid() {
         if (!document.getElementById('chk-grid').checked) return;
-
         const size = 1000;
         const step = 5;
-
         this.ctx.strokeStyle = '#333';
-        this.ctx.lineWidth = 0.05;
+        this.ctx.lineWidth = 1 / this.scale;
 
         this.ctx.beginPath();
         for (let x = -size; x <= size; x += step) {
-            this.ctx.moveTo(x, -size);
-            this.ctx.lineTo(x, size);
+            this.ctx.moveTo(x, -size); this.ctx.lineTo(x, size);
         }
         for (let y = -size; y <= size; y += step) {
-            this.ctx.moveTo(-size, y);
-            this.ctx.lineTo(size, y);
+            this.ctx.moveTo(-size, y); this.ctx.lineTo(size, y);
         }
         this.ctx.stroke();
 
-        // Axis
-        this.ctx.strokeStyle = '#555';
-        this.ctx.lineWidth = 0.1;
+        this.ctx.strokeStyle = '#444';
+        this.ctx.lineWidth = 2 / this.scale;
         this.ctx.beginPath();
         this.ctx.moveTo(-size, 0); this.ctx.lineTo(size, 0);
         this.ctx.moveTo(0, -size); this.ctx.lineTo(0, size);
@@ -249,54 +258,63 @@ class App {
     }
 
     drawMonsters(monsters) {
-        this.ctx.fillStyle = '#f44336'; // Red
+        this.ctx.fillStyle = '#f44336';
         monsters.forEach(m => {
             this.ctx.beginPath();
             this.ctx.arc(m.x, m.y, 0.5, 0, Math.PI * 2);
             this.ctx.fill();
+        });
+    }
 
-            // ID Label - Only show if zoomed in
-            if (this.scale > 10) {
-                this.ctx.save();
-                this.ctx.translate(m.x, m.y);
-                // [Fix] Invert Y scale back to 100% for text to be upright
-                this.ctx.scale(1 / this.scale, -1 / this.scale);
-                this.ctx.fillStyle = 'white';
-                this.ctx.font = '12px Arial';
-                this.ctx.textAlign = 'center';
-                this.ctx.fillText(m.id, 0, -15); // Text is now above the object (in inverted space)
-                this.ctx.restore();
-            }
+    drawProjectiles(projectiles) {
+        this.ctx.fillStyle = '#2196f3';
+        projectiles.forEach(pr => {
+            this.ctx.beginPath();
+            this.ctx.arc(pr.x, pr.y, 0.2, 0, Math.PI * 2);
+            this.ctx.fill();
         });
     }
 
     drawPlayers(players) {
-        this.ctx.fillStyle = '#4caf50'; // Green
         players.forEach(p => {
+            this.ctx.fillStyle = (p.id === this.followingPlayerId) ? '#ffeb3b' : '#4caf50';
             this.ctx.beginPath();
-            this.ctx.arc(p.x, p.y, 0.5, 0, Math.PI * 2);
+            this.ctx.arc(p.x, p.y, 0.6, 0, Math.PI * 2);
             this.ctx.fill();
 
-            // ID Label
+            // Direction triangle if 'l' is present
+            if (p.l !== undefined) {
+                this.ctx.fillStyle = 'white';
+                this.ctx.beginPath();
+                const dir = p.l ? -1 : 1; // l=1 is Left
+                this.ctx.moveTo(p.x + dir * 0.7, p.y);
+                this.ctx.lineTo(p.x + dir * 0.4, p.y + 0.2);
+                this.ctx.lineTo(p.x + dir * 0.4, p.y - 0.2);
+                this.ctx.fill();
+            }
+
             this.ctx.save();
             this.ctx.translate(p.x, p.y);
-            // [Fix] Invert Y scale back for text
             this.ctx.scale(1 / this.scale, -1 / this.scale);
             this.ctx.fillStyle = 'white';
-            this.ctx.font = '14px Arial';
+            this.ctx.font = 'bold 12px Arial';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText(`P${p.id}`, 0, -20);
+            this.ctx.fillText(`P${p.id}`, 0, -15);
             this.ctx.restore();
         });
     }
 
     resetView() {
-        // [Fix] World view roughly 40 units
-        this.scale = Math.min(this.width, this.height) / 40.0;
+        this.scale = Math.min(this.width, this.height) / 50.0;
         this.offsetX = this.width / 2;
         this.offsetY = this.height / 2;
+        this.selectedRoomId = null; // Re-scan rooms
+
+        const chkFollow = document.getElementById('chk-follow');
+        if (chkFollow) chkFollow.checked = false;
+        this.updateFollowIndicator();
     }
 }
 
 const app = new App();
-window.app = app; // For debugging access
+window.app = app;

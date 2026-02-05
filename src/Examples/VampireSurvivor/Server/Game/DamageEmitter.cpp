@@ -30,6 +30,7 @@ DamageEmitter::DamageEmitter(int32_t skillId, std::shared_ptr<Player> owner, int
         _lifeTime = tmpl->lifeTime;
         _activeDuration = tmpl->activeDuration;
         _dotInterval = tmpl->dotInterval;
+        _arcDegrees = tmpl->arcDegrees; // [New] Load arc angle
 
         LOG_INFO(
             "[DamageEmitter] Created: Skill={} Type={} typeId={} Interval={:.2f}s Duration={:.1f}s Owner={}",
@@ -63,12 +64,32 @@ void DamageEmitter::Update(float dt, Room *room)
     }
 
     // --- Apply Multipliers ---
+    const auto *tmpl = DataManager::Instance().GetSkillTemplate(_skillId);
+    auto hasTrait = [&](const std::string &trait)
+    {
+        if (!tmpl)
+            return false;
+        return std::find(tmpl->traits.begin(), tmpl->traits.end(), trait) != tmpl->traits.end();
+    };
+
     float effectiveDamageMult = owner->GetDamageMultiplier();
     float effectiveCooldownMult = owner->GetCooldownMultiplier();
-    float effectiveAreaMult = owner->GetAreaMultiplier();
-    float effectiveDurationMult = owner->GetDurationMultiplier();
-    int32_t additionalProjectiles = owner->GetAdditionalProjectileCount(_weaponId);
-    int32_t additionalPierce = owner->GetAdditionalPierceCount(_weaponId);
+    float effectiveAreaMult = 1.0f;
+    float effectiveDurationMult = 1.0f;
+    int32_t additionalProjectiles = 0;
+    int32_t additionalPierce = 0;
+
+    if (hasTrait("AREA") || hasTrait("AOE"))
+        effectiveAreaMult = owner->GetAreaMultiplier();
+
+    if (hasTrait("DURATION"))
+        effectiveDurationMult = owner->GetDurationMultiplier();
+
+    if (hasTrait("PROJECTILE"))
+    {
+        additionalProjectiles = owner->GetAdditionalProjectileCount();
+        additionalPierce = owner->GetAdditionalPierceCount();
+    }
 
     // Weapon Level Multipliers
     if (_weaponId > 0)
@@ -263,6 +284,89 @@ void DamageEmitter::Update(float dt, Room *room)
                     room->BroadcastSpawn({proj});
                 }
             }
+        }
+        else if (_emitterType == "Arc")
+        {
+            // [Arc] Melee arc attack (e.g. Greatsword)
+            Vector2 direction = owner->GetFacingDirection();
+
+            // Get all monsters in range
+            auto monsters = room->GetMonstersInRange(px, py, finalRadius);
+
+            std::vector<int32_t> hitTargetIds;
+            std::vector<int32_t> hitDamageValues;
+            std::vector<bool> hitCriticals;
+
+            // Check critical hit
+            bool isCritical = false;
+            float critMultiplier = 1.0f;
+            float critChance = owner->GetCriticalChance();
+
+            static std::random_device rd;
+            static std::mt19937 gen(rd());
+            std::uniform_real_distribution<float> dis(0.0f, 1.0f);
+
+            if (dis(gen) < critChance)
+            {
+                isCritical = true;
+                critMultiplier = owner->GetCriticalDamageMultiplier();
+            }
+
+            int32_t criticalDamage = static_cast<int32_t>(finalDamage * critMultiplier);
+
+            // Filter monsters within arc
+            for (auto &monster : monsters)
+            {
+                if (monster->IsDead())
+                    continue;
+
+                // Calculate angle between facing direction and monster direction
+                Vector2 toMonster(monster->GetX() - px, monster->GetY() - py);
+                float distSq = toMonster.MagnitudeSq();
+
+                if (distSq > finalRadius * finalRadius)
+                    continue;
+
+                toMonster.Normalize();
+
+                // Dot product to get angle
+                float dot = direction.x * toMonster.x + direction.y * toMonster.y;
+                float angleRad = std::acos(std::clamp(dot, -1.0f, 1.0f));
+                float angleDeg = angleRad * 180.0f / 3.14159265f;
+
+                // Check if within arc
+                if (angleDeg <= _arcDegrees / 2.0f)
+                {
+                    monster->TakeDamage(criticalDamage, room);
+                    hitTargetIds.push_back(monster->GetId());
+                    hitDamageValues.push_back(criticalDamage);
+                    hitCriticals.push_back(isCritical);
+                }
+            }
+
+            // Broadcast damage effect
+            if (!hitTargetIds.empty())
+            {
+                Protocol::S_DamageEffect damageMsg;
+                damageMsg.set_skill_id(_skillId);
+                for (size_t i = 0; i < hitTargetIds.size(); ++i)
+                {
+                    damageMsg.add_target_ids(hitTargetIds[i]);
+                    damageMsg.add_damage_values(hitDamageValues[i]);
+                    damageMsg.add_is_critical(hitCriticals[i]);
+                }
+                room->BroadcastPacket(S_DamageEffectPacket(std::move(damageMsg)));
+            }
+
+            // Broadcast visual effect
+            Protocol::S_SkillEffect skillMsg;
+            skillMsg.set_caster_id(owner->GetId());
+            skillMsg.set_skill_id(_skillId);
+            skillMsg.set_x(px);
+            skillMsg.set_y(py);
+            skillMsg.set_radius(finalRadius);
+            skillMsg.set_duration_seconds(0.3f); // Short visual duration
+            room->BroadcastPacket(S_SkillEffectPacket(std::move(skillMsg)));
         }
         else
         {

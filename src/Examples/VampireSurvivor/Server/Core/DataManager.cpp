@@ -145,6 +145,16 @@ bool DataManager::LoadSkillData(const std::string &path)
             // Field Stats
             data.activeDuration = item.value("active_duration", 0.0f);
             data.dotInterval = item.value("dot_interval", 0.5f);
+            data.arcDegrees = item.value("arc_degrees", 30.0f); // [New] Arc angle for Arc emitter
+
+            // Traits Parsing
+            if (item.contains("traits") && item["traits"].is_array())
+            {
+                for (const auto &trait : item["traits"])
+                {
+                    data.traits.push_back(trait.get<std::string>());
+                }
+            }
 
             _skills[data.id] = data;
             LOG_INFO(
