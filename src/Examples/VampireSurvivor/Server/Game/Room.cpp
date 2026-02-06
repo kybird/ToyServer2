@@ -194,7 +194,7 @@ void Room::Enter(const std::shared_ptr<Player> &player)
                 const auto *pTmpl = DataManager::Instance().GetPlayerTemplate(1);
                 if (pTmpl != nullptr && !pTmpl->defaultSkills.empty())
                 {
-                    player->AddDefaultSkills(pTmpl->defaultSkills);
+                    player->AddDefaultSkills(pTmpl->defaultSkills, self.get());
                     LOG_INFO(
                         "Applied {} default skills to Player {}", pTmpl->defaultSkills.size(), player->GetSessionId()
                     );
@@ -208,7 +208,7 @@ void Room::Enter(const std::shared_ptr<Player> &player)
         const auto *pTmpl = DataManager::Instance().GetPlayerTemplate(1);
         if (pTmpl != nullptr && !pTmpl->defaultSkills.empty())
         {
-            player->AddDefaultSkills(pTmpl->defaultSkills);
+            player->AddDefaultSkills(pTmpl->defaultSkills, self.get());
         }
 
         _objMgr.AddObject(player);

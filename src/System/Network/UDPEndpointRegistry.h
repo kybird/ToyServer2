@@ -1,68 +1,40 @@
 #pragma once
 
 #include "System/Pch.h"
-#include <boost/asio/ip/udp.hpp>
-#include <memory>
-#include <unordered_map>
-#include <mutex>
+#include "System/Network/UDPEndpointRegistry.h"
+#include "System/Session/UDPSession.h"
 #include <chrono>
+#include <cstdint>
 
 namespace System {
 
-class ISession;
+struct SessionInfo
+{
+    ISession *session;
+    std::chrono::steady_clock::time_point lastActivity;
+    uint128_t udpToken = 0; // 16바이트 랜덤 토큰
+};
 
-/**
- * @brief Registry for mapping UDP endpoints to sessions.
- * Thread-safe container for managing UDP session lifecycle.
- */
 class UDPEndpointRegistry
 {
 public:
     UDPEndpointRegistry();
     ~UDPEndpointRegistry();
 
-    /**
-     * @brief Register a session for a specific endpoint.
-     * @param endpoint UDP endpoint
-     * @param session Session to register
-     */
     void Register(const boost::asio::ip::udp::endpoint &endpoint, ISession *session);
-
-    /**
-     * @brief Find session by endpoint.
-     * @param endpoint UDP endpoint to search
-     * @return Session pointer if found, nullptr otherwise
-     */
     ISession *Find(const boost::asio::ip::udp::endpoint &endpoint);
-
-    /**
-     * @brief Remove session from registry.
-     * @param endpoint UDP endpoint to remove
-     */
     void Remove(const boost::asio::ip::udp::endpoint &endpoint);
 
-    /**
-     * @brief Update last activity time for a session.
-     * @param endpoint UDP endpoint
-     */
+    // [New] 토큰 기반 세션 등록 및 조회
+    void RegisterWithToken(const boost::asio::ip::udp::endpoint &endpoint, ISession *session, uint128_t udpToken);
+    ISession *GetEndpointByToken(uint128_t token);
     void UpdateActivity(const boost::asio::ip::udp::endpoint &endpoint);
 
-    /**
-     * @brief Remove sessions that have timed out.
-     * @param timeoutMs Timeout threshold in milliseconds
-     * @return Number of sessions removed
-     */
     size_t CleanupTimeouts(uint32_t timeoutMs);
 
 private:
-    // Endpoint-to-session mapping
-    struct SessionInfo
-    {
-        ISession *session = nullptr;
-        std::chrono::steady_clock::time_point lastActivity;
-    };
-
     std::unordered_map<boost::asio::ip::udp::endpoint, SessionInfo> _sessions;
+    std::unordered_map<uint128_t, boost::asio::ip::udp::endpoint, System::uint128_hash> _tokens;
     std::mutex _mutex;
 };
 

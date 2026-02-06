@@ -1,6 +1,7 @@
 #pragma once
 
 #include "System/Pch.h"
+#include "System/Network/UDPTransportHeader.h"
 #include <boost/asio/ip/udp.hpp>
 #include <memory>
 

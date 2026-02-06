@@ -58,7 +58,8 @@ public:
     int32_t GetLevel() const;
 
     void AddExp(int32_t amount, Room *room);
-    void RefreshInventoryEffects();
+    void AddDefaultSkills(const std::vector<int32_t> &skillIds, Room *room);
+    void RefreshInventoryEffects(Room *room);
 
     // Passive Stats Calculation
     float GetDamageMultiplier() const;
@@ -85,7 +86,6 @@ public:
 
     // Auto-Attack
     void Update(float dt, Room *room) override;
-    void AddDefaultSkills(const std::vector<int32_t> &skillIds);
 
     // Ready State (Control Broadcast)
     bool IsReady() const

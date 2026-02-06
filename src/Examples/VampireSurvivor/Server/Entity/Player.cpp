@@ -411,7 +411,7 @@ void Player::Update(float dt, Room *room)
     );
 }
 
-void Player::AddDefaultSkills(const std::vector<int32_t> &skillIds)
+void Player::AddDefaultSkills(const std::vector<int32_t> &skillIds, Room *room)
 {
     if (_inventory == nullptr)
     {
@@ -425,7 +425,7 @@ void Player::AddDefaultSkills(const std::vector<int32_t> &skillIds)
     }
 
     // Refresh emitters based on inventory
-    RefreshInventoryEffects();
+    RefreshInventoryEffects(room);
 }
 
 size_t Player::GetEmitterCount() const
@@ -525,7 +525,7 @@ void Player::ExitLevelUpState(Room *room)
     _invincibleUntil = 0.0f;
 
     // 패시브 효과 갱신 (Max HP 상승 등 반영)
-    RefreshInventoryEffects();
+    RefreshInventoryEffects(room);
 }
 
 float Player::GetDamageMultiplier() const

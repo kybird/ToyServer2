@@ -108,12 +108,10 @@ bool Framework::Init(std::shared_ptr<IConfig> config, std::shared_ptr<IPacketHan
     if (serverConfig.serverRole == "backend")
     {
         SessionFactory::SetServerRole(ServerRole::Backend);
-        System::SessionPool<System::BackendSession>::Init(1000, 1000);
     }
     else
     {
         SessionFactory::SetServerRole(ServerRole::Gateway);
-        System::SessionPool<System::GatewaySession>::Init(1000, 1000);
     }
 
     // 2. Prepare Pools & Encryption (Hidden from User)

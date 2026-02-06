@@ -1,4 +1,7 @@
 #include "System/Session/UDPSession.h"
+#include "System/Network/UDPNetworkImpl.h"
+#include "System/Network/UDPTransportHeader.h"
+#include "System/Network/GenerateUDPToken.h"
 #include "System/ILog.h"
 #include "System/Pch.h"
 
@@ -8,6 +11,8 @@ struct UDPSessionImpl
 {
     boost::asio::ip::udp::endpoint endpoint;
     std::chrono::steady_clock::time_point lastActivity;
+    UDPNetworkImpl *network = nullptr;
+    uint128_t udpToken = 0;
 };
 
 UDPSession::UDPSession() : _impl(std::make_unique<UDPSessionImpl>())
@@ -21,17 +26,15 @@ UDPSession::~UDPSession()
 void UDPSession::Reset(std::shared_ptr<void> socketVoidPtr, uint64_t sessionId, IDispatcher *dispatcher,
                       const boost::asio::ip::udp::endpoint &endpoint)
 {
-    // Call base class Reset
     Session::Reset();
 
-    // Initialize base class members
     _id = sessionId;
     _dispatcher = dispatcher;
     _connected.store(true);
 
-    // Store UDP-specific data
     _impl->endpoint = endpoint;
     _impl->lastActivity = std::chrono::steady_clock::now();
+    _impl->udpToken = GenerateUDPToken::Generate();
 
     LOG_INFO("[UDPSession] Session {} reset for endpoint {}:{}", _id,
              endpoint.address().to_string(), endpoint.port());
@@ -50,6 +53,26 @@ void UDPSession::UpdateActivity()
 const std::chrono::steady_clock::time_point &UDPSession::GetLastActivity() const
 {
     return _impl->lastActivity;
+}
+
+void UDPSession::SetNetwork(UDPNetworkImpl *network)
+{
+    _impl->network = network;
+}
+
+UDPNetworkImpl *UDPSession::GetNetwork() const
+{
+    return _impl->network;
+}
+
+void UDPSession::SetUdpToken(uint128_t token)
+{
+    _impl->udpToken = token;
+}
+
+uint128_t UDPSession::GetUdpToken() const
+{
+    return _impl->udpToken;
 }
 
 void UDPSession::HandleData(const uint8_t *data, size_t length)
@@ -88,19 +111,35 @@ void UDPSession::Close()
 
 void UDPSession::Flush()
 {
-    // UDP sessions handle sending differently from TCP
-    // UDP is connectionless, so "flush" means send queued packets to endpoint
-    // This will be implemented when integrating with UDPNetworkImpl
+    if (!_impl->network)
+    {
+        return;
+    }
 
     PacketMessage *msg;
     while (_sendQueue.try_dequeue(msg))
     {
-        // Send packet to endpoint
-        // This will be called via UDPNetworkImpl::SendTo
-        // For now, placeholder
+        const uint16_t packetSize = msg->length;
 
-        // Release message
-        // msg->Release();
+        std::vector<uint8_t> sendBuffer;
+        sendBuffer.resize(UDPTransportHeader::SIZE + packetSize);
+
+        UDPTransportHeader *transportHeader = reinterpret_cast<UDPTransportHeader *>(sendBuffer.data());
+        transportHeader->tag = UDPTransportHeader::TAG_RAW_UDP;
+        transportHeader->sessionId = _id;
+        transportHeader->udpToken = _impl->udpToken;
+
+        std::memcpy(sendBuffer.data() + UDPTransportHeader::SIZE, msg->Payload(), packetSize);
+
+        _impl->network->SendTo(sendBuffer.data(), sendBuffer.size(), _impl->endpoint);
+
+        msg->DecRef();
+        if (msg->DecRef())
+        {
+            if (msg->isPooled)
+            {
+            }
+        }
     }
 }
 

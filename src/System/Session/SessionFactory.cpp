@@ -25,22 +25,19 @@ ISession *SessionFactory::CreateSession(std::shared_ptr<boost::asio::ip::tcp::so
 {
     uint64_t id = _nextSessionId.fetch_add(1);
 
-    // [Hot Path Optimization] No branching after initialization
-    // Factory selects session type based on server role (set once at startup)
     if (_serverRole == ServerRole::Gateway)
     {
-        // Gateway: Encryption-enabled session
-        GatewaySession *gatewaySess = SessionPool<GatewaySession>::Acquire();
+        auto& pool = GetSessionPool<GatewaySession>();
+        GatewaySession *gatewaySess = pool.Acquire();
         if (!gatewaySess)
         {
-            std::cout << "[DEBUG] SessionPool<GatewaySession>::Acquire() returned NULL!" << std::endl;
+            std::cout << "[DEBUG] GetSessionPool<GatewaySession>().Acquire() returned NULL!" << std::endl;
             return nullptr;
         }
 
         std::cout << "[DEBUG] GatewaySession Acquired. Resetting..." << std::endl;
         gatewaySess->Reset(std::static_pointer_cast<void>(socket), id, dispatcher);
 
-        // Inject encryption (mandatory for Gateway)
         if (_encryptionFactory)
         {
             std::cout << "[DEBUG] Setting Encryption..." << std::endl;
@@ -51,7 +48,6 @@ ISession *SessionFactory::CreateSession(std::shared_ptr<boost::asio::ip::tcp::so
             std::cout << "[DEBUG] WARNING: No EncryptionFactory set!" << std::endl;
         }
 
-        // Apply heartbeat if configured
         if (_hbInterval > 0)
         {
             gatewaySess->ConfigHeartbeat(
@@ -67,16 +63,15 @@ ISession *SessionFactory::CreateSession(std::shared_ptr<boost::asio::ip::tcp::so
 
         return static_cast<ISession *>(gatewaySess);
     }
-    else // ServerRole::Backend
+    else
     {
-        // Backend: Zero-copy optimized session (no encryption)
-        BackendSession *backendSess = SessionPool<BackendSession>::Acquire();
+        auto& pool = GetSessionPool<BackendSession>();
+        BackendSession *backendSess = pool.Acquire();
         if (!backendSess)
             return nullptr;
 
         backendSess->Reset(std::static_pointer_cast<void>(socket), id, dispatcher);
 
-        // Apply heartbeat if configured
         if (_hbInterval > 0)
         {
             backendSess->ConfigHeartbeat(
@@ -116,14 +111,23 @@ void SessionFactory::Destroy(ISession *session)
     if (!session)
         return;
 
-    // Determine session type and release to appropriate pool
+    // [UDP] Check if this is a UDP session first
+    if (auto *udpSession = dynamic_cast<UDPSession *>(session))
+    {
+        delete udpSession;
+        return;
+    }
+
+    // [TCP] Handle TCP sessions based on server role
     if (_serverRole == ServerRole::Gateway)
     {
-        SessionPool<GatewaySession>::Release(static_cast<GatewaySession *>(session));
+        auto& pool = GetSessionPool<GatewaySession>();
+        pool.Release(static_cast<GatewaySession *>(session));
     }
     else
     {
-        SessionPool<BackendSession>::Release(static_cast<BackendSession *>(session));
+        auto& pool = GetSessionPool<BackendSession>();
+        pool.Release(static_cast<BackendSession *>(session));
     }
 }
 

@@ -65,33 +65,71 @@ void UDPEndpointRegistry::UpdateActivity(const boost::asio::ip::udp::endpoint &e
     }
 }
 
-size_t UDPEndpointRegistry::CleanupTimeouts(uint32_t timeoutMs)
+void UDPEndpointRegistry::RegisterWithToken(const boost::asio::ip::udp::endpoint &endpoint,
+                                             ISession *session, uint128_t udpToken)
 {
     std::lock_guard<std::mutex> lock(_mutex);
 
-    auto now = std::chrono::steady_clock::now();
-    auto timeoutThreshold = std::chrono::milliseconds(timeoutMs);
-    size_t removedCount = 0;
-
-    for (auto it = _sessions.begin(); it != _sessions.end();)
+    auto it = _sessions.find(endpoint);
+    if (it != _sessions.end())
     {
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - it->second.lastActivity);
+        it->second.session = session;
+        it->second.udpToken = udpToken;
+        it->second.lastActivity = std::chrono::steady_clock::now();
+    }
+    else
+    {
+        SessionInfo info;
+        info.session = session;
+        info.udpToken = udpToken;
+        info.lastActivity = std::chrono::steady_clock::now();
+        _sessions[endpoint] = info;
+    }
 
-        if (elapsed >= timeoutThreshold)
+    _tokens[udpToken] = endpoint;
+}
+
+ISession *UDPEndpointRegistry::GetEndpointByToken(uint128_t token)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    auto tokenIt = _tokens.find(token);
+    if (tokenIt != _tokens.end())
+    {
+        auto sessionIt = _sessions.find(tokenIt->second);
+        if (sessionIt != _sessions.end())
         {
-            LOG_INFO("[UDPEndpointRegistry] Session {}:{} timed out ({}ms inactive)",
-                     it->first.address().to_string(), it->first.port(), elapsed.count());
+            return sessionIt->second.session;
+        }
+    }
+    return nullptr;
+}
 
+size_t UDPEndpointRegistry::CleanupTimeouts(uint32_t timeoutMs)
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    size_t removed = 0;
+    auto now = std::chrono::steady_clock::now();
+
+    auto it = _sessions.begin();
+    while (it != _sessions.end())
+    {
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+            now - it->second.lastActivity
+        ).count();
+
+        if (elapsed > timeoutMs)
+        {
+            _tokens.erase(it->second.udpToken);
             it = _sessions.erase(it);
-            removedCount++;
+            ++removed;
         }
         else
         {
             ++it;
         }
     }
-
-    return removedCount;
+    return removed;
 }
 
 } // namespace System

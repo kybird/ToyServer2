@@ -50,7 +50,7 @@ void LevelUpManager::ApplySelection(Player *player, int optionIndex, Room *room)
 
     if (success)
     {
-        player->RefreshInventoryEffects();
+        player->RefreshInventoryEffects(room);
         player->SyncInventory(room); // 동기화 패킷 전송
         LOG_INFO(
             "[LevelUpManager] Player {} successfully applied {} (ID: {}, Type: {})",

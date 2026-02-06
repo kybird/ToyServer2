@@ -1,6 +1,7 @@
 #include "System/Network/UDPNetworkImpl.h"
 #include "System/Network/UDPEndpointRegistry.h"
 #include "System/ISession.h"
+#include "System/Session/UDPSession.h"
 #include "System/ILog.h"
 #include "System/Pch.h"
 
@@ -129,34 +130,63 @@ void UDPNetworkImpl::HandleReceive(const boost::system::error_code &error, size_
         return;
     }
 
-    if (bytesReceived > 0)
+    if (bytesReceived > UDPTransportHeader::SIZE)
     {
         LOG_INFO("[UDP Network] Received {} bytes from {}:{}", bytesReceived,
                  senderEndpoint.address().to_string(), senderEndpoint.port());
 
-        // Delegate session management to registry
         if (_registry && _dispatcher)
         {
-            // Find or create session for this endpoint
-            ISession *session = _registry->Find(senderEndpoint);
+            const UDPTransportHeader *transportHeader = reinterpret_cast<const UDPTransportHeader *>(_receiveBuffer.data());
+
+            if (!transportHeader->IsValid())
+            {
+                LOG_WARN("[UDP Network] Invalid transport header tag: {}, discarding packet", transportHeader->tag);
+                StartReceive();
+                return;
+            }
+
+            LOG_INFO("[UDP Network] Transport Header - SessionId: {}, Tag: {}", transportHeader->sessionId, transportHeader->tag);
+
+            ISession *session = nullptr;
+
+            session = _registry->Find(senderEndpoint);
 
             if (!session)
             {
-                // New session - create and register
-                // This is where SessionFactory::CreateUDPSession would be called
-                // For now, we'll handle this in Wave 2 when SessionFactory is updated
-                LOG_INFO("[UDP Network] New endpoint detected, session creation pending...");
+                session = _registry->GetEndpointByToken(transportHeader->udpToken);
+
+                if (session)
+                {
+                    LOG_INFO("[UDP Network] NAT rebinding detected - session {} moved to new endpoint {}:{}", transportHeader->sessionId,
+                             senderEndpoint.address().to_string(), senderEndpoint.port());
+                }
             }
-            else
+
+            if (!session)
             {
-                // Existing session - update activity and handle data
-                _registry->UpdateActivity(senderEndpoint);
-                // Data would be posted to dispatcher here
+                LOG_INFO("[UDP Network] New endpoint or invalid token, session creation pending...");
+                StartReceive();
+                return;
+            }
+
+            _registry->UpdateActivity(senderEndpoint);
+
+            const uint8_t *packetData = _receiveBuffer.data() + UDPTransportHeader::SIZE;
+            size_t packetLength = bytesReceived - UDPTransportHeader::SIZE;
+
+            UDPSession *udpSession = dynamic_cast<UDPSession *>(session);
+            if (udpSession)
+            {
+                udpSession->HandleData(packetData, packetLength);
             }
         }
     }
+    else if (bytesReceived > 0)
+    {
+        LOG_WARN("[UDP Network] Packet too small ({} bytes), expected at least {} bytes", bytesReceived, UDPTransportHeader::SIZE);
+    }
 
-    // Continue receiving
     StartReceive();
 }
 
