@@ -1,5 +1,6 @@
 #include "System/Network/WebSocketSession.h"
 #include "System/ILog.h"
+#include "System/Utility/Encoding.h"
 
 namespace System {
 
@@ -33,7 +34,7 @@ void WebSocketSession::Run()
         {
             if (ec)
             {
-                LOG_ERROR("WebSocket Handshake Failed: {}", ec.message());
+                LOG_ERROR("WebSocket Handshake Failed: {}", Utility::ToUtf8(ec.message()));
                 return;
             }
 
@@ -114,13 +115,13 @@ void WebSocketSession::OnRead(beast::error_code ec, std::size_t bytes_transferre
     if (ec == boost::asio::error::connection_reset || ec == boost::asio::error::eof ||
         ec == boost::asio::error::broken_pipe || ec == boost::asio::error::connection_aborted)
     {
-        LOG_INFO("WebSocket Client Disconnected (Connection Lost: {})", ec.message());
+        LOG_INFO("WebSocket Client Disconnected (Connection Lost: {})", Utility::ToUtf8(ec.message()));
         return;
     }
 
     if (ec)
     {
-        LOG_ERROR("WebSocket Read Error: {} ({})", ec.message(), ec.value());
+        LOG_ERROR("WebSocket Read Error: {} ({})", Utility::ToUtf8(ec.message()), ec.value());
         return;
     }
 
@@ -149,11 +150,11 @@ void WebSocketSession::OnWrite(beast::error_code ec, std::size_t bytes_transferr
 
         if (ec == boost::asio::error::connection_reset || ec == boost::asio::error::broken_pipe)
         {
-            LOG_INFO("WebSocket Write Failed (Connection Lost): {}", ec.message());
+            LOG_INFO("WebSocket Write Failed (Connection Lost): {}", Utility::ToUtf8(ec.message()));
         }
         else
         {
-            LOG_ERROR("WebSocket Write Error: {}", ec.message());
+            LOG_ERROR("WebSocket Write Error: {}", Utility::ToUtf8(ec.message()));
         }
         return;
     }

@@ -1,6 +1,7 @@
 #include "Protocol/game.pb.h"
 #include "System/Packet/PacketHeader.h"
 #include "System/Pch.h"
+#include "System/Utility/Encoding.h"
 #include <boost/asio.hpp>
 #include <chrono>
 #include <cstring>
@@ -249,7 +250,7 @@ int main()
             {
                 if (ec)
                 {
-                    std::cerr << "Recv error: " << ec.message() << std::endl;
+                    std::cerr << "Recv error: " << System::Utility::ToUtf8(ec.message()) << std::endl;
                     break;
                 }
                 writePos += bytesReceived;

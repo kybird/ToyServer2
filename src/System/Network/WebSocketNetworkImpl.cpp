@@ -1,6 +1,7 @@
 #include "System/Network/WebSocketNetworkImpl.h"
 #include "System/ILog.h"
 #include "System/Network/WebSocketSession.h"
+#include "System/Utility/Encoding.h"
 
 namespace System {
 
@@ -119,7 +120,7 @@ void WebSocketNetworkImpl::OnAccept(boost::system::error_code ec, boost::asio::i
 
     if (ec)
     {
-        LOG_ERROR("WebSocket Accept Error: {}", ec.message());
+        LOG_ERROR("WebSocket Accept Error: {}", Utility::ToUtf8(ec.message()));
     }
     else
     {
