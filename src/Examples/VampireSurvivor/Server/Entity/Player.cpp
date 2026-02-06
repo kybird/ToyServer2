@@ -720,7 +720,7 @@ void Player::ClearPendingLevelUpOptions()
     _pendingLevelUpOptions.clear();
 }
 
-void Player::RefreshInventoryEffects()
+void Player::RefreshInventoryEffects(Room *room)
 {
     if (_inventory == nullptr)
         return;
@@ -776,6 +776,8 @@ void Player::RefreshInventoryEffects()
             }
         }
     }
+
+    SyncInventory(room);
 }
 
 void Player::SetGodMode(bool enable)
