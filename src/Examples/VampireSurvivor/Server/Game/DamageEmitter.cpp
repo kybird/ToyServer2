@@ -366,7 +366,7 @@ void DamageEmitter::Update(float dt, Room *room)
             skillMsg.set_duration_seconds(0.3f); // Short visual duration
             skillMsg.set_arc_degrees(_arcDegrees);
 
-            float rotDeg = std::atan2(facingDir.y, facingDir.x) * (180.0f / 3.14159265f);
+            float rotDeg = std::atan2(direction.y, direction.x) * (180.0f / 3.14159265f);
             skillMsg.set_rotation_degrees(rotDeg);
 
             room->BroadcastPacket(S_SkillEffectPacket(std::move(skillMsg)));

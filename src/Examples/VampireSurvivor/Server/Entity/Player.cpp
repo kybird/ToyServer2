@@ -205,9 +205,7 @@ void Player::ApplySkills(const std::vector<std::pair<int, int>> &skills)
         int id = skill.first;
         int lvl = skill.second;
 
-        // TODO: Move this ID to a shared constant/enum
-        constexpr int SKILL_ID_MAX_HP_BONUS = 101;
-        if (id == SKILL_ID_MAX_HP_BONUS)
+        if (id == GameConfig::SKILL_ID_MAX_HP_BONUS)
         {
             // +10 HP per level
             _maxHp += 10 * lvl;
@@ -846,7 +844,7 @@ void Player::SyncInventory(Room *room)
 
     Protocol::S_UpdateInventory msg;
 
-    // Collect Weapons
+    // 보유 중인 무기 정보 수집
     for (int id : _inventory->GetOwnedWeaponIds())
     {
         auto *item = msg.add_items();
@@ -855,7 +853,7 @@ void Player::SyncInventory(Room *room)
         item->set_is_passive(false);
     }
 
-    // Collect Passives
+    // 보유 중인 패시브 정보 수집
     for (int id : _inventory->GetOwnedPassiveIds())
     {
         auto *item = msg.add_items();
@@ -864,11 +862,11 @@ void Player::SyncInventory(Room *room)
         item->set_is_passive(true);
     }
 
-    // Send only to the owner (this player)
+    // 소유자(해당 플레이어)에게만 개별 전송
     S_UpdateInventoryPacket pkt(msg);
     room->SendToPlayer(_sessionId, pkt);
 
-    LOG_INFO("[Player] Synced inventory to Player {} ({} items)", _id, msg.items_size());
+    LOG_INFO("[Player] 인벤토리 동기화 완료: 플레이어 {} (아이템 {}개)", _id, msg.items_size());
 }
 
 } // namespace SimpleGame

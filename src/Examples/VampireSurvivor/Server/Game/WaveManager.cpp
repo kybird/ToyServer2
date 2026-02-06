@@ -68,9 +68,8 @@ void WaveManager::Update(float dt, Room *room)
         {
             // [Optimization] 현재 몬스터 수 체크
             size_t currentMonsterCount = room->GetObjectManager().GetAliveMonsterCount();
-            const size_t MAX_MONSTERS = 500; // [Fix] 50 -> 500으로 상향
 
-            if (currentMonsterCount >= MAX_MONSTERS)
+            if (currentMonsterCount >= GameConfig::MAX_MONSTERS_PER_ROOM)
             {
                 // 제한 초과 시 스폰 안 함
                 it->timer = it->interval; // 다음 틱에 다시 시도
@@ -81,7 +80,7 @@ void WaveManager::Update(float dt, Room *room)
             if (totalPlayers > 0)
             {
                 // 스폰 가능한 수량 계산
-                int maxSpawnable = static_cast<int>(MAX_MONSTERS - currentMonsterCount);
+                int maxSpawnable = static_cast<int>(GameConfig::MAX_MONSTERS_PER_ROOM - currentMonsterCount);
                 int actualBatch = std::min(it->batchCount, maxSpawnable);
 
                 // Distribute batch count among clusters
@@ -264,11 +263,12 @@ std::pair<float, float> WaveManager::GetAngularGapSpawnPos(const PlayerCluster &
     }
 
     // 3. Calc Position with Jitter
-    // Add small random jitter to radius and angle to prevent stacking
-    float jitterAngle = rng.NextFloat(-0.5f, 0.5f); // +/- 0.5 rad (~28 degrees)
+    // Add larger random jitter to radius and angle to prevent stacking
+    // Wider angle spread (+/- 0.8 rad ~= +/- 45 deg) and deeper radius variation (0~5m)
+    float jitterAngle = rng.NextFloat(-0.8f, 0.8f);
     float finalAngle = spawnAngle + jitterAngle;
 
-    float jitterDist = rng.NextFloat(0.0f, 3.0f); // 0~3m variation
+    float jitterDist = rng.NextFloat(0.0f, 5.0f);
     float finalRadius = spawnRadius + jitterDist;
 
     return {cluster.centerX + std::cos(finalAngle) * finalRadius, cluster.centerY + std::sin(finalAngle) * finalRadius};
@@ -300,7 +300,7 @@ void WaveManager::SpawnMonster(int32_t monsterTypeId, float hpMultiplier, Room *
 {
     // [Optimization] 최대 몬스터 수 재확인 (상향: 500)
     size_t currentMonsterCount = room->GetObjectManager().GetAliveMonsterCount();
-    if (currentMonsterCount >= 500)
+    if (currentMonsterCount >= GameConfig::MAX_MONSTERS_PER_ROOM)
     {
         return;
     }

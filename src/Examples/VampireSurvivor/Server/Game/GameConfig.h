@@ -49,7 +49,10 @@ struct GameConfig
     static constexpr float DEFAULT_PLAYER_SPEED = 5.0f;
 
     // Monster Population Limit
-    static constexpr size_t MAX_MONSTERS_PER_ROOM = 20000;
+    static constexpr size_t MAX_MONSTERS_PER_ROOM = 500;
+
+    // Skill IDs (Hardcoded legacy support)
+    static constexpr int SKILL_ID_MAX_HP_BONUS = 101;
 };
 
 } // namespace SimpleGame
