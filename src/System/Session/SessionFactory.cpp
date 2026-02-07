@@ -31,21 +31,14 @@ ISession *SessionFactory::CreateSession(std::shared_ptr<boost::asio::ip::tcp::so
         GatewaySession *gatewaySess = pool.Acquire();
         if (!gatewaySess)
         {
-            std::cout << "[DEBUG] GetSessionPool<GatewaySession>().Acquire() returned NULL!" << std::endl;
             return nullptr;
         }
 
-        std::cout << "[DEBUG] GatewaySession Acquired. Resetting..." << std::endl;
         gatewaySess->Reset(std::static_pointer_cast<void>(socket), id, dispatcher);
 
         if (_encryptionFactory)
         {
-            std::cout << "[DEBUG] Setting Encryption..." << std::endl;
             gatewaySess->SetEncryption(_encryptionFactory());
-        }
-        else
-        {
-            std::cout << "[DEBUG] WARNING: No EncryptionFactory set!" << std::endl;
         }
 
         if (_hbInterval > 0)
@@ -98,9 +91,6 @@ ISession *SessionFactory::CreateUDPSession(const boost::asio::ip::udp::endpoint 
     if (!udpSess)
     {
         LOG_ERROR("[SessionFactory] GetSessionPool<UDPSession>().Acquire() returned NULL!");
-        // Fallback or return nullptr. For now, let's try to allocate one if pool is empty/failed
-        // But SessionPool checks queue. If empty, it returns nullptr.
-        // We probably should handle this better, but for now consistent with GatewaySession logic.
         return nullptr;
     }
 
@@ -120,14 +110,12 @@ void SessionFactory::Destroy(ISession *session)
 
     session->OnRecycle();
 
-    // [UDP] Check if this is a UDP session first
     if (auto *udpSession = dynamic_cast<UDPSession *>(session))
     {
         GetSessionPool<UDPSession>().Release(udpSession);
         return;
     }
 
-    // [TCP] Handle TCP sessions based on server role
     if (_serverRole == ServerRole::Gateway)
     {
         auto &pool = GetSessionPool<GatewaySession>();

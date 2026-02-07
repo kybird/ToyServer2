@@ -363,10 +363,10 @@ set(VS_TEST_SOURCES
     tests/TestByteBuffer.cpp
     tests/TestRateLimiter.cpp
     tests/TestSpatialGrid.cpp
-    tests/TestSpatialGrid.cpp
     tests/TestPerformance.cpp
     tests/TestMQ.cpp
     src/Examples/VampireSurvivor/tests/TestStatModifier.cpp
+    src/System/Session/tests/TestPerf.cpp
     tests/TestBroadcastBenchmark.cpp
     tests/TestDispatcherBenchmark.cpp
     tests/TestGatherWriteBenchmark.cpp
