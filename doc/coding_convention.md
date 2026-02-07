@@ -103,3 +103,23 @@ src/System/Dispatcher/
 
 ### 5.2. 트랜잭션 관리
 *   반드시 RAII(`ITransaction`)를 사용하며, 명시적으로 `Commit()`을 호출하지 않으면 스코프 종료 시 자동 Rollback 됩니다.
+## 6. 네트워크 규칙 (Networking Rules)
+
+### 6.1. UDP 전송 방식 선택 (Dual Protocol)
+패킷의 성격에 따라 반드시 올바른 전송 메서드를 사용하십시오.
+*   **`SendReliable(const IPacket&)`**: 반드시 전달되어야 하는 액션 (스킬 사용, 아이템 획득, 상태 이상 등). KCP를 통해 재전송을 보장합니다.
+*   **`SendUnreliable(const IPacket&)`**: 유실되어도 무방하며 최신값만 중요한 데이터 (캐릭터/몬스터 이동, 단순 위치 동기화). Raw UDP를 통해 최저 지연으로 전송합니다.
+
+### 6.2. 세션 수명 주기 관리
+*   **생성/소멸**: 세션은 반드시 `SessionFactory`를 통해서만 생성 및 파괴되어야 합니다. 직접적인 `new`/`delete`는 절대 금지됩니다.
+*   **풀링(Pooling)**: 모든 세션은 풀링됩니다. 새로운 세션 타입 추가 시 반드시 `OnRecycle()` 메서드를 구현하여, 풀에 반납되기 전 모든 리소스(소켓, 큐, 버퍼, 토큰 등)를 초기화해야 합니다.
+*   **안전한 파괴**: 세션 파괴 시에는 `OnDisconnect()` 및 `OnRecycle()` 흐름이 보장되도록 `SessionFactory::Destroy()`를 호출하십시오.
+
+### 6.3. 패킷 직렬화 및 스레드 안전성
+*   **참조 캡처 금지**: 비동기 핸들러(람다)에 `IPacket` 참조를 직접 캡처하는 것은 댕글링 포인터 위험이 크므로 **절대 금지**합니다.
+*   **직렬화 후 전달**: 반드시 `MessagePool::AllocatePacket()`을 사용하여 패킷 내용을 복사(직렬화)한 후, `PacketPtr`을 값으로 캡처하여 전달하십시오.
+*   **Zero-Overhead**: 내부 통신(Backend)이나 고성능이 필요한 경우, `PacketPtr`의 Reference Counting을 활용하여 불필요한 메모리 할당을 최소화하십시오.
+
+### 6.4. 네트워크 핫패스 (Hot Path)
+*   UDP 수신 핸들러 (`HandleReceive`) 및 KCP 업데이트 루프는 초고속 핫패스입니다.
+*   이 구간에서 **컴파일러 경고가 발생하는 코드, 블로킹 락(Mutex), 복잡한 로직 지연**은 전체 서버 지연으로 직결되므로 엄격하게 관리하십시오.
