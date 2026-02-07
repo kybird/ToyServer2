@@ -1,10 +1,10 @@
 #include "System/Session/SessionFactory.h"
-#include "System/Session/UDPSession.h"
 #include "System/ILog.h"
 #include "System/Pch.h"
 #include "System/Session/BackendSession.h"
 #include "System/Session/GatewaySession.h"
 #include "System/Session/SessionPool.h"
+#include "System/Session/UDPSession.h"
 
 namespace System {
 
@@ -27,7 +27,7 @@ ISession *SessionFactory::CreateSession(std::shared_ptr<boost::asio::ip::tcp::so
 
     if (_serverRole == ServerRole::Gateway)
     {
-        auto& pool = GetSessionPool<GatewaySession>();
+        auto &pool = GetSessionPool<GatewaySession>();
         GatewaySession *gatewaySess = pool.Acquire();
         if (!gatewaySess)
         {
@@ -65,7 +65,7 @@ ISession *SessionFactory::CreateSession(std::shared_ptr<boost::asio::ip::tcp::so
     }
     else
     {
-        auto& pool = GetSessionPool<BackendSession>();
+        auto &pool = GetSessionPool<BackendSession>();
         BackendSession *backendSess = pool.Acquire();
         if (!backendSess)
             return nullptr;
@@ -93,9 +93,16 @@ ISession *SessionFactory::CreateUDPSession(const boost::asio::ip::udp::endpoint 
 {
     uint64_t id = _nextSessionId.fetch_add(1);
 
-    // For now, create a UDPSession directly
-    // In future, this might use a session pool like Gateway/Backend sessions
-    UDPSession *udpSess = new UDPSession();
+    auto &pool = GetSessionPool<UDPSession>();
+    UDPSession *udpSess = pool.Acquire();
+    if (!udpSess)
+    {
+        LOG_ERROR("[SessionFactory] GetSessionPool<UDPSession>().Acquire() returned NULL!");
+        // Fallback or return nullptr. For now, let's try to allocate one if pool is empty/failed
+        // But SessionPool checks queue. If empty, it returns nullptr.
+        // We probably should handle this better, but for now consistent with GatewaySession logic.
+        return nullptr;
+    }
 
     // Create a null shared_ptr for socket (UDP uses endpoint, not socket)
     std::shared_ptr<void> socketPtr = nullptr;
@@ -114,19 +121,19 @@ void SessionFactory::Destroy(ISession *session)
     // [UDP] Check if this is a UDP session first
     if (auto *udpSession = dynamic_cast<UDPSession *>(session))
     {
-        delete udpSession;
+        GetSessionPool<UDPSession>().Release(udpSession);
         return;
     }
 
     // [TCP] Handle TCP sessions based on server role
     if (_serverRole == ServerRole::Gateway)
     {
-        auto& pool = GetSessionPool<GatewaySession>();
+        auto &pool = GetSessionPool<GatewaySession>();
         pool.Release(static_cast<GatewaySession *>(session));
     }
     else
     {
-        auto& pool = GetSessionPool<BackendSession>();
+        auto &pool = GetSessionPool<BackendSession>();
         pool.Release(static_cast<BackendSession *>(session));
     }
 }
