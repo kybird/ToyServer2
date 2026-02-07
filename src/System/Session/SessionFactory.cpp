@@ -118,6 +118,8 @@ void SessionFactory::Destroy(ISession *session)
     if (!session)
         return;
 
+    session->OnRecycle();
+
     // [UDP] Check if this is a UDP session first
     if (auto *udpSession = dynamic_cast<UDPSession *>(session))
     {

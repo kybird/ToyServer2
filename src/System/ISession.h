@@ -1,5 +1,5 @@
 #pragma once
-#include "System/Packet/PacketPtr.h" // [New]
+#include "System/Packet/PacketPtr.h"
 #include <cstdint>
 #include <memory>
 #include <span>
@@ -18,6 +18,10 @@ public:
     // [User API] Send a packet (PacketMessage created internally)
     virtual void SendPacket(const IPacket &pkt) = 0;
     virtual void SendPacket(PacketPtr msg) = 0; // [New] RAII Async Safe
+
+    // [UDP] Reliable/Unreliable explicitly
+    virtual void SendReliable(const IPacket &pkt) = 0;
+    virtual void SendUnreliable(const IPacket &pkt) = 0;
 
     // [System API] Send pre-serialized message (Broadcast optimization)
     virtual void SendPreSerialized(const PacketMessage *msg) = 0;

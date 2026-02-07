@@ -1,14 +1,13 @@
 #include "System/Network/UDPNetworkImpl.h"
-#include "System/Network/UDPEndpointRegistry.h"
-#include "System/ISession.h"
-#include "System/Session/UDPSession.h"
 #include "System/ILog.h"
+#include "System/ISession.h"
+#include "System/Network/UDPEndpointRegistry.h"
 #include "System/Pch.h"
+#include "System/Session/UDPSession.h"
 
 namespace System {
 
-UDPNetworkImpl::UDPNetworkImpl(boost::asio::io_context &ioContext)
-    : _ioContext(ioContext), _socket(_ioContext)
+UDPNetworkImpl::UDPNetworkImpl(boost::asio::io_context &ioContext) : _ioContext(ioContext), _socket(_ioContext)
 {
 }
 
@@ -35,8 +34,7 @@ bool UDPNetworkImpl::Start(uint16_t port)
         StartReceive();
 
         return true;
-    }
-    catch (const std::exception &e)
+    } catch (const std::exception &e)
     {
         std::cerr << "[DEBUG] UDP Network Start Failed on Port " << port << ": " << e.what() << std::endl;
         LOG_ERROR("UDP Network Start Failed: {}", e.what());
@@ -85,8 +83,7 @@ bool UDPNetworkImpl::SendTo(const uint8_t *data, size_t length, const boost::asi
             }
         );
         return true;
-    }
-    catch (const std::exception &e)
+    } catch (const std::exception &e)
     {
         LOG_ERROR("UDP Send Exception: {}", e.what());
         return false;
@@ -108,8 +105,9 @@ void UDPNetworkImpl::StartReceive()
     );
 }
 
-void UDPNetworkImpl::HandleReceive(const boost::system::error_code &error, size_t bytesReceived,
-                                const boost::asio::ip::udp::endpoint &senderEndpoint)
+void UDPNetworkImpl::HandleReceive(
+    const boost::system::error_code &error, size_t bytesReceived, const boost::asio::ip::udp::endpoint &senderEndpoint
+)
 {
     if (_isStopping.load())
     {
@@ -132,12 +130,17 @@ void UDPNetworkImpl::HandleReceive(const boost::system::error_code &error, size_
 
     if (bytesReceived > UDPTransportHeader::SIZE)
     {
-        LOG_INFO("[UDP Network] Received {} bytes from {}:{}", bytesReceived,
-                 senderEndpoint.address().to_string(), senderEndpoint.port());
+        LOG_INFO(
+            "[UDP Network] Received {} bytes from {}:{}",
+            bytesReceived,
+            senderEndpoint.address().to_string(),
+            senderEndpoint.port()
+        );
 
         if (_registry && _dispatcher)
         {
-            const UDPTransportHeader *transportHeader = reinterpret_cast<const UDPTransportHeader *>(_receiveBuffer.data());
+            const UDPTransportHeader *transportHeader =
+                reinterpret_cast<const UDPTransportHeader *>(_receiveBuffer.data());
 
             if (!transportHeader->IsValid())
             {
@@ -146,7 +149,11 @@ void UDPNetworkImpl::HandleReceive(const boost::system::error_code &error, size_
                 return;
             }
 
-            LOG_INFO("[UDP Network] Transport Header - SessionId: {}, Tag: {}", transportHeader->sessionId, transportHeader->tag);
+            LOG_INFO(
+                "[UDP Network] Transport Header - SessionId: {}, Tag: {}",
+                transportHeader->sessionId,
+                transportHeader->tag
+            );
 
             ISession *session = nullptr;
 
@@ -158,8 +165,12 @@ void UDPNetworkImpl::HandleReceive(const boost::system::error_code &error, size_
 
                 if (session)
                 {
-                    LOG_INFO("[UDP Network] NAT rebinding detected - session {} moved to new endpoint {}:{}", transportHeader->sessionId,
-                             senderEndpoint.address().to_string(), senderEndpoint.port());
+                    LOG_INFO(
+                        "[UDP Network] NAT rebinding detected - session {} moved to new endpoint {}:{}",
+                        transportHeader->sessionId,
+                        senderEndpoint.address().to_string(),
+                        senderEndpoint.port()
+                    );
                 }
             }
 
@@ -178,13 +189,17 @@ void UDPNetworkImpl::HandleReceive(const boost::system::error_code &error, size_
             UDPSession *udpSession = dynamic_cast<UDPSession *>(session);
             if (udpSession)
             {
-                udpSession->HandleData(packetData, packetLength);
+                udpSession->HandleData(packetData, packetLength, transportHeader->IsKCP());
             }
         }
     }
     else if (bytesReceived > 0)
     {
-        LOG_WARN("[UDP Network] Packet too small ({} bytes), expected at least {} bytes", bytesReceived, UDPTransportHeader::SIZE);
+        LOG_WARN(
+            "[UDP Network] Packet too small ({} bytes), expected at least {} bytes",
+            bytesReceived,
+            UDPTransportHeader::SIZE
+        );
     }
 
     StartReceive();

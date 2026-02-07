@@ -1,7 +1,7 @@
 #pragma once
 
-#include "System/Session/Session.h"
 #include "System/Pch.h"
+#include "System/Session/Session.h"
 #include <boost/asio/ip/udp.hpp>
 #include <memory>
 
@@ -20,8 +20,10 @@ public:
     UDPSession();
     virtual ~UDPSession();
 
-    void Reset(std::shared_ptr<void> socketVoidPtr, uint64_t sessionId, IDispatcher *dispatcher,
-              const boost::asio::ip::udp::endpoint &endpoint);
+    void Reset(
+        std::shared_ptr<void> socketVoidPtr, uint64_t sessionId, IDispatcher *dispatcher,
+        const boost::asio::ip::udp::endpoint &endpoint
+    );
 
     const boost::asio::ip::udp::endpoint &GetEndpoint() const;
 
@@ -29,7 +31,7 @@ public:
 
     const std::chrono::steady_clock::time_point &GetLastActivity() const;
 
-    void HandleData(const uint8_t *data, size_t length);
+    void HandleData(const uint8_t *data, size_t length, bool isKCP);
 
     void SetNetwork(UDPNetworkImpl *network);
     UDPNetworkImpl *GetNetwork() const;
@@ -40,6 +42,12 @@ public:
     void OnConnect() override;
     void OnDisconnect() override;
     void Close() override;
+    void OnRecycle() override;
+
+    void SendReliable(const IPacket &pkt) override;
+    void SendUnreliable(const IPacket &pkt) override;
+
+    void UpdateKCP(uint32_t currentMs);
 
 protected:
     void Flush() override;

@@ -25,6 +25,12 @@ public:
     void SendPreSerialized(const System::PacketMessage *msg) override
     {
     }
+    void SendReliable(const System::IPacket &pkt) override
+    {
+    }
+    void SendUnreliable(const System::IPacket &pkt) override
+    {
+    }
     void OnConnect() override
     {
     }

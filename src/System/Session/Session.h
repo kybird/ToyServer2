@@ -41,6 +41,9 @@ public:
     void SendPacket(PacketPtr msg) override;
     void SendPreSerialized(const PacketMessage *msg) override;
 
+    void SendReliable(const IPacket &pkt) override;
+    void SendUnreliable(const IPacket &pkt) override;
+
     // Default implementations for optional hooks
     void OnRecycle() override
     {

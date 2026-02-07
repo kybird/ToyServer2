@@ -85,6 +85,16 @@ void Session::SendPreSerialized(const PacketMessage *msg)
     EnqueueSend(const_cast<PacketMessage *>(msg));
 }
 
+void Session::SendReliable(const IPacket &pkt)
+{
+    SendPacket(pkt);
+}
+
+void Session::SendUnreliable(const IPacket &pkt)
+{
+    SendPacket(pkt);
+}
+
 void Session::EnqueueSend(PacketMessage *msg)
 {
     _sendQueue.enqueue(msg);

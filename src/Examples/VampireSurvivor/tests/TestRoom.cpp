@@ -33,6 +33,12 @@ public:
     void SendPreSerialized(const System::PacketMessage *msg) override
     {
     }
+    void SendReliable(const System::IPacket &pkt) override
+    {
+    }
+    void SendUnreliable(const System::IPacket &pkt) override
+    {
+    }
     void OnConnect() override
     {
     }
@@ -157,6 +163,16 @@ public:
     }
     void SendPreSerialized(const System::PacketMessage *msg) override
     {
+    }
+    void SendReliable(const System::IPacket &pkt) override
+    {
+        sendPacketCalled = true;
+        lastPacketId = pkt.GetPacketId();
+    }
+    void SendUnreliable(const System::IPacket &pkt) override
+    {
+        sendPacketCalled = true;
+        lastPacketId = pkt.GetPacketId();
     }
     void OnConnect() override
     {

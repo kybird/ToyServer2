@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
+#include <functional>
 
 namespace System {
 
@@ -13,6 +13,11 @@ class IKCPAdapter
 {
 public:
     virtual ~IKCPAdapter() = default;
+
+    /**
+     * @brief Set callback for KCP output (sending raw packets).
+     */
+    virtual void SetOutputCallback(std::function<int(const char *, int)> callback) = 0;
 
     /**
      * @brief Send data through KCP protocol.
