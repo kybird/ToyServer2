@@ -4,7 +4,6 @@
 #include <map>
 #include <mutex>
 
-
 namespace System {
 
 class MetricImpl : public IMetric
@@ -47,15 +46,10 @@ class MetricsCollector : public IMetrics
 {
 public:
     MetricsCollector();
-    ~MetricsCollector();
+    virtual ~MetricsCollector() override;
 
     std::shared_ptr<Counter> GetCounter(const std::string &name) override;
     std::shared_ptr<Gauge> GetGauge(const std::string &name) override;
-
-    // Legacy Support
-    void RecordAccept() override;
-    void RecordPacket(uint32_t count = 1) override;
-    void RecordJob() override;
 
     void LogMetrics() override;
 

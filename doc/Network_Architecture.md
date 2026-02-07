@@ -56,10 +56,13 @@ UDP 상에 자체적인 전송 헤더와 KCP 레이어를 얹어 다중화(Multi
 ### 3.1 NAT Rebinding (UDP)
 네트워크 환경 변화(WiFi <-> LTE)로 클라이언트의 IP:Port가 바뀌어도, 패킷에 포함된 **128비트 UDP Token**을 통해 기존 세션을 즉시 찾아 이동(Rebinding)시킵니다.
 
-### 3.2 세션 풀링 (Pooling)
+### 3.2 세션 풀링 및 생명주기 (Pooling & Lifecycle)
 메모리 파편화 및 할당 오버헤드를 줄이기 위해 모든 세션 타입(`Gateway`, `Backend`, `UDP`)은 미리 생성된 풀에서 관리됩니다.
-- **Acquire**: `SessionFactory`를 통해 풀에서 세션 대여.
-- **Release**: `OnRecycle` 호출을 통해 상태 초기화 후 풀로 반납.
+
+- **SessionFactory 독점권**: 세션의 객체 생성 및 소멸(반납)은 반드시 `SessionFactory`를 통해서만 이루어져야 합니다. 외부에서 `new`/`delete`를 직접 사용하는 것을 엄격히 금지합니다.
+- **Acquire (대여)**: `SessionFactory::Create()`를 통해 풀에서 세션을 대여합니다.
+- **Release (반납)**: `SessionFactory::Destroy()` 호출 시 `OnRecycle()`을 통해 멤버 변수들을 초기화하고 풀로 안전하게 반납합니다.
+- **Safety**: 공유 포인터(`std::shared_ptr`)를 사용하여 세션이 디스패처 큐에 머무는 동안 객체가 소멸되지 않도록 보장합니다.
 
 ---
 

@@ -10,18 +10,6 @@ namespace System {
 
 struct ITimerListener;
 
-struct TimerMessage : public IMessage
-{
-    TimerMessage()
-    {
-        type = MessageType::LOGIC_TIMER;
-    }
-    uint32_t timerId;
-    void *pParam;
-    ITimerListener *listener;
-    std::shared_ptr<void> lifetimeRef;
-};
-
 struct TimerExpiredMessage : public IMessage
 {
     TimerExpiredMessage()

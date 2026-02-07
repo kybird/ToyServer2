@@ -63,21 +63,6 @@ EventMessage *MessagePool::AllocateEvent()
     return msg;
 }
 
-TimerMessage *MessagePool::AllocateTimer()
-{
-    void *block = PopBlock();
-    if (!block)
-        return nullptr;
-    TimerMessage *msg = new (block) TimerMessage();
-    msg->type = MessageType::LOGIC_TIMER;
-    // Re-using LOGIC_JOB or adding LOGIC_TIMER in future?
-    // Let's check IMessage.h for MessageType enum. It has LOGIC_JOB.
-    // Let's stick to LOGIC_JOB or add LOGIC_TIMER?
-    // I should add LOGIC_TIMER to enum in IMessage.h FIRST if I want strict typing.
-    // Previous step I didn't add it. I should fix IMessage.h enum too.
-    return msg;
-}
-
 TimerExpiredMessage *MessagePool::AllocateTimerExpired()
 {
     void *block = PopBlock();

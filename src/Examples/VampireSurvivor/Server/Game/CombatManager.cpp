@@ -257,7 +257,7 @@ void CombatManager::ExecuteAttackEvents(Room *room, const std::vector<AttackEven
         if (player->IsDead())
             continue;
 
-        // 데미지 적용
+        // 데미지 적용 (내부에서 S_HpChange 브로드캐스트 수행)
         player->TakeDamage(evt.damage, room);
 
         // 쿨다운 갱신
@@ -267,14 +267,6 @@ void CombatManager::ExecuteAttackEvents(Room *room, const std::vector<AttackEven
             auto monster = std::static_pointer_cast<Monster>(monsterObj);
             monster->ResetAttackCooldown(evt.attackTime);
         }
-
-        // HP 변화 패킷 전송
-        Protocol::S_HpChange hpMsg;
-        hpMsg.set_object_id(player->GetId());
-        hpMsg.set_current_hp(player->GetHp());
-        hpMsg.set_max_hp(player->GetMaxHp());
-        S_HpChangePacket hpPkt(std::move(hpMsg));
-        room->BroadcastPacket(hpPkt);
 
         // 플레이어 사망 처리
         if (player->IsDead())

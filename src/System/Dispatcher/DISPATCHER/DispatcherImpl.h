@@ -49,7 +49,7 @@ private:
 
     // Message Handlers
     void HandlePacketMessage(IMessage *msg);
-    void HandleTimerMessage(IMessage *msg);
+
     void HandleTimerExpiredMessage(IMessage *msg);
     void HandleTimerAddMessage(IMessage *msg);
     void HandleTimerCancelMessage(IMessage *msg);

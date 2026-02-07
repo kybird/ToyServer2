@@ -17,7 +17,7 @@ enum class MessageType {
     LAMBDA_JOB, // Added for generic tasks
 
     // Timer System Messages
-    LOGIC_TIMER,
+
     LOGIC_TIMER_EXPIRED,
     LOGIC_TIMER_ADD,
     LOGIC_TIMER_CANCEL,

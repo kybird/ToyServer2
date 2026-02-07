@@ -84,10 +84,6 @@ bool DispatcherImpl::Process()
                 }
                 break;
 
-            case MessageType::LOGIC_TIMER:
-                HandleTimerMessage(msg);
-                break;
-
             case MessageType::LOGIC_TIMER_EXPIRED:
                 HandleTimerExpiredMessage(msg);
                 break;
@@ -175,11 +171,6 @@ void DispatcherImpl::HandlePacketMessage(IMessage *msg)
             LOG_ERROR("Packet too small for header: {}", content->length);
         }
     }
-}
-
-void DispatcherImpl::HandleTimerMessage(IMessage * /*msg*/)
-{
-    // [DEPRECATED]
 }
 
 void DispatcherImpl::HandleTimerExpiredMessage(IMessage *msg)

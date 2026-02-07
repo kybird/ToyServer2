@@ -7,7 +7,6 @@
 
 namespace System {
 
-struct TimerMessage;
 struct TimerExpiredMessage;
 struct TimerAddMessage;
 struct TimerCancelMessage;
@@ -29,7 +28,7 @@ public:
     // Allocation
     static PacketMessage *AllocatePacket(uint16_t bodySize);
     static EventMessage *AllocateEvent();
-    static TimerMessage *AllocateTimer();
+
     static TimerExpiredMessage *AllocateTimerExpired();
     static TimerAddMessage *AllocateTimerAdd();
     static TimerCancelMessage *AllocateTimerCancel();

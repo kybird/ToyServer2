@@ -36,7 +36,6 @@ public:
     static Registry &Instance();
     void Initialize();
 
-    // Legacy support wrappers or direct usage
     void Register(const std::string &type, DatabaseFactory factory);
     std::shared_ptr<IDatabase> Create(const std::string &type, const DatabaseContext &ctx);
     std::vector<std::string> GetRegisteredDrivers();

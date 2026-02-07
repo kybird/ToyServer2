@@ -36,24 +36,6 @@ std::shared_ptr<Gauge> MetricsCollector::GetGauge(const std::string &name)
     return std::static_pointer_cast<Gauge>(_registry[name]);
 }
 
-void MetricsCollector::RecordAccept()
-{
-    if (_acceptCounter)
-        _acceptCounter->Increment();
-}
-
-void MetricsCollector::RecordPacket(uint32_t count)
-{
-    if (_packetCounter)
-        _packetCounter->Increment(count);
-}
-
-void MetricsCollector::RecordJob()
-{
-    if (_jobCounter)
-        _jobCounter->Increment();
-}
-
 void MetricsCollector::LogMetrics()
 {
     // Basic Logging for now

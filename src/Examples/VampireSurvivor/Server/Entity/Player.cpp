@@ -106,6 +106,18 @@ void Player::TakeDamage(int32_t damage, Room *room)
     SetInvincible(room->GetTotalRunTime() + GameConfig::PLAYER_INVINCIBLE_DURATION);
 
     _hp -= damage;
+
+    // [HP 동기화] 모든 클라이언트에게 플레이어 HP 변경 알림
+    if (room != nullptr)
+    {
+        Protocol::S_HpChange hpMsg;
+        hpMsg.set_object_id(_id);
+        hpMsg.set_current_hp(static_cast<float>(_hp));
+        hpMsg.set_max_hp(static_cast<float>(_maxHp));
+
+        room->BroadcastPacket(S_HpChangePacket(std::move(hpMsg)));
+    }
+
     if (_hp <= 0)
     {
         _hp = 0;
