@@ -48,24 +48,29 @@ void UDPSession::Reset(
     _impl->lastActivity = std::chrono::steady_clock::now();
     _impl->udpToken = GenerateUDPToken::Generate();
 
-    // Initialize KCP
+    // KCP 초기화
     _impl->kcp = std::make_unique<KCPAdapter>(static_cast<uint32_t>(sessionId));
     _impl->kcp->SetOutputCallback(
         [this](const char *buf, int len) -> int
         {
-            if (_impl->network == nullptr) // Fix: boolean comparison
+            if (_impl->network == nullptr)
                 return 0;
 
-            std::vector<uint8_t> sendBuffer;
-            sendBuffer.resize(UDPTransportHeader::SIZE + len);
+            // [Zero-Copy] 풀에서 할당 -> 복사 1회 -> AsyncSend로 소유권 이전
+            auto *msg = MessagePool::AllocatePacket(static_cast<uint16_t>(len));
+            if (!msg)
+            {
+                LOG_ERROR("KCP Output Failed: MessagePool Exhausted");
+                return -1;
+            }
 
-            UDPTransportHeader *header = reinterpret_cast<UDPTransportHeader *>(sendBuffer.data());
-            header->tag = UDPTransportHeader::TAG_KCP;
-            header->sessionId = _id;
-            header->udpToken = _impl->udpToken;
+            std::memcpy(msg->Payload(), buf, len);
 
-            std::memcpy(sendBuffer.data() + UDPTransportHeader::SIZE, buf, len);
-            _impl->network->SendTo(sendBuffer.data(), sendBuffer.size(), _impl->endpoint);
+            // AsyncSend가 메시지를 해제할 책임을 가짐
+            _impl->network->AsyncSend(
+                _impl->endpoint, UDPTransportHeader::TAG_KCP, _id, _impl->udpToken, msg, static_cast<uint16_t>(len)
+            );
+
             return 0;
         }
     );
@@ -79,6 +84,13 @@ void UDPSession::OnRecycle()
     _impl->endpoint = {};
     _impl->kcp.reset();
     _connected.store(false);
+
+    // 잔여 큐 정리
+    PacketMessage *msg;
+    while (_sendQueue.try_dequeue(msg))
+    {
+        MessagePool::Free(msg);
+    }
 }
 
 const boost::asio::ip::udp::endpoint &UDPSession::GetEndpoint() const
@@ -120,19 +132,18 @@ void UDPSession::HandleData(const uint8_t *data, size_t length, bool isKCP)
 {
     UpdateActivity();
 
-    if (isKCP && _impl->kcp != nullptr) // Fix: boolean comparison
+    if (isKCP && _impl->kcp != nullptr)
     {
         _impl->kcp->Input(data, static_cast<int>(length));
 
-        // Read all available packets from KCP
         uint8_t buffer[2048];
         int receivedSize;
         while ((receivedSize = _impl->kcp->Recv(buffer, sizeof(buffer))) > 0)
         {
-            if (_dispatcher != nullptr) // Fix: boolean comparison
+            if (_dispatcher != nullptr)
             {
                 auto *msg = MessagePool::AllocatePacket(static_cast<uint16_t>(receivedSize));
-                if (msg != nullptr) // Fix: boolean comparison
+                if (msg != nullptr)
                 {
                     msg->type = MessageType::NETWORK_DATA;
                     msg->sessionId = _id;
@@ -147,11 +158,10 @@ void UDPSession::HandleData(const uint8_t *data, size_t length, bool isKCP)
     }
     else
     {
-        // Raw UDP - Post directly to dispatcher
-        if (_dispatcher != nullptr) // Fix: boolean comparison
+        if (_dispatcher != nullptr)
         {
             auto *msg = MessagePool::AllocatePacket(static_cast<uint16_t>(length));
-            if (msg != nullptr) // Fix: boolean comparison
+            if (msg != nullptr)
             {
                 msg->type = MessageType::NETWORK_DATA;
                 msg->sessionId = _id;
@@ -200,30 +210,49 @@ void UDPSession::SendReliable(const IPacket &pkt)
         return;
 
     uint16_t size = pkt.GetTotalSize();
-    std::vector<uint8_t> buffer(size);
-    pkt.SerializeTo(buffer.data());
 
-    if (_impl->kcp != nullptr) // Fix: boolean comparison
+    // 최적화: 작은 패킷은 스택 버퍼 사용
+    if (size <= 1024)
     {
-        _impl->kcp->Send(buffer.data(), size);
-        // Force flush KCP
-        _impl->kcp->Update(
-            static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
-                                      std::chrono::steady_clock::now().time_since_epoch()
-            )
-                                      .count())
-        );
+        uint8_t buffer[1024];
+        pkt.SerializeTo(buffer);
+        if (_impl->kcp)
+        {
+            _impl->kcp->Send(buffer, size);
+            _impl->kcp->Update(
+                static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                          std::chrono::steady_clock::now().time_since_epoch()
+                )
+                                          .count())
+            );
+        }
+    }
+    else
+    {
+        std::vector<uint8_t> buffer(size);
+        pkt.SerializeTo(buffer.data());
+        if (_impl->kcp)
+        {
+            _impl->kcp->Send(buffer.data(), size);
+            _impl->kcp->Update(
+                static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                          std::chrono::steady_clock::now().time_since_epoch()
+                )
+                                          .count())
+            );
+        }
     }
 }
 
 void UDPSession::SendUnreliable(const IPacket &pkt)
 {
+    // 큐에 쌓고 Flush()에서 AsyncSend로 처리
     SendPacket(pkt);
 }
 
 void UDPSession::UpdateKCP(uint32_t currentMs)
 {
-    if (_impl->kcp != nullptr) // Fix: boolean comparison
+    if (_impl->kcp != nullptr)
     {
         _impl->kcp->Update(currentMs);
     }
@@ -231,35 +260,54 @@ void UDPSession::UpdateKCP(uint32_t currentMs)
 
 void UDPSession::Flush()
 {
-    if (_impl->network == nullptr) // Fix: boolean comparison
+    if (_impl->network == nullptr)
     {
+        PacketMessage *msg;
+        while (_sendQueue.try_dequeue(msg))
+        {
+            MessagePool::Free(msg);
+        }
         return;
     }
 
-    PacketMessage *msg;
-    while (_sendQueue.try_dequeue(msg))
+    // [Loop Pattern]
+    // 1. 현재 큐에 있는 모든 메시지를 소진합니다.
+    // 2. _isSending 플래그를 해제합니다.
+    // 3. 다시 큐를 확인하여 지연 패킷(Straggler)이 있는지 확인합니다.
+    // 4. 있을 경우 Re-enqueue 후 소유권을 다시 획득하여 루프를 재시작합니다.
+
+    while (true)
     {
-        const uint16_t packetSize = msg->length;
-
-        std::vector<uint8_t> sendBuffer;
-        sendBuffer.resize(UDPTransportHeader::SIZE + packetSize);
-
-        UDPTransportHeader *transportHeader = reinterpret_cast<UDPTransportHeader *>(sendBuffer.data());
-        transportHeader->tag = UDPTransportHeader::TAG_RAW_UDP;
-        transportHeader->sessionId = _id;
-        transportHeader->udpToken = _impl->udpToken;
-
-        std::memcpy(sendBuffer.data() + UDPTransportHeader::SIZE, msg->Payload(), packetSize);
-
-        _impl->network->SendTo(sendBuffer.data(), sendBuffer.size(), _impl->endpoint);
-
-        if (msg->DecRef() == 0)
+        PacketMessage *msg;
+        while (_sendQueue.try_dequeue(msg))
         {
-            if (msg->isPooled)
+            // AsyncSend로 소유권 이전. 여기서 직접 해제하지 않음.
+            _impl->network->AsyncSend(
+                _impl->endpoint, UDPTransportHeader::TAG_RAW_UDP, _id, _impl->udpToken, msg, msg->length
+            );
+        }
+
+        _isSending.store(false);
+
+        if (_sendQueue.try_dequeue(msg))
+        {
+            // 뒤늦게 들어온 패킷 처리 (Order 보존을 위해 무조건 다시 넣음)
+            _sendQueue.enqueue(msg);
+
+            bool expected = false;
+            if (_isSending.compare_exchange_strong(expected, true))
             {
-                // MessagePool::Free(msg);
+                // 소유권 재획득 성공 -> 루프 계속
+                continue;
+            }
+            else
+            {
+                // 다른 스레드가 이미 Flush를 시작함
+                break;
             }
         }
+
+        break;
     }
 }
 

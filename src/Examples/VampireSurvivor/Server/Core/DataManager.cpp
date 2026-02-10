@@ -245,6 +245,10 @@ bool DataManager::LoadWeaponData(const std::string &path)
             data.description = item.value("description", "");
             data.icon = item.value("icon", "");
             data.maxLevel = item.value("max_level", 8);
+            data.weight = item.value("weight", 100);
+            data.uniqueGroup = item.value("unique_group", 0);
+            data.evolutionId = item.value("evolution_id", 0);
+            data.evolutionPassiveId = item.value("evolution_passive_id", 0);
 
             if (item.contains("levels"))
             {
@@ -303,6 +307,8 @@ bool DataManager::LoadPassiveData(const std::string &path)
             data.icon = item.value("icon", "");
             data.statType = item.value("stat_type", "");
             data.maxLevel = item.value("max_level", 5);
+            data.weight = item.value("weight", 100);
+            data.uniqueGroup = item.value("unique_group", 0);
 
             if (item.contains("levels"))
             {

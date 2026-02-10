@@ -34,7 +34,6 @@ void LevelUpManager::ApplySelection(Player *player, int optionIndex, Room *room)
         return;
     }
 
-    // [Crash Fix] 레벨업 옵션을 복사하여 사용합니다. (Clear 시 참조 무효화 방지)
     const LevelUpOption selected = options[optionIndex];
     auto &inventory = player->GetInventory();
 
@@ -51,7 +50,7 @@ void LevelUpManager::ApplySelection(Player *player, int optionIndex, Room *room)
     if (success)
     {
         player->RefreshInventoryEffects(room);
-        player->SyncInventory(room); // 동기화 패킷 전송
+        player->SyncInventory(room);
         LOG_INFO(
             "[LevelUpManager] Player {} successfully applied {} (ID: {}, Type: {})",
             player->GetId(),
@@ -67,7 +66,6 @@ void LevelUpManager::ApplySelection(Player *player, int optionIndex, Room *room)
         );
     }
 
-    // 선택지 초기화
     player->ClearPendingLevelUpOptions();
 }
 
@@ -77,15 +75,37 @@ std::vector<LevelUpOption> LevelUpManager::BuildCandidatePool(Player *player)
     auto &inventory = player->GetInventory();
     int optionId = 0;
 
-    // 무기 후보
+    // 1. 무기 후보 필터링
     const auto &allWeapons = DataManager::Instance().GetAllWeapons();
     for (const auto &[weaponId, tmpl] : allWeapons)
     {
         int currentLevel = inventory.GetWeaponLevel(weaponId);
 
+        // [진화 조건 체크] 무기가 마스터 레벨이고 필요한 패시브가 있는가?
+        if (currentLevel >= tmpl.maxLevel && tmpl.evolutionId > 0)
+        {
+            if (inventory.GetPassiveLevel(tmpl.evolutionPassiveId) > 0)
+            {
+                // 진화 아이템을 후보로 등록 (ID는 진화된 무기 ID)
+                const auto *evoTmpl = DataManager::Instance().GetWeaponTemplate(tmpl.evolutionId);
+                if (evoTmpl && inventory.GetWeaponLevel(evoTmpl->id) == 0)
+                {
+                    LevelUpOption opt;
+                    opt.optionId = optionId++;
+                    opt.type = LevelUpOptionType::WEAPON;
+                    opt.itemId = evoTmpl->id;
+                    opt.name = evoTmpl->name + " (EVOLVED)";
+                    opt.desc = evoTmpl->description;
+                    opt.isNew = true;
+                    pool.push_back(opt);
+                    continue; // 진화는 특별한 경우이므로 일반 레벨업 로직 건너뜀
+                }
+            }
+        }
+
         if (currentLevel == 0)
         {
-            // 새로 획득 가능 (빈 슬롯이 있을 때만)
+            // 신규 무기 도입 가능 여부 체크
             if (inventory.HasEmptyWeaponSlot())
             {
                 LevelUpOption opt;
@@ -100,85 +120,30 @@ std::vector<LevelUpOption> LevelUpManager::BuildCandidatePool(Player *player)
         }
         else if (currentLevel < tmpl.maxLevel)
         {
-            // 업그레이드 가능
+            // 레벨업 가능
             LevelUpOption opt;
             opt.optionId = optionId++;
             opt.type = LevelUpOptionType::WEAPON;
             opt.itemId = weaponId;
             opt.name = tmpl.name;
-
-            // 다음 레벨 설명
-            if (currentLevel < static_cast<int>(tmpl.levels.size()))
-            {
-                opt.desc = tmpl.levels[currentLevel].desc; // 다음 레벨 (0-indexed)
-            }
-            else
-            {
-                opt.desc = "Level " + std::to_string(currentLevel + 1);
-            }
-
+            opt.desc = (currentLevel < static_cast<int>(tmpl.levels.size()))
+                           ? tmpl.levels[static_cast<size_t>(currentLevel)].desc
+                           : "Level Up";
             opt.isNew = false;
             pool.push_back(opt);
         }
     }
 
-    // 패시브 후보
+    // 2. 패시브 후보 필터링
     const auto &allPassives = DataManager::Instance().GetAllPassives();
     for (const auto &[passiveId, tmpl] : allPassives)
     {
         int currentLevel = inventory.GetPassiveLevel(passiveId);
 
-        // [Filtering] Check Weapon Dependency
-        // Format: "pierce_{weaponId}" or "projectile_count_{weaponId}"
-        std::string sType = tmpl.statType;
-        bool isPierce = (sType.find("pierce_") == 0);
-        bool isProj = (sType.find("projectile_count_") == 0);
-
-        if (isPierce || isProj)
-        {
-            size_t lastUnderscore = sType.find_last_of('_');
-            if (lastUnderscore != std::string::npos)
-            {
-                std::string suffix = sType.substr(lastUnderscore + 1);
-                if (!suffix.empty() && std::all_of(suffix.begin(), suffix.end(), ::isdigit))
-                {
-                    int reqId = std::stoi(suffix);
-                    int weaponLvl = inventory.GetWeaponLevel(reqId);
-
-                    if (weaponLvl == 0)
-                    {
-                        LOG_INFO(
-                            "  [LevelUpFilter] Player {} SKIP Passive {} ({}) - Weapon {} NOT OWNED",
-                            player->GetId(),
-                            passiveId,
-                            tmpl.name,
-                            reqId
-                        );
-                        continue;
-                    }
-                    else
-                    {
-                        LOG_INFO(
-                            "  [LevelUpFilter] Player {} ALLOW Passive {} ({}) - Weapon {} Lvl {}",
-                            player->GetId(),
-                            passiveId,
-                            tmpl.name,
-                            reqId,
-                            weaponLvl
-                        );
-                    }
-                }
-            }
-        }
-        else
-        {
-            // Optional: Log generic passives if needed
-            // LOG_DEBUG("  [LevelUpFilter] Player {} ALLOW Generic {} ({})", player->GetId(), passiveId, tmpl.name);
-        }
+        // [Filtering] 의존성 체크 (필요시 추가)
 
         if (currentLevel == 0)
         {
-            // 새로 획득 가능 (빈 슬롯이 있을 때만)
             if (inventory.HasEmptyPassiveSlot())
             {
                 LevelUpOption opt;
@@ -193,33 +158,17 @@ std::vector<LevelUpOption> LevelUpManager::BuildCandidatePool(Player *player)
         }
         else if (currentLevel < tmpl.maxLevel)
         {
-            // 업그레이드 가능
             LevelUpOption opt;
             opt.optionId = optionId++;
             opt.type = LevelUpOptionType::PASSIVE;
             opt.itemId = passiveId;
             opt.name = tmpl.name;
-
-            // 다음 레벨 설명
-            if (currentLevel < static_cast<int>(tmpl.levels.size()))
-            {
-                opt.desc = tmpl.levels[currentLevel].desc; // 다음 레벨 (0-indexed)
-            }
-            else
-            {
-                opt.desc = "Level " + std::to_string(currentLevel + 1);
-            }
-
+            opt.desc = (currentLevel < static_cast<int>(tmpl.levels.size()))
+                           ? tmpl.levels[static_cast<size_t>(currentLevel)].desc
+                           : "Level Up";
             opt.isNew = false;
             pool.push_back(opt);
         }
-    }
-
-    LOG_INFO("[LevelUpManager] Built candidate pool with {} options for player {}", pool.size(), player->GetId());
-    for (const auto &opt : pool)
-    {
-        std::string typeStr = (opt.type == LevelUpOptionType::WEAPON) ? "Weapon" : "Passive";
-        LOG_INFO("  - Candidate item: {} (ID: {}, Type: {}, New: {})", opt.name, opt.itemId, typeStr, opt.isNew);
     }
 
     return pool;
@@ -227,27 +176,64 @@ std::vector<LevelUpOption> LevelUpManager::BuildCandidatePool(Player *player)
 
 std::vector<LevelUpOption> LevelUpManager::SelectRandom(const std::vector<LevelUpOption> &pool, int count)
 {
+    if (pool.empty())
+        return {};
     if (pool.size() <= static_cast<size_t>(count))
-    {
-        return pool; // 풀이 작으면 전부 반환
-    }
+        return pool;
 
     std::vector<LevelUpOption> result;
-    std::vector<int> indices(pool.size());
-    for (size_t i = 0; i < pool.size(); ++i)
-    {
-        indices[i] = static_cast<int>(i);
-    }
+    std::vector<LevelUpOption> tempPool = pool;
 
-    // 랜덤 셔플
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::shuffle(indices.begin(), indices.end(), gen);
 
-    // 앞에서 count개 선택
     for (int i = 0; i < count; ++i)
     {
-        result.push_back(pool[indices[i]]);
+        int totalWeight = 0;
+        for (const auto &opt : tempPool)
+        {
+            // 가중치 가져오기
+            if (opt.type == LevelUpOptionType::WEAPON)
+            {
+                auto tmpl = DataManager::Instance().GetWeaponTemplate(opt.itemId);
+                totalWeight += tmpl ? tmpl->weight : 100;
+            }
+            else
+            {
+                auto tmpl = DataManager::Instance().GetPassiveTemplate(opt.itemId);
+                totalWeight += tmpl ? tmpl->weight : 100;
+            }
+        }
+
+        if (totalWeight <= 0)
+            break;
+
+        std::uniform_int_distribution<> dis(0, totalWeight - 1);
+        int randomValue = dis(gen);
+
+        int cumulativeWeight = 0;
+        for (auto it = tempPool.begin(); it != tempPool.end(); ++it)
+        {
+            int weight = 100;
+            if (it->type == LevelUpOptionType::WEAPON)
+            {
+                auto tmpl = DataManager::Instance().GetWeaponTemplate(it->itemId);
+                weight = tmpl ? tmpl->weight : 100;
+            }
+            else
+            {
+                auto tmpl = DataManager::Instance().GetPassiveTemplate(it->itemId);
+                weight = tmpl ? tmpl->weight : 100;
+            }
+
+            cumulativeWeight += weight;
+            if (randomValue < cumulativeWeight)
+            {
+                result.push_back(*it);
+                tempPool.erase(it); // 중복 선발 방지
+                break;
+            }
+        }
     }
 
     return result;

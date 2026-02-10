@@ -86,6 +86,10 @@ struct WeaponTemplate
     std::string description;
     std::string icon;
     int32_t maxLevel;
+    int32_t weight = 100;           // 가중치 (추첨 확률)
+    int32_t uniqueGroup = 0;        // 중복 방지 그룹 ID
+    int32_t evolutionId = 0;        // 진화 결과 무기 ID
+    int32_t evolutionPassiveId = 0; // 진화에 필요한 패시브 ID
     std::vector<WeaponLevelData> levels;
 };
 
@@ -104,6 +108,8 @@ struct PassiveTemplate
     std::string icon;
     std::string statType; // "damage", "max_hp", "speed", "cooldown", "area", "projectile_count"
     int32_t maxLevel;
+    int32_t weight = 100;    // 가중치 (추첨 확률)
+    int32_t uniqueGroup = 0; // 중복 방지 그룹 ID
     std::vector<PassiveLevelData> levels;
 };
 

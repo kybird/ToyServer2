@@ -5,6 +5,7 @@
         "description": "Increases Damage for all weapons",
         "icon": "spinach",
         "stat_type": "damage",
+        "weight": 100,
         "max_level": 5,
         "levels": [
             {
@@ -40,6 +41,7 @@
         "description": "Increases Max HP",
         "icon": "hollow_heart",
         "stat_type": "max_hp",
+        "weight": 90,
         "max_level": 5,
         "levels": [
             {
@@ -75,27 +77,13 @@
         "description": "Increases Movement Speed",
         "icon": "wings",
         "stat_type": "speed",
+        "weight": 80,
         "max_level": 5,
         "levels": [
             {
                 "level": 1,
                 "bonus": 0.1,
                 "desc": "Move Speed +10%"
-            },
-            {
-                "level": 2,
-                "bonus": 0.2,
-                "desc": "Move Speed +20%"
-            },
-            {
-                "level": 3,
-                "bonus": 0.3,
-                "desc": "Move Speed +30%"
-            },
-            {
-                "level": 4,
-                "bonus": 0.4,
-                "desc": "Move Speed +40%"
             },
             {
                 "level": 5,
@@ -110,27 +98,13 @@
         "description": "Reduces Skill Cooldown",
         "icon": "empty_tome",
         "stat_type": "cooldown",
+        "weight": 80,
         "max_level": 5,
         "levels": [
             {
                 "level": 1,
                 "bonus": 0.08,
                 "desc": "Cooldown -8%"
-            },
-            {
-                "level": 2,
-                "bonus": 0.16,
-                "desc": "Cooldown -16%"
-            },
-            {
-                "level": 3,
-                "bonus": 0.24,
-                "desc": "Cooldown -24%"
-            },
-            {
-                "level": 4,
-                "bonus": 0.32,
-                "desc": "Cooldown -32%"
             },
             {
                 "level": 5,
@@ -145,27 +119,13 @@
         "description": "Increases Attack Area",
         "icon": "candelabrador",
         "stat_type": "area",
+        "weight": 70,
         "max_level": 5,
         "levels": [
             {
                 "level": 1,
                 "bonus": 0.1,
                 "desc": "Area +10%"
-            },
-            {
-                "level": 2,
-                "bonus": 0.2,
-                "desc": "Area +20%"
-            },
-            {
-                "level": 3,
-                "bonus": 0.3,
-                "desc": "Area +30%"
-            },
-            {
-                "level": 4,
-                "bonus": 0.4,
-                "desc": "Area +40%"
             },
             {
                 "level": 5,
@@ -180,27 +140,13 @@
         "description": "Increases Effect Duration",
         "icon": "spellbinder",
         "stat_type": "duration",
+        "weight": 70,
         "max_level": 5,
         "levels": [
             {
                 "level": 1,
                 "bonus": 0.1,
                 "desc": "Duration +10%"
-            },
-            {
-                "level": 2,
-                "bonus": 0.2,
-                "desc": "Duration +20%"
-            },
-            {
-                "level": 3,
-                "bonus": 0.3,
-                "desc": "Duration +30%"
-            },
-            {
-                "level": 4,
-                "bonus": 0.4,
-                "desc": "Duration +40%"
             },
             {
                 "level": 5,
@@ -215,17 +161,18 @@
         "description": "Increases Projectile Count",
         "icon": "duplicator",
         "stat_type": "projectile_count",
+        "weight": 50,
         "max_level": 2,
         "levels": [
             {
                 "level": 1,
                 "bonus": 1,
-                "desc": "Projectile Count +1"
+                "desc": "Count +1"
             },
             {
                 "level": 2,
                 "bonus": 2,
-                "desc": "Projectile Count +2"
+                "desc": "Count +2"
             }
         ]
     },
@@ -235,27 +182,13 @@
         "description": "Increases Pierce Count",
         "icon": "magic_bindi",
         "stat_type": "pierce",
+        "weight": 60,
         "max_level": 5,
         "levels": [
             {
                 "level": 1,
                 "bonus": 1,
                 "desc": "Pierce +1"
-            },
-            {
-                "level": 2,
-                "bonus": 2,
-                "desc": "Pierce +2"
-            },
-            {
-                "level": 3,
-                "bonus": 3,
-                "desc": "Pierce +3"
-            },
-            {
-                "level": 4,
-                "bonus": 4,
-                "desc": "Pierce +4"
             },
             {
                 "level": 5,

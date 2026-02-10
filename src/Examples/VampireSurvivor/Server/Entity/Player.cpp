@@ -857,6 +857,7 @@ void Player::SyncInventory(Room *room)
         return;
 
     Protocol::S_UpdateInventory msg;
+    msg.set_player_id(_id);
 
     // 보유 중인 무기 정보 수집
     for (int id : _inventory->GetOwnedWeaponIds())
@@ -876,9 +877,12 @@ void Player::SyncInventory(Room *room)
         item->set_is_passive(true);
     }
 
-    // 소유자(해당 플레이어)에게만 개별 전송
+    // 소유자(해당 플레이어)에게만 개별 전송 (단단하게 구현하기 위해 broadcast도 고려 가능하지만 현재는 개별 전송 유지)
     S_UpdateInventoryPacket pkt(msg);
     room->SendToPlayer(_sessionId, pkt);
+
+    // [Architectural Choice] 다른 플레이어에게도 무기 비주얼을 보여주고 싶다면 BroadcastPacket 사용
+    // room->BroadcastPacket(pkt);
 
     LOG_INFO("[Player] 인벤토리 동기화 완료: 플레이어 {} (아이템 {}개)", _id, msg.items_size());
 }

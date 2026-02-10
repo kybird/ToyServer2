@@ -360,5 +360,6 @@ message InventoryItem {
 }
 
 message S_UpdateInventory {
-    repeated InventoryItem items = 1;
+    int32 player_id = 1;
+    repeated InventoryItem items = 2;
 }

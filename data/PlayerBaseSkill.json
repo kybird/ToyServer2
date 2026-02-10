@@ -1,87 +1,158 @@
 [
-  {
-    "id": 1,
-    "name": "base_linear",
-    "emitter_type": "Linear",
-    "type_id": 1,
-    "damage": 10,
-    "hit_radius": 0.5,
-    "tick_interval": 1.0,
-    "life_time": 0,
-    "pierce": 0,
-    "max_targets_per_tick": 1,
-    "target_rule": "Nearest",
-    "traits": [
-      "PROJECTILE",
-      "PIERCE",
-      "LINEAR"
-    ]
-  },
-  {
-    "id": 2,
-    "name": "Poison Dart",
-    "emitter_type": "Linear",
-    "type_id": 2,
-    "damage": 5,
-    "hit_radius": 0.5,
-    "tick_interval": 1.5,
-    "life_time": 0,
-    "pierce": 0,
-    "max_targets_per_tick": 1,
-    "target_rule": "Nearest",
-    "effect_type": "POISON",
-    "effect_value": 5,
-    "effect_duration": 3.0,
-    "effect_interval": 1.0,
-    "traits": [
-      "PROJECTILE",
-      "PIERCE",
-      "LINEAR",
-      "EFFECT"
-    ]
-  },
-  {
-    "id": 3,
-    "name": "Frost Nova",
-    "emitter_type": "AoE",
-    "type_id": 0,
-    "damage": 5,
-    "hit_radius": 3.0,
-    "tick_interval": 6.0,
-    "life_time": 0,
-    "pierce": 99,
-    "max_targets_per_tick": 100,
-    "target_rule": "Nearest",
-    "effect_type": "SLOW",
-    "effect_value": 0.4,
-    "effect_duration": 2.5,
-    "effect_interval": 0,
-    "active_duration": 3.0,
-    "dot_interval": 0.5,
-    "traits": [
-      "AOE",
-      "AREA",
-      "DURATION",
-      "EFFECT"
-    ]
-  },
-  {
-    "life_time": 0,
-    "arc_degrees": 30,
-    "traits": [
-      "AOE",
-      "ARC",
-      "MELEE"
-    ],
-    "hit_radius": 2.0,
-    "emitter_type": "Arc",
-    "name": "Greatsword",
-    "max_targets_per_tick": 100,
-    "tick_interval": 1.5,
-    "type_id": 0,
-    "damage": 15,
-    "id": 4,
-    "target_rule": "Nearest",
-    "pierce": 99
-  }
+    {
+        "id": 1,
+        "name": "base_linear",
+        "emitter_type": "Linear",
+        "type_id": 1,
+        "damage": 10,
+        "hit_radius": 0.5,
+        "tick_interval": 1.0,
+        "life_time": 0,
+        "pierce": 0,
+        "max_targets_per_tick": 1,
+        "target_rule": "Nearest",
+        "traits": [
+            "PROJECTILE",
+            "PIERCE",
+            "LINEAR"
+        ]
+    },
+    {
+        "id": 2,
+        "name": "Poison Dart",
+        "emitter_type": "Linear",
+        "type_id": 2,
+        "damage": 5,
+        "hit_radius": 0.5,
+        "tick_interval": 1.5,
+        "life_time": 0,
+        "pierce": 0,
+        "max_targets_per_tick": 1,
+        "target_rule": "Nearest",
+        "effect_type": "POISON",
+        "effect_value": 5,
+        "effect_duration": 3.0,
+        "effect_interval": 1.0,
+        "traits": [
+            "PROJECTILE",
+            "PIERCE",
+            "LINEAR",
+            "EFFECT"
+        ]
+    },
+    {
+        "id": 3,
+        "name": "Frost Nova",
+        "emitter_type": "AoE",
+        "type_id": 0,
+        "damage": 5,
+        "hit_radius": 3.0,
+        "tick_interval": 6.0,
+        "life_time": 0,
+        "pierce": 99,
+        "max_targets_per_tick": 100,
+        "target_rule": "Nearest",
+        "effect_type": "SLOW",
+        "effect_value": 0.4,
+        "effect_duration": 2.5,
+        "effect_interval": 0,
+        "active_duration": 3.0,
+        "dot_interval": 0.5,
+        "traits": [
+            "AOE",
+            "AREA",
+            "DURATION",
+            "EFFECT"
+        ]
+    },
+    {
+        "id": 4,
+        "name": "Greatsword",
+        "emitter_type": "Arc",
+        "type_id": 0,
+        "damage": 15,
+        "hit_radius": 2.0,
+        "tick_interval": 1.5,
+        "arc_degrees": 30,
+        "life_time": 0,
+        "pierce": 99,
+        "max_targets_per_tick": 100,
+        "target_rule": "Nearest",
+        "traits": [
+            "AOE",
+            "ARC",
+            "MELEE"
+        ]
+    },
+    {
+        "id": 5,
+        "name": "King Bible",
+        "emitter_type": "Orbit",
+        "type_id": 3,
+        "damage": 8,
+        "hit_radius": 0.5,
+        "tick_interval": 2.0,
+        "life_time": 0,
+        "pierce": -1,
+        "max_targets_per_tick": 5,
+        "target_rule": "Nearest",
+        "traits": [
+            "ORBIT",
+            "PROJECTILE",
+            "PIERCE"
+        ]
+    },
+    {
+        "id": 6,
+        "name": "Lightning Ring",
+        "emitter_type": "Zone",
+        "type_id": 0,
+        "damage": 25,
+        "hit_radius": 1.5,
+        "tick_interval": 3.0,
+        "life_time": 0,
+        "pierce": 1,
+        "max_targets_per_tick": 1,
+        "target_rule": "Nearest",
+        "traits": [
+            "ZONE",
+            "INSTANT"
+        ]
+    },
+    {
+        "id": 7,
+        "name": "Whip",
+        "emitter_type": "Directional",
+        "type_id": 0,
+        "damage": 12,
+        "hit_radius": 2.5,
+        "tick_interval": 1.2,
+        "life_time": 0,
+        "pierce": 99,
+        "max_targets_per_tick": 10,
+        "target_rule": "Nearest",
+        "traits": [
+            "DIRECTIONAL",
+            "MELEE",
+            "AREA"
+        ]
+    },
+    {
+        "id": 8,
+        "name": "Garlic",
+        "emitter_type": "Aura",
+        "type_id": 0,
+        "damage": 3,
+        "hit_radius": 2.5,
+        "tick_interval": 1.0,
+        "life_time": 0,
+        "pierce": 99,
+        "max_targets_per_tick": 100,
+        "target_rule": "Nearest",
+        "traits": [
+            "AURA",
+            "AREA",
+            "DURATION"
+        ]
+    }
 ]

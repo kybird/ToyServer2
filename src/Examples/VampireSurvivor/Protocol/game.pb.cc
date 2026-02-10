@@ -1104,6 +1104,7 @@ PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT
 inline constexpr S_UpdateInventory::Impl_::Impl_(
     ::_pbi::ConstantInitialized) noexcept
       : items_{},
+        player_id_{0},
         _cached_size_{0} {}
 
 template <typename>
@@ -1712,6 +1713,7 @@ const ::uint32_t
         ~0u,  // no _inlined_string_donated_
         ~0u,  // no _split_
         ~0u,  // no sizeof(Split)
+        PROTOBUF_FIELD_OFFSET(::Protocol::S_UpdateInventory, _impl_.player_id_),
         PROTOBUF_FIELD_OFFSET(::Protocol::S_UpdateInventory, _impl_.items_),
 };
 
@@ -1886,39 +1888,40 @@ const char descriptor_table_protodef_game_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIA
     "\ttimestamp\030\001 \001(\003\"(\n\021S_DebugServerTick\022\023\n"
     "\013server_tick\030\001 \001(\r\">\n\rInventoryItem\022\n\n\002i"
     "d\030\001 \001(\005\022\r\n\005level\030\002 \001(\005\022\022\n\nis_passive\030\003 \001"
-    "(\010\";\n\021S_UpdateInventory\022&\n\005items\030\001 \003(\0132\027"
-    ".Protocol.InventoryItem*\201\006\n\005MsgId\022\010\n\004NON"
-    "E\020\000\022\013\n\007C_LOGIN\020d\022\013\n\007S_LOGIN\020e\022\021\n\rC_CREAT"
-    "E_ROOM\020f\022\021\n\rS_CREATE_ROOM\020g\022\017\n\013C_JOIN_RO"
-    "OM\020h\022\017\n\013S_JOIN_ROOM\020i\022\023\n\017C_GET_ROOM_LIST"
-    "\020j\022\017\n\013S_ROOM_LIST\020k\022\021\n\rC_ENTER_LOBBY\020n\022\021"
-    "\n\rS_ENTER_LOBBY\020o\022\020\n\014C_LEAVE_ROOM\020p\022\020\n\014S"
-    "_LEAVE_ROOM\020q\022\020\n\014C_GAME_READY\020r\022\n\n\006C_CHA"
-    "T\020x\022\n\n\006S_CHAT\020y\022\023\n\016S_SPAWN_OBJECT\020\310\001\022\025\n\020"
-    "S_DESPAWN_OBJECT\020\311\001\022\030\n\023S_MOVE_OBJECT_BAT"
-    "CH\020\312\001\022\021\n\014C_MOVE_INPUT\020\313\001\022\027\n\022S_PLAYER_STA"
-    "TE_ACK\020\314\001\022\020\n\013C_USE_SKILL\020\254\002\022\023\n\016S_SKILL_E"
-    "FFECT\020\255\002\022\024\n\017S_DAMAGE_EFFECT\020\256\002\022\020\n\013S_KNOC"
-    "KBACK\020\261\002\022\024\n\017S_PLAYER_DOWNED\020\262\002\022\024\n\017S_PLAY"
-    "ER_REVIVE\020\263\002\022\021\n\014S_EXP_CHANGE\020\220\003\022\026\n\021S_LEV"
-    "EL_UP_OPTION\020\221\003\022\026\n\021C_SELECT_LEVEL_UP\020\222\003\022"
-    "\020\n\013S_HP_CHANGE\020\223\003\022\022\n\rS_WAVE_NOTIFY\020\224\003\022\017\n"
-    "\nS_GAME_WIN\020\364\003\022\020\n\013S_GAME_OVER\020\365\003\022\022\n\rS_PL"
-    "AYER_DEAD\020\366\003\022\013\n\006S_PING\020\204\007\022\013\n\006C_PONG\020\205\007\022\013"
-    "\n\006C_PING\020\206\007\022\013\n\006S_PONG\020\207\007\022\030\n\023S_DEBUG_SERV"
-    "ER_TICK\020\210\007\022\027\n\022S_UPDATE_INVENTORY\020\211\007*L\n\nO"
-    "bjectType\022\013\n\007UNKNOWN\020\000\022\n\n\006PLAYER\020\001\022\013\n\007MO"
-    "NSTER\020\002\022\016\n\nPROJECTILE\020\003\022\010\n\004ITEM\020\004*d\n\013Obj"
-    "ectState\022\010\n\004IDLE\020\000\022\n\n\006MOVING\020\001\022\r\n\tATTACK"
-    "ING\020\002\022\010\n\004DEAD\020\003\022\n\n\006DOWNED\020\004\022\r\n\tKNOCKBACK"
-    "\020\005\022\013\n\007STUNNED\020\006*-\n\010ItemType\022\017\n\013WEAPON_TY"
-    "PE\020\000\022\020\n\014PASSIVE_TYPE\020\001b\006proto3"
+    "(\010\"N\n\021S_UpdateInventory\022\021\n\tplayer_id\030\001 \001"
+    "(\005\022&\n\005items\030\002 \003(\0132\027.Protocol.InventoryIt"
+    "em*\201\006\n\005MsgId\022\010\n\004NONE\020\000\022\013\n\007C_LOGIN\020d\022\013\n\007S"
+    "_LOGIN\020e\022\021\n\rC_CREATE_ROOM\020f\022\021\n\rS_CREATE_"
+    "ROOM\020g\022\017\n\013C_JOIN_ROOM\020h\022\017\n\013S_JOIN_ROOM\020i"
+    "\022\023\n\017C_GET_ROOM_LIST\020j\022\017\n\013S_ROOM_LIST\020k\022\021"
+    "\n\rC_ENTER_LOBBY\020n\022\021\n\rS_ENTER_LOBBY\020o\022\020\n\014"
+    "C_LEAVE_ROOM\020p\022\020\n\014S_LEAVE_ROOM\020q\022\020\n\014C_GA"
+    "ME_READY\020r\022\n\n\006C_CHAT\020x\022\n\n\006S_CHAT\020y\022\023\n\016S_"
+    "SPAWN_OBJECT\020\310\001\022\025\n\020S_DESPAWN_OBJECT\020\311\001\022\030"
+    "\n\023S_MOVE_OBJECT_BATCH\020\312\001\022\021\n\014C_MOVE_INPUT"
+    "\020\313\001\022\027\n\022S_PLAYER_STATE_ACK\020\314\001\022\020\n\013C_USE_SK"
+    "ILL\020\254\002\022\023\n\016S_SKILL_EFFECT\020\255\002\022\024\n\017S_DAMAGE_"
+    "EFFECT\020\256\002\022\020\n\013S_KNOCKBACK\020\261\002\022\024\n\017S_PLAYER_"
+    "DOWNED\020\262\002\022\024\n\017S_PLAYER_REVIVE\020\263\002\022\021\n\014S_EXP"
+    "_CHANGE\020\220\003\022\026\n\021S_LEVEL_UP_OPTION\020\221\003\022\026\n\021C_"
+    "SELECT_LEVEL_UP\020\222\003\022\020\n\013S_HP_CHANGE\020\223\003\022\022\n\r"
+    "S_WAVE_NOTIFY\020\224\003\022\017\n\nS_GAME_WIN\020\364\003\022\020\n\013S_G"
+    "AME_OVER\020\365\003\022\022\n\rS_PLAYER_DEAD\020\366\003\022\013\n\006S_PIN"
+    "G\020\204\007\022\013\n\006C_PONG\020\205\007\022\013\n\006C_PING\020\206\007\022\013\n\006S_PONG"
+    "\020\207\007\022\030\n\023S_DEBUG_SERVER_TICK\020\210\007\022\027\n\022S_UPDAT"
+    "E_INVENTORY\020\211\007*L\n\nObjectType\022\013\n\007UNKNOWN\020"
+    "\000\022\n\n\006PLAYER\020\001\022\013\n\007MONSTER\020\002\022\016\n\nPROJECTILE"
+    "\020\003\022\010\n\004ITEM\020\004*d\n\013ObjectState\022\010\n\004IDLE\020\000\022\n\n"
+    "\006MOVING\020\001\022\r\n\tATTACKING\020\002\022\010\n\004DEAD\020\003\022\n\n\006DO"
+    "WNED\020\004\022\r\n\tKNOCKBACK\020\005\022\013\n\007STUNNED\020\006*-\n\010It"
+    "emType\022\017\n\013WEAPON_TYPE\020\000\022\020\n\014PASSIVE_TYPE\020"
+    "\001b\006proto3"
 };
 static ::absl::once_flag descriptor_table_game_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_game_2eproto = {
     false,
     false,
-    4030,
+    4049,
     descriptor_table_protodef_game_2eproto,
     "game.proto",
     &descriptor_table_game_2eproto_once,
@@ -13152,6 +13155,7 @@ S_UpdateInventory::S_UpdateInventory(
   _internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(
       from._internal_metadata_);
   new (&_impl_) Impl_(internal_visibility(), arena, from._impl_, from);
+  _impl_.player_id_ = from._impl_.player_id_;
 
   // @@protoc_insertion_point(copy_constructor:Protocol.S_UpdateInventory)
 }
@@ -13163,6 +13167,7 @@ inline PROTOBUF_NDEBUG_INLINE S_UpdateInventory::Impl_::Impl_(
 
 inline void S_UpdateInventory::SharedCtor(::_pb::Arena* arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
+  _impl_.player_id_ = {};
 }
 S_UpdateInventory::~S_UpdateInventory() {
   // @@protoc_insertion_point(destructor:Protocol.S_UpdateInventory)
@@ -13223,15 +13228,15 @@ const ::google::protobuf::internal::ClassData* S_UpdateInventory::GetClassData()
   return _class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<0, 1, 1, 0, 2> S_UpdateInventory::_table_ = {
+const ::_pbi::TcParseTable<1, 2, 1, 0, 2> S_UpdateInventory::_table_ = {
   {
     0,  // no _has_bits_
     0, // no _extensions_
-    1, 0,  // max_field_number, fast_idx_mask
+    2, 8,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294967294,  // skipmap
+    4294967292,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    1,  // num_field_entries
+    2,  // num_field_entries
     1,  // num_aux_entries
     offsetof(decltype(_table_), aux_entries),
     _class_data_.base(),
@@ -13241,13 +13246,19 @@ const ::_pbi::TcParseTable<0, 1, 1, 0, 2> S_UpdateInventory::_table_ = {
     ::_pbi::TcParser::GetTable<::Protocol::S_UpdateInventory>(),  // to_prefetch
     #endif  // PROTOBUF_PREFETCH_PARSE_TABLE
   }, {{
-    // repeated .Protocol.InventoryItem items = 1;
+    // repeated .Protocol.InventoryItem items = 2;
     {::_pbi::TcParser::FastMtR1,
-     {10, 63, 0, PROTOBUF_FIELD_OFFSET(S_UpdateInventory, _impl_.items_)}},
+     {18, 63, 0, PROTOBUF_FIELD_OFFSET(S_UpdateInventory, _impl_.items_)}},
+    // int32 player_id = 1;
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(S_UpdateInventory, _impl_.player_id_), 63>(),
+     {8, 63, 0, PROTOBUF_FIELD_OFFSET(S_UpdateInventory, _impl_.player_id_)}},
   }}, {{
     65535, 65535
   }}, {{
-    // repeated .Protocol.InventoryItem items = 1;
+    // int32 player_id = 1;
+    {PROTOBUF_FIELD_OFFSET(S_UpdateInventory, _impl_.player_id_), 0, 0,
+    (0 | ::_fl::kFcSingular | ::_fl::kInt32)},
+    // repeated .Protocol.InventoryItem items = 2;
     {PROTOBUF_FIELD_OFFSET(S_UpdateInventory, _impl_.items_), 0, 0,
     (0 | ::_fl::kFcRepeated | ::_fl::kMessage | ::_fl::kTvTable)},
   }}, {{
@@ -13264,6 +13275,7 @@ PROTOBUF_NOINLINE void S_UpdateInventory::Clear() {
   (void) cached_has_bits;
 
   _impl_.items_.Clear();
+  _impl_.player_id_ = 0;
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
 }
 
@@ -13282,14 +13294,21 @@ PROTOBUF_NOINLINE void S_UpdateInventory::Clear() {
           ::uint32_t cached_has_bits = 0;
           (void)cached_has_bits;
 
-          // repeated .Protocol.InventoryItem items = 1;
+          // int32 player_id = 1;
+          if (this_._internal_player_id() != 0) {
+            target = ::google::protobuf::internal::WireFormatLite::
+                WriteInt32ToArrayWithField<1>(
+                    stream, this_._internal_player_id(), target);
+          }
+
+          // repeated .Protocol.InventoryItem items = 2;
           for (unsigned i = 0, n = static_cast<unsigned>(
                                    this_._internal_items_size());
                i < n; i++) {
             const auto& repfield = this_._internal_items().Get(i);
             target =
                 ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
-                    1, repfield, repfield.GetCachedSize(),
+                    2, repfield, repfield.GetCachedSize(),
                     target, stream);
           }
 
@@ -13318,12 +13337,19 @@ PROTOBUF_NOINLINE void S_UpdateInventory::Clear() {
 
           ::_pbi::Prefetch5LinesFrom7Lines(&this_);
            {
-            // repeated .Protocol.InventoryItem items = 1;
+            // repeated .Protocol.InventoryItem items = 2;
             {
               total_size += 1UL * this_._internal_items_size();
               for (const auto& msg : this_._internal_items()) {
                 total_size += ::google::protobuf::internal::WireFormatLite::MessageSize(msg);
               }
+            }
+          }
+           {
+            // int32 player_id = 1;
+            if (this_._internal_player_id() != 0) {
+              total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
+                  this_._internal_player_id());
             }
           }
           return this_.MaybeComputeUnknownFieldsSize(total_size,
@@ -13340,6 +13366,9 @@ void S_UpdateInventory::MergeImpl(::google::protobuf::MessageLite& to_msg, const
 
   _this->_internal_mutable_items()->MergeFrom(
       from._internal_items());
+  if (from._internal_player_id() != 0) {
+    _this->_impl_.player_id_ = from._impl_.player_id_;
+  }
   _this->_internal_metadata_.MergeFrom<::google::protobuf::UnknownFieldSet>(from._internal_metadata_);
 }
 
@@ -13355,6 +13384,7 @@ void S_UpdateInventory::InternalSwap(S_UpdateInventory* PROTOBUF_RESTRICT other)
   using std::swap;
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
   _impl_.items_.InternalSwap(&other->_impl_.items_);
+        swap(_impl_.player_id_, other->_impl_.player_id_);
 }
 
 ::google::protobuf::Metadata S_UpdateInventory::GetMetadata() const {

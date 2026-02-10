@@ -48,12 +48,12 @@ private:
      * @brief 선택 가능한 후보 풀 생성
      * @return 모든 가능한 선택지
      */
-    std::vector<LevelUpOption> BuildCandidatePool(Player *player);
+    static std::vector<LevelUpOption> BuildCandidatePool(Player *player);
 
     /**
      * @brief 후보 풀에서 랜덤으로 N개 선발
      */
-    std::vector<LevelUpOption> SelectRandom(const std::vector<LevelUpOption> &pool, int count);
+    static std::vector<LevelUpOption> SelectRandom(const std::vector<LevelUpOption> &pool, int count);
 };
 
 } // namespace SimpleGame

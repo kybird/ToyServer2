@@ -99,12 +99,10 @@ target_sources(System PRIVATE
     src/System/Session/BackendSession.h
     src/System/Session/UDPSession.cpp
     src/System/Session/UDPSession.h
-    src/System/Session/UDPSession.cpp
     src/System/Session/UDP/IKCPAdapter.h
     src/System/Session/UDP/IKCPWrapper.h
     src/System/Session/UDP/KCPAdapter.h
     src/System/Session/UDP/KCPAdapter.cpp
-    src/System/Session/UDP/IKCPWrapper.h
     src/System/Session/UDP/KCPWrapper.cpp
     src/System/Session/SessionCommon.h
     src/System/Session/SessionContext.cpp
@@ -116,6 +114,9 @@ target_sources(System PRIVATE
     src/System/Network/NetworkImpl.h
     src/System/Network/UDPNetworkImpl.cpp
     src/System/Network/UDPNetworkImpl.h
+    src/System/Network/UDPSendContextPool.cpp
+    src/System/Network/UDPSendContextPool.h
+    src/System/Network/UDPLimits.h
     src/System/Network/UDPEndpointRegistry.cpp
     src/System/Network/UDPEndpointRegistry.h
     src/System/Network/WebSocketNetworkImpl.cpp
@@ -217,6 +218,12 @@ add_executable(DummyClient src/DummyClient/main.cpp)
 target_include_directories(DummyClient PRIVATE src/DummyClient src)
 target_precompile_headers(DummyClient PRIVATE src/System/Pch.h)
 target_link_libraries(DummyClient PRIVATE System Share)
+
+# UdpSpamClient Executable
+add_executable(UdpSpamClient src/Tools/UdpSpamClient/main.cpp)
+target_include_directories(UdpSpamClient PRIVATE src/Tools/UdpSpamClient src)
+target_precompile_headers(UdpSpamClient PRIVATE src/System/Pch.h)
+target_link_libraries(UdpSpamClient PRIVATE System Share)
 
 # Packet Test Executable
 add_executable(PacketTest src/Tools/PacketTest/PacketTest.cpp)
@@ -352,7 +359,6 @@ install(DIRECTORY src/Share DESTINATION dist/include
 # UnitTests (Consolidated Test Suite)
 set(VS_TEST_SOURCES
     src/Examples/VampireSurvivor/tests/main_test.cpp
-    src/Examples/VampireSurvivor/tests/TestRoom.cpp
     src/Examples/VampireSurvivor/tests/TestRoom.cpp
     src/Examples/VampireSurvivor/tests/TestCombat.cpp
     src/Examples/VampireSurvivor/tests/TestDeadReckoningCorrection.cpp

@@ -8951,9 +8951,10 @@ class S_UpdateInventory final : public ::google::protobuf::Message
 
   // accessors -------------------------------------------------------
   enum : int {
-    kItemsFieldNumber = 1,
+    kItemsFieldNumber = 2,
+    kPlayerIdFieldNumber = 1,
   };
-  // repeated .Protocol.InventoryItem items = 1;
+  // repeated .Protocol.InventoryItem items = 2;
   int items_size() const;
   private:
   int _internal_items_size() const;
@@ -8970,12 +8971,22 @@ class S_UpdateInventory final : public ::google::protobuf::Message
   const ::Protocol::InventoryItem& items(int index) const;
   ::Protocol::InventoryItem* add_items();
   const ::google::protobuf::RepeatedPtrField<::Protocol::InventoryItem>& items() const;
+  // int32 player_id = 1;
+  void clear_player_id() ;
+  ::int32_t player_id() const;
+  void set_player_id(::int32_t value);
+
+  private:
+  ::int32_t _internal_player_id() const;
+  void _internal_set_player_id(::int32_t value);
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.S_UpdateInventory)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      0, 1, 1,
+      1, 2, 1,
       0, 2>
       _table_;
 
@@ -8994,6 +9005,7 @@ class S_UpdateInventory final : public ::google::protobuf::Message
                           ::google::protobuf::Arena* arena, const Impl_& from,
                           const S_UpdateInventory& from_msg);
     ::google::protobuf::RepeatedPtrField< ::Protocol::InventoryItem > items_;
+    ::int32_t player_id_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -13087,7 +13099,29 @@ inline void InventoryItem::_internal_set_is_passive(bool value) {
 
 // S_UpdateInventory
 
-// repeated .Protocol.InventoryItem items = 1;
+// int32 player_id = 1;
+inline void S_UpdateInventory::clear_player_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.player_id_ = 0;
+}
+inline ::int32_t S_UpdateInventory::player_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_UpdateInventory.player_id)
+  return _internal_player_id();
+}
+inline void S_UpdateInventory::set_player_id(::int32_t value) {
+  _internal_set_player_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_UpdateInventory.player_id)
+}
+inline ::int32_t S_UpdateInventory::_internal_player_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.player_id_;
+}
+inline void S_UpdateInventory::_internal_set_player_id(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.player_id_ = value;
+}
+
+// repeated .Protocol.InventoryItem items = 2;
 inline int S_UpdateInventory::_internal_items_size() const {
   return _internal_items().size();
 }
