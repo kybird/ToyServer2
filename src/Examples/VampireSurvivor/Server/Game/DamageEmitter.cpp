@@ -278,28 +278,38 @@ void DamageEmitter::Update(float dt, Room *room)
         {
             // [Orbit] 성서형: 플레이어 주변을 공전하는 투사체
             int32_t projectileCount = 1 + additionalProjectiles;
-            float speed = 5.0f; // 회전 속도
+            float orbitRadius = 3.0f * effectiveAreaMult;
+            float orbitSpeed = 4.0f; // 매초 약 0.6회전
             float life = 4.0f * effectiveDurationMult;
 
             for (int i = 0; i < projectileCount; ++i)
             {
-                // 초기 각도 설정
-                float angle = (static_cast<float>(i) / projectileCount) * 2.0f * 3.14159265f;
+                // 초기 각도 설정 (균등 분배)
+                float initialAngle = (static_cast<float>(i) / projectileCount) * 2.0f * 3.14159265f;
+
+                // 투사체 위치 계산 (초기 위치)
+                float spawnX = px + orbitRadius * std::cos(initialAngle);
+                float spawnY = py + orbitRadius * std::sin(initialAngle);
 
                 auto proj = ProjectileFactory::Instance().CreateProjectile(
-                    room->_objMgr, owner->GetId(), _skillId, _typeId, px, py, 0, 0, finalDamage, life
+                    room->_objMgr, owner->GetId(), _skillId, _typeId, spawnX, spawnY, 0, 0, finalDamage, life
                 );
 
                 if (proj)
                 {
                     proj->SetRadius(0.3f);
                     proj->SetPierce(-1); // 무한 관통
+                    proj->SetOrbit(orbitRadius, orbitSpeed, initialAngle);
 
-                    // Orbit 상태 설정 (Update에서 cos/sin 계산을 위해 Projectile 클래스 수정 필요할 수 있음)
-                    // 여기서는 간단히 초기 위치만 잡아주고,
-                    // 실제 움직임은 Projectile::Update에서 owner가 있는 경우 Orbit 하도록 처리
                     room->_objMgr.AddObject(proj);
                     room->BroadcastSpawn({proj});
+
+                    LOG_INFO(
+                        "[DamageEmitter] Spawned Orbit Projectile: ID={}, Owner={}, Angle={:.2f}",
+                        proj->GetId(),
+                        owner->GetId(),
+                        initialAngle
+                    );
                 }
             }
         }
@@ -352,30 +362,59 @@ void DamageEmitter::Update(float dt, Room *room)
             float boxWidth = 2.0f * effectiveAreaMult;
             float boxHeight = 4.0f * effectiveAreaMult;
 
-            // 판정 중심점
+            // 판정 중심점 (플레이어 정면)
             float cx = px + dir.x * (boxHeight * 0.5f);
             float cy = py + dir.y * (boxHeight * 0.5f);
+
+            // 각도 계산 (라디안)
+            float angle = std::atan2(dir.y, dir.x);
+            float sinA = std::sin(-angle);
+            float cosA = std::cos(-angle);
 
             auto monsters = room->GetMonstersInRange(cx, cy, boxHeight);
             std::vector<int32_t> hitIds;
             std::vector<int32_t> hitDamages;
+            std::vector<bool> hitCrits;
+
+            // 크리티컬 체크
+            bool isCritical = false;
+            float critMultiplier = 1.0f;
+            if (System::Utility::FastRandom().NextFloat() < owner->GetCriticalChance())
+            {
+                isCritical = true;
+                critMultiplier = owner->GetCriticalDamageMultiplier();
+            }
+            int32_t finalCritDamage = static_cast<int32_t>(finalDamage * critMultiplier);
 
             for (auto &m : monsters)
             {
-                // 간단한 거리/각도 기반 판정 또는 AABB (여기서는 원형 근사로 처리 가능)
-                m->TakeDamage(finalDamage, room);
-                hitIds.push_back(m->GetId());
-                hitDamages.push_back(finalDamage);
+                // 상대 좌표 변환 (Rotate toward 0)
+                float dx = m->GetX() - cx;
+                float dy = m->GetY() - cy;
+
+                float localX = dx * cosA - dy * sinA;
+                float localY = dx * sinA + dy * cosA;
+
+                // 직사각형 판정 (boxWidth는 좌우, boxHeight는 상하/길이)
+                if (std::abs(localX) <= boxHeight * 0.5f && std::abs(localY) <= boxWidth * 0.5f)
+                {
+                    m->TakeDamage(finalCritDamage, room);
+                    hitIds.push_back(m->GetId());
+                    hitDamages.push_back(finalCritDamage);
+                    hitCrits.push_back(isCritical);
+                }
             }
 
             if (!hitIds.empty())
             {
                 Protocol::S_DamageEffect dmgMsg;
                 dmgMsg.set_skill_id(_skillId);
-                for (int id : hitIds)
-                    dmgMsg.add_target_ids(id);
-                for (int d : hitDamages)
-                    dmgMsg.add_damage_values(d);
+                for (size_t i = 0; i < hitIds.size(); ++i)
+                {
+                    dmgMsg.add_target_ids(hitIds[i]);
+                    dmgMsg.add_damage_values(hitDamages[i]);
+                    dmgMsg.add_is_critical(hitCrits[i]);
+                }
                 room->BroadcastPacket(S_DamageEffectPacket(std::move(dmgMsg)));
             }
 
@@ -385,8 +424,12 @@ void DamageEmitter::Update(float dt, Room *room)
             skillMsg.set_skill_id(_skillId);
             skillMsg.set_x(cx);
             skillMsg.set_y(cy);
-            skillMsg.set_radius(boxHeight * 0.5f);
+            skillMsg.set_radius(boxHeight * 0.5f); // 비주얼용 가이드 반경
             skillMsg.set_duration_seconds(0.2f);
+
+            float rotDeg = angle * (180.0f / 3.14159265f);
+            skillMsg.set_rotation_degrees(rotDeg);
+
             room->BroadcastPacket(S_SkillEffectPacket(std::move(skillMsg)));
         }
         else if (_emitterType == "Arc")
@@ -486,16 +529,62 @@ void DamageEmitter::Update(float dt, Room *room)
             int32_t finalMaxTargets = _maxTargetsPerTick + additionalProjectiles;
             std::vector<int32_t> hitTargetIds;
             std::vector<int32_t> hitDamageValues;
+            std::vector<bool> hitCrits;
+
+            // 크리티컬 체크
+            bool isCritical = false;
+            float critMultiplier = 1.0f;
+            if (System::Utility::FastRandom().NextFloat() < owner->GetCriticalChance())
+            {
+                isCritical = true;
+                critMultiplier = owner->GetCriticalDamageMultiplier();
+            }
+            int32_t finalCritDamage = static_cast<int32_t>(finalDamage * critMultiplier);
 
             for (auto &monster : victims)
             {
                 if (count >= finalMaxTargets)
                     break;
 
-                monster->TakeDamage(finalDamage, room);
+                monster->TakeDamage(finalCritDamage, room);
                 hitTargetIds.push_back(monster->GetId());
-                hitDamageValues.push_back(finalDamage);
+                hitDamageValues.push_back(finalCritDamage);
+                hitCrits.push_back(isCritical);
                 count++;
+            }
+
+            if (!hitTargetIds.empty())
+            {
+                LOG_INFO(
+                    "[DamageEmitter] AoE Pulse Hit: Skill={}, Targets={}, Damage={}",
+                    _skillId,
+                    hitTargetIds.size(),
+                    finalCritDamage
+                );
+
+                Protocol::S_DamageEffect damageMsg;
+                damageMsg.set_skill_id(_skillId);
+                for (size_t i = 0; i < hitTargetIds.size(); ++i)
+                {
+                    damageMsg.add_target_ids(hitTargetIds[i]);
+                    damageMsg.add_damage_values(hitDamageValues[i]);
+                    damageMsg.add_is_critical(hitCrits[i]);
+                }
+                room->BroadcastPacket(S_DamageEffectPacket(std::move(damageMsg)));
+            }
+            else
+            {
+                static float lastNoTargetLogTime = 0.0f;
+                if (_elapsedTime - lastNoTargetLogTime > 1.0f)
+                {
+                    lastNoTargetLogTime = _elapsedTime;
+                    LOG_DEBUG(
+                        "[DamageEmitter] AoE Pulse No Target: Skill={}, Radius={:.2f}, VictimsInRange={}",
+                        _skillId,
+                        finalRadius,
+                        victims.size()
+                    );
+                }
             }
 
             Protocol::S_SkillEffect skillMsg;
@@ -506,17 +595,6 @@ void DamageEmitter::Update(float dt, Room *room)
             skillMsg.set_radius(finalRadius);
             skillMsg.set_duration_seconds(0.2f);
             room->BroadcastPacket(S_SkillEffectPacket(std::move(skillMsg)));
-
-            if (!hitTargetIds.empty())
-            {
-                Protocol::S_DamageEffect damageMsg;
-                damageMsg.set_skill_id(_skillId);
-                for (int32_t tid : hitTargetIds)
-                    damageMsg.add_target_ids(tid);
-                for (int32_t dmg : hitDamageValues)
-                    damageMsg.add_damage_values(dmg);
-                room->BroadcastPacket(S_DamageEffectPacket(std::move(damageMsg)));
-            }
         }
     }
 }

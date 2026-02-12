@@ -72,29 +72,11 @@ public:
         return _damage;
     }
 
-    void Update(float dt, Room *room) override
-    {
-        if (IsDead())
-            return;
+    void Update(float dt, Room *room) override;
 
-        // Track traveled distance
-        float speed = std::sqrt(_vx * _vx + _vy * _vy);
-        _traveledDistance += speed * dt;
+    void UpdateLinear(float dt, Room *room);
 
-        // Check max range
-        if (_traveledDistance >= _maxRange)
-        {
-            SetState(Protocol::ObjectState::DEAD);
-            return;
-        }
-
-        // Lifetime check
-        _lifetime -= dt;
-        if (_lifetime <= 0 || _isHit)
-        {
-            SetState(Protocol::ObjectState::DEAD);
-        }
-    }
+    void UpdateOrbit(float dt, Room *room);
 
     bool IsExpired() const
     {
@@ -108,6 +90,15 @@ public:
     void SetPierce(int32_t count)
     {
         _pierceCount = count;
+    }
+
+    // Orbit 설정
+    void SetOrbit(float radius, float speed, float initialAngle)
+    {
+        _isOrbit = true;
+        _orbitRadius = radius;
+        _orbitSpeed = speed;
+        _currentAngle = initialAngle;
     }
 
     // Returns true if projectile is consumed (expired)
@@ -161,6 +152,12 @@ private:
     float _traveledDistance = 0.0f; // [New] Accumulated travel distance
     bool _isHit = false;
     int32_t _pierceCount = 0;
+
+    // Orbit members
+    bool _isOrbit = false;
+    float _orbitRadius = 0.0f;
+    float _orbitSpeed = 0.0f;
+    float _currentAngle = 0.0f;
 };
 
 } // namespace SimpleGame

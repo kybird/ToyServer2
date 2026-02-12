@@ -177,7 +177,7 @@ void Room::Enter(const std::shared_ptr<Player> &player)
                     return;
                 }
 
-                player->ApplySkills(skills);
+                player->ApplySkills(skills, self.get());
                 LOG_INFO("Applied {} skills to Player {}", skills.size(), player->GetSessionId());
 
                 self->_objMgr.AddObject(player);

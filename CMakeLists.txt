@@ -291,6 +291,7 @@ set(GAME_SOURCES
     src/Examples/VampireSurvivor/Server/Entity/AI/Movement/StrictSeparationStrategy.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/Movement/SurroundingFlockingStrategy.cpp
     src/Examples/VampireSurvivor/Server/Entity/ProjectileFactory.cpp
+    src/Examples/VampireSurvivor/Server/Entity/Projectile.cpp
     ${PROTO_SRCS} ${PROTO_HDRS}
 )
 

@@ -209,7 +209,7 @@ Vector2 Player::GetFacingDirection() const
     return Vector2(_facingDirX, _facingDirY);
 }
 
-void Player::ApplySkills(const std::vector<std::pair<int, int>> &skills)
+void Player::ApplySkills(const std::vector<std::pair<int, int>> &skills, Room *room)
 {
     // Example: Skill ID 101 = Max HP
     for (const auto &skill : skills)
@@ -222,8 +222,20 @@ void Player::ApplySkills(const std::vector<std::pair<int, int>> &skills)
             // +10 HP per level
             _maxHp += 10 * lvl;
             _hp = _maxHp;
+
+            LOG_INFO("[Player] ApplySkills: MaxHP Bonus ID={}, Lv={}, NewMaxHP={}", id, lvl, _maxHp);
         }
         // Add more skills here
+    }
+
+    // [HP 동기화] 스킬 적용 시 변경된 HP 즉시 알림
+    if (room != nullptr)
+    {
+        Protocol::S_HpChange hpMsg;
+        hpMsg.set_object_id(_id);
+        hpMsg.set_current_hp(static_cast<float>(_hp));
+        hpMsg.set_max_hp(static_cast<float>(_maxHp));
+        room->BroadcastPacket(S_HpChangePacket(std::move(hpMsg)));
     }
 }
 
@@ -790,6 +802,18 @@ void Player::RefreshInventoryEffects(Room *room)
     }
 
     SyncInventory(room);
+
+    // [HP 동기화] 패시브 효과로 인해 HP가 변경된 경우 즉시 알림
+    if (room != nullptr && (oldMaxHp != _maxHp))
+    {
+        Protocol::S_HpChange hpMsg;
+        hpMsg.set_object_id(_id);
+        hpMsg.set_current_hp(static_cast<float>(_hp));
+        hpMsg.set_max_hp(static_cast<float>(_maxHp));
+        room->BroadcastPacket(S_HpChangePacket(std::move(hpMsg)));
+
+        LOG_INFO("[Player] Sync HP after inventory refresh: Player={}, HP={}/{}", _id, _hp, _maxHp);
+    }
 }
 
 void Player::SetGodMode(bool enable)

@@ -48,7 +48,7 @@ public:
 
     Vector2 GetFacingDirection() const;
 
-    void ApplySkills(const std::vector<std::pair<int, int>> &skills);
+    void ApplySkills(const std::vector<std::pair<int, int>> &skills, Room *room);
 
     uint32_t GetLastProcessedClientTick() const;
 
