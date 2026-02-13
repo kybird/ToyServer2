@@ -1,7 +1,9 @@
-#include "Monster.h"
+#include "Entity/Monster.h"
 #include "AI/IAIBehavior.h"
 #include "Entity/AI/Movement/IMovementStrategy.h"
 #include "Entity/AI/Movement/SurroundingFlockingStrategy.h"
+#include "Entity/ExpGem.h"
+#include "Game/ObjectManager.h"
 #include "Game/Room.h"
 #include "GamePackets.h"
 
@@ -71,6 +73,20 @@ void Monster::TakeDamage(int32_t damage, Room *room)
     {
         _hp = 0;
         SetState(Protocol::ObjectState::DEAD);
+
+        // [Unified Gem Drop] 모든 대미지 원인에 대해 사망 시 젬 스폰
+        if (room != nullptr)
+        {
+            auto gem = std::make_shared<ExpGem>(room->GetObjectManager().GenerateId(), 10);
+            gem->Initialize(gem->GetId(), _x, _y, 10);
+
+            room->GetObjectManager().AddObject(gem);
+            room->GetSpatialGrid().Add(gem);
+
+            std::vector<std::shared_ptr<GameObject>> spawns;
+            spawns.push_back(gem);
+            room->BroadcastSpawn(spawns);
+        }
     }
 }
 

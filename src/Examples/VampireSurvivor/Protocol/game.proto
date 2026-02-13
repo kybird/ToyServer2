@@ -244,6 +244,8 @@ message S_SkillEffect {
     float duration_seconds = 7;    // 이펙트 지속 시간
     float arc_degrees = 8;         // [New] 부채꼴 각도
     float rotation_degrees = 9;    // [New] 회전 각도
+    float width = 10;              // [New] 사각형 판정 너비
+    float height = 11;             // [New] 사각형 판정 높이
 }
 
 message S_DamageEffect {

@@ -750,6 +750,8 @@ class S_SkillEffect final : public ::google::protobuf::Message
     kDurationSecondsFieldNumber = 7,
     kArcDegreesFieldNumber = 8,
     kRotationDegreesFieldNumber = 9,
+    kWidthFieldNumber = 10,
+    kHeightFieldNumber = 11,
   };
   // repeated int32 target_ids = 5;
   int target_ids_size() const;
@@ -849,12 +851,32 @@ class S_SkillEffect final : public ::google::protobuf::Message
   void _internal_set_rotation_degrees(float value);
 
   public:
+  // float width = 10;
+  void clear_width() ;
+  float width() const;
+  void set_width(float value);
+
+  private:
+  float _internal_width() const;
+  void _internal_set_width(float value);
+
+  public:
+  // float height = 11;
+  void clear_height() ;
+  float height() const;
+  void set_height(float value);
+
+  private:
+  float _internal_height() const;
+  void _internal_set_height(float value);
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.S_SkillEffect)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      4, 9, 0,
+      4, 11, 0,
       0, 2>
       _table_;
 
@@ -882,6 +904,8 @@ class S_SkillEffect final : public ::google::protobuf::Message
     float duration_seconds_;
     float arc_degrees_;
     float rotation_degrees_;
+    float width_;
+    float height_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -11897,6 +11921,50 @@ inline float S_SkillEffect::_internal_rotation_degrees() const {
 inline void S_SkillEffect::_internal_set_rotation_degrees(float value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.rotation_degrees_ = value;
+}
+
+// float width = 10;
+inline void S_SkillEffect::clear_width() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.width_ = 0;
+}
+inline float S_SkillEffect::width() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_SkillEffect.width)
+  return _internal_width();
+}
+inline void S_SkillEffect::set_width(float value) {
+  _internal_set_width(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_SkillEffect.width)
+}
+inline float S_SkillEffect::_internal_width() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.width_;
+}
+inline void S_SkillEffect::_internal_set_width(float value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.width_ = value;
+}
+
+// float height = 11;
+inline void S_SkillEffect::clear_height() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.height_ = 0;
+}
+inline float S_SkillEffect::height() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_SkillEffect.height)
+  return _internal_height();
+}
+inline void S_SkillEffect::set_height(float value) {
+  _internal_set_height(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_SkillEffect.height)
+}
+inline float S_SkillEffect::_internal_height() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.height_;
+}
+inline void S_SkillEffect::_internal_set_height(float value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.height_ = value;
 }
 
 // -------------------------------------------------------------------

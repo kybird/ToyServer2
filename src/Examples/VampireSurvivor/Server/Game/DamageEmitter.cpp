@@ -32,6 +32,8 @@ DamageEmitter::DamageEmitter(int32_t skillId, std::shared_ptr<Player> owner, int
         _activeDuration = tmpl->activeDuration;
         _dotInterval = tmpl->dotInterval;
         _arcDegrees = tmpl->arcDegrees; // [New] Load arc angle
+        _width = tmpl->width;           // [New] Initial width
+        _height = tmpl->height;         // [New] Initial height
 
         LOG_INFO(
             "[DamageEmitter] Created: Skill={} Type={} typeId={} Interval={:.2f}s Duration={:.1f}s Owner={}",
@@ -102,6 +104,14 @@ void DamageEmitter::Update(float dt, Room *room)
             effectiveDamageMult *= levelData.damageMult;
             effectiveCooldownMult *= levelData.cooldownMult;
             effectiveDurationMult *= levelData.durationMult;
+
+            // [New] Apply generic parameter overrides (e.g., width_mult, height_mult)
+            if (levelData.params.contains("skill_width_mult"))
+                effectiveAreaMult *= levelData.params.at("skill_width_mult"); // Simple approach
+            if (levelData.params.contains("skill_height_mult"))
+            {
+                // For Directional, we might want separate multipliers
+            }
         }
     }
 
@@ -359,19 +369,37 @@ void DamageEmitter::Update(float dt, Room *room)
         {
             // [Directional] 채찍형: 바라보는 방향 직사각형 판정
             Vector2 dir = owner->GetFacingDirection();
-            float boxWidth = 2.0f * effectiveAreaMult;
-            float boxHeight = 4.0f * effectiveAreaMult;
+
+            // Load from Level Data overrides if present
+            float widthMult = 1.0f;
+            float heightMult = 1.0f;
+            if (_weaponId > 0)
+            {
+                const auto *weaponTmpl = DataManager::Instance().GetWeaponTemplate(_weaponId);
+                if (weaponTmpl != nullptr && _level > 0 && static_cast<size_t>(_level) <= weaponTmpl->levels.size())
+                {
+                    const auto &levelData = weaponTmpl->levels[static_cast<size_t>(_level) - 1];
+                    if (levelData.params.contains("skill_width_mult"))
+                        widthMult = levelData.params.at("skill_width_mult");
+                    if (levelData.params.contains("skill_height_mult"))
+                        heightMult = levelData.params.at("skill_height_mult");
+                }
+            }
+
+            // [Data-Driven] Use _width and _height instead of hardcoded 2.0/4.0
+            float finalBoxWidth = _width * effectiveAreaMult * widthMult;
+            float finalBoxHeight = _height * effectiveAreaMult * heightMult;
 
             // 판정 중심점 (플레이어 정면)
-            float cx = px + dir.x * (boxHeight * 0.5f);
-            float cy = py + dir.y * (boxHeight * 0.5f);
+            float cx = px + dir.x * (finalBoxHeight * 0.5f);
+            float cy = py + dir.y * (finalBoxHeight * 0.5f);
 
             // 각도 계산 (라디안)
             float angle = std::atan2(dir.y, dir.x);
             float sinA = std::sin(-angle);
             float cosA = std::cos(-angle);
 
-            auto monsters = room->GetMonstersInRange(cx, cy, boxHeight);
+            auto monsters = room->GetMonstersInRange(cx, cy, finalBoxHeight);
             std::vector<int32_t> hitIds;
             std::vector<int32_t> hitDamages;
             std::vector<bool> hitCrits;
@@ -395,8 +423,8 @@ void DamageEmitter::Update(float dt, Room *room)
                 float localX = dx * cosA - dy * sinA;
                 float localY = dx * sinA + dy * cosA;
 
-                // 직사각형 판정 (boxWidth는 좌우, boxHeight는 상하/길이)
-                if (std::abs(localX) <= boxHeight * 0.5f && std::abs(localY) <= boxWidth * 0.5f)
+                // 직사각형 판정 (finalBoxHeight는 플레이어 정면 방향 길이, finalBoxWidth는 좌우 너비)
+                if (std::abs(localX) <= finalBoxHeight * 0.5f && std::abs(localY) <= finalBoxWidth * 0.5f)
                 {
                     m->TakeDamage(finalCritDamage, room);
                     hitIds.push_back(m->GetId());
@@ -424,8 +452,10 @@ void DamageEmitter::Update(float dt, Room *room)
             skillMsg.set_skill_id(_skillId);
             skillMsg.set_x(cx);
             skillMsg.set_y(cy);
-            skillMsg.set_radius(boxHeight * 0.5f); // 비주얼용 가이드 반경
+            skillMsg.set_radius(finalBoxHeight * 0.5f); // 비주얼용 가이드 반경
             skillMsg.set_duration_seconds(0.2f);
+            skillMsg.set_width(finalBoxWidth);   // [New] Pass dynamic width
+            skillMsg.set_height(finalBoxHeight); // [New] Pass dynamic height
 
             float rotDeg = angle * (180.0f / 3.14159265f);
             skillMsg.set_rotation_degrees(rotDeg);
