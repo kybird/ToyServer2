@@ -13,8 +13,9 @@ public:
     {
         try
         {
-            // Setup Async Logger
-            spdlog::init_thread_pool(8192, 1);
+            // Setup Async Logger (Global Thread Pool)
+            // 1,048,576 (2^20) 크기의 큐, 1개의 백그라운드 I/O 스레드
+            spdlog::init_thread_pool(1048576, 1);
 
             // Use simple stdout sink (No Color for stability)
             auto console_sink = std::make_shared<spdlog::sinks::stdout_sink_mt>();
@@ -22,27 +23,31 @@ public:
 
             std::vector<spdlog::sink_ptr> sinks{console_sink, file_sink};
 
-            auto logger = std::make_shared<spdlog::async_logger>(
-                "server", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block
+            // overrun_oldest: 큐가 가득 차면 오래된 로그를 버리고 서버 틱 안정을 우선함
+            _logger = std::make_shared<spdlog::async_logger>(
+                "server",
+                sinks.begin(),
+                sinks.end(),
+                spdlog::thread_pool(),
+                spdlog::async_overflow_policy::overrun_oldest
             );
 
-            spdlog::register_logger(logger);
-            spdlog::set_default_logger(logger);
+            spdlog::register_logger(_logger);
+            spdlog::set_default_logger(_logger);
+
+            // 패턴 최적화 (단순화된 포맷)
             spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] %v");
 
             SetLogLevel(level);
 
-            // Setup File-Only Logger
-            _fileLogger = std::make_shared<spdlog::async_logger>(
-                "file_only", file_sink, spdlog::thread_pool(), spdlog::async_overflow_policy::block
-            );
-            spdlog::register_logger(_fileLogger);
-            _fileLogger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [FILE] %v");
+            // Backtrace: 크리티컬 에러 발생 시 직전 32개 로그를 쏟아냄
+            _logger->enable_backtrace(32);
 
             spdlog::flush_on(spdlog::level::err);
-            spdlog::flush_every(std::chrono::seconds(1));
-            spdlog::info("Logger Initialized (Level: {})", level);
-            logger->flush();
+            // 너무 잦은 플러시는 I/O 병목을 유발하므로 완화 (OS 버퍼 활용)
+            spdlog::flush_every(std::chrono::seconds(5));
+
+            LOG_INFO("Logger Initialized (Level: {}, Async Queue: 1048576, Policy: overrun_oldest)", level);
         } catch (const std::exception &e)
         {
             std::cerr << "Logger Init Failed: " << e.what() << std::endl;
@@ -57,35 +62,49 @@ public:
         spdlog::set_level(GetSpdLevel(level));
     }
 
-    void Info(const std::string &msg) override
+    bool ShouldLog(Log::Level level) override
     {
-        spdlog::info(msg);
+        return _logger && _logger->should_log(ToSpdLevel(level));
     }
 
-    void Warn(const std::string &msg) override
+    void Write(Log::Level level, std::string_view message) override
     {
-        spdlog::warn(msg);
-    }
-
-    void Error(const std::string &msg) override
-    {
-        spdlog::error(msg);
-    }
-
-    void Debug(const std::string &msg) override
-    {
-        spdlog::debug(msg);
-    }
-
-    void File(const std::string &msg) override
-    {
-        if (_fileLogger)
+        if (_logger)
         {
-            _fileLogger->info(msg);
+            _logger->log(ToSpdLevel(level), message);
+
+            // Critical 레벨 발생 시 백트레이스 덤프 (선택 사항)
+            if (level == Log::Level::Critical)
+            {
+                _logger->dump_backtrace();
+            }
         }
     }
 
 private:
+    spdlog::level::level_enum ToSpdLevel(Log::Level level)
+    {
+        switch (level)
+        {
+        case Log::Level::Trace:
+            return spdlog::level::trace;
+        case Log::Level::Debug:
+            return spdlog::level::debug;
+        case Log::Level::Info:
+            return spdlog::level::info;
+        case Log::Level::Warn:
+            return spdlog::level::warn;
+        case Log::Level::Error:
+            return spdlog::level::err;
+        case Log::Level::Critical:
+            return spdlog::level::critical;
+        case Log::Level::Off:
+            return spdlog::level::off;
+        default:
+            return spdlog::level::info;
+        }
+    }
+
     spdlog::level::level_enum GetSpdLevel(const std::string &level)
     {
         if (level == "trace")
@@ -105,7 +124,7 @@ private:
         return spdlog::level::info;
     }
 
-    std::shared_ptr<spdlog::logger> _fileLogger;
+    std::shared_ptr<spdlog::async_logger> _logger;
 };
 
 ILog &GetLog()

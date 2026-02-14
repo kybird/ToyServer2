@@ -38,10 +38,11 @@ bool NetworkImpl::Start(uint16_t port)
         boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::make_address("127.0.0.1"), port);
 
         _acceptor.open(endpoint.protocol());
-        // [Debugging] Disable reuse_address to detect zombie processes
-        _acceptor.set_option(boost::asio::socket_base::reuse_address(false));
+        // [Production] Enable reuse_address to allow immediate restarts under load
+        _acceptor.set_option(boost::asio::socket_base::reuse_address(true));
         _acceptor.bind(endpoint);
-        _acceptor.listen();
+        // [Production] Increase backlog to OS maximum (SOMAXCONN) to handle mass connection bursts
+        _acceptor.listen(boost::asio::socket_base::max_listen_connections);
 
         LOG_INFO("Network listening on 127.0.0.1:{}", port);
 

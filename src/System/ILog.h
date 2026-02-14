@@ -1,11 +1,13 @@
 #pragma once
 
-#include <format>
-#include <iostream>
-#include <memory>
-#include <string>
+#include <fmt/format.h> // Ensure consistency with Pch.h
+#include <string_view>
 
 namespace System {
+
+namespace Log {
+enum class Level { Trace, Debug, Info, Warn, Error, Critical, Off };
+}
 
 class ILog
 {
@@ -13,11 +15,23 @@ public:
     virtual ~ILog() = default;
     virtual void Init(const std::string &level = "info") = 0;
     virtual void SetLogLevel(const std::string &level) = 0;
-    virtual void Info(const std::string &msg) = 0;
-    virtual void Warn(const std::string &msg) = 0;
-    virtual void Error(const std::string &msg) = 0;
-    virtual void Debug(const std::string &msg) = 0;
-    virtual void File(const std::string &msg) = 0;
+
+    // [Virtual] 구현체가 처리할 Low-Level 함수 (이미 포맷팅된 문자열만 받음)
+    virtual bool ShouldLog(Log::Level level) = 0;
+    virtual void Write(Log::Level level, std::string_view message) = 0;
+
+    // [Template] 고성능 포맷팅 엔진 (Zero-Allocation)
+    template <typename... Args> void LogFormat(Log::Level level, fmt::format_string<Args...> fmt, Args &&...args)
+    {
+        // 1KB 스택 버퍼 (힙 할당 없이 복사 비용 최소화)
+        char buffer[1024];
+
+        // 포맷팅 수행 (1024바이트 초과 시 안전하게 잘림)
+        auto result = fmt::format_to_n(buffer, sizeof(buffer), fmt, std::forward<Args>(args)...);
+
+        // 완성된 문자열 뷰를 가상 함수로 전달
+        Write(level, std::string_view(buffer, result.size));
+    }
 };
 
 // Global Accessor
@@ -25,15 +39,57 @@ ILog &GetLog();
 
 } // namespace System
 
-// Macros for easy access
-#define LOG_INFO(fmt, ...) ::System::GetLog().Info(std::format(fmt, __VA_ARGS__))
-#define LOG_WARN(fmt, ...) ::System::GetLog().Warn(std::format(fmt, __VA_ARGS__))
-#define LOG_ERROR(fmt, ...) ::System::GetLog().Error(std::format(fmt, __VA_ARGS__))
-#define LOG_DEBUG(fmt, ...) ::System::GetLog().Debug(std::format(fmt, __VA_ARGS__))
-#define LOG_FILE(fmt, ...) ::System::GetLog().File(std::format(fmt, __VA_ARGS__))
+// Macros for easy access with Lazy Evaluation
+#define LOG_TRACE(...)                                                                                                 \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        if (::System::GetLog().ShouldLog(::System::Log::Level::Trace))                                                 \
+        {                                                                                                              \
+            ::System::GetLog().LogFormat(::System::Log::Level::Trace, __VA_ARGS__);                                    \
+        }                                                                                                              \
+    } while (0)
 
-// For simple strings without args
-#define LOG_INFO_S(msg) ::System::GetLog().Info(msg)
-#define LOG_WARN_S(msg) ::System::GetLog().Warn(msg)
-#define LOG_ERROR_S(msg) ::System::GetLog().Error(msg)
-#define LOG_FILE_S(msg) ::System::GetLog().File(msg)
+#define LOG_DEBUG(...)                                                                                                 \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        if (::System::GetLog().ShouldLog(::System::Log::Level::Debug))                                                 \
+        {                                                                                                              \
+            ::System::GetLog().LogFormat(::System::Log::Level::Debug, __VA_ARGS__);                                    \
+        }                                                                                                              \
+    } while (0)
+
+#define LOG_INFO(...)                                                                                                  \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        if (::System::GetLog().ShouldLog(::System::Log::Level::Info))                                                  \
+        {                                                                                                              \
+            ::System::GetLog().LogFormat(::System::Log::Level::Info, __VA_ARGS__);                                     \
+        }                                                                                                              \
+    } while (0)
+
+#define LOG_WARN(...)                                                                                                  \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        if (::System::GetLog().ShouldLog(::System::Log::Level::Warn))                                                  \
+        {                                                                                                              \
+            ::System::GetLog().LogFormat(::System::Log::Level::Warn, __VA_ARGS__);                                     \
+        }                                                                                                              \
+    } while (0)
+
+#define LOG_ERROR(...)                                                                                                 \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        if (::System::GetLog().ShouldLog(::System::Log::Level::Error))                                                 \
+        {                                                                                                              \
+            ::System::GetLog().LogFormat(::System::Log::Level::Error, __VA_ARGS__);                                    \
+        }                                                                                                              \
+    } while (0)
+
+#define LOG_CRITICAL(...)                                                                                              \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        if (::System::GetLog().ShouldLog(::System::Log::Level::Critical))                                              \
+        {                                                                                                              \
+            ::System::GetLog().LogFormat(::System::Log::Level::Critical, __VA_ARGS__);                                 \
+        }                                                                                                              \
+    } while (0)
