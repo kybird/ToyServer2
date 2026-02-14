@@ -231,6 +231,9 @@ target_include_directories(PacketTest PRIVATE src)
 target_precompile_headers(PacketTest PRIVATE src/System/Pch.h)
 target_link_libraries(PacketTest PRIVATE System Share)
 
+# Stress Test Client
+add_subdirectory(src/Tools/StressTest)
+
 
 
 

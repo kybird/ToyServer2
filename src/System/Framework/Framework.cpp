@@ -108,15 +108,19 @@ bool Framework::Init(std::shared_ptr<IConfig> config, std::shared_ptr<IPacketHan
     if (serverConfig.serverRole == "backend")
     {
         SessionFactory::SetServerRole(ServerRole::Backend);
+        GetSessionPool<BackendSession>().WarmUp(1000);
     }
     else
     {
         SessionFactory::SetServerRole(ServerRole::Gateway);
+        // [Production] Warm up for 10,000 CCU scenario
+        GetSessionPool<GatewaySession>().WarmUp(10000);
     }
 
     // 2. Prepare Pools & Encryption (Hidden from User)
     LOG_INFO("Pre-allocating MessagePool...");
-    System::MessagePool::Prepare(6000);
+    // [Production] Pre-allocate enough messages to handle initial bursts (20,000 targets 10,000 CCU)
+    System::MessagePool::Prepare(20000);
 
     // [Encryption] Configure Factory
     std::string encType = serverConfig.encryption;
