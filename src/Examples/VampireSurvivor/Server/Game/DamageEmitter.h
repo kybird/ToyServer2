@@ -58,6 +58,8 @@ private:
     float _lifeTime = 0.0f; // 0 = infinite (Overall emitter life)
     float _elapsedTime = 0.0f;
     float _arcDegrees = 30.0f; // [New] Arc angle for Arc emitter type
+    float _width = 1.0f;       // [New] Rectangular width
+    float _height = 1.0f;      // [New] Rectangular height
     bool _active = true;
 };
 

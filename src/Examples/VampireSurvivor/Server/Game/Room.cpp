@@ -232,6 +232,9 @@ void Room::OnPlayerReady(uint64_t sessionId)
     player->SetReady(true);
     LOG_INFO("Player {} is ready in Room {}", sessionId, _roomId);
 
+    // [Fix] 확보된 세션으로 인벤토리 상태 강제 동기화 (기본 무기 표시 누락 방지)
+    player->SyncInventory(this);
+
     if (!_gameStarted)
     {
         StartGame();

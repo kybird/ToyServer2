@@ -145,7 +145,9 @@ bool DataManager::LoadSkillData(const std::string &path)
             // Field Stats
             data.activeDuration = item.value("active_duration", 0.0f);
             data.dotInterval = item.value("dot_interval", 0.5f);
-            data.arcDegrees = item.value("arc_degrees", 30.0f); // [New] Arc angle for Arc emitter
+            data.arcDegrees = item.value("arc_degrees", 30.0f); // [New] Arc angle for Arc emitter type
+            data.width = item.value("width", 0.0f);             // [New] Initial width
+            data.height = item.value("height", 0.0f);           // [New] Initial height
 
             // Traits Parsing
             if (item.contains("traits") && item["traits"].is_array())
@@ -261,6 +263,19 @@ bool DataManager::LoadWeaponData(const std::string &path)
                     levelData.cooldownMult = lvl.value("cooldown_mult", 1.0f);
                     levelData.durationMult = lvl.value("duration_mult", 1.0f);
                     levelData.desc = lvl.value("desc", "");
+
+                    // [New] Generic params parsing
+                    if (lvl.contains("params") && lvl["params"].is_object())
+                    {
+                        for (auto it = lvl["params"].begin(); it != lvl["params"].end(); ++it)
+                        {
+                            if (it.value().is_number())
+                            {
+                                levelData.params[it.key()] = it.value().get<float>();
+                            }
+                        }
+                    }
+
                     data.levels.push_back(levelData);
                 }
             }

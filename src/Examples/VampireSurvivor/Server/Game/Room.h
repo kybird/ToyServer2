@@ -109,6 +109,10 @@ public:
     {
         return _objMgr;
     }
+    SpatialGrid &GetSpatialGrid()
+    {
+        return _grid;
+    }
     const SpatialGrid &GetSpatialGrid() const
     {
         return _grid;

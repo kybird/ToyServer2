@@ -53,6 +53,8 @@ struct SkillTemplate
     float activeDuration;     // How long the field stays active (0 = pulse)
     float dotInterval;        // Tick interval for damage/effect while active
     float arcDegrees = 30.0f; // [New] Arc angle for Arc emitter type
+    float width = 0.0f;       // [New] Rectangular width
+    float height = 0.0f;      // [New] Rectangular height
 
     // Traits (Categories)
     std::vector<std::string> traits; // "PROJECTILE", "AOE", "DURATION", "PIERCE", etc.
@@ -77,6 +79,9 @@ struct WeaponLevelData
     float cooldownMult = 1.0f;
     float durationMult = 1.0f; // New field for scaling active duration
     std::string desc;
+
+    // [New] Generic overrides for skill parameters
+    std::unordered_map<std::string, float> params;
 };
 
 struct WeaponTemplate

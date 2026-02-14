@@ -162,16 +162,7 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
 
                         if (monster->IsDead())
                         {
-                            // 몬스터 사망 시 경험치 젬 스폰
-                            auto gem = std::make_shared<ExpGem>(room->GetObjectManager().GenerateId(), 10);
-                            gem->Initialize(gem->GetId(), monster->GetX(), monster->GetY(), 10);
-
-                            room->GetObjectManager().AddObject(gem);
-                            room->_grid.Add(gem);
-
-                            std::vector<std::shared_ptr<GameObject>> spawns;
-                            spawns.push_back(gem);
-                            room->BroadcastSpawn(spawns);
+                            // 몬스터 사망 시 처리는 이제 monster->TakeDamage(room) 내부에서 통합 관리됨
                         }
 
                         if (consumed)
