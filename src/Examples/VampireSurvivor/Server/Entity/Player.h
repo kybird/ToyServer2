@@ -11,6 +11,7 @@ namespace SimpleGame {
 
 class DamageEmitter;
 class PlayerInventory;
+class Room;
 struct LevelUpOption;
 
 class Player : public GameObject

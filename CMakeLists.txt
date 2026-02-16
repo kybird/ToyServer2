@@ -41,6 +41,7 @@ find_package(nlohmann_json CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(concurrentqueue CONFIG REQUIRED)
 find_package(GTest CONFIG REQUIRED)
+include(GoogleTest)
 find_package(Protobuf REQUIRED)
 find_package(unofficial-sqlite3 CONFIG REQUIRED)
 find_package(OpenSSL REQUIRED)
@@ -238,6 +239,8 @@ add_subdirectory(src/Tools/StressTest)
 
 
 
+
+
 # ==========================================
 # Example: Vampire Survivor Server (Formerly SimpleGame)
 # ==========================================
@@ -405,6 +408,5 @@ add_custom_command(TARGET UnitTests POST_BUILD
 )
 
 enable_testing()
-include(GoogleTest)
 # add_subdirectory(tests) # No longer needed as we compile sources directly
 gtest_discover_tests(UnitTests)

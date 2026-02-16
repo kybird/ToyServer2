@@ -33,21 +33,18 @@ void Room::BroadcastDebugState()
     root["rid"] = _roomId;
     root["t"] = _serverTick;
 
-    // Players
+    // Players (이미 Strand에서 직렬화되어 있으므로 mutex 불필요)
     std::vector<System::Json> players;
+    for (const auto &pair : _players)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
-        for (const auto &pair : _players)
-        {
-            auto p = pair.second;
-            players.push_back({
-                {"id", p->GetId()},
-                {"x", p->GetX()},
-                {"y", p->GetY()},
-                {"hp", p->GetHp()},
-                {"l", p->GetLookLeft()} // Direction: 1 for Left, 0 for Right
-            });
-        }
+        auto p = pair.second;
+        players.push_back({
+            {"id", p->GetId()},
+            {"x", p->GetX()},
+            {"y", p->GetY()},
+            {"hp", p->GetHp()},
+            {"l", p->GetLookLeft()} // Direction: 1 for Left, 0 for Right
+        });
     }
     root["p"] = players;
 

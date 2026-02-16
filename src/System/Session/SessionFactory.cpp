@@ -153,4 +153,13 @@ void SessionFactory::SetServerRole(ServerRole role)
     _serverRole = role;
 }
 
+void SessionFactory::Cleanup()
+{
+    LOG_INFO("[SessionFactory] Cleaning up session pools...");
+    GetSessionPool<GatewaySession>().Clear();
+    GetSessionPool<BackendSession>().Clear();
+    GetSessionPool<UDPSession>().Clear();
+    LOG_INFO("[SessionFactory] Session pools cleaned up.");
+}
+
 } // namespace System

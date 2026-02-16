@@ -3,7 +3,10 @@
 ## 🚀 Tasks In-Progress & Remaining
 
 ### Next Sprint Planning
-- [ ] 
+- [ ] **네트워크 패킷 처리 구조 근본적 개선**
+    - 현재 서버(10KB) 및 스트레스 테스트 클라이언트(8KB)에 하드코딩된 패킷 상한선 존재 (설계 미스).
+    - 수신 상황에 따른 **동적 수신 버퍼 확장 구조** 도입 필요.
+    - PacketHeader의 SizeType(uint16_t)이 허용하는 최대치(64KB)까지 유연하게 대응하도록 개편.
 
 ---
 

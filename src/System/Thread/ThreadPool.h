@@ -24,9 +24,12 @@ public:
     void Start();
 
     // Stop the thread pool.
-    // Drains any remaining tasks in the queue before exiting.
+    // Signals threads to exit as soon as they finish current task.
     // New tasks will be rejected.
     void Stop();
+
+    // Join threads and wait for completion.
+    void Join();
 
     // Enqueue a generic callable task. Returns a std::future.
     template <typename Func, typename... Args>

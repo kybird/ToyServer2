@@ -18,20 +18,29 @@ public:
 
     // [Virtual] 구현체가 처리할 Low-Level 함수 (이미 포맷팅된 문자열만 받음)
     virtual bool ShouldLog(Log::Level level) = 0;
-    virtual void Write(Log::Level level, std::string_view message) = 0;
+    // string_view로 전달, spdlog가 내부적으로 복사/이동 처리
+    virtual void Write(Log::Level level, std::string_view message) noexcept = 0;
 
-    // [Template] 고성능 포맷팅 엔진 (Zero-Allocation)
-    template <typename... Args> void LogFormat(Log::Level level, fmt::format_string<Args...> fmt, Args &&...args)
+    // [Template] 고성능 포맷팅 엔진 (Zero-Allocation for small messages)
+    template <typename... Args> void LogFormat(Log::Level level, fmt::format_string<Args...> fmt_str, Args &&...args)
     {
-        // 1KB 스택 버퍼 (힙 할당 없이 복사 비용 최소화)
-        char buffer[1024];
+        // [CRITICAL] 로그 레벨 체크를 먼저 수행 (불필요한 포맷팅 연산 방지)
+        if (!ShouldLog(level))
+            return;
 
-        // 포맷팅 수행 (1024바이트 초과 시 안전하게 잘림)
-        auto result = fmt::format_to_n(buffer, sizeof(buffer), fmt, std::forward<Args>(args)...);
+        // 1. fmt::format으로 직접 std::string 생성 (SSO: 64~128바이트까지 힙 할당 없음)
+        std::string message = fmt::format(fmt_str, std::forward<Args>(args)...);
 
-        // 완성된 문자열 뷰를 가상 함수로 전달
-        Write(level, std::string_view(buffer, result.size));
+        // 2. std::move로 소유권 이전 → 큐가 밀려도 안전 (message가 주인)
+        Write(level, std::move(message));
     }
+
+    // 기존 인터페이스 호환성 유지
+    virtual void Info(const std::string &msg) = 0;
+    virtual void Warn(const std::string &msg) = 0;
+    virtual void Error(const std::string &msg) = 0;
+    virtual void Debug(const std::string &msg) = 0;
+    virtual void File(const std::string &msg) = 0;
 };
 
 // Global Accessor
@@ -91,5 +100,15 @@ ILog &GetLog();
         if (::System::GetLog().ShouldLog(::System::Log::Level::Critical))                                              \
         {                                                                                                              \
             ::System::GetLog().LogFormat(::System::Log::Level::Critical, __VA_ARGS__);                                 \
+        }                                                                                                              \
+    } while (0)
+
+// LOG_FILE uses Info level (for backward compatibility)
+#define LOG_FILE(...)                                                                                                  \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        if (::System::GetLog().ShouldLog(::System::Log::Level::Info))                                                  \
+        {                                                                                                              \
+            ::System::GetLog().LogFormat(::System::Log::Level::Info, __VA_ARGS__);                                     \
         }                                                                                                              \
     } while (0)

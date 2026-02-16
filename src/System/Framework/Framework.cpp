@@ -347,30 +347,14 @@ void Framework::Stop()
         _network->Stop(); // Sets _isStopping = true and closes acceptor
     }
 
-    // 2. Stop Console
+    // 4. Stop Console
     if (_console)
     {
         LOG_INFO("Stopping Console...");
         _console->Stop();
     }
 
-    // 3. Shutdown MQ System
-    LOG_INFO("Stopping MQ System...");
-    System::MQ::MessageSystem::Instance().Shutdown();
-
-    // 4. Stop Thread Pools (Will wait for current tasks to finish)
-    if (_threadPool)
-    {
-        LOG_INFO("Stopping ThreadPool...");
-        _threadPool->Stop();
-    }
-    if (_dbThreadPool)
-    {
-        LOG_INFO("Stopping DBThreadPool...");
-        _dbThreadPool->Stop();
-    }
-
-    LOG_INFO("[Shutdown] FrameWork Stop sequence finished.");
+    LOG_INFO("[Shutdown] FrameWork Stop sequence initiated (Signals sent).");
 
     // 5. Wake up Main Loop
     if (_dispatcher)
@@ -388,14 +372,22 @@ void Framework::Join()
     if (_console)
         _console->Stop();
 
-    // 1. Shutdown MQ
+    // 2. Wait for Logic Cleanup & Thread Pools (Actual Power Off)
+    // IMPORTANT: Shutdown MQ & ThreadPools HERE, after RoomManager/Logic are cleaned up.
+    LOG_INFO("Stopping MQ System...");
     System::MQ::MessageSystem::Instance().Shutdown();
 
-    // 2. Stop Thread Pools (if not already)
+    LOG_INFO("Stopping ThreadPools (Final)...");
     if (_threadPool)
+    {
         _threadPool->Stop();
+        _threadPool->Join();
+    }
     if (_dbThreadPool)
+    {
         _dbThreadPool->Stop();
+        _dbThreadPool->Join();
+    }
 
     // 3. Wait for IO Threads
     // Since we use std::jthread, they would join in destructor anyway,

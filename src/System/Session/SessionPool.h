@@ -24,11 +24,18 @@ public:
 
     ~SessionPoolBase()
     {
+        Clear();
+    }
+
+    void Clear()
+    {
         T *session;
         while (_pool.try_dequeue(session))
         {
             delete session;
         }
+        _totalAllocated.store(0);
+        _availableCount.store(0);
     }
 
     // [Production] Initial Warm-up: 1.2x expected CCU

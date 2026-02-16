@@ -75,6 +75,9 @@ void ServerApp::Run()
         // 1. Cleanup Game Logic first (break cycles)
         RoomManager::Instance().Cleanup();
 
+        // 1.5 Cleanup Session Pools (Prevent UAF during CRT shutdown)
+        System::SessionFactory::Cleanup();
+
         // 2. Join Framework (Stop Engine)
         // Note: Join() was added to IFramework interface directly
         _framework->Join();

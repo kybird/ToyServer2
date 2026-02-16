@@ -54,6 +54,9 @@ public:
         return _serverRole;
     }
 
+    // [New] Explicit cleanup to prevent UAF on shutdown
+    static void Cleanup();
+
 private:
     static std::atomic<uint64_t> _nextSessionId;
     static std::function<std::unique_ptr<IPacketEncryption>()> _encryptionFactory;

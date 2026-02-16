@@ -3,6 +3,7 @@
 #include "System/Pch.h"
 #include <atomic>
 #include <boost/asio.hpp>
+#include <deque>
 #include <functional>
 #include <google/protobuf/message.h>
 #include <memory>
@@ -66,19 +67,22 @@ private:
     void HandlePacket(uint16_t id, const uint8_t *payload, size_t size);
 
     void SendPacket(uint16_t id, const google::protobuf::Message &msg);
+    void DoWrite();
 
 private:
     tcp::socket _socket;
+    boost::asio::strand<boost::asio::io_context::executor_type> _strand;
     tcp::resolver _resolver;
     std::vector<uint8_t> _recvBuffer;
+    std::deque<std::vector<uint8_t>> _sendQueue;
 
-    int _id;
-    int _targetRoomId = 0;
+    std::atomic<int> _id;
+    std::atomic<int> _targetRoomId = 0;
 
-    bool _isConnected = false;
-    bool _isLoggedIn = false;
-    bool _isInRoom = false;
-    bool _isReady = false;
+    std::atomic<bool> _isConnected = false;
+    std::atomic<bool> _isLoggedIn = false;
+    std::atomic<bool> _isInRoom = false;
+    std::atomic<bool> _isReady = false;
 
     // Room Creation State
     bool _isCreator = false;

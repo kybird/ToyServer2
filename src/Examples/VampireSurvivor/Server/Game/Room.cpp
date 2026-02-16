@@ -31,7 +31,7 @@ Room::Room(
 
 Room::~Room()
 {
-    Stop();
+    InternalClear();
 }
 
 void Room::Start()
@@ -52,8 +52,43 @@ void Room::Start()
 
 void Room::Stop()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    // [Fix] 이미 정지 중이면 중복 실행 방지
+    if (_isStopping.exchange(true))
+        return;
+
+    LOG_INFO("Room {} STOP requested.", _roomId);
+
+    // [Trap Fix] Framework가 살아있는 동안에는 워커가 이 작업을 받아줄 것임.
+    auto self = shared_from_this();
+    if (_strand)
+    {
+        _strand->Post(
+            [self]()
+            {
+                self->ExecuteStop();
+            }
+        );
+    }
+    else
+    {
+        ExecuteStop();
+    }
+}
+
+void Room::ExecuteStop()
+{
     LOG_INFO("Room {} STOP initiated. (Players: {})", _roomId, _players.size());
+
+    // 공통 정리 로직 호출
+    InternalClear();
+
+    LOG_INFO("Room {} STOP finished.", _roomId);
+}
+
+void Room::InternalClear()
+{
+    // [Safety] 이 함수는 소멸자에서도 호출되므로 shared_from_this를 절대 사용하면 안 됨.
+    // 또한 중복 실행되어도 안전해야 함.
 
     if (_timer != nullptr && _timerHandle != 0)
     {
@@ -65,11 +100,27 @@ void Room::Stop()
 
     _players.clear();
     _objMgr.Clear();
-
-    LOG_INFO("Room {} STOP finished.", _roomId);
 }
 
 void Room::StartGame()
+{
+    auto self = shared_from_this();
+    if (_strand)
+    {
+        _strand->Post(
+            [self]()
+            {
+                self->ExecuteStartGame();
+            }
+        );
+    }
+    else
+    {
+        ExecuteStartGame();
+    }
+}
+
+void Room::ExecuteStartGame()
 {
     if (_gameStarted)
         return;
@@ -87,8 +138,24 @@ void Room::StartGame()
 
 void Room::Reset()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    auto self = shared_from_this();
+    if (_strand)
+    {
+        _strand->Post(
+            [self]()
+            {
+                self->ExecuteReset();
+            }
+        );
+    }
+    else
+    {
+        ExecuteReset();
+    }
+}
 
+void Room::ExecuteReset()
+{
     // ObjectManager 및 Grid 클리어
     _objMgr.Clear();
     _grid.HardClear();
@@ -99,6 +166,7 @@ void Room::Reset()
 
     _gameStarted = false;
     _isGameOver = false;
+    _isStopping.store(false); // [Fix] 방을 다시 사용할 수 있도록 부활
     _totalRunTime = 0.0f;
     _serverTick = 0;
 
@@ -106,21 +174,43 @@ void Room::Reset()
     _totalUpdateSec = 0.0f;
     _updateCount = 0;
     _maxUpdateSec = 0.0f;
+    _isUpdating.store(false);
+    _playerCount.store(0); // [Thread-Safe] atomic 카운터 초기화
 
-    LOG_INFO("Room {} has been reset. Ready for new game.", _roomId);
+    LOG_INFO("Room {} reset complete.", _roomId);
 }
 
 void Room::OnTimer(uint32_t timerId, void *pParam)
 {
     (void)timerId;
     (void)pParam;
-    _serverTick++;
+
+    // [DESIGN NOTE] CAS는 반드시 Post() 호출 전에 수행해야 한다.
+    //
+    // 이유: 람다 내부로 CAS를 옮기면 Post() 자체를 차단할 수 없어
+    //       Strand 큐에 작업이 무한히 쌓이는 큐 폭주(queue flooding)가 발생한다.
+    //
+    // 동작 원리:
+    //   1. OnTimer(로직 스레드) → CAS(false→true) 성공 → Post(람다)
+    //   2. Strand가 람다 실행 → Update() → RAII Guard가 flag를 false로 복원
+    //   3. 다음 OnTimer 호출 시:
+    //      - Update 완료 전이면 → CAS 실패 → 정당한 프레임 스킵
+    //      - Update 완료 후이면 → CAS 성공 → 정상 실행
+    //
+    // 주의: 이 CAS를 절대 람다 내부로 이동하지 말 것.
+    bool expected = false;
+    if (!_isUpdating.compare_exchange_strong(expected, true))
+    {
+        return;
+    }
+
     if (_strand != nullptr)
     {
+        auto self = shared_from_this();
         _strand->Post(
-            [this]()
+            [self]()
             {
-                this->Update(GameConfig::TICK_INTERVAL_SEC);
+                self->Update(GameConfig::TICK_INTERVAL_SEC);
             }
         );
     }
@@ -130,32 +220,52 @@ void Room::OnTimer(uint32_t timerId, void *pParam)
     }
 }
 
+void Room::Update(float deltaTime)
+{
+    // [RAII] 예외 발생 시에도 반드시 플래그 해제 보장
+    // OnTimer에서 CAS로 이미 true 설정했으므로 추가 store(true) 불필요
+    struct UpdateGuard
+    {
+        std::atomic<bool> &flag;
+        ~UpdateGuard()
+        {
+            flag.store(false);
+        }
+    } guard{_isUpdating};
+
+    ExecuteUpdate(deltaTime);
+}
+
 void Room::Enter(const std::shared_ptr<Player> &player)
 {
-    // [Safety] 과부하로 인한 Disconnect 지연 시, 재접속하면 기존 좀비 세션이 남아있을 수 있음.
-    // 여기서는 테스트 편의를 위해(혹은 1인 방 가정) 기존 플레이어를 정리함.
+    auto self = shared_from_this();
+    if (_strand)
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
-        if (!_players.empty())
-        {
-            LOG_WARN("Room::Enter - Clearing {} stale players for new connection.", _players.size());
-            for (auto &pair : _players)
+        _strand->Post(
+            [self, player]()
             {
-                // ObjectManager에서 제거해야 Rebuild 시 포함되지 않음
-                _objMgr.RemoveObject(pair.second->GetId());
+                self->ExecuteEnter(player);
             }
-            _players.clear();
-
-            // 재입장 시 웨이브 리셋
-            Reset();
-        }
+        );
     }
-
+    else
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
-        _players[player->GetSessionId()] = player;
-        player->SetRoomId(_roomId);
+        ExecuteEnter(player);
     }
+}
+
+void Room::ExecuteEnter(const std::shared_ptr<Player> &player)
+{
+    // [Fix] 기존에는 1인 테스트를 위해 신규 입장 시 무조건 방을 리셋했으나,
+    // 멀티플레이어 환경(스트레스 테스트 등)을 위해 해당 로직을 제거함.
+    {
+        // 특정 세션이 이미 존재할 경우에 대한 처리는 필요할 수 있으나,
+        // 전체 플레이어를 지우는 것은 멀티 환경에서 치명적임.
+    }
+
+    _players[player->GetSessionId()] = player;
+    _playerCount++; // [Thread-Safe] atomic 카운터 증가
+    player->SetRoomId(_roomId);
 
     LOG_INFO("Player {} connecting to Room {}. Loading Data...", player->GetSessionId(), _roomId);
 
@@ -168,63 +278,96 @@ void Room::Enter(const std::shared_ptr<Player> &player)
             userId,
             [self, player](const std::vector<std::pair<int, int>> &skills)
             {
-                std::lock_guard<std::recursive_mutex> lock(self->_mutex);
+                // [Fix] DB 콜백에서 직접 멤버에 접근하지 않고 Strand로 Post하여 직렬화 보장
+                self->_strand->Post(
+                    [self, player, skills]()
+                    {
+                        auto it = self->_players.find(player->GetSessionId());
+                        if (it == self->_players.end() || it->second != player)
+                        {
+                            LOG_WARN("Player {} disconnected while loading.", player->GetSessionId());
+                            return;
+                        }
 
-                auto it = self->_players.find(player->GetSessionId());
-                if (it == self->_players.end() || it->second != player)
-                {
-                    LOG_WARN("Player {} disconnected while loading.", player->GetSessionId());
-                    return;
-                }
+                        player->ApplySkills(skills, self.get());
+                        LOG_INFO("Applied {} skills to Player {}", skills.size(), player->GetSessionId());
 
-                player->ApplySkills(skills, self.get());
-                LOG_INFO("Applied {} skills to Player {}", skills.size(), player->GetSessionId());
+                        self->_objMgr.AddObject(player);
+                        self->_grid.Add(player);
 
-                self->_objMgr.AddObject(player);
-                self->_grid.Add(player);
+                        LOG_INFO(
+                            "Player {} entered Room {}. Total Players: {}",
+                            player->GetSessionId(),
+                            self->_roomId,
+                            self->_players.size()
+                        );
+                        LOG_INFO(
+                            "Player {} entered Room {}. Waiting for C_GAME_READY.",
+                            player->GetSessionId(),
+                            self->_roomId
+                        );
 
-                LOG_INFO(
-                    "Player {} entered Room {}. Total Players: {}",
-                    player->GetSessionId(),
-                    self->_roomId,
-                    self->_players.size()
+                        const auto *pTmpl = DataManager::Instance().GetPlayerTemplate(1);
+                        if (pTmpl != nullptr && !pTmpl->defaultSkills.empty())
+                        {
+                            player->AddDefaultSkills(pTmpl->defaultSkills, self.get());
+                            LOG_INFO(
+                                "Applied {} default skills to Player {}",
+                                pTmpl->defaultSkills.size(),
+                                player->GetSessionId()
+                            );
+                        }
+                        if (!self->_gameStarted)
+                        {
+                            self->StartGame();
+                        }
+                    }
                 );
-                LOG_INFO("Player {} entered Room {}. Waiting for C_GAME_READY.", player->GetSessionId(), self->_roomId);
-
-                const auto *pTmpl = DataManager::Instance().GetPlayerTemplate(1);
-                if (pTmpl != nullptr && !pTmpl->defaultSkills.empty())
-                {
-                    player->AddDefaultSkills(pTmpl->defaultSkills, self.get());
-                    LOG_INFO(
-                        "Applied {} default skills to Player {}", pTmpl->defaultSkills.size(), player->GetSessionId()
-                    );
-                }
             }
         );
     }
     else
     {
-        std::lock_guard<std::recursive_mutex> lock(_mutex);
         const auto *pTmpl = DataManager::Instance().GetPlayerTemplate(1);
         if (pTmpl != nullptr && !pTmpl->defaultSkills.empty())
         {
-            player->AddDefaultSkills(pTmpl->defaultSkills, self.get());
+            player->AddDefaultSkills(pTmpl->defaultSkills, this);
         }
 
         _objMgr.AddObject(player);
         _grid.Add(player);
-        LOG_INFO("Player {} entered Room {} (No DB).", player->GetSessionId(), _roomId);
+
+        if (!_gameStarted)
+        {
+            StartGame();
+        }
     }
 }
 
 void Room::OnPlayerReady(uint64_t sessionId)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    auto self = shared_from_this();
+    if (_strand)
+    {
+        _strand->Post(
+            [self, sessionId]()
+            {
+                self->ExecuteOnPlayerReady(sessionId);
+            }
+        );
+    }
+    else
+    {
+        ExecuteOnPlayerReady(sessionId);
+    }
+}
 
+void Room::ExecuteOnPlayerReady(uint64_t sessionId)
+{
     auto it = _players.find(sessionId);
     if (it == _players.end())
     {
-        LOG_WARN("OnPlayerReady: Player {} not found in room {}", sessionId, _roomId);
+        LOG_WARN("ExecuteOnPlayerReady: Player {} not found in room {}", sessionId, _roomId);
         return;
     }
 
@@ -237,7 +380,7 @@ void Room::OnPlayerReady(uint64_t sessionId)
 
     if (!_gameStarted)
     {
-        StartGame();
+        ExecuteStartGame();
     }
 
     auto allObjects = _objMgr.GetAllObjects();
@@ -257,6 +400,7 @@ void Room::OnPlayerReady(uint64_t sessionId)
             info->set_state(obj->GetState());
             info->set_vx(obj->GetVX());
             info->set_vy(obj->GetVY());
+            info->set_look_left(obj->GetLookLeft());
 
             if (obj->GetType() == Protocol::ObjectType::MONSTER)
             {
@@ -301,8 +445,24 @@ void Room::OnPlayerReady(uint64_t sessionId)
 
 void Room::Leave(uint64_t sessionId)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
+    auto self = shared_from_this();
+    if (_strand)
+    {
+        _strand->Post(
+            [self, sessionId]()
+            {
+                self->ExecuteLeave(sessionId);
+            }
+        );
+    }
+    else
+    {
+        ExecuteLeave(sessionId);
+    }
+}
 
+void Room::ExecuteLeave(uint64_t sessionId)
+{
     auto it = _players.find(sessionId);
     if (it != _players.end())
     {
@@ -317,24 +477,50 @@ void Room::Leave(uint64_t sessionId)
         BroadcastPacket(S_DespawnObjectPacket(std::move(despawn)));
 
         _players.erase(it);
+        _playerCount--; // [Thread-Safe] atomic 카운터 감소
         LOG_INFO("Player {} left Room {}", sessionId, _roomId);
 
         if (_players.empty())
         {
-            Stop();
-            LOG_INFO("Room {} is empty. Stopping game loop timer.", _roomId);
-            Reset();
+            if (_roomId != 1)
+            {
+                ExecuteStop();
+                ExecuteReset();
+            }
+            else
+            {
+                // [Fix] 1번 방은 엔진(Stop)은 유지하되 다음 플레이어를 위해 리셋만 수행
+                ExecuteReset();
+            }
         }
     }
 }
 
 size_t Room::GetPlayerCount()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-    return _players.size();
+    // [Thread-Safe] Strand 바깥(GetRoomListHandler 등)에서도 호출되므로 atomic 카운터 사용
+    return _playerCount.load();
 }
 
 void Room::HandleGameOver(bool isWin)
+{
+    auto self = shared_from_this();
+    if (_strand)
+    {
+        _strand->Post(
+            [self, isWin]()
+            {
+                self->ExecuteHandleGameOver(isWin);
+            }
+        );
+    }
+    else
+    {
+        ExecuteHandleGameOver(isWin);
+    }
+}
+
+void Room::ExecuteHandleGameOver(bool isWin)
 {
     if (_isGameOver)
         return;
@@ -356,56 +542,86 @@ bool Room::CheckWinCondition() const
 
 void Room::DebugToggleGodMode()
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-    for (auto &[sid, p] : _players)
+    auto self = shared_from_this();
+    if (_strand)
     {
-        p->SetGodMode(!p->IsGodMode());
-        LOG_INFO("Debug: GodMode toggled for Player {} -> {}", sid, p->IsGodMode());
+        _strand->Post(
+            [self]()
+            {
+                for (auto &[sid, p] : self->_players)
+                {
+                    p->SetGodMode(!p->IsGodMode());
+                    LOG_INFO("Debug: GodMode toggled for Player {} -> {}", sid, p->IsGodMode());
+                }
+            }
+        );
     }
 }
 
 void Room::SetMonsterStrategy(const std::string &strategyName)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-
-    std::shared_ptr<IMovementStrategy> strategy;
-    if (strategyName == "smart")
+    auto self = shared_from_this();
+    if (_strand)
     {
-        strategy = std::make_shared<SmartFlockingStrategy>();
-    }
-    else if (strategyName == "fluid")
-    {
-        strategy = std::make_shared<FluidStackingStrategy>();
-    }
-    else if (strategyName == "strict")
-    {
-        strategy = std::make_shared<StrictSeparationStrategy>();
-    }
-    else if (strategyName == "surround")
-    {
-        strategy = std::make_shared<SurroundingFlockingStrategy>();
-    }
-    else
-    {
-        LOG_WARN("Unknown strategy name: {}", strategyName);
-        return;
-    }
-
-    auto objects = _objMgr.GetAllObjects();
-    int count = 0;
-    for (auto &obj : objects)
-    {
-        if (obj->GetType() == Protocol::ObjectType::MONSTER)
-        {
-            auto monster = std::dynamic_pointer_cast<Monster>(obj);
-            if (monster)
+        _strand->Post(
+            [self, strategyName]()
             {
-                monster->SetMovementStrategy(strategy);
-                count++;
+                std::shared_ptr<IMovementStrategy> strategy;
+                if (strategyName == "smart")
+                {
+                    strategy = std::make_shared<SmartFlockingStrategy>();
+                }
+                else if (strategyName == "fluid")
+                {
+                    strategy = std::make_shared<FluidStackingStrategy>();
+                }
+                else if (strategyName == "strict")
+                {
+                    strategy = std::make_shared<StrictSeparationStrategy>();
+                }
+                else if (strategyName == "surround")
+                {
+                    strategy = std::make_shared<SurroundingFlockingStrategy>();
+                }
+                else
+                {
+                    LOG_WARN("Unknown strategy name: {}", strategyName);
+                    return;
+                }
+
+                auto objects = self->_objMgr.GetAllObjects();
+                int count = 0;
+                for (auto &obj : objects)
+                {
+                    if (obj->GetType() == Protocol::ObjectType::MONSTER)
+                    {
+                        auto monster = std::dynamic_pointer_cast<Monster>(obj);
+                        if (monster)
+                        {
+                            monster->SetMovementStrategy(strategy);
+                            count++;
+                        }
+                    }
+                }
+                LOG_INFO("Changed strategy to {} for {} monsters", strategyName, count);
             }
-        }
+        );
     }
-    LOG_INFO("Changed strategy to {} for {} monsters", strategyName, count);
+}
+
+bool Room::IsPlaying() const
+{
+    return _gameStarted;
+}
+
+float Room::GetTotalRunTime() const
+{
+    return _totalRunTime;
+}
+
+uint32_t Room::GetServerTick() const
+{
+    return _serverTick;
 }
 
 } // namespace SimpleGame

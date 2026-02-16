@@ -7,20 +7,24 @@
 #include "Game/SpatialGrid.h"
 #include "GamePackets.h"
 #include "System/Dispatcher/IDispatcher.h"
+#include "System/Dispatcher/MessagePool.h"
+#include "System/Packet/PacketPtr.h"
 #include "System/Session/SessionContext.h"
+#include "System/Thread/IStrand.h"
 
 namespace SimpleGame {
 
-void Room::Update(float deltaTime)
+void Room::ExecuteUpdate(float deltaTime)
 {
-    if (!_gameStarted || _isGameOver)
+    // [Fix] 정지 중이거나 플레이어가 없으면 무거운 연산 즉시 중단
+    if (!_gameStarted || _isGameOver || _isStopping.load() || _players.empty())
         return;
 
     // [Performance Measurement Start]
     auto startPerf = std::chrono::high_resolution_clock::now();
 
     _totalRunTime += deltaTime;
-    // _serverTick++; // [Fix] REMOVE: Already incremented in OnTimer to prevent double-tick per frame
+    _serverTick++;
     auto objects = _objMgr.GetAllObjects();
 
     // [1] Wave Update (Monster Spawn)
@@ -226,7 +230,6 @@ void Room::BroadcastPacket(const System::IPacket &pkt, uint64_t excludeSessionId
     pkt.SerializeTo(msg->Payload());
     System::PacketPtr serialized(msg);
 
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
     for (const auto &[sid, player] : _players)
     {
         if (sid == excludeSessionId)
@@ -336,7 +339,6 @@ void Room::SyncNetwork()
     }
 
     // [이동 동기화] 클라이언트 측 추측 이동(CSP) 정정을 위해 각 플레이어에게 Ack 패킷 전송
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
     for (auto &[sid, player] : _players)
     {
         if (player->IsDead())
@@ -355,8 +357,6 @@ void Room::SyncNetwork()
 // [Spatial Queries]
 std::shared_ptr<Player> Room::GetNearestPlayer(float x, float y)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-
     std::shared_ptr<Player> nearest = nullptr;
     float minDstSq = std::numeric_limits<float>::max();
 
@@ -405,17 +405,34 @@ std::vector<std::shared_ptr<Monster>> Room::GetMonstersInRange(float x, float y,
 // [Debug]
 void Room::DebugAddExpToAll(int32_t exp)
 {
-    std::lock_guard<std::recursive_mutex> lock(_mutex);
-    for (auto &[sid, p] : _players)
+    auto self = shared_from_this();
+    if (_strand)
     {
-        p->AddExp(exp, this);
+        _strand->Post(
+            [self, exp]()
+            {
+                for (auto &[sid, p] : self->_players)
+                {
+                    p->AddExp(exp, self.get());
+                }
+                LOG_INFO("Debug: Added {} EXP to all players.", exp);
+            }
+        );
     }
-    LOG_INFO("Debug: Added {} EXP to all players.", exp);
 }
 
 void Room::DebugSpawnMonster(int32_t monsterId, int32_t count)
 {
-    _waveMgr.DebugSpawn(this, monsterId, count);
+    auto self = shared_from_this();
+    if (_strand)
+    {
+        _strand->Post(
+            [self, monsterId, count]()
+            {
+                self->_waveMgr.DebugSpawn(self.get(), monsterId, count);
+            }
+        );
+    }
 }
 
 } // namespace SimpleGame

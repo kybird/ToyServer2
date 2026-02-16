@@ -17,6 +17,7 @@ ThreadPool::ThreadPool(int threadCount, const std::string &name) : _threadCount(
 ThreadPool::~ThreadPool()
 {
     Stop();
+    Join();
 }
 
 void ThreadPool::Start()
@@ -39,6 +40,12 @@ void ThreadPool::Start()
                 {
                     _taskSemaphore.acquire();
 
+                    // [Fix] 정지 신호가 오면 즉시 퇴근 (큐에 작업이 남았어도 무시)
+                    if (_stop.load(std::memory_order_acquire))
+                    {
+                        return;
+                    }
+
                     std::function<void()> task;
                     if (_tasks.try_dequeue(task))
                     {
@@ -50,15 +57,8 @@ void ThreadPool::Start()
                             LOG_ERROR("Task Worker #{} Std Exception: {}", i, e.what());
                         } catch (...)
                         {
-                            LOG_ERROR("Task Worker #{} Unknown Exception (SEH/Non-Std)!", i);
+                            LOG_ERROR("Task Worker #{} Unknown Exception!", i);
                         }
-                        continue;
-                    }
-
-                    // Only return if acquired but no task (empty) AND stopped.
-                    if (_stop.load(std::memory_order_acquire))
-                    {
-                        return;
                     }
                 }
             }
@@ -68,13 +68,21 @@ void ThreadPool::Start()
 
 void ThreadPool::Stop()
 {
-    // Set stop flag
-    _stop.store(true, std::memory_order_release);
+    // [Fix] Non-blocking Stop
+    if (_stop.exchange(true, std::memory_order_release))
+    {
+        return; // Already stopped
+    }
 
     // Wake up all threads so they check _stop
     _taskSemaphore.release(_threadCount);
+    LOG_INFO("{} Stop signal sent.", _name);
+}
 
-    // Join threads
+void ThreadPool::Join()
+{
+    // [Fix] Blocking Join
+    LOG_INFO("{} Waiting for threads to join...", _name);
     for (auto &t : _threads)
     {
         if (t.joinable())

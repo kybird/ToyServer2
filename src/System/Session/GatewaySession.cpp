@@ -323,7 +323,7 @@ void GatewaySessionImpl::OnRecv(size_t bytesTransferred)
             break;
 
         PacketHeader *header = (PacketHeader *)_recvBuffer.ReadPos();
-        if (header->size > 1024 * 10 || header->size == 0)
+        if (header->size > 65535 || header->size == 0)
         {
             _owner->Close();
             return;

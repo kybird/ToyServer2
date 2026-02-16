@@ -1,4 +1,3 @@
-
 # Google Test based tests
 
 # ThreadPool Test
@@ -28,7 +27,6 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/TestMetrics.cpp")
     )
     target_precompile_headers(TestMetrics PRIVATE "${CMAKE_SOURCE_DIR}/src/System/Pch.h")
 
-    gtest_discover_tests(TestMetrics)
     gtest_discover_tests(TestMetrics)
 endif()
 

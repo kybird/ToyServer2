@@ -1,6 +1,6 @@
 #pragma once
 #include "Entity/Player.h"
-#include <mutex>
+#include <atomic>
 #include <unordered_map>
 #include <vector>
 
@@ -75,10 +75,7 @@ public:
     {
         return 4;
     }
-    bool IsPlaying() const
-    {
-        return _gameStarted;
-    }
+    bool IsPlaying() const;
 
     std::shared_ptr<Player> GetNearestPlayer(float x, float y);
     std::vector<std::shared_ptr<Monster>> GetMonstersInRange(float x, float y, float radius);
@@ -117,14 +114,8 @@ public:
     {
         return _grid;
     }
-    float GetTotalRunTime() const
-    {
-        return _totalRunTime;
-    }
-    uint32_t GetServerTick() const
-    {
-        return _serverTick;
-    }
+    float GetTotalRunTime() const;
+    uint32_t GetServerTick() const;
 
     // Debug Commands
     void DebugAddExpToAll(int32_t exp);
@@ -134,6 +125,17 @@ public:
     bool CheckWinCondition() const;
 
 private:
+    // [Serialization] Actual logic execution in Room's Strand
+    void ExecuteEnter(const std::shared_ptr<Player> &player);
+    void ExecuteLeave(uint64_t sessionId);
+    void ExecuteOnPlayerReady(uint64_t sessionId);
+    void ExecuteStartGame();
+    void ExecuteReset();
+    void ExecuteHandleGameOver(bool isWin);
+    void ExecuteUpdate(float deltaTime);
+    void ExecuteStop();
+    void InternalClear();
+
     void UpdatePhysics(float deltaTime, const std::vector<std::shared_ptr<GameObject>> &objects);
     void SyncNetwork();
     void BroadcastDebugState();
@@ -144,7 +146,6 @@ private:
     int _roomId;
     std::string _title;
     std::unordered_map<uint64_t, std::shared_ptr<Player>> _players;
-    std::recursive_mutex _mutex;
 
     std::shared_ptr<System::ITimer> _timer;
     System::ITimer::TimerHandle _timerHandle = 0;
@@ -167,13 +168,16 @@ private:
     uint32_t _updateCount = 0;
     float _maxUpdateSec = 0.0f;
 
-    bool _gameStarted = false;
+    std::atomic<bool> _gameStarted{false}; // [Thread-Safe] Strand 바깥(GetRoomListHandler)에서도 읽힘
     bool _isGameOver = false;
     std::unique_ptr<CombatManager> _combatMgr;
     std::unique_ptr<EffectManager> _effectMgr;
 
     RoomPerformanceProfile _perfProfile;
-    bool _enableMonsterPhysics = false; // [New] Toggle for monster-to-monster physical collisions
+    std::atomic<bool> _isStopping{false};
+    std::atomic<bool> _isUpdating{false}; // [New] 업데이트 중복 실행 방지 플래그
+    std::atomic<size_t> _playerCount{0};  // [New] Strand 바깥 호출을 위한 thread-safe 카운터
+    bool _enableMonsterPhysics = false;   // [New] Toggle for monster-to-monster physical collisions
 };
 
 } // namespace SimpleGame

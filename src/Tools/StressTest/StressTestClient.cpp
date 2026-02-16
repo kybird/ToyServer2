@@ -21,9 +21,17 @@ constexpr uint16_t S_PONG = 903;
 } // namespace PacketID
 
 StressTestClient::StressTestClient(boost::asio::io_context &io_context, int id)
-    : _socket(io_context), _resolver(io_context), _id(id)
+    : _socket(io_context), _strand(io_context.get_executor()), _resolver(io_context), _id(id)
 {
-    _recvBuffer.resize(8192);
+    std::cout << "DEBUG: StressTestClient Constructor Entry " << id << "\n";
+    try
+    {
+        _recvBuffer.resize(128 * 1024);
+    } catch (...)
+    {
+        std::cerr << "DEBUG: Resize Failed\n";
+    }
+    std::cout << "DEBUG: StressTestClient Constructor Exit " << id << "\n";
 }
 
 StressTestClient::~StressTestClient()
@@ -33,8 +41,14 @@ StressTestClient::~StressTestClient()
 
 void StressTestClient::Start(const std::string &host, const std::string &port)
 {
-    auto endpoints = _resolver.resolve(host, port);
-    DoConnect(endpoints, 5); // Start with 5 retries
+    boost::asio::post(
+        _strand,
+        [this, self = shared_from_this(), host, port]()
+        {
+            auto endpoints = _resolver.resolve(host, port);
+            DoConnect(endpoints, 5);
+        }
+    );
 }
 
 void StressTestClient::DoConnect(const boost::asio::ip::tcp::resolver::results_type &endpoints, int retriesLeft)
@@ -42,36 +56,44 @@ void StressTestClient::DoConnect(const boost::asio::ip::tcp::resolver::results_t
     boost::asio::async_connect(
         _socket,
         endpoints,
-        [this, self = shared_from_this(), endpoints, retriesLeft](const boost::system::error_code &ec, tcp::endpoint)
-        {
-            if (!ec)
+        boost::asio::bind_executor(
+            _strand,
+            [this, self = shared_from_this(), endpoints, retriesLeft](
+                const boost::system::error_code &ec, tcp::endpoint
+            )
             {
-                _isConnected = true;
-                _socket.set_option(tcp::no_delay(true));
-                // std::cout << "[Client " << _id << "] Connected\n";
-                RecvLoop();
-                SendLogin();
-            }
-            else
-            {
-                if (retriesLeft > 0)
+                if (!ec)
                 {
-                    // Retry after 1 second
-                    auto timer = std::make_shared<boost::asio::steady_timer>(_socket.get_executor());
-                    timer->expires_after(std::chrono::seconds(1));
-                    timer->async_wait(
-                        [this, self, endpoints, retriesLeft, timer](const boost::system::error_code &)
-                        {
-                            DoConnect(endpoints, retriesLeft - 1);
-                        }
-                    );
+                    _isConnected = true;
+                    _socket.set_option(tcp::no_delay(true));
+                    std::cout << "[Client " << _id << "] Connected\n";
+                    RecvLoop();
+                    SendLogin();
                 }
                 else
                 {
-                    std::cerr << "[Client " << _id << "] Connect Failed (Final): " << ec.message() << "\n";
+                    if (retriesLeft > 0)
+                    {
+                        auto timer = std::make_shared<boost::asio::steady_timer>(_socket.get_executor());
+                        timer->expires_after(std::chrono::seconds(1));
+                        timer->async_wait(
+                            boost::asio::bind_executor(
+                                _strand,
+                                [this, self, endpoints, retriesLeft, timer](const boost::system::error_code &ec_timer)
+                                {
+                                    if (ec_timer != boost::asio::error::operation_aborted)
+                                        DoConnect(endpoints, retriesLeft - 1);
+                                }
+                            )
+                        );
+                    }
+                    else
+                    {
+                        std::cerr << "[Client " << _id << "] Connect Failed (Final): " << ec.message() << "\n";
+                    }
                 }
             }
-        }
+        )
     );
 }
 
@@ -79,20 +101,22 @@ void StressTestClient::Stop()
 {
     _isConnected = false;
     boost::system::error_code ec;
-    try
+    if (_socket.is_open())
     {
-        if (_socket.is_open())
-            _socket.close(ec);
-    } catch (...)
-    {
+        _socket.shutdown(tcp::socket::shutdown_both, ec);
+        _socket.close(ec);
     }
 }
 
 void StressTestClient::RequestCreateRoom(const std::string &title, OnRoomCreatedCallback callback)
 {
+    std::cout << "DEBUG: RequestCreateRoom Entry\n";
     _isCreator = true;
+    std::cout << "DEBUG: RequestCreateRoom 2\n";
     _roomTitleToCreate = title;
+    std::cout << "DEBUG: RequestCreateRoom 3\n";
     _onRoomCreated = callback;
+    std::cout << "DEBUG: RequestCreateRoom 4\n";
 }
 
 void StressTestClient::SendPacket(uint16_t id, const google::protobuf::Message &msg)
@@ -100,35 +124,68 @@ void StressTestClient::SendPacket(uint16_t id, const google::protobuf::Message &
     if (!_isConnected)
         return;
 
-    size_t bodySize = msg.ByteSizeLong();
-    size_t packetSize = sizeof(System::PacketHeader) + bodySize;
+    size_t body_size = msg.ByteSizeLong();
+    size_t packet_size = sizeof(System::PacketHeader) + body_size;
 
-    std::vector<uint8_t> buffer(packetSize);
+    std::vector<uint8_t> buffer(packet_size);
     auto *header = reinterpret_cast<System::PacketHeader *>(buffer.data());
-    header->size = static_cast<uint16_t>(packetSize);
+    header->size = static_cast<uint16_t>(packet_size);
     header->id = id;
 
-    msg.SerializeToArray(buffer.data() + sizeof(System::PacketHeader), static_cast<int>(bodySize));
+    msg.SerializeToArray(buffer.data() + sizeof(System::PacketHeader), static_cast<int>(body_size));
 
     // XOR-CBC Encryption (Key: 165)
-    // Server Init: XorEncryption(165)
-    // Algorithm: cipher = plain ^ key; key = cipher;
     uint8_t key = 165;
-    uint8_t *payloadPtr = buffer.data() + sizeof(System::PacketHeader);
-    for (size_t i = 0; i < bodySize; ++i)
+    uint8_t *payload_ptr = buffer.data() + sizeof(System::PacketHeader);
+    for (size_t i = 0; i < body_size; ++i)
     {
-        uint8_t plain = payloadPtr[i];
+        uint8_t plain = payload_ptr[i];
         uint8_t cipher = plain ^ key;
-        payloadPtr[i] = cipher;
-        key = cipher; // Feedback for CBC
+        payload_ptr[i] = cipher;
+        key = cipher;
     }
+
+    boost::asio::post(
+        _strand,
+        [this, self = shared_from_this(), send_buffer = std::move(buffer)]() mutable
+        {
+            bool write_in_progress = !_sendQueue.empty();
+            _sendQueue.push_back(std::move(send_buffer));
+
+            if (!write_in_progress)
+            {
+                DoWrite();
+            }
+        }
+    );
+}
+
+void StressTestClient::DoWrite()
+{
+    // Important: DoWrite must be called WITHIN the strand
+    if (_sendQueue.empty())
+        return;
 
     boost::asio::async_write(
         _socket,
-        boost::asio::buffer(buffer),
-        [self = shared_from_this()](const boost::system::error_code &, size_t)
-        {
-        }
+        boost::asio::buffer(_sendQueue.front()),
+        boost::asio::bind_executor(
+            _strand,
+            [this, self = shared_from_this()](const boost::system::error_code &ec, size_t /*bytesTransferred*/)
+            {
+                if (ec)
+                {
+                    _isConnected = false;
+                    return;
+                }
+
+                _sendQueue.pop_front();
+                if (!_sendQueue.empty())
+                {
+                    DoWrite();
+                }
+            }
+        )
     );
 }
 
@@ -213,50 +270,60 @@ void StressTestClient::RecvLoop()
 {
     _socket.async_read_some(
         boost::asio::buffer(_recvBuffer.data() + _writePos, _recvBuffer.size() - _writePos),
-        [this, self = shared_from_this()](const boost::system::error_code &ec, size_t bytesTransferred)
-        {
-            if (ec)
+        boost::asio::bind_executor(
+            _strand,
+            [this, self = shared_from_this()](const boost::system::error_code &ec, size_t bytesTransferred)
             {
-                // std::cerr << "[Client " << _id << "] Recv Error: " << ec.message() << "\n";
-                _isConnected = false;
-                return;
+                if (ec)
+                {
+                    _isConnected = false;
+                    return;
+                }
+
+                _writePos += bytesTransferred;
+
+                while (_writePos - _readPos >= sizeof(System::PacketHeader))
+                {
+                    auto *header = reinterpret_cast<System::PacketHeader *>(&_recvBuffer[_readPos]);
+
+                    // Invalid packet size check
+                    if (header->size < sizeof(System::PacketHeader) || header->size > 65535)
+                    {
+                        std::cerr << "[Client " << _id << "] Invalid Packet Size: " << header->size << "\n";
+                        _isConnected = false;
+                        return;
+                    }
+
+                    if (_writePos - _readPos < header->size)
+                        break;
+
+                    // Handle Packet
+                    HandlePacket(
+                        header->id,
+                        &_recvBuffer[_readPos + sizeof(System::PacketHeader)],
+                        header->size - sizeof(System::PacketHeader)
+                    );
+
+                    _readPos += header->size;
+                }
+
+                // Buffer Management
+                if (_readPos == _writePos)
+                {
+                    _readPos = 0;
+                    _writePos = 0;
+                }
+                else if (_recvBuffer.size() - _writePos < 1024)
+                {
+                    size_t remaining = _writePos - _readPos;
+                    std::memmove(_recvBuffer.data(), &_recvBuffer[_readPos], remaining);
+                    _readPos = 0;
+                    _writePos = remaining;
+                }
+
+                RecvLoop();
             }
-
-            _writePos += bytesTransferred;
-
-            while (_writePos - _readPos >= sizeof(System::PacketHeader))
-            {
-                auto *header = reinterpret_cast<System::PacketHeader *>(&_recvBuffer[_readPos]);
-
-                if (_writePos - _readPos < header->size)
-                    break;
-
-                // Handle Packet
-                HandlePacket(
-                    header->id,
-                    &_recvBuffer[_readPos + sizeof(System::PacketHeader)],
-                    header->size - sizeof(System::PacketHeader)
-                );
-
-                _readPos += header->size;
-            }
-
-            if (_readPos == _writePos)
-            {
-                _readPos = 0;
-                _writePos = 0;
-            }
-            else if (_recvBuffer.size() - _writePos < 1024)
-            {
-                // Compact
-                size_t remaining = _writePos - _readPos;
-                std::memmove(_recvBuffer.data(), &_recvBuffer[_readPos], remaining);
-                _readPos = 0;
-                _writePos = remaining;
-            }
-
-            RecvLoop();
-        }
+        )
     );
 }
 
