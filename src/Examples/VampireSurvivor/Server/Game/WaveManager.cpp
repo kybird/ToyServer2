@@ -274,7 +274,7 @@ std::pair<float, float> WaveManager::GetAngularGapSpawnPos(const PlayerCluster &
     return {cluster.centerX + std::cos(finalAngle) * finalRadius, cluster.centerY + std::sin(finalAngle) * finalRadius};
 }
 
-void WaveManager::StartSpawner(Room *room, const WaveData &wave)
+void WaveManager::StartSpawner(Room *room, const WaveInfo &wave)
 {
     PeriodicSpawner spawner;
     spawner.monsterTypeId = wave.monsterTypeId;
@@ -308,7 +308,7 @@ void WaveManager::SpawnMonster(int32_t monsterTypeId, float hpMultiplier, Room *
     // Apply HP Multiplier from WaveData
     int32_t finalHp = 0;
     int32_t maxHp = 100;
-    const auto *tmpl = DataManager::Instance().GetMonsterTemplate(monsterTypeId);
+    const auto *tmpl = DataManager::Instance().GetMonsterInfo(monsterTypeId);
     if (tmpl)
     {
         finalHp = static_cast<int32_t>(tmpl->hp * hpMultiplier);

@@ -87,7 +87,7 @@ std::vector<LevelUpOption> LevelUpManager::BuildCandidatePool(Player *player)
             if (inventory.GetPassiveLevel(tmpl.evolutionPassiveId) > 0)
             {
                 // 진화 아이템을 후보로 등록 (ID는 진화된 무기 ID)
-                const auto *evoTmpl = DataManager::Instance().GetWeaponTemplate(tmpl.evolutionId);
+                const auto *evoTmpl = DataManager::Instance().GetWeaponInfo(tmpl.evolutionId);
                 if (evoTmpl && inventory.GetWeaponLevel(evoTmpl->id) == 0)
                 {
                     LevelUpOption opt;
@@ -195,12 +195,12 @@ std::vector<LevelUpOption> LevelUpManager::SelectRandom(const std::vector<LevelU
             // 가중치 가져오기
             if (opt.type == LevelUpOptionType::WEAPON)
             {
-                auto tmpl = DataManager::Instance().GetWeaponTemplate(opt.itemId);
+                auto tmpl = DataManager::Instance().GetWeaponInfo(opt.itemId);
                 totalWeight += tmpl ? tmpl->weight : 100;
             }
             else
             {
-                auto tmpl = DataManager::Instance().GetPassiveTemplate(opt.itemId);
+                auto tmpl = DataManager::Instance().GetPassiveInfo(opt.itemId);
                 totalWeight += tmpl ? tmpl->weight : 100;
             }
         }
@@ -217,12 +217,12 @@ std::vector<LevelUpOption> LevelUpManager::SelectRandom(const std::vector<LevelU
             int weight = 100;
             if (it->type == LevelUpOptionType::WEAPON)
             {
-                auto tmpl = DataManager::Instance().GetWeaponTemplate(it->itemId);
+                auto tmpl = DataManager::Instance().GetWeaponInfo(it->itemId);
                 weight = tmpl ? tmpl->weight : 100;
             }
             else
             {
-                auto tmpl = DataManager::Instance().GetPassiveTemplate(it->itemId);
+                auto tmpl = DataManager::Instance().GetPassiveInfo(it->itemId);
                 weight = tmpl ? tmpl->weight : 100;
             }
 

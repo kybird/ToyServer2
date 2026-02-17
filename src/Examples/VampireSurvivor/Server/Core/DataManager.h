@@ -7,7 +7,7 @@
 
 namespace SimpleGame {
 
-struct MonsterTemplate
+struct MonsterInfo
 {
     int32_t id;
     std::string name;
@@ -19,7 +19,7 @@ struct MonsterTemplate
     MonsterAIType aiType;
 };
 
-struct PlayerTemplate
+struct PlayerInfo
 {
     int32_t id;
     std::string name;
@@ -28,39 +28,39 @@ struct PlayerTemplate
     std::vector<int32_t> defaultSkills;
 };
 
-struct SkillTemplate
+struct SkillInfo
 {
-    int32_t id;
+    int32_t id = 0;
     std::string name;
-    int32_t damage;
-    float tickInterval;
-    float hitRadius;
-    float lifeTime;
+    int32_t damage = 0;
+    float tickInterval = 1.0f;
+    float hitRadius = 0.5f;
+    float lifeTime = 0.0f;
 
-    std::string emitterType;   // "Linear", "Orbit", "AoE"
-    int32_t typeId;            // 클라이언트 프리팹 ID (투사체 등)
-    int32_t pierce;            // 관통 수
-    int32_t maxTargetsPerTick; // 틱당 최대 타겟
-    std::string targetRule;    // "Nearest", "Random", "LowestHp"
+    std::string emitterType = "Linear"; // "Linear", "Orbit", "AoE", "Zone", "Arc"
+    int32_t typeId = 0;                 // 클라이언트 프리팹 ID (투사체 등)
+    int32_t pierce = 0;                 // 관통 수
+    int32_t maxTargetsPerTick = 1;      // 틱당 최대 타겟
+    std::string targetRule = "Nearest"; // "Nearest", "Random", "LowestHp"
 
     // Status Effects
-    std::string effectType; // "POISON", "SLOW", etc. (Empty if none)
-    float effectValue;      // Damage for DoT, Scale for Slow (e.g. 0.5)
-    float effectDuration;   // Duration in seconds
-    float effectInterval;   // Tick interval for DoT
+    std::string effectType;      // "POISON", "SLOW", etc. (Empty if none)
+    float effectValue = 0.0f;    // Damage for DoT, Scale for Slow (e.g. 0.5)
+    float effectDuration = 0.0f; // Duration in seconds
+    float effectInterval = 0.0f; // Tick interval for DoT
 
     // Field/Persistent Skill Stats
-    float activeDuration;     // How long the field stays active (0 = pulse)
-    float dotInterval;        // Tick interval for damage/effect while active
-    float arcDegrees = 30.0f; // [New] Arc angle for Arc emitter type
-    float width = 0.0f;       // [New] Rectangular width
-    float height = 0.0f;      // [New] Rectangular height
+    float activeDuration = 0.0f; // How long the field stays active (0 = pulse)
+    float dotInterval = 0.5f;    // Tick interval for damage/effect while active
+    float arcDegrees = 30.0f;    // [New] Arc angle for Arc emitter type
+    float width = 0.0f;          // [New] Rectangular width
+    float height = 0.0f;         // [New] Rectangular height
 
     // Traits (Categories)
     std::vector<std::string> traits; // "PROJECTILE", "AOE", "DURATION", "PIERCE", etc.
 };
 
-struct WaveData
+struct WaveInfo
 {
     int32_t waveId;
     float startTime;
@@ -71,7 +71,7 @@ struct WaveData
     float hpMultiplier = 1.0f; // Default 1.0
 };
 
-struct WeaponLevelData
+struct WeaponLevelInfo
 {
     int32_t level;
     int32_t skillId;
@@ -84,7 +84,7 @@ struct WeaponLevelData
     std::unordered_map<std::string, float> params;
 };
 
-struct WeaponTemplate
+struct WeaponInfo
 {
     int32_t id;
     std::string name;
@@ -95,17 +95,17 @@ struct WeaponTemplate
     int32_t uniqueGroup = 0;        // 중복 방지 그룹 ID
     int32_t evolutionId = 0;        // 진화 결과 무기 ID
     int32_t evolutionPassiveId = 0; // 진화에 필요한 패시브 ID
-    std::vector<WeaponLevelData> levels;
+    std::vector<WeaponLevelInfo> levels;
 };
 
-struct PassiveLevelData
+struct PassiveLevelInfo
 {
     int32_t level;
     float bonus;
     std::string desc;
 };
 
-struct PassiveTemplate
+struct PassiveInfo
 {
     int32_t id;
     std::string name;
@@ -115,7 +115,7 @@ struct PassiveTemplate
     int32_t maxLevel;
     int32_t weight = 100;    // 가중치 (추첨 확률)
     int32_t uniqueGroup = 0; // 중복 방지 그룹 ID
-    std::vector<PassiveLevelData> levels;
+    std::vector<PassiveLevelInfo> levels;
 };
 
 class DataManager
@@ -128,55 +128,55 @@ public:
     }
 
     bool LoadMonsterData(const std::string &path);
-    const MonsterTemplate *GetMonsterTemplate(int32_t id);
+    const MonsterInfo *GetMonsterInfo(int32_t id);
 
     bool LoadPlayerData(const std::string &path);
-    const PlayerTemplate *GetPlayerTemplate(int32_t id);
+    const PlayerInfo *GetPlayerInfo(int32_t id);
 
     bool LoadSkillData(const std::string &path);
-    const SkillTemplate *GetSkillTemplate(int32_t id);
+    const SkillInfo *GetSkillInfo(int32_t id);
 
     bool LoadWaveData(const std::string &path);
-    const std::vector<WaveData> &GetWaves() const
+    const std::vector<WaveInfo> &GetWaves() const
     {
         return _waves;
     }
 
     bool LoadWeaponData(const std::string &path);
-    const WeaponTemplate *GetWeaponTemplate(int32_t id);
-    const std::unordered_map<int32_t, WeaponTemplate> &GetAllWeapons() const
+    const WeaponInfo *GetWeaponInfo(int32_t id);
+    const std::unordered_map<int32_t, WeaponInfo> &GetAllWeapons() const
     {
         return _weapons;
     }
 
     bool LoadPassiveData(const std::string &path);
-    const PassiveTemplate *GetPassiveTemplate(int32_t id);
-    const std::unordered_map<int32_t, PassiveTemplate> &GetAllPassives() const
+    const PassiveInfo *GetPassiveInfo(int32_t id);
+    const std::unordered_map<int32_t, PassiveInfo> &GetAllPassives() const
     {
         return _passives;
     }
 
     // For Testing
-    void AddMonsterTemplate(const MonsterTemplate &tmpl)
+    void AddMonsterInfo(const MonsterInfo &tmpl)
     {
         _monsters[tmpl.id] = tmpl;
     }
-    void AddPlayerTemplate(const PlayerTemplate &tmpl)
+    void AddPlayerInfo(const PlayerInfo &tmpl)
     {
         _players[tmpl.id] = tmpl;
     }
-    void AddSkillTemplate(const SkillTemplate &tmpl)
+    void AddSkillInfo(const SkillInfo &tmpl)
     {
         _skills[tmpl.id] = tmpl;
     }
 
 private:
-    std::unordered_map<int32_t, MonsterTemplate> _monsters;
-    std::unordered_map<int32_t, PlayerTemplate> _players;
-    std::unordered_map<int32_t, SkillTemplate> _skills;
-    std::vector<WaveData> _waves;
-    std::unordered_map<int32_t, WeaponTemplate> _weapons;
-    std::unordered_map<int32_t, PassiveTemplate> _passives;
+    std::unordered_map<int32_t, MonsterInfo> _monsters;
+    std::unordered_map<int32_t, PlayerInfo> _players;
+    std::unordered_map<int32_t, SkillInfo> _skills;
+    std::vector<WaveInfo> _waves;
+    std::unordered_map<int32_t, WeaponInfo> _weapons;
+    std::unordered_map<int32_t, PassiveInfo> _passives;
 };
 
 } // namespace SimpleGame

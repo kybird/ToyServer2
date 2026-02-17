@@ -41,7 +41,7 @@ private:
         float remainingDuration;
     };
 
-    void StartSpawner(Room *room, const WaveData &wave);
+    void StartSpawner(Room *room, const WaveInfo &wave);
     void SpawnMonster(int32_t monsterTypeId, float hpMultiplier, Room *room);
     void BroadcastProto(Room *room, PacketID id, const Protocol::S_SpawnObject &msg);
 
@@ -50,7 +50,7 @@ private:
     int _roomId;
 
     float _currentTime = 0.0f;
-    std::vector<WaveData> _waves;
+    std::vector<WaveInfo> _waves;
     int _currentWaveIndex = 0;
     float _nextSpawnTime = 0.0f;
 

@@ -17,7 +17,7 @@ namespace SimpleGame {
 DamageEmitter::DamageEmitter(int32_t skillId, std::shared_ptr<Player> owner, int32_t weaponId, int32_t level)
     : _skillId(skillId), _owner(owner), _weaponId(weaponId), _level(level)
 {
-    const auto *tmpl = DataManager::Instance().GetSkillTemplate(skillId);
+    const auto *tmpl = DataManager::Instance().GetSkillInfo(skillId);
     if (tmpl)
     {
         _damage = tmpl->damage;
@@ -47,7 +47,7 @@ DamageEmitter::DamageEmitter(int32_t skillId, std::shared_ptr<Player> owner, int
     }
     else
     {
-        LOG_ERROR("[DamageEmitter] Failed to find SkillTemplate for ID {}", skillId);
+        LOG_ERROR("[DamageEmitter] Failed to find SkillInfo for ID {}", skillId);
     }
     _timer = _tickInterval; // Ready to fire
 }
@@ -67,7 +67,7 @@ void DamageEmitter::Update(float dt, Room *room)
     }
 
     // --- Apply Multipliers ---
-    const auto *tmpl = DataManager::Instance().GetSkillTemplate(_skillId);
+    const auto *tmpl = DataManager::Instance().GetSkillInfo(_skillId);
     auto hasTrait = [&](const std::string &trait)
     {
         if (!tmpl)
@@ -97,7 +97,7 @@ void DamageEmitter::Update(float dt, Room *room)
     // Weapon Level Multipliers
     if (_weaponId > 0)
     {
-        const auto *weaponTmpl = DataManager::Instance().GetWeaponTemplate(_weaponId);
+        const auto *weaponTmpl = DataManager::Instance().GetWeaponInfo(_weaponId);
         if (weaponTmpl && _level > 0 && _level <= static_cast<int>(weaponTmpl->levels.size()))
         {
             const auto &levelData = weaponTmpl->levels[_level - 1];
@@ -161,7 +161,7 @@ void DamageEmitter::Update(float dt, Room *room)
                 std::vector<int32_t> hitTargetIds;
                 std::vector<int32_t> hitDamageValues;
 
-                const auto *tmpl = DataManager::Instance().GetSkillTemplate(_skillId);
+                const auto *tmpl = DataManager::Instance().GetSkillInfo(_skillId);
 
                 for (auto &monster : victims)
                 {
@@ -375,7 +375,7 @@ void DamageEmitter::Update(float dt, Room *room)
             float heightMult = 1.0f;
             if (_weaponId > 0)
             {
-                const auto *weaponTmpl = DataManager::Instance().GetWeaponTemplate(_weaponId);
+                const auto *weaponTmpl = DataManager::Instance().GetWeaponInfo(_weaponId);
                 if (weaponTmpl != nullptr && _level > 0 && static_cast<size_t>(_level) <= weaponTmpl->levels.size())
                 {
                     const auto &levelData = weaponTmpl->levels[static_cast<size_t>(_level) - 1];

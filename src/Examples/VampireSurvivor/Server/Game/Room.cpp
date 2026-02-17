@@ -222,8 +222,7 @@ void Room::OnTimer(uint32_t timerId, void *pParam)
 
 void Room::Update(float deltaTime)
 {
-    // [RAII] 예외 발생 시에도 반드시 플래그 해제 보장
-    // OnTimer에서 CAS로 이미 true 설정했으므로 추가 store(true) 불필요
+    // 함수 종료 시 _isUpdating을 false로 복원 (예외 안전)
     struct UpdateGuard
     {
         std::atomic<bool> &flag;
@@ -256,13 +255,6 @@ void Room::Enter(const std::shared_ptr<Player> &player)
 
 void Room::ExecuteEnter(const std::shared_ptr<Player> &player)
 {
-    // [Fix] 기존에는 1인 테스트를 위해 신규 입장 시 무조건 방을 리셋했으나,
-    // 멀티플레이어 환경(스트레스 테스트 등)을 위해 해당 로직을 제거함.
-    {
-        // 특정 세션이 이미 존재할 경우에 대한 처리는 필요할 수 있으나,
-        // 전체 플레이어를 지우는 것은 멀티 환경에서 치명적임.
-    }
-
     _players[player->GetSessionId()] = player;
     _playerCount++; // [Thread-Safe] atomic 카운터 증가
     player->SetRoomId(_roomId);
@@ -307,7 +299,7 @@ void Room::ExecuteEnter(const std::shared_ptr<Player> &player)
                             self->_roomId
                         );
 
-                        const auto *pTmpl = DataManager::Instance().GetPlayerTemplate(1);
+                        const auto *pTmpl = DataManager::Instance().GetPlayerInfo(1);
                         if (pTmpl != nullptr && !pTmpl->defaultSkills.empty())
                         {
                             player->AddDefaultSkills(pTmpl->defaultSkills, self.get());
@@ -328,7 +320,7 @@ void Room::ExecuteEnter(const std::shared_ptr<Player> &player)
     }
     else
     {
-        const auto *pTmpl = DataManager::Instance().GetPlayerTemplate(1);
+        const auto *pTmpl = DataManager::Instance().GetPlayerInfo(1);
         if (pTmpl != nullptr && !pTmpl->defaultSkills.empty())
         {
             player->AddDefaultSkills(pTmpl->defaultSkills, this);

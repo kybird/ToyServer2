@@ -11,7 +11,7 @@ bool PlayerInventory::AddOrUpgradeWeapon(int weaponId)
     // 이미 보유 중 - 업그레이드
     if (it != _weapons.end())
     {
-        const auto *tmpl = DataManager::Instance().GetWeaponTemplate(weaponId);
+        const auto *tmpl = DataManager::Instance().GetWeaponInfo(weaponId);
         if (!tmpl)
         {
             LOG_ERROR("[PlayerInventory] Weapon template {} not found", weaponId);
@@ -48,7 +48,7 @@ bool PlayerInventory::AddOrUpgradePassive(int passiveId)
     // 이미 보유 중 - 업그레이드
     if (it != _passives.end())
     {
-        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(passiveId);
+        const auto *tmpl = DataManager::Instance().GetPassiveInfo(passiveId);
         if (!tmpl)
         {
             LOG_ERROR("[PlayerInventory] Passive template {} not found", passiveId);
@@ -126,7 +126,7 @@ bool PlayerInventory::IsWeaponMaxLevel(int weaponId) const
     if (it == _weapons.end())
         return false;
 
-    const auto *tmpl = DataManager::Instance().GetWeaponTemplate(weaponId);
+    const auto *tmpl = DataManager::Instance().GetWeaponInfo(weaponId);
     if (!tmpl)
         return false;
 
@@ -139,7 +139,7 @@ bool PlayerInventory::IsPassiveMaxLevel(int passiveId) const
     if (it == _passives.end())
         return false;
 
-    const auto *tmpl = DataManager::Instance().GetPassiveTemplate(passiveId);
+    const auto *tmpl = DataManager::Instance().GetPassiveInfo(passiveId);
     if (!tmpl)
         return false;
 

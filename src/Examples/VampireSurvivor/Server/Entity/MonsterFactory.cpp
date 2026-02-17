@@ -26,7 +26,7 @@ MonsterFactory::MonsterFactory()
 std::shared_ptr<Monster>
 MonsterFactory::CreateMonster(ObjectManager &objMgr, int32_t monsterTypeId, float x, float y, int32_t hpOverride)
 {
-    const auto *tmpl = DataManager::Instance().GetMonsterTemplate(monsterTypeId);
+    const auto *tmpl = DataManager::Instance().GetMonsterInfo(monsterTypeId);
     if (!tmpl)
     {
         LOG_ERROR("Invalid Monster Type ID: {}", monsterTypeId);

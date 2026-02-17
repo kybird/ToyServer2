@@ -17,6 +17,7 @@ namespace SimpleGame {
 void Room::ExecuteUpdate(float deltaTime)
 {
     // [Fix] 정지 중이거나 플레이어가 없으면 무거운 연산 즉시 중단
+
     if (!_gameStarted || _isGameOver || _isStopping.load() || _players.empty())
         return;
 

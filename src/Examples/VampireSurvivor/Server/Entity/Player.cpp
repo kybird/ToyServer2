@@ -560,7 +560,7 @@ float Player::GetDamageMultiplier() const
 
     for (int id : _inventory->GetOwnedPassiveIds())
     {
-        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        const auto *tmpl = DataManager::Instance().GetPassiveInfo(id);
         if (tmpl && tmpl->statType == "damage")
         {
             int level = _inventory->GetPassiveLevel(id);
@@ -581,7 +581,7 @@ float Player::GetMaxHpMultiplier() const
 
     for (int id : _inventory->GetOwnedPassiveIds())
     {
-        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        const auto *tmpl = DataManager::Instance().GetPassiveInfo(id);
         if (tmpl && tmpl->statType == "max_hp")
         {
             int level = _inventory->GetPassiveLevel(id);
@@ -602,7 +602,7 @@ float Player::GetMovementSpeedMultiplier() const
 
     for (int id : _inventory->GetOwnedPassiveIds())
     {
-        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        const auto *tmpl = DataManager::Instance().GetPassiveInfo(id);
         if (tmpl && tmpl->statType == "speed")
         {
             int level = _inventory->GetPassiveLevel(id);
@@ -623,7 +623,7 @@ float Player::GetCooldownMultiplier() const
 
     for (int id : _inventory->GetOwnedPassiveIds())
     {
-        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        const auto *tmpl = DataManager::Instance().GetPassiveInfo(id);
         if (tmpl && tmpl->statType == "cooldown")
         {
             int level = _inventory->GetPassiveLevel(id);
@@ -644,7 +644,7 @@ float Player::GetAreaMultiplier() const
 
     for (int id : _inventory->GetOwnedPassiveIds())
     {
-        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        const auto *tmpl = DataManager::Instance().GetPassiveInfo(id);
         if (tmpl && tmpl->statType == "area")
         {
             int level = _inventory->GetPassiveLevel(id);
@@ -665,7 +665,7 @@ float Player::GetDurationMultiplier() const
 
     for (int id : _inventory->GetOwnedPassiveIds())
     {
-        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        const auto *tmpl = DataManager::Instance().GetPassiveInfo(id);
         if (tmpl && tmpl->statType == "duration")
         {
             int level = _inventory->GetPassiveLevel(id);
@@ -686,7 +686,7 @@ int32_t Player::GetAdditionalProjectileCount() const
 
     for (int id : _inventory->GetOwnedPassiveIds())
     {
-        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        const auto *tmpl = DataManager::Instance().GetPassiveInfo(id);
         if (tmpl && tmpl->statType == "projectile_count")
         {
             int level = _inventory->GetPassiveLevel(id);
@@ -707,7 +707,7 @@ int32_t Player::GetAdditionalPierceCount() const
 
     for (int id : _inventory->GetOwnedPassiveIds())
     {
-        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        const auto *tmpl = DataManager::Instance().GetPassiveInfo(id);
         if (tmpl && tmpl->statType == "pierce")
         {
             int level = _inventory->GetPassiveLevel(id);
@@ -788,7 +788,7 @@ void Player::RefreshInventoryEffects(Room *room)
         else
         {
             // New weapon, create emitter
-            const auto *tmpl = DataManager::Instance().GetWeaponTemplate(weaponId);
+            const auto *tmpl = DataManager::Instance().GetWeaponInfo(weaponId);
             if (tmpl && level > 0 && level <= static_cast<int>(tmpl->levels.size()))
             {
                 int skillId = tmpl->levels[level - 1].skillId;
@@ -837,7 +837,7 @@ float Player::GetCriticalChance() const
 
     for (int id : _inventory->GetOwnedPassiveIds())
     {
-        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        const auto *tmpl = DataManager::Instance().GetPassiveInfo(id);
         if (tmpl && tmpl->statType == "critical_chance")
         {
             int level = _inventory->GetPassiveLevel(id);
@@ -861,7 +861,7 @@ float Player::GetCriticalDamageMultiplier() const
 
     for (int id : _inventory->GetOwnedPassiveIds())
     {
-        const auto *tmpl = DataManager::Instance().GetPassiveTemplate(id);
+        const auto *tmpl = DataManager::Instance().GetPassiveInfo(id);
         if (tmpl && tmpl->statType == "critical_damage")
         {
             int level = _inventory->GetPassiveLevel(id);

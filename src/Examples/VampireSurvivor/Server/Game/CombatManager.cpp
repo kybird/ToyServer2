@@ -145,6 +145,10 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
                             }
                         }
 
+                        // [Fix] 이미 타격한 대상인지 체크 (관통 투사체가 같은 대상을 반복 타격하는 것 방지)
+                        if (proj->HasHit(monster->GetId()))
+                            continue;
+
                         // [Pierce Damage Decay] Calculate damage based on pierce count
                         // Each pierce reduces damage by 10%
                         int32_t baseDamage = proj->GetDamage();
@@ -153,6 +157,7 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
                             static_cast<int32_t>(baseDamage * std::pow(0.9, pierceCount) * critMultiplier);
 
                         monster->TakeDamage(actualDamage, room);
+                        proj->AddHit(monster->GetId()); // [Fix] 타격 기록 추가
 
                         bool consumed = proj->OnHit();
 

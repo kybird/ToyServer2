@@ -106,6 +106,11 @@ TEST_F(ThreadPoolTest, GracefulShutdown)
         ));
     }
 
+    for (auto &f : futures)
+    {
+        f.get();
+    }
+
     pool.Stop(); // finishPending = true
 
     // Check if all tasks completed

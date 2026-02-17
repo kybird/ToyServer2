@@ -138,7 +138,7 @@ void Monster::Initialize(
     _id = id;
     _monsterTypeId = monsterTypeId;
     _hp = _maxHp = hp;
-    _radius = GameConfig::MONSTER_COLLISION_RADIUS;
+    _radius = radius;
     _damageOnContact = damage;
     _attackCooldown = cooldown;
     _lastAttackTime = -100.0f;

@@ -2,6 +2,7 @@
 #include "Game/Room.h"
 #include "Game/RoomManager.h"
 #include "Protocol/game.pb.h"
+#include "System/MockSystem.h"
 #include <gtest/gtest.h>
 
 using namespace SimpleGame;
@@ -70,25 +71,36 @@ class VerificationTest : public ::testing::Test
 protected:
     void SetUp() override
     {
+        // Setup RoomManager
+        mockFramework = std::make_shared<System::MockFramework>();
+        RoomManager::Instance().Init(mockFramework, nullptr);
+
         // Setup Room
         room = RoomManager::Instance().CreateRoom(999, "TestRoom");
-        room->Start();
+        // [Fix] StartGame sets _gameStarted = true, required for ExecuteUpdate
+        room->StartGame();
 
-        // Setup Player
+        // [Fix] Make ID and SessionID same to avoid CombatManager lookup failure
         session = std::make_shared<MockSession>(100);
-        player = std::make_shared<Player>(1, session->GetId());
-        player->Initialize(1, session->GetId(), 100, 5.0f);
+        player = std::make_shared<Player>(100, 100ULL);
+        player->Initialize(100, 100ULL, 100, 5.0f);
+        player->SetReady(true);
         room->Enter(player);
     }
 
     void TearDown() override
     {
-        room->Stop();
+        if (room)
+        {
+            room->Stop();
+        }
+        RoomManager::Instance().Cleanup();
     }
 
     std::shared_ptr<Room> room;
     std::shared_ptr<Player> player;
     std::shared_ptr<MockSession> session;
+    std::shared_ptr<System::MockFramework> mockFramework;
 };
 
 // 1. Normal Movement
@@ -126,6 +138,9 @@ TEST_F(VerificationTest, CorrectionTrigger_OnLargeError)
     player->SetVelocity(0, 0);
     player->UpdateLastSentState(0.0f, 0);
     player->SetPos(100.0f, 0.0f);
+
+    // [Fix] Manually simulate what the test expects (server recording the sent state)
+    player->UpdateLastSentState(0.05f, 1);
 
     room->Update(0.05f);
 

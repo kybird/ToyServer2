@@ -31,6 +31,7 @@ public:
         _x = 0.0f;
         _y = 0.0f;
         _isHit = false;
+        _hitTargets.clear();
         SetState(Protocol::ObjectState::IDLE); // [Fix] Reset state for pooled object
     }
 
@@ -47,6 +48,7 @@ public:
         _vx = 0.0f;
         _vy = 0.0f;
         _isHit = false;
+        _hitTargets.clear();
         SetState(Protocol::ObjectState::IDLE);
     }
 
@@ -142,6 +144,21 @@ public:
         return _pierceCount;
     }
 
+    bool HasHit(int32_t targetId) const
+    {
+        for (int32_t id : _hitTargets)
+        {
+            if (id == targetId)
+                return true;
+        }
+        return false;
+    }
+
+    void AddHit(int32_t targetId)
+    {
+        _hitTargets.push_back(targetId);
+    }
+
 private:
     int32_t _ownerId = 0;
     int32_t _skillId = 0;
@@ -152,6 +169,8 @@ private:
     float _traveledDistance = 0.0f; // [New] Accumulated travel distance
     bool _isHit = false;
     int32_t _pierceCount = 0;
+
+    std::vector<int32_t> _hitTargets; // [Safety] Track hit targets for multi-frame collisions
 
     // Orbit members
     bool _isOrbit = false;

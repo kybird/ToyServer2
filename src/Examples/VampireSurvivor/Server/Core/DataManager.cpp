@@ -13,7 +13,7 @@ bool DataManager::LoadMonsterData(const std::string &path)
         if (!file.is_open())
         {
             LOG_ERROR("Could not open monster data file: {}", path);
-            return false;
+            std::exit(EXIT_FAILURE);
         }
 
         nlohmann::json j;
@@ -21,7 +21,7 @@ bool DataManager::LoadMonsterData(const std::string &path)
 
         for (const auto &item : j)
         {
-            MonsterTemplate data;
+            MonsterInfo data;
             data.id = item["id"];
             data.name = item["name"];
             data.hp = item["hp"];
@@ -45,11 +45,11 @@ bool DataManager::LoadMonsterData(const std::string &path)
     } catch (const std::exception &e)
     {
         LOG_ERROR("Failed to load monster data {}: {}", path, e.what());
-        return false;
+        std::exit(EXIT_FAILURE);
     }
 }
 
-const MonsterTemplate *DataManager::GetMonsterTemplate(int32_t id)
+const MonsterInfo *DataManager::GetMonsterInfo(int32_t id)
 {
     auto it = _monsters.find(id);
     if (it != _monsters.end())
@@ -65,7 +65,7 @@ bool DataManager::LoadPlayerData(const std::string &path)
         if (!file.is_open())
         {
             LOG_ERROR("Could not open player data file: {}", path);
-            return false;
+            std::exit(EXIT_FAILURE);
         }
 
         nlohmann::json j;
@@ -73,7 +73,7 @@ bool DataManager::LoadPlayerData(const std::string &path)
 
         for (const auto &item : j)
         {
-            PlayerTemplate data;
+            PlayerInfo data;
             data.id = item["id"];
             data.name = item["name"];
             data.hp = item["hp"];
@@ -94,11 +94,11 @@ bool DataManager::LoadPlayerData(const std::string &path)
     } catch (const std::exception &e)
     {
         LOG_ERROR("Failed to load player data {}: {}", path, e.what());
-        return false;
+        std::exit(EXIT_FAILURE);
     }
 }
 
-const PlayerTemplate *DataManager::GetPlayerTemplate(int32_t id)
+const PlayerInfo *DataManager::GetPlayerInfo(int32_t id)
 {
     auto it = _players.find(id);
     if (it != _players.end())
@@ -114,7 +114,7 @@ bool DataManager::LoadSkillData(const std::string &path)
         if (!file.is_open())
         {
             LOG_ERROR("Could not open skill data file: {}", path);
-            return false;
+            std::exit(EXIT_FAILURE);
         }
 
         nlohmann::json j;
@@ -122,7 +122,7 @@ bool DataManager::LoadSkillData(const std::string &path)
 
         for (const auto &item : j)
         {
-            SkillTemplate data;
+            SkillInfo data;
             data.id = item["id"];
             data.name = item["name"];
             data.damage = item["damage"];
@@ -168,11 +168,11 @@ bool DataManager::LoadSkillData(const std::string &path)
     } catch (const std::exception &e)
     {
         LOG_ERROR("Failed to load skill data {}: {}", path, e.what());
-        return false;
+        std::exit(EXIT_FAILURE);
     }
 }
 
-const SkillTemplate *DataManager::GetSkillTemplate(int32_t id)
+const SkillInfo *DataManager::GetSkillInfo(int32_t id)
 {
     auto it = _skills.find(id);
     if (it != _skills.end())
@@ -188,7 +188,7 @@ bool DataManager::LoadWaveData(const std::string &path)
         if (!file.is_open())
         {
             LOG_ERROR("Could not open wave data file: {}", path);
-            return false;
+            std::exit(EXIT_FAILURE);
         }
 
         nlohmann::json j;
@@ -196,7 +196,7 @@ bool DataManager::LoadWaveData(const std::string &path)
 
         for (const auto &item : j)
         {
-            WaveData data;
+            WaveInfo data;
             data.waveId = item["wave_id"];
             data.startTime = item["start_time"];
             data.duration = item["duration"]; // Not always used if fixed pattern
@@ -210,7 +210,7 @@ bool DataManager::LoadWaveData(const std::string &path)
         std::sort(
             _waves.begin(),
             _waves.end(),
-            [](const WaveData &a, const WaveData &b)
+            [](const WaveInfo &a, const WaveInfo &b)
             {
                 return a.startTime < b.startTime;
             }
@@ -221,7 +221,7 @@ bool DataManager::LoadWaveData(const std::string &path)
     } catch (const std::exception &e)
     {
         LOG_ERROR("Failed to load wave data {}: {}", path, e.what());
-        return false;
+        std::exit(EXIT_FAILURE);
     }
 }
 
@@ -233,7 +233,7 @@ bool DataManager::LoadWeaponData(const std::string &path)
         if (!file.is_open())
         {
             LOG_ERROR("Could not open weapon data file: {}", path);
-            return false;
+            std::exit(EXIT_FAILURE);
         }
 
         nlohmann::json j;
@@ -241,7 +241,7 @@ bool DataManager::LoadWeaponData(const std::string &path)
 
         for (const auto &item : j)
         {
-            WeaponTemplate data;
+            WeaponInfo data;
             data.id = item["id"];
             data.name = item["name"];
             data.description = item.value("description", "");
@@ -256,7 +256,7 @@ bool DataManager::LoadWeaponData(const std::string &path)
             {
                 for (const auto &lvl : item["levels"])
                 {
-                    WeaponLevelData levelData;
+                    WeaponLevelInfo levelData;
                     levelData.level = lvl["level"];
                     levelData.skillId = lvl["skill_id"];
                     levelData.damageMult = lvl.value("damage_mult", 1.0f);
@@ -287,11 +287,11 @@ bool DataManager::LoadWeaponData(const std::string &path)
     } catch (const std::exception &e)
     {
         LOG_ERROR("Failed to load weapon data {}: {}", path, e.what());
-        return false;
+        std::exit(EXIT_FAILURE);
     }
 }
 
-const WeaponTemplate *DataManager::GetWeaponTemplate(int32_t id)
+const WeaponInfo *DataManager::GetWeaponInfo(int32_t id)
 {
     auto it = _weapons.find(id);
     if (it != _weapons.end())
@@ -307,7 +307,7 @@ bool DataManager::LoadPassiveData(const std::string &path)
         if (!file.is_open())
         {
             LOG_ERROR("Could not open passive data file: {}", path);
-            return false;
+            std::exit(EXIT_FAILURE);
         }
 
         nlohmann::json j;
@@ -315,7 +315,7 @@ bool DataManager::LoadPassiveData(const std::string &path)
 
         for (const auto &item : j)
         {
-            PassiveTemplate data;
+            PassiveInfo data;
             data.id = item["id"];
             data.name = item["name"];
             data.description = item.value("description", "");
@@ -329,7 +329,7 @@ bool DataManager::LoadPassiveData(const std::string &path)
             {
                 for (const auto &lvl : item["levels"])
                 {
-                    PassiveLevelData levelData;
+                    PassiveLevelInfo levelData;
                     levelData.level = lvl["level"];
                     levelData.bonus = lvl.value("bonus", 0.0f);
                     levelData.desc = lvl.value("desc", "");
@@ -344,11 +344,11 @@ bool DataManager::LoadPassiveData(const std::string &path)
     } catch (const std::exception &e)
     {
         LOG_ERROR("Failed to load passive data {}: {}", path, e.what());
-        return false;
+        std::exit(EXIT_FAILURE);
     }
 }
 
-const PassiveTemplate *DataManager::GetPassiveTemplate(int32_t id)
+const PassiveInfo *DataManager::GetPassiveInfo(int32_t id)
 {
     auto it = _passives.find(id);
     if (it != _passives.end())

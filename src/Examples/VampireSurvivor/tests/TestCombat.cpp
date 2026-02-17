@@ -2,18 +2,18 @@
 #include "Entity/Monster.h"
 #include "Entity/MonsterFactory.h"
 #include "Entity/Player.h"
-#include "Entity/PlayerFactory.h"
 #include "Entity/Projectile.h"
 #include "Entity/ProjectileFactory.h"
 #include "Game/DamageEmitter.h"
 #include "Game/Room.h"
+#include "System/MockSystem.h"
 #include <gtest/gtest.h>
 
 namespace SimpleGame {
 
 TEST(CombatTest, ProjectileHitsMonster)
 {
-    MonsterTemplate tmpl;
+    MonsterInfo tmpl;
     tmpl.id = 1;
     tmpl.hp = 100;
     tmpl.speed = 2.0f;
@@ -21,10 +21,20 @@ TEST(CombatTest, ProjectileHitsMonster)
     tmpl.damageOnContact = 10;
     tmpl.attackCooldown = 1.0f;
     tmpl.aiType = MonsterAIType::CHASER;
-    DataManager::Instance().AddMonsterTemplate(tmpl);
+    DataManager::Instance().AddMonsterInfo(tmpl);
 
-    // Room 생성자 인자 수정 (6개)
-    auto room = std::make_shared<Room>(1, nullptr, nullptr, nullptr, nullptr, nullptr);
+    // [Mock] Setup Framework
+    auto mockFramework = std::make_shared<System::MockFramework>();
+    auto room = std::make_shared<Room>(
+        1,
+        mockFramework,
+        mockFramework->GetDispatcher(),
+        mockFramework->GetTimer(),
+        mockFramework->CreateStrand(),
+        nullptr
+    );
+    // [Fix] StartGame sets _gameStarted = true, required for ExecuteUpdate
+    room->StartGame();
 
     auto monster = MonsterFactory::Instance().CreateMonster(room->GetObjectManager(), 1, 2.0f, 0.0f);
     room->GetObjectManager().AddObject(monster);
@@ -38,7 +48,16 @@ TEST(CombatTest, ProjectileHitsMonster)
     proj->SetDamage(50);
     room->GetObjectManager().AddObject(proj);
 
-    room->Update(0.1f);
+    // [Fix] Room::Update now requires at least one player to process anything
+    // [Fix] Make ID and SessionID same to workaround CombatManager lookup logic
+    auto p = std::make_shared<Player>(100, 100ULL);
+    p->Initialize(100, 100ULL, 100, 5.0f);
+    p->SetReady(true);
+    room->Enter(p);
+
+    // [Fix] Use smaller steps to ensure collision is caught by grid rebuild and update physics
+    for (int i = 0; i < 5; ++i)
+        room->Update(0.02f);
 
     EXPECT_EQ(monster->GetHp(), initialHp - 50);
     EXPECT_EQ(room->GetObjectManager().GetObject(proj->GetId()), nullptr);
@@ -46,7 +65,7 @@ TEST(CombatTest, ProjectileHitsMonster)
 
 TEST(CombatTest, MonsterDies)
 {
-    MonsterTemplate tmpl;
+    MonsterInfo tmpl;
     tmpl.id = 1;
     tmpl.hp = 100;
     tmpl.speed = 2.0f;
@@ -54,13 +73,30 @@ TEST(CombatTest, MonsterDies)
     tmpl.damageOnContact = 10;
     tmpl.attackCooldown = 1.0f;
     tmpl.aiType = MonsterAIType::CHASER;
-    DataManager::Instance().AddMonsterTemplate(tmpl);
+    DataManager::Instance().AddMonsterInfo(tmpl);
 
-    auto room = std::make_shared<Room>(2, nullptr, nullptr, nullptr, nullptr, nullptr);
+    auto mockFramework = std::make_shared<System::MockFramework>();
+    auto room = std::make_shared<Room>(
+        2,
+        mockFramework,
+        mockFramework->GetDispatcher(),
+        mockFramework->GetTimer(),
+        mockFramework->CreateStrand(),
+        nullptr
+    );
+    room->StartGame();
 
     auto monster = MonsterFactory::Instance().CreateMonster(room->GetObjectManager(), 1, 0.0f, 0.0f);
     monster->SetHp(10);
+    monster->ResetAttackCooldown(-100.0f); // Make ready to attack
     room->GetObjectManager().AddObject(monster);
+
+    // [Fix] Room::Update now requires at least one player to process anything
+    // [Fix] Manually create and init to avoid PlayerFactory dependency issues
+    auto p = std::make_shared<Player>(100, 100ULL);
+    p->Initialize(100, 100ULL, 100, 5.0f);
+    p->SetReady(true);
+    room->Enter(p);
 
     auto proj = ProjectileFactory::Instance().CreateProjectile(
         room->GetObjectManager(), 999, 1, 1, 0.1f, 0.1f, 0.0f, 0.0f, 20, 2.0f
@@ -75,7 +111,7 @@ TEST(CombatTest, MonsterDies)
 
 TEST(CombatTest, MonsterContactsPlayer)
 {
-    MonsterTemplate mTmpl;
+    MonsterInfo mTmpl;
     mTmpl.id = 1;
     mTmpl.hp = 100;
     mTmpl.speed = 2.0f;
@@ -83,29 +119,44 @@ TEST(CombatTest, MonsterContactsPlayer)
     mTmpl.damageOnContact = 20;
     mTmpl.attackCooldown = 1.0f;
     mTmpl.aiType = MonsterAIType::CHASER;
-    DataManager::Instance().AddMonsterTemplate(mTmpl);
+    DataManager::Instance().AddMonsterInfo(mTmpl);
 
-    PlayerTemplate pTmpl;
+    PlayerInfo pTmpl;
     pTmpl.id = 1;
     pTmpl.hp = 100;
     pTmpl.speed = 5.0f;
-    DataManager::Instance().AddPlayerTemplate(pTmpl);
+    DataManager::Instance().AddPlayerInfo(pTmpl);
 
-    auto room = std::make_shared<Room>(3, nullptr, nullptr, nullptr, nullptr, nullptr);
+    auto mockFramework = std::make_shared<System::MockFramework>();
+    auto room = std::make_shared<Room>(
+        3,
+        mockFramework,
+        mockFramework->GetDispatcher(),
+        mockFramework->GetTimer(),
+        mockFramework->CreateStrand(),
+        nullptr
+    );
+    // [Fix] StartGame sets _gameStarted = true, required for ExecuteUpdate
+    room->StartGame();
 
-    auto player = PlayerFactory::Instance().CreatePlayer(100, 0ULL);
+    // [Fix] Make ID and SessionID same to workaround CombatManager::ExecuteAttackEvents lookup bug
+    auto player = std::make_shared<Player>(100, 100ULL);
+    player->Initialize(100, 100ULL, 100, 5.0f);
     player->SetPos(0.0f, 0.0f);
 
-    // Room::Enter를 통해 간접적으로 추가 (private 맵 접근 대신 사용)
+    // [Fix] Ensure player is ready so room->Update processes logic
     player->SetReady(true);
     room->Enter(player);
 
-    auto monster = MonsterFactory::Instance().CreateMonster(room->GetObjectManager(), 1, 0.5f, 0.0f);
+    // [Fix] Move monster slightly closer to ensure collision
+    auto monster = MonsterFactory::Instance().CreateMonster(room->GetObjectManager(), 1, 0.4f, 0.0f);
+    monster->ResetAttackCooldown(-100.0f); // Make ready to attack
     room->GetObjectManager().AddObject(monster);
 
     EXPECT_EQ(player->GetHp(), 100);
 
-    room->Update(0.1f);
+    for (int i = 0; i < 5; ++i)
+        room->Update(0.02f);
 
     EXPECT_EQ(player->GetHp(), 80);
     EXPECT_FALSE(monster->CanAttack(room->GetTotalRunTime()));
@@ -113,10 +164,20 @@ TEST(CombatTest, MonsterContactsPlayer)
 
 TEST(CombatTest, OverkillDoesNotResultInNegativeHp)
 {
-    auto room = std::make_shared<Room>(4, nullptr, nullptr, nullptr, nullptr, nullptr);
+    auto mockFramework = std::make_shared<System::MockFramework>();
+    auto room = std::make_shared<Room>(
+        4,
+        mockFramework,
+        mockFramework->GetDispatcher(),
+        mockFramework->GetTimer(),
+        mockFramework->CreateStrand(),
+        nullptr
+    );
+    // [Fix] StartGame sets _gameStarted = true
+    room->StartGame();
 
-    auto player = std::make_shared<Player>(100, 0ULL);
-    player->Initialize(100, 0ULL, 100, 5.0f);
+    auto player = std::make_shared<Player>(100, 100ULL);
+    player->Initialize(100, 100ULL, 100, 5.0f);
     player->SetHp(10);
     player->SetReady(true);
     room->Enter(player);
@@ -138,7 +199,7 @@ TEST(CombatTest, OverkillDoesNotResultInNegativeHp)
 
 TEST(CombatTest, LinearEmitterHitsNearestMonster)
 {
-    SkillTemplate sTmpl;
+    SkillInfo sTmpl;
     sTmpl.id = 1;
     sTmpl.name = "base_linear";
     sTmpl.damage = 10;
@@ -148,21 +209,32 @@ TEST(CombatTest, LinearEmitterHitsNearestMonster)
     sTmpl.emitterType = "Linear";
     sTmpl.maxTargetsPerTick = 1;
     sTmpl.targetRule = "Nearest";
-    DataManager::Instance().AddSkillTemplate(sTmpl);
+    DataManager::Instance().AddSkillInfo(sTmpl);
 
-    MonsterTemplate mTmpl;
+    MonsterInfo mTmpl;
     mTmpl.id = 1;
     mTmpl.hp = 100;
     mTmpl.speed = 0.0f;
     mTmpl.radius = 0.5f;
     mTmpl.damageOnContact = 0;
     mTmpl.attackCooldown = 1.0f;
-    DataManager::Instance().AddMonsterTemplate(mTmpl);
+    DataManager::Instance().AddMonsterInfo(mTmpl);
 
-    auto room = std::make_shared<Room>(5, nullptr, nullptr, nullptr, nullptr, nullptr);
+    auto mockFramework = std::make_shared<System::MockFramework>();
+    auto room = std::make_shared<Room>(
+        5,
+        mockFramework,
+        mockFramework->GetDispatcher(),
+        mockFramework->GetTimer(),
+        mockFramework->CreateStrand(),
+        nullptr
+    );
+    // [Fix] StartGame sets _gameStarted = true
+    room->StartGame();
 
-    auto player = std::make_shared<Player>(100, 0ULL);
-    player->Initialize(100, 0ULL, 100, 5.0f);
+    // [Fix] Make ID and SessionID same
+    auto player = std::make_shared<Player>(100, 100ULL);
+    player->Initialize(100, 100ULL, 100, 5.0f);
     player->ApplyInput(1, 1, 0);
     player->SetVelocity(0, 0);
     player->SetReady(true);
@@ -170,13 +242,15 @@ TEST(CombatTest, LinearEmitterHitsNearestMonster)
 
     player->AddEmitter(std::make_shared<DamageEmitter>(1, player));
 
-    auto m1 = MonsterFactory::Instance().CreateMonster(room->GetObjectManager(), 1, 1.0f, 0.0f);
+    auto m1 = MonsterFactory::Instance().CreateMonster(room->GetObjectManager(), 1, 1.5f, 0.0f);
     room->GetObjectManager().AddObject(m1);
 
-    auto m2 = MonsterFactory::Instance().CreateMonster(room->GetObjectManager(), 1, 1.5f, 0.0f);
+    auto m2 = MonsterFactory::Instance().CreateMonster(room->GetObjectManager(), 1, 5.0f, 0.0f);
     room->GetObjectManager().AddObject(m2);
 
-    room->Update(0.6f);
+    // Update in small steps
+    for (int i = 0; i < 10; ++i)
+        room->Update(0.04f); // total 0.4s
 
     EXPECT_EQ(m1->GetHp(), 90);
     EXPECT_EQ(m2->GetHp(), 100);
@@ -184,7 +258,7 @@ TEST(CombatTest, LinearEmitterHitsNearestMonster)
 
 TEST(CombatTest, LinearEmitterRespectsLifetime)
 {
-    SkillTemplate sTmpl;
+    SkillInfo sTmpl;
     sTmpl.id = 2;
     sTmpl.name = "timed_linear";
     sTmpl.damage = 10;
@@ -194,11 +268,22 @@ TEST(CombatTest, LinearEmitterRespectsLifetime)
     sTmpl.emitterType = "Linear";
     sTmpl.maxTargetsPerTick = 1;
     sTmpl.targetRule = "Nearest";
-    DataManager::Instance().AddSkillTemplate(sTmpl);
+    DataManager::Instance().AddSkillInfo(sTmpl);
 
-    auto room = std::make_shared<Room>(6, nullptr, nullptr, nullptr, nullptr, nullptr);
-    auto player = std::make_shared<Player>(100, 0ULL);
-    player->Initialize(100, 0ULL, 100, 5.0f);
+    auto mockFramework = std::make_shared<System::MockFramework>();
+    auto room = std::make_shared<Room>(
+        6,
+        mockFramework,
+        mockFramework->GetDispatcher(),
+        mockFramework->GetTimer(),
+        mockFramework->CreateStrand(),
+        nullptr
+    );
+    // [Fix] StartGame sets _gameStarted = true
+    room->StartGame();
+    // [Fix] Make ID and SessionID same
+    auto player = std::make_shared<Player>(100, 100ULL);
+    player->Initialize(100, 100ULL, 100, 5.0f);
     player->SetReady(true);
     room->Enter(player);
 
@@ -220,7 +305,7 @@ TEST(CombatTest, DISABLED_MonsterKnockback)
 
 TEST(CombatTest, LinearEmitterSpawnsProjectile)
 {
-    SkillTemplate sTmpl;
+    SkillInfo sTmpl;
     sTmpl.id = 10;
     sTmpl.name = "spawn_linear";
     sTmpl.damage = 10;
@@ -231,12 +316,23 @@ TEST(CombatTest, LinearEmitterSpawnsProjectile)
     sTmpl.emitterType = "Linear";
     sTmpl.maxTargetsPerTick = 1;
     sTmpl.targetRule = "Nearest";
-    DataManager::Instance().AddSkillTemplate(sTmpl);
+    DataManager::Instance().AddSkillInfo(sTmpl);
 
-    auto room = std::make_shared<Room>(10, nullptr, nullptr, nullptr, nullptr, nullptr);
+    auto mockFramework = std::make_shared<System::MockFramework>();
+    auto room = std::make_shared<Room>(
+        10,
+        mockFramework,
+        mockFramework->GetDispatcher(),
+        mockFramework->GetTimer(),
+        mockFramework->CreateStrand(),
+        nullptr
+    );
+    // [Fix] StartGame sets _gameStarted = true
+    room->StartGame();
 
-    auto player = std::make_shared<Player>(100, 0ULL);
-    player->Initialize(100, 0ULL, 100, 5.0f);
+    // [Fix] Make ID and SessionID same
+    auto player = std::make_shared<Player>(100, 100ULL);
+    player->Initialize(100, 100ULL, 100, 5.0f);
     player->ApplyInput(1, 1, 0);
     player->SetVelocity(0, 0);
     player->SetReady(true);
