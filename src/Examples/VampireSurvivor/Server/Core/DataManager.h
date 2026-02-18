@@ -77,10 +77,29 @@ struct WeaponLevelInfo
     int32_t skillId;
     float damageMult = 1.0f;
     float cooldownMult = 1.0f;
-    float durationMult = 1.0f; // New field for scaling active duration
+    float durationMult = 1.0f;
+    float areaMult = 1.0f;
+    float speedMult = 1.0f;
     std::string desc;
 
-    // [New] Generic overrides for skill parameters
+    // Projectile/Attack modifiers
+    int32_t projectileCount = 0;  // Additional projectiles
+    int32_t pierceCount = 0;      // Additional pierce
+    int32_t maxTargets = 0;       // Override max targets (0 = use base)
+
+    // Critical modifiers
+    float critChance = 0.0f;      // Additional crit chance
+    float critDamageMult = 1.0f;  // Crit damage multiplier
+
+    // Effect modifiers (for skills with effects)
+    std::string effectType;       // Override/add effect type
+    float effectValue = 0.0f;
+    float effectDuration = 0.0f;
+
+    // Special flags for mechanism changes
+    std::vector<std::string> flags; // BIDIRECTIONAL, HOMING, EXPLODE_ON_HIT, etc.
+
+    // Generic overrides for skill parameters (legacy support)
     std::unordered_map<std::string, float> params;
 };
 
@@ -101,7 +120,8 @@ struct WeaponInfo
 struct PassiveLevelInfo
 {
     int32_t level;
-    float bonus;
+    float bonus = 0.0f;
+    float bonus2 = 0.0f;      // Secondary bonus (e.g., speed + crit)
     std::string desc;
 };
 
@@ -111,10 +131,11 @@ struct PassiveInfo
     std::string name;
     std::string description;
     std::string icon;
-    std::string statType; // "damage", "max_hp", "speed", "cooldown", "area", "projectile_count"
+    std::string statType;      // "damage", "max_hp", "speed", "cooldown", "area", "projectile_count", "pierce", "crit_chance", "crit_damage"
+    std::string statType2;     // Secondary stat (optional)
     int32_t maxLevel;
-    int32_t weight = 100;    // 가중치 (추첨 확률)
-    int32_t uniqueGroup = 0; // 중복 방지 그룹 ID
+    int32_t weight = 100;      // 가중치 (추첨 확률)
+    int32_t uniqueGroup = 0;   // 중복 방지 그룹 ID
     std::vector<PassiveLevelInfo> levels;
 };
 
@@ -168,6 +189,23 @@ public:
     void AddSkillInfo(const SkillInfo &tmpl)
     {
         _skills[tmpl.id] = tmpl;
+    }
+
+    // For Testing: Inject synthetic weapon data for gtests without modifying JSON files
+    void AddWeaponInfoForTest(const WeaponInfo &tmpl)
+    {
+        _weapons[tmpl.id] = tmpl;
+    }
+
+    // For Testing: Clear all weapons to reset between tests and avoid cross-test coupling
+    void ClearWeaponsForTest()
+    {
+        _weapons.clear();
+    }
+
+    void ClearPassivesForTest()
+    {
+        _passives.clear();
     }
 
 private:

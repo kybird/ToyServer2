@@ -370,6 +370,7 @@ set(VS_TEST_SOURCES
     src/Examples/VampireSurvivor/tests/TestCombat.cpp
     src/Examples/VampireSurvivor/tests/TestDeadReckoningCorrection.cpp
     src/Examples/VampireSurvivor/tests/TestEffectSystem.cpp
+    src/Examples/VampireSurvivor/tests/TestWeaponMechanics.cpp
     tests/TestEventBus_Mock.cpp
     tests/TestAsyncDatabase.cpp
     tests/TestThreadPool.cpp

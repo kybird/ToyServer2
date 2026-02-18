@@ -33,6 +33,12 @@ public:
         _isHit = false;
         _hitTargets.clear();
         SetState(Protocol::ObjectState::IDLE); // [Fix] Reset state for pooled object
+
+        // [Fix] Reset Orbit State
+        _isOrbit = false;
+        _orbitRadius = 0.0f;
+        _orbitSpeed = 0.0f;
+        _currentAngle = 0.0f;
     }
 
     void Reset()
@@ -50,6 +56,12 @@ public:
         _isHit = false;
         _hitTargets.clear();
         SetState(Protocol::ObjectState::IDLE);
+
+        // [Fix] Reset Orbit State
+        _isOrbit = false;
+        _orbitRadius = 0.0f;
+        _orbitSpeed = 0.0f;
+        _currentAngle = 0.0f;
     }
 
     int32_t GetOwnerId() const
@@ -106,16 +118,16 @@ public:
     // Returns true if projectile is consumed (expired)
     bool OnHit()
     {
-        if (_pierceCount > 0)
+        if (_pierceCount != 0)
         {
-            _pierceCount--;
-            return false; // Not expired yet (Pierced)
+            // Positive: decrement finite pierce count
+            // Negative: infinite pierce, never consumed
+            if (_pierceCount > 0)
+                _pierceCount--;
+            return false;
         }
-        else
-        {
-            _isHit = true;
-            return true; // Expired
-        }
+        _isHit = true;
+        return true;
     }
 
     // Deprecated: Use OnHit logic instead or keep for backward compatibility checking IsHit
@@ -142,6 +154,11 @@ public:
     int32_t GetPierceCount() const
     {
         return _pierceCount;
+    }
+
+    int32_t GetHitCount() const
+    {
+        return static_cast<int32_t>(_hitTargets.size());
     }
 
     bool HasHit(int32_t targetId) const

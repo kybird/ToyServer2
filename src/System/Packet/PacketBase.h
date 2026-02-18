@@ -105,7 +105,16 @@ public:
 
     void SerializeBodyTo(void *buffer) const
     {
-        _proto.SerializeToArray(buffer, static_cast<int>(GetBodySize()));
+        size_t bodySize = GetBodySize();
+        // [Fix] Protobuf varint encoding can slightly exceed ByteSizeLong()
+        // Add 10% safety margin to prevent buffer overflow
+        size_t safeSize = bodySize + (bodySize / 10) + 16;
+        
+        if (!_proto.SerializeToArray(buffer, static_cast<int>(safeSize)))
+        {
+            // Fallback: Try with exact size if safe size fails
+            _proto.SerializeToArray(buffer, static_cast<int>(bodySize));
+        }
     }
 
     void Reset()

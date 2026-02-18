@@ -95,22 +95,33 @@ void DamageEmitter::Update(float dt, Room *room)
     }
 
     // Weapon Level Multipliers
+    const WeaponLevelInfo* levelData = nullptr;
     if (_weaponId > 0)
     {
         const auto *weaponTmpl = DataManager::Instance().GetWeaponInfo(_weaponId);
-        if (weaponTmpl && _level > 0 && _level <= static_cast<int>(weaponTmpl->levels.size()))
+        if (weaponTmpl)
         {
-            const auto &levelData = weaponTmpl->levels[_level - 1];
-            effectiveDamageMult *= levelData.damageMult;
-            effectiveCooldownMult *= levelData.cooldownMult;
-            effectiveDurationMult *= levelData.durationMult;
-
-            // [New] Apply generic parameter overrides (e.g., width_mult, height_mult)
-            if (levelData.params.contains("skill_width_mult"))
-                effectiveAreaMult *= levelData.params.at("skill_width_mult"); // Simple approach
-            if (levelData.params.contains("skill_height_mult"))
+            for (const auto &lvl : weaponTmpl->levels)
             {
-                // For Directional, we might want separate multipliers
+                if (lvl.level == _level)
+                {
+                    levelData = &lvl;
+                    break;
+                }
+            }
+            
+            if (levelData)
+            {
+                effectiveDamageMult *= levelData->damageMult;
+                effectiveCooldownMult *= levelData->cooldownMult;
+                effectiveDurationMult *= levelData->durationMult;
+                effectiveAreaMult *= levelData->areaMult;
+
+                additionalProjectiles += levelData->projectileCount;
+                additionalPierce += levelData->pierceCount;
+
+                if (levelData->params.contains("skill_width_mult"))
+                    effectiveAreaMult *= levelData->params.at("skill_width_mult");
             }
         }
     }
@@ -204,12 +215,26 @@ void DamageEmitter::Update(float dt, Room *room)
     {
         _timer -= currentTickInterval;
 
-        float px = owner->GetX();
-        float py = owner->GetY();
-        int32_t finalDamage = static_cast<int32_t>(_damage * effectiveDamageMult);
-        float finalRadius = _hitRadius * effectiveAreaMult;
+            float px = owner->GetX();
+            float py = owner->GetY();
+            int32_t finalDamage = static_cast<int32_t>(_damage * effectiveDamageMult);
+            float finalRadius = _hitRadius * effectiveAreaMult;
 
-        if (_emitterType == "Linear")
+            std::string effectiveEffectType = tmpl ? tmpl->effectType : "";
+            float effectiveEffectValue = tmpl ? tmpl->effectValue : 0.0f;
+            float effectiveEffectDuration = tmpl ? tmpl->effectDuration : 0.0f;
+
+            if (levelData)
+            {
+                if (!levelData->effectType.empty())
+                    effectiveEffectType = levelData->effectType;
+                if (levelData->effectValue != 0.0f)
+                    effectiveEffectValue = levelData->effectValue;
+                if (levelData->effectDuration != 0.0f)
+                    effectiveEffectDuration = levelData->effectDuration;
+            }
+
+            if (_emitterType == "Linear")
         {
             Vector2 direction = owner->GetFacingDirection();
 
@@ -242,7 +267,7 @@ void DamageEmitter::Update(float dt, Room *room)
                 }
             }
 
-            float speed = 15.0f;
+            float speed = 15.0f * (levelData ? levelData->speedMult : 1.0f);
             float life = 3.0f;
             int32_t projectileCount = 1 + additionalProjectiles;
 
@@ -289,7 +314,7 @@ void DamageEmitter::Update(float dt, Room *room)
             // [Orbit] 성서형: 플레이어 주변을 공전하는 투사체
             int32_t projectileCount = 1 + additionalProjectiles;
             float orbitRadius = 3.0f * effectiveAreaMult;
-            float orbitSpeed = 4.0f; // 매초 약 0.6회전
+            float orbitSpeed = 4.0f * (levelData ? levelData->speedMult : 1.0f); // 매초 약 0.6회전
             float life = 4.0f * effectiveDurationMult;
 
             for (int i = 0; i < projectileCount; ++i)
@@ -325,11 +350,12 @@ void DamageEmitter::Update(float dt, Room *room)
         }
         else if (_emitterType == "Zone")
         {
-            // [Zone] 번개형: 화면 내 랜덤 적 즉시 타격
-            auto monsters = room->GetMonstersInRange(px, py, 20.0f); // 화면 근처 범위
+            auto monsters = room->GetMonstersInRange(px, py, finalRadius);
             if (!monsters.empty())
             {
                 int32_t shotCount = 1 + additionalProjectiles;
+                if (levelData && levelData->maxTargets > 0)
+                    shotCount = levelData->maxTargets;
                 std::vector<int32_t> hitIds;
                 std::vector<int32_t> hitDamages;
 
@@ -367,100 +393,127 @@ void DamageEmitter::Update(float dt, Room *room)
         }
         else if (_emitterType == "Directional")
         {
-            // [Directional] 채찍형: 바라보는 방향 직사각형 판정
             Vector2 dir = owner->GetFacingDirection();
 
-            // Load from Level Data overrides if present
             float widthMult = 1.0f;
             float heightMult = 1.0f;
-            if (_weaponId > 0)
+            bool bidirectional = false;
+
+            if (levelData)
             {
-                const auto *weaponTmpl = DataManager::Instance().GetWeaponInfo(_weaponId);
-                if (weaponTmpl != nullptr && _level > 0 && static_cast<size_t>(_level) <= weaponTmpl->levels.size())
+                if (levelData->params.contains("skill_width_mult"))
+                    widthMult = levelData->params.at("skill_width_mult");
+                if (levelData->params.contains("skill_height_mult"))
+                    heightMult = levelData->params.at("skill_height_mult");
+                
+                for (const auto &flag : levelData->flags)
                 {
-                    const auto &levelData = weaponTmpl->levels[static_cast<size_t>(_level) - 1];
-                    if (levelData.params.contains("skill_width_mult"))
-                        widthMult = levelData.params.at("skill_width_mult");
-                    if (levelData.params.contains("skill_height_mult"))
-                        heightMult = levelData.params.at("skill_height_mult");
+                    if (flag == "BIDIRECTIONAL")
+                        bidirectional = true;
                 }
             }
 
-            // [Data-Driven] Use _width and _height instead of hardcoded 2.0/4.0
             float finalBoxWidth = _width * effectiveAreaMult * widthMult;
             float finalBoxHeight = _height * effectiveAreaMult * heightMult;
 
-            // 판정 중심점 (플레이어 정면)
-            float cx = px + dir.x * (finalBoxHeight * 0.5f);
-            float cy = py + dir.y * (finalBoxHeight * 0.5f);
+            auto doDirectionalAttack = [&](const Vector2& attackDir, float boxWidth, float boxHeight) {
+                float cx = px + attackDir.x * (boxHeight * 0.5f);
+                float cy = py + attackDir.y * (boxHeight * 0.5f);
 
-            // 각도 계산 (라디안)
-            float angle = std::atan2(dir.y, dir.x);
-            float sinA = std::sin(-angle);
-            float cosA = std::cos(-angle);
+                float angle = std::atan2(attackDir.y, attackDir.x);
+                float sinA = std::sin(-angle);
+                float cosA = std::cos(-angle);
 
-            auto monsters = room->GetMonstersInRange(cx, cy, finalBoxHeight);
-            std::vector<int32_t> hitIds;
-            std::vector<int32_t> hitDamages;
-            std::vector<bool> hitCrits;
+                auto monsters = room->GetMonstersInRange(cx, cy, boxHeight);
+                std::vector<int32_t> hitIds;
+                std::vector<int32_t> hitDamages;
+                std::vector<bool> hitCrits;
 
-            // 크리티컬 체크
-            bool isCritical = false;
-            float critMultiplier = 1.0f;
-            if (System::Utility::FastRandom().NextFloat() < owner->GetCriticalChance())
-            {
-                isCritical = true;
-                critMultiplier = owner->GetCriticalDamageMultiplier();
-            }
-            int32_t finalCritDamage = static_cast<int32_t>(finalDamage * critMultiplier);
+                int32_t maxTargets = _maxTargetsPerTick + additionalProjectiles;
+                if (levelData && levelData->maxTargets > 0)
+                    maxTargets = levelData->maxTargets;
 
-            for (auto &m : monsters)
-            {
-                // 상대 좌표 변환 (Rotate toward 0)
-                float dx = m->GetX() - cx;
-                float dy = m->GetY() - cy;
+                int targetCount = 0;
 
-                float localX = dx * cosA - dy * sinA;
-                float localY = dx * sinA + dy * cosA;
+                bool isCritical = false;
+                float critMultiplier = 1.0f;
+                float critChance = owner->GetCriticalChance();
+                if (levelData && levelData->critChance > 0.0f)
+                    critChance += levelData->critChance;
 
-                // 직사각형 판정 (finalBoxHeight는 플레이어 정면 방향 길이, finalBoxWidth는 좌우 너비)
-                if (std::abs(localX) <= finalBoxHeight * 0.5f && std::abs(localY) <= finalBoxWidth * 0.5f)
+                if (System::Utility::FastRandom().NextFloat() < critChance)
                 {
-                    m->TakeDamage(finalCritDamage, room);
-                    hitIds.push_back(m->GetId());
-                    hitDamages.push_back(finalCritDamage);
-                    hitCrits.push_back(isCritical);
+                    isCritical = true;
+                    critMultiplier = owner->GetCriticalDamageMultiplier();
+                    if (levelData && levelData->critDamageMult > 1.0f)
+                        critMultiplier *= levelData->critDamageMult;
                 }
-            }
+                int32_t finalCritDamage = static_cast<int32_t>(finalDamage * critMultiplier);
 
-            if (!hitIds.empty())
-            {
-                Protocol::S_DamageEffect dmgMsg;
-                dmgMsg.set_skill_id(_skillId);
-                for (size_t i = 0; i < hitIds.size(); ++i)
+                for (auto &m : monsters)
                 {
-                    dmgMsg.add_target_ids(hitIds[i]);
-                    dmgMsg.add_damage_values(hitDamages[i]);
-                    dmgMsg.add_is_critical(hitCrits[i]);
+                    float dx = m->GetX() - cx;
+                    float dy = m->GetY() - cy;
+
+                    float localX = dx * cosA - dy * sinA;
+                    float localY = dx * sinA + dy * cosA;
+
+                    if (std::abs(localX) <= boxHeight * 0.5f && std::abs(localY) <= boxWidth * 0.5f)
+                    {
+                        m->TakeDamage(finalCritDamage, room);
+                        hitIds.push_back(m->GetId());
+                        hitDamages.push_back(finalCritDamage);
+                        hitCrits.push_back(isCritical);
+
+                        if (!effectiveEffectType.empty())
+                        {
+                            m->AddStatusEffect(
+                                effectiveEffectType, effectiveEffectValue, effectiveEffectDuration, room->GetTotalRunTime()
+                            );
+                        }
+
+                        targetCount++;
+                        if (targetCount >= maxTargets)
+                            break;
+                    }
                 }
-                room->BroadcastPacket(S_DamageEffectPacket(std::move(dmgMsg)));
+
+                if (!hitIds.empty())
+                {
+                    Protocol::S_DamageEffect dmgMsg;
+                    dmgMsg.set_skill_id(_skillId);
+                    for (size_t i = 0; i < hitIds.size(); ++i)
+                    {
+                        dmgMsg.add_target_ids(hitIds[i]);
+                        dmgMsg.add_damage_values(hitDamages[i]);
+                        dmgMsg.add_is_critical(hitCrits[i]);
+                    }
+                    room->BroadcastPacket(S_DamageEffectPacket(std::move(dmgMsg)));
+                }
+
+                Protocol::S_SkillEffect skillMsg;
+                skillMsg.set_caster_id(owner->GetId());
+                skillMsg.set_skill_id(_skillId);
+                skillMsg.set_x(cx);
+                skillMsg.set_y(cy);
+                skillMsg.set_radius(boxHeight * 0.5f);
+                skillMsg.set_duration_seconds(0.2f);
+                skillMsg.set_width(boxWidth);
+                skillMsg.set_height(boxHeight);
+
+                float rotDeg = angle * (180.0f / 3.14159265f);
+                skillMsg.set_rotation_degrees(rotDeg);
+
+                room->BroadcastPacket(S_SkillEffectPacket(std::move(skillMsg)));
+            };
+
+            doDirectionalAttack(dir, finalBoxWidth, finalBoxHeight);
+
+            if (bidirectional)
+            {
+                Vector2 oppositeDir(-dir.x, -dir.y);
+                doDirectionalAttack(oppositeDir, finalBoxWidth, finalBoxHeight);
             }
-
-            // 시각 효과
-            Protocol::S_SkillEffect skillMsg;
-            skillMsg.set_caster_id(owner->GetId());
-            skillMsg.set_skill_id(_skillId);
-            skillMsg.set_x(cx);
-            skillMsg.set_y(cy);
-            skillMsg.set_radius(finalBoxHeight * 0.5f); // 비주얼용 가이드 반경
-            skillMsg.set_duration_seconds(0.2f);
-            skillMsg.set_width(finalBoxWidth);   // [New] Pass dynamic width
-            skillMsg.set_height(finalBoxHeight); // [New] Pass dynamic height
-
-            float rotDeg = angle * (180.0f / 3.14159265f);
-            skillMsg.set_rotation_degrees(rotDeg);
-
-            room->BroadcastPacket(S_SkillEffectPacket(std::move(skillMsg)));
         }
         else if (_emitterType == "Arc")
         {
@@ -474,16 +527,25 @@ void DamageEmitter::Update(float dt, Room *room)
             bool isCritical = false;
             float critMultiplier = 1.0f;
             float critChance = owner->GetCriticalChance();
+            if (levelData && levelData->critChance > 0.0f)
+                critChance += levelData->critChance;
 
             static thread_local System::Utility::FastRandom rng;
             if (rng.NextFloat() < critChance)
             {
                 isCritical = true;
                 critMultiplier = owner->GetCriticalDamageMultiplier();
+                if (levelData && levelData->critDamageMult > 1.0f)
+                    critMultiplier *= levelData->critDamageMult;
             }
 
             int32_t criticalDamage = static_cast<int32_t>(finalDamage * critMultiplier);
 
+            int32_t maxTargets = _maxTargetsPerTick + additionalProjectiles;
+            if (levelData && levelData->maxTargets > 0)
+                maxTargets = levelData->maxTargets;
+
+            int targetCount = 0;
             for (auto &monster : monsters)
             {
                 if (monster->IsDead())
@@ -507,6 +569,17 @@ void DamageEmitter::Update(float dt, Room *room)
                     hitTargetIds.push_back(monster->GetId());
                     hitDamageValues.push_back(criticalDamage);
                     hitCriticals.push_back(isCritical);
+
+                    if (!effectiveEffectType.empty())
+                    {
+                        monster->AddStatusEffect(
+                            effectiveEffectType, effectiveEffectValue, effectiveEffectDuration, room->GetTotalRunTime()
+                        );
+                    }
+
+                    targetCount++;
+                    if (targetCount >= maxTargets)
+                        break;
                 }
             }
 
@@ -537,9 +610,78 @@ void DamageEmitter::Update(float dt, Room *room)
 
             room->BroadcastPacket(S_SkillEffectPacket(std::move(skillMsg)));
         }
+        else if (_emitterType == "Aura")
+        {
+            std::vector<std::shared_ptr<Monster>> victims = room->GetMonstersInRange(px, py, finalRadius);
+
+            int32_t finalMaxTargets = _maxTargetsPerTick + additionalProjectiles;
+            if (levelData && levelData->maxTargets > 0)
+                finalMaxTargets = levelData->maxTargets;
+            std::vector<int32_t> hitTargetIds;
+            std::vector<int32_t> hitDamageValues;
+            std::vector<bool> hitCrits;
+
+            bool isCritical = false;
+            float critMultiplier = 1.0f;
+            float critChance = owner->GetCriticalChance();
+            if (levelData && levelData->critChance > 0.0f)
+                critChance += levelData->critChance;
+
+            if (System::Utility::FastRandom().NextFloat() < critChance)
+            {
+                isCritical = true;
+                critMultiplier = owner->GetCriticalDamageMultiplier();
+                if (levelData && levelData->critDamageMult > 1.0f)
+                    critMultiplier *= levelData->critDamageMult;
+            }
+            int32_t finalCritDamage = static_cast<int32_t>(finalDamage * critMultiplier);
+
+            int count = 0;
+            for (auto &monster : victims)
+            {
+                if (count >= finalMaxTargets)
+                    break;
+
+                monster->TakeDamage(finalCritDamage, room);
+                hitTargetIds.push_back(monster->GetId());
+                hitDamageValues.push_back(finalCritDamage);
+                hitCrits.push_back(isCritical);
+
+                if (!effectiveEffectType.empty())
+                {
+                    monster->AddStatusEffect(
+                        effectiveEffectType, effectiveEffectValue, effectiveEffectDuration, room->GetTotalRunTime()
+                    );
+                }
+
+                count++;
+            }
+
+            if (!hitTargetIds.empty())
+            {
+                Protocol::S_DamageEffect damageMsg;
+                damageMsg.set_skill_id(_skillId);
+                for (size_t i = 0; i < hitTargetIds.size(); ++i)
+                {
+                    damageMsg.add_target_ids(hitTargetIds[i]);
+                    damageMsg.add_damage_values(hitDamageValues[i]);
+                    damageMsg.add_is_critical(hitCrits[i]);
+                }
+                room->BroadcastPacket(S_DamageEffectPacket(std::move(damageMsg)));
+            }
+
+            Protocol::S_SkillEffect skillMsg;
+            skillMsg.set_caster_id(owner->GetId());
+            skillMsg.set_skill_id(_skillId);
+            skillMsg.set_x(px);
+            skillMsg.set_y(py);
+            skillMsg.set_radius(finalRadius);
+            skillMsg.set_duration_seconds(0.2f);
+            room->BroadcastPacket(S_SkillEffectPacket(std::move(skillMsg)));
+        }
         else
         {
-            // AoE Pulse Damage (Aura/Garlic) - _activeDuration == 0인 경우의 기본 처리
+            // AoE Pulse Damage (default fallback)
             std::vector<std::shared_ptr<Monster>> victims = room->GetMonstersInRange(px, py, finalRadius);
 
             if (_targetRule == "Nearest")
@@ -556,7 +698,10 @@ void DamageEmitter::Update(float dt, Room *room)
             }
 
             int count = 0;
-            int32_t finalMaxTargets = _maxTargetsPerTick + additionalProjectiles;
+            // projectile_count affects number of projectiles, NOT target cap in AoE
+            int32_t finalMaxTargets = _maxTargetsPerTick;
+            if (levelData && levelData->maxTargets > 0)
+                finalMaxTargets = levelData->maxTargets;
             std::vector<int32_t> hitTargetIds;
             std::vector<int32_t> hitDamageValues;
             std::vector<bool> hitCrits;
@@ -564,10 +709,16 @@ void DamageEmitter::Update(float dt, Room *room)
             // 크리티컬 체크
             bool isCritical = false;
             float critMultiplier = 1.0f;
-            if (System::Utility::FastRandom().NextFloat() < owner->GetCriticalChance())
+            float critChance = owner->GetCriticalChance();
+            if (levelData && levelData->critChance > 0.0f)
+                critChance += levelData->critChance;
+
+            if (System::Utility::FastRandom().NextFloat() < critChance)
             {
                 isCritical = true;
                 critMultiplier = owner->GetCriticalDamageMultiplier();
+                if (levelData && levelData->critDamageMult > 1.0f)
+                    critMultiplier *= levelData->critDamageMult;
             }
             int32_t finalCritDamage = static_cast<int32_t>(finalDamage * critMultiplier);
 
@@ -580,6 +731,14 @@ void DamageEmitter::Update(float dt, Room *room)
                 hitTargetIds.push_back(monster->GetId());
                 hitDamageValues.push_back(finalCritDamage);
                 hitCrits.push_back(isCritical);
+
+                if (!effectiveEffectType.empty())
+                {
+                    monster->AddStatusEffect(
+                        effectiveEffectType, effectiveEffectValue, effectiveEffectDuration, room->GetTotalRunTime()
+                    );
+                }
+
                 count++;
             }
 

@@ -1,8 +1,8 @@
 #include "Entity/Player.h"
 #include "Game/Room.h"
 #include "Game/RoomManager.h"
+#include "MockSystem.h"
 #include "Protocol/game.pb.h"
-#include "System/MockSystem.h"
 #include <gtest/gtest.h>
 
 using namespace SimpleGame;

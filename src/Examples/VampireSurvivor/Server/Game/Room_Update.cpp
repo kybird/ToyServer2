@@ -11,6 +11,7 @@
 #include "System/Packet/PacketPtr.h"
 #include "System/Session/SessionContext.h"
 #include "System/Thread/IStrand.h"
+#include <cmath>
 
 namespace SimpleGame {
 
@@ -31,7 +32,10 @@ void Room::ExecuteUpdate(float deltaTime)
     // [1] Wave Update (Monster Spawn)
     _waveMgr.Update(deltaTime, this);
 
-    // [2] Grid Rebuild (Reflect Spawns immediately so AI can see neighbors)
+    // [2] Effect Update (DoT ticking, expiration)
+    _effectMgr->Update(_totalRunTime, this);
+
+    // [3] Grid Rebuild (Reflect Spawns immediately so AI can see neighbors)
     // [Fix] Rebuild MUST happen before AI Update
     auto currentObjects = _objMgr.GetAllObjects();
     _grid.Rebuild(currentObjects);
@@ -197,10 +201,9 @@ void Room::SendToPlayer(uint64_t sessionId, const System::IPacket &pkt)
 {
     if (_dispatcher)
     {
-        // [Fix] pkt 참조를 비동기 람다에 캡처하면 dangling 위험
-        // 호출 시점(Room Strand)에서 직렬화 후 PacketPtr로 값 캡처
         uint16_t size = pkt.GetTotalSize();
-        auto *msg = System::MessagePool::AllocatePacket(size);
+        uint16_t safeSize = size + (size / 10) + 16;
+        auto *msg = System::MessagePool::AllocatePacket(safeSize);
         if (msg == nullptr)
             return;
 
@@ -222,9 +225,9 @@ void Room::BroadcastPacket(const System::IPacket &pkt, uint64_t excludeSessionId
     if (!_dispatcher)
         return;
 
-    // [Optimization] Serialize ONCE for all sessions
     uint16_t size = pkt.GetTotalSize();
-    auto *msg = System::MessagePool::AllocatePacket(size);
+    uint16_t safeSize = size + (size / 10) + 16;
+    auto *msg = System::MessagePool::AllocatePacket(safeSize);
     if (msg == nullptr)
         return;
 
@@ -318,20 +321,45 @@ void Room::SyncNetwork()
     Protocol::S_MoveObjectBatch moveBatch;
     moveBatch.set_server_tick(_serverTick);
 
+    int validCount = 0;
+    int invalidCount = 0;
+
     for (const auto &obj : objects)
     {
         if (obj->IsDead())
             continue;
 
+        // [Fix] NaN/Inf 값 검증 (Protobuf 직렬화 크래시 방지)
+        float x = obj->GetX();
+        float y = obj->GetY();
+        float vx = obj->GetVX();
+        float vy = obj->GetVY();
+
+        if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(vx) || !std::isfinite(vy))
+        {
+            LOG_ERROR(
+                "[CRITICAL] Invalid float in Object {}: x={}, y={}, vx={}, vy={}",
+                obj->GetId(), x, y, vx, vy
+            );
+            invalidCount++;
+            continue;
+        }
+
         // 플레이어, 몬스터, 투사체 모두 동기화
         auto *pos = moveBatch.add_moves();
         pos->set_object_id(obj->GetId());
-        pos->set_x(obj->GetX());
-        pos->set_y(obj->GetY());
-        pos->set_vx(obj->GetVX());
-        pos->set_vy(obj->GetVY());
+        pos->set_x(x);
+        pos->set_y(y);
+        pos->set_vx(vx);
+        pos->set_vy(vy);
         pos->set_state(obj->GetState());
         pos->set_look_left(obj->GetLookLeft());
+        validCount++;
+    }
+
+    if (invalidCount > 0)
+    {
+        LOG_WARN("[SyncNetwork] Skipped {} invalid objects (NaN/Inf detected)", invalidCount);
     }
 
     if (moveBatch.moves_size() > 0)

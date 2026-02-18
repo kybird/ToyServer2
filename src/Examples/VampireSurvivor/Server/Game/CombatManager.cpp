@@ -1,8 +1,12 @@
 #include "CombatManager.h"
+#include "Core/DataManager.h"
 #include "Entity/ExpGem.h"
 #include "Entity/Monster.h"
 #include "Entity/Player.h"
+#include "Entity/PlayerInventory.h"
 #include "Entity/Projectile.h"
+#include "Game/Effect/EffectManager.h"
+#include "Game/Effect/StatusEffect.h"
 #include "Game/ObjectManager.h"
 #include "Game/Room.h"
 #include "Game/SpatialGrid.h"
@@ -125,39 +129,96 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
                     // [Precision] Using a slight margin for hit detection stability
                     if (distSq <= (sumRad + 0.1f) * (sumRad + 0.1f))
                     {
+                        // [Fix] Check if already hit this target (prevent piercing projectile from hitting same target repeatedly)
+                        if (proj->HasHit(monster->GetId()))
+                            continue;
+
                         // [Critical Hit] Check for critical hit
                         bool isCritical = false;
                         float critMultiplier = 1.0f;
+                        float additionalCritChance = 0.0f;
 
                         // Get projectile owner (player)
                         auto ownerObj = room->GetObjectManager().GetObject(proj->GetOwnerId());
                         if (ownerObj && ownerObj->GetType() == Protocol::ObjectType::PLAYER)
                         {
                             auto player = std::static_pointer_cast<Player>(ownerObj);
-                            float critChance = player->GetCriticalChance();
+                            float baseCritChance = player->GetCriticalChance();
+
+                            // Find weapon level info to add crit modifiers
+                            int32_t skillId = proj->GetSkillId();
+                            const auto &allWeapons = DataManager::Instance().GetAllWeapons();
+                            for (const auto &weaponPair : allWeapons)
+                            {
+                                const auto &weapon = weaponPair.second;
+                                for (const auto &levelInfo : weapon.levels)
+                                {
+                                    if (levelInfo.skillId == skillId)
+                                    {
+                                        int32_t playerWeaponLevel = player->GetInventory().GetWeaponLevel(weapon.id);
+                                        if (playerWeaponLevel > 0 && playerWeaponLevel <= static_cast<int32_t>(weapon.levels.size()))
+                                        {
+                                            const auto &levelData = weapon.levels[playerWeaponLevel - 1];
+                                            additionalCritChance = levelData.critChance;
+                                            critMultiplier *= levelData.critDamageMult;
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+
+                            float totalCritChance = baseCritChance + additionalCritChance;
 
                             // Random critical check using FastRandom
                             static thread_local System::Utility::FastRandom rng;
-                            if (rng.NextFloat() < critChance)
+                            if (rng.NextFloat() < totalCritChance)
                             {
                                 isCritical = true;
-                                critMultiplier = player->GetCriticalDamageMultiplier();
+                                critMultiplier *= player->GetCriticalDamageMultiplier();
                             }
                         }
 
-                        // [Fix] 이미 타격한 대상인지 체크 (관통 투사체가 같은 대상을 반복 타격하는 것 방지)
-                        if (proj->HasHit(monster->GetId()))
-                            continue;
-
-                        // [Pierce Damage Decay] Calculate damage based on pierce count
-                        // Each pierce reduces damage by 10%
+                        // [Fix Damage Decay] Calculate damage based on hit index (not remaining pierce count)
+                        // Each hit reduces damage by 10% - monotonic decay (never increases)
                         int32_t baseDamage = proj->GetDamage();
-                        int32_t pierceCount = proj->GetPierceCount();
+                        int32_t hitIndex = proj->GetHitCount();
                         int32_t actualDamage =
-                            static_cast<int32_t>(baseDamage * std::pow(0.9, pierceCount) * critMultiplier);
+                            static_cast<int32_t>(baseDamage * std::pow(0.9f, hitIndex) * critMultiplier);
+
+                        // [Apply Effects] Check skill info for effects
+                        int32_t skillId = proj->GetSkillId();
+                        const auto *skillInfo = DataManager::Instance().GetSkillInfo(skillId);
+                        if (skillInfo && !skillInfo->effectType.empty())
+                        {
+                            Effect::Type effectType;
+                            if (skillInfo->effectType == "POISON")
+                                effectType = Effect::Type::POISON;
+                            else if (skillInfo->effectType == "BURN")
+                                effectType = Effect::Type::BURN;
+                            else if (skillInfo->effectType == "SLOW")
+                                effectType = Effect::Type::SLOW;
+                            else
+                                effectType = Effect::Type::POISON;
+
+                            if (effectType == Effect::Type::SLOW)
+                            {
+                                monster->AddStatusEffect("SLOW", skillInfo->effectValue, skillInfo->effectDuration, room->_totalRunTime);
+                            }
+                            else
+                            {
+                                Effect::StatusEffect effect;
+                                effect.type = effectType;
+                                effect.sourceId = proj->GetOwnerId();
+                                effect.endTime = room->_totalRunTime + skillInfo->effectDuration;
+                                effect.tickInterval = skillInfo->effectInterval > 0.0f ? skillInfo->effectInterval : 0.5f;
+                                effect.lastTickTime = room->_totalRunTime;
+                                effect.value = skillInfo->effectValue;
+                                room->GetEffectManager().ApplyEffect(monster->GetId(), effect);
+                            }
+                        }
 
                         monster->TakeDamage(actualDamage, room);
-                        proj->AddHit(monster->GetId()); // [Fix] 타격 기록 추가
+                        proj->AddHit(monster->GetId());
 
                         bool consumed = proj->OnHit();
 

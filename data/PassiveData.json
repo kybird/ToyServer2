@@ -8,31 +8,11 @@
         "weight": 100,
         "max_level": 5,
         "levels": [
-            {
-                "level": 1,
-                "bonus": 0.1,
-                "desc": "Damage +10%"
-            },
-            {
-                "level": 2,
-                "bonus": 0.2,
-                "desc": "Damage +20%"
-            },
-            {
-                "level": 3,
-                "bonus": 0.3,
-                "desc": "Damage +30%"
-            },
-            {
-                "level": 4,
-                "bonus": 0.4,
-                "desc": "Damage +40%"
-            },
-            {
-                "level": 5,
-                "bonus": 0.5,
-                "desc": "Damage +50%"
-            }
+            { "level": 1, "bonus": 0.1, "desc": "Damage +10%" },
+            { "level": 2, "bonus": 0.2, "desc": "Damage +20%" },
+            { "level": 3, "bonus": 0.3, "desc": "Damage +30%" },
+            { "level": 4, "bonus": 0.4, "desc": "Damage +40%" },
+            { "level": 5, "bonus": 0.5, "desc": "Damage +50%" }
         ]
     },
     {
@@ -44,31 +24,11 @@
         "weight": 90,
         "max_level": 5,
         "levels": [
-            {
-                "level": 1,
-                "bonus": 0.2,
-                "desc": "Max HP +20%"
-            },
-            {
-                "level": 2,
-                "bonus": 0.4,
-                "desc": "Max HP +40%"
-            },
-            {
-                "level": 3,
-                "bonus": 0.6,
-                "desc": "Max HP +60%"
-            },
-            {
-                "level": 4,
-                "bonus": 0.8,
-                "desc": "Max HP +80%"
-            },
-            {
-                "level": 5,
-                "bonus": 1.0,
-                "desc": "Max HP +100%"
-            }
+            { "level": 1, "bonus": 0.2, "desc": "Max HP +20%" },
+            { "level": 2, "bonus": 0.4, "desc": "Max HP +40%" },
+            { "level": 3, "bonus": 0.6, "desc": "Max HP +60%" },
+            { "level": 4, "bonus": 0.8, "desc": "Max HP +80%" },
+            { "level": 5, "bonus": 1.0, "desc": "Max HP +100%" }
         ]
     },
     {
@@ -80,16 +40,11 @@
         "weight": 80,
         "max_level": 5,
         "levels": [
-            {
-                "level": 1,
-                "bonus": 0.1,
-                "desc": "Move Speed +10%"
-            },
-            {
-                "level": 5,
-                "bonus": 0.5,
-                "desc": "Move Speed +50%"
-            }
+            { "level": 1, "bonus": 0.1, "desc": "Move Speed +10%" },
+            { "level": 2, "bonus": 0.2, "desc": "Move Speed +20%" },
+            { "level": 3, "bonus": 0.3, "desc": "Move Speed +30%" },
+            { "level": 4, "bonus": 0.4, "desc": "Move Speed +40%" },
+            { "level": 5, "bonus": 0.5, "desc": "Move Speed +50%" }
         ]
     },
     {
@@ -101,16 +56,11 @@
         "weight": 80,
         "max_level": 5,
         "levels": [
-            {
-                "level": 1,
-                "bonus": 0.08,
-                "desc": "Cooldown -8%"
-            },
-            {
-                "level": 5,
-                "bonus": 0.40,
-                "desc": "Cooldown -40%"
-            }
+            { "level": 1, "bonus": 0.08, "desc": "Cooldown -8%" },
+            { "level": 2, "bonus": 0.16, "desc": "Cooldown -16%" },
+            { "level": 3, "bonus": 0.24, "desc": "Cooldown -24%" },
+            { "level": 4, "bonus": 0.32, "desc": "Cooldown -32%" },
+            { "level": 5, "bonus": 0.40, "desc": "Cooldown -40%" }
         ]
     },
     {
@@ -122,16 +72,11 @@
         "weight": 70,
         "max_level": 5,
         "levels": [
-            {
-                "level": 1,
-                "bonus": 0.1,
-                "desc": "Area +10%"
-            },
-            {
-                "level": 5,
-                "bonus": 0.5,
-                "desc": "Area +50%"
-            }
+            { "level": 1, "bonus": 0.1, "desc": "Area +10%" },
+            { "level": 2, "bonus": 0.2, "desc": "Area +20%" },
+            { "level": 3, "bonus": 0.3, "desc": "Area +30%" },
+            { "level": 4, "bonus": 0.4, "desc": "Area +40%" },
+            { "level": 5, "bonus": 0.5, "desc": "Area +50%" }
         ]
     },
     {
@@ -143,16 +88,11 @@
         "weight": 70,
         "max_level": 5,
         "levels": [
-            {
-                "level": 1,
-                "bonus": 0.1,
-                "desc": "Duration +10%"
-            },
-            {
-                "level": 5,
-                "bonus": 0.5,
-                "desc": "Duration +50%"
-            }
+            { "level": 1, "bonus": 0.1, "desc": "Duration +10%" },
+            { "level": 2, "bonus": 0.2, "desc": "Duration +20%" },
+            { "level": 3, "bonus": 0.3, "desc": "Duration +30%" },
+            { "level": 4, "bonus": 0.4, "desc": "Duration +40%" },
+            { "level": 5, "bonus": 0.5, "desc": "Duration +50%" }
         ]
     },
     {
@@ -164,16 +104,8 @@
         "weight": 50,
         "max_level": 2,
         "levels": [
-            {
-                "level": 1,
-                "bonus": 1,
-                "desc": "Count +1"
-            },
-            {
-                "level": 2,
-                "bonus": 2,
-                "desc": "Count +2"
-            }
+            { "level": 1, "bonus": 1, "desc": "Count +1" },
+            { "level": 2, "bonus": 2, "desc": "Count +2" }
         ]
     },
     {
@@ -185,16 +117,11 @@
         "weight": 60,
         "max_level": 5,
         "levels": [
-            {
-                "level": 1,
-                "bonus": 1,
-                "desc": "Pierce +1"
-            },
-            {
-                "level": 5,
-                "bonus": 5,
-                "desc": "Pierce +5"
-            }
+            { "level": 1, "bonus": 1, "desc": "Pierce +1" },
+            { "level": 2, "bonus": 2, "desc": "Pierce +2" },
+            { "level": 3, "bonus": 3, "desc": "Pierce +3" },
+            { "level": 4, "bonus": 4, "desc": "Pierce +4" },
+            { "level": 5, "bonus": 5, "desc": "Pierce +5" }
         ]
     }
 ]

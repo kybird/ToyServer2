@@ -789,14 +789,33 @@ void Player::RefreshInventoryEffects(Room *room)
         {
             // New weapon, create emitter
             const auto *tmpl = DataManager::Instance().GetWeaponInfo(weaponId);
-            if (tmpl && level > 0 && level <= static_cast<int>(tmpl->levels.size()))
+            if (tmpl && level > 0)
             {
-                int skillId = tmpl->levels[level - 1].skillId;
-                auto emitter = std::make_shared<DamageEmitter>(
-                    skillId, std::static_pointer_cast<Player>(shared_from_this()), weaponId, level
-                );
-                _emitters.push_back(emitter);
-                LOG_INFO("[Player] Added new emitter for weapon {} level {}", weaponId, level);
+                // Find the correct level info (handles sparse/out-of-order level arrays)
+                const WeaponLevelInfo* levelData = nullptr;
+                for (const auto &lvl : tmpl->levels)
+                {
+                    if (lvl.level == level)
+                    {
+                        levelData = &lvl;
+                        break;
+                    }
+                }
+
+                if (levelData)
+                {
+                    int skillId = levelData->skillId;
+                    auto emitter = std::make_shared<DamageEmitter>(
+                        skillId, std::static_pointer_cast<Player>(shared_from_this()), weaponId, level
+                    );
+                    _emitters.push_back(emitter);
+                    LOG_INFO("[Player] Added new emitter for weapon {} level {}", weaponId, level);
+                }
+                else
+                {
+                    LOG_WARN("[Player] Level {} not found for weapon {} (total levels: {})",
+                             level, weaponId, tmpl->levels.size());
+                }
             }
         }
     }
@@ -838,7 +857,7 @@ float Player::GetCriticalChance() const
     for (int id : _inventory->GetOwnedPassiveIds())
     {
         const auto *tmpl = DataManager::Instance().GetPassiveInfo(id);
-        if (tmpl && tmpl->statType == "critical_chance")
+        if (tmpl && (tmpl->statType == "critical_chance" || tmpl->statType == "crit_chance"))
         {
             int level = _inventory->GetPassiveLevel(id);
             if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))
@@ -862,7 +881,7 @@ float Player::GetCriticalDamageMultiplier() const
     for (int id : _inventory->GetOwnedPassiveIds())
     {
         const auto *tmpl = DataManager::Instance().GetPassiveInfo(id);
-        if (tmpl && tmpl->statType == "critical_damage")
+        if (tmpl && (tmpl->statType == "critical_damage" || tmpl->statType == "crit_damage"))
         {
             int level = _inventory->GetPassiveLevel(id);
             if (level > 0 && level <= static_cast<int>(tmpl->levels.size()))

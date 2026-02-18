@@ -1,8 +1,8 @@
 #include "Entity/Player.h"
 #include "Game/ObjectManager.h"
 #include "Game/Room.h"
+#include "MockSystem.h"
 #include "System/ISession.h"
-#include "System/MockSystem.h"
 #include "System/Packet/IPacket.h"
 #include <cstring>
 #include <gtest/gtest.h>

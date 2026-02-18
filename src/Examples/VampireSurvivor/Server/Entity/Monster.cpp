@@ -126,9 +126,15 @@ void Monster::Reset()
     _lastAttackTime = -100.0f;
     _state = Protocol::ObjectState::IDLE;
     _stateExpiresAt = 0.0f;
+    _stuckTimer = 0.0f; // [Fix] Reset stuck timer
+    _targetId = 0;      // [Fix] Ensure target is cleared
+
     if (_ai)
         _ai->Reset();
     _modifiers.Clear();
+
+    // [Fix] Reset movement strategy to default if needed (but usually set in Initialize/CreateAI)
+    // _movementStrategy = std::make_shared<SurroundingFlockingStrategy>();
 }
 
 void Monster::Initialize(

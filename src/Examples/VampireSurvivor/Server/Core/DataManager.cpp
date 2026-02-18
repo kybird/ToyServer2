@@ -262,9 +262,29 @@ bool DataManager::LoadWeaponData(const std::string &path)
                     levelData.damageMult = lvl.value("damage_mult", 1.0f);
                     levelData.cooldownMult = lvl.value("cooldown_mult", 1.0f);
                     levelData.durationMult = lvl.value("duration_mult", 1.0f);
+                    levelData.areaMult = lvl.value("area_mult", 1.0f);
+                    levelData.speedMult = lvl.value("speed_mult", 1.0f);
                     levelData.desc = lvl.value("desc", "");
 
-                    // [New] Generic params parsing
+                    levelData.projectileCount = lvl.value("projectile_count", 0);
+                    levelData.pierceCount = lvl.value("pierce_count", 0);
+                    levelData.maxTargets = lvl.value("max_targets", 0);
+
+                    levelData.critChance = lvl.value("crit_chance", 0.0f);
+                    levelData.critDamageMult = lvl.value("crit_damage_mult", 1.0f);
+
+                    levelData.effectType = lvl.value("effect_type", "");
+                    levelData.effectValue = lvl.value("effect_value", 0.0f);
+                    levelData.effectDuration = lvl.value("effect_duration", 0.0f);
+
+                    if (lvl.contains("flags") && lvl["flags"].is_array())
+                    {
+                        for (const auto &flag : lvl["flags"])
+                        {
+                            levelData.flags.push_back(flag.get<std::string>());
+                        }
+                    }
+
                     if (lvl.contains("params") && lvl["params"].is_object())
                     {
                         for (auto it = lvl["params"].begin(); it != lvl["params"].end(); ++it)
@@ -321,6 +341,7 @@ bool DataManager::LoadPassiveData(const std::string &path)
             data.description = item.value("description", "");
             data.icon = item.value("icon", "");
             data.statType = item.value("stat_type", "");
+            data.statType2 = item.value("stat_type2", "");
             data.maxLevel = item.value("max_level", 5);
             data.weight = item.value("weight", 100);
             data.uniqueGroup = item.value("unique_group", 0);
@@ -332,6 +353,7 @@ bool DataManager::LoadPassiveData(const std::string &path)
                     PassiveLevelInfo levelData;
                     levelData.level = lvl["level"];
                     levelData.bonus = lvl.value("bonus", 0.0f);
+                    levelData.bonus2 = lvl.value("bonus2", 0.0f);
                     levelData.desc = lvl.value("desc", "");
                     data.levels.push_back(levelData);
                 }

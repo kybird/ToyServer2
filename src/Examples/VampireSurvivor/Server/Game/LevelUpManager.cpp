@@ -120,15 +120,22 @@ std::vector<LevelUpOption> LevelUpManager::BuildCandidatePool(Player *player)
         }
         else if (currentLevel < tmpl.maxLevel)
         {
-            // 레벨업 가능
             LevelUpOption opt;
             opt.optionId = optionId++;
             opt.type = LevelUpOptionType::WEAPON;
             opt.itemId = weaponId;
             opt.name = tmpl.name;
-            opt.desc = (currentLevel < static_cast<int>(tmpl.levels.size()))
-                           ? tmpl.levels[static_cast<size_t>(currentLevel)].desc
-                           : "Level Up";
+
+            std::string levelDesc = "Level Up";
+            for (const auto &lvl : tmpl.levels)
+            {
+                if (lvl.level == currentLevel + 1)
+                {
+                    levelDesc = lvl.desc;
+                    break;
+                }
+            }
+            opt.desc = levelDesc;
             opt.isNew = false;
             pool.push_back(opt);
         }
@@ -139,8 +146,6 @@ std::vector<LevelUpOption> LevelUpManager::BuildCandidatePool(Player *player)
     for (const auto &[passiveId, tmpl] : allPassives)
     {
         int currentLevel = inventory.GetPassiveLevel(passiveId);
-
-        // [Filtering] 의존성 체크 (필요시 추가)
 
         if (currentLevel == 0)
         {
@@ -163,9 +168,17 @@ std::vector<LevelUpOption> LevelUpManager::BuildCandidatePool(Player *player)
             opt.type = LevelUpOptionType::PASSIVE;
             opt.itemId = passiveId;
             opt.name = tmpl.name;
-            opt.desc = (currentLevel < static_cast<int>(tmpl.levels.size()))
-                           ? tmpl.levels[static_cast<size_t>(currentLevel)].desc
-                           : "Level Up";
+
+            std::string levelDesc = "Level Up";
+            for (const auto &lvl : tmpl.levels)
+            {
+                if (lvl.level == currentLevel + 1)
+                {
+                    levelDesc = lvl.desc;
+                    break;
+                }
+            }
+            opt.desc = levelDesc;
             opt.isNew = false;
             pool.push_back(opt);
         }

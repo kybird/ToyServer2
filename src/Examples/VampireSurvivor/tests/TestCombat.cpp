@@ -6,7 +6,7 @@
 #include "Entity/ProjectileFactory.h"
 #include "Game/DamageEmitter.h"
 #include "Game/Room.h"
-#include "System/MockSystem.h"
+#include "MockSystem.h"
 #include <gtest/gtest.h>
 
 namespace SimpleGame {

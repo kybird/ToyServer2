@@ -116,7 +116,9 @@
         "target_rule": "Nearest",
         "traits": [
             "ZONE",
-            "INSTANT"
+            "INSTANT",
+            "PROJECTILE",
+            "AREA"
         ]
     },
     {
@@ -131,6 +133,8 @@
         "pierce": 99,
         "max_targets_per_tick": 10,
         "target_rule": "Nearest",
+        "width": 2.0,
+        "height": 4.0,
         "traits": [
             "DIRECTIONAL",
             "MELEE",
