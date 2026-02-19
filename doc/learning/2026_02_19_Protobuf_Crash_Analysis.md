@@ -36,10 +36,39 @@
 - **조치**: `S_MoveObjectBatch` 패킷을 보낼 때, 한 번에 보내지 않고 **300개씩 끊어서(Chunking)** 여러 번 보냄.
 - **효과**: 몬스터가 10만 마리가 되어도 패킷 하나는 절대 65KB를 넘지 않음. 네트워크 대역폭 관리에도 유리함.
 
-## 💡 교훈 (Lessons Learned)
-1.  **타입의 한계를 믿지 마라**: `uint16_t`를 쓰는 곳엔 반드시 `UINT16_MAX` 체크가 있어야 한다. `assert`도 믿지 말고 `static_assert`나 런타임 체크(`if`)를 적극 활용하자.
-2.  **대규모 데이터는 무조건 쪼개라(Chunking)**: MMO에서 "모든 유저 정보", "모든 몬스터 정보"를 한 패킷에 담는 건 시한폭탄이다. 언제 터질지 모른다.
-3.  **Fail Fast**: 조용히 잘려서 이상한 동작을 하는 것보다, 차라리 터져서 로그를 남기는 게 백배 낫다. (이번에도 터지지 않았다면 디버깅에 며칠이 걸렸을 것이다.)
+---
+
+## �️ [Part 2] 후속 사건: The `safeSize` Regression (2026-02-19)
+
+### 1. 증상
+- 위 1차 수정 직후, 클라이언트에서 **`Failed to parse C_LOGIN`** 에러 발생.
+- 로그인 성공 후 **`S_RoomList` 패킷이 오지 않거나**, 엉뚱한 값으로 파싱됨.
+
+### 2. 원인: 과잉 방어 (`safeSize`)
+- **버그 코드**:
+    ```cpp
+    // Room_Update.cpp
+    uint16_t safeSize = size + (size / 10) + 16;  // 여유분 10% + 16바이트 추가
+    auto *msg = System::MessagePool::AllocatePacket(safeSize); 
+    pkt.SerializeTo(msg->Payload());
+    // msg->length를 size로 보정하지 않음!
+    ```
+- **문제점**:
+    - `AllocatePacket(safeSize)`는 **`msg->length`를 `safeSize`(예: 32바이트)로 설정**함.
+    - 실제 패킷(`size`)은 **15바이트**.
+    - `GatewaySession::Flush`는 `msg->length`(32바이트)만큼 TCP로 전송.
+    - **결과**: `[Header(4) + Body(11) + 쓰레기(17)]`가 전송됨.
+    - 클라이언트는 앞의 15바이트만 읽고, **나머지 17바이트 쓰레기를 다음 패킷 헤더로 오인**하여 파싱 대실패.
+
+### 3. 해결 및 교훈
+- **해결**:
+    - `safeSize` 로직 완전 제거 (테스트 결과 `ByteSizeLong()`이 정확함이 입증됨).
+    - `AllocatePacket(pkt.GetTotalSize())`로 **할당 크기 = 전송 크기**를 일치시킴.
+- **교훈**:
+    - **Memory Allocation $\neq$ Network Transmission**: "넉넉하게 할당해도 된다"는 메모리 관점이고, 네트워크 전송 시엔 "정확하게 그만큼만" 보내야 한다.
+    - **Verify Assumptions**: "Protobuf 계산이 틀릴 수도 있다"는 막연한 불안감(`safeSize`)이 오히려 버그를 만들었다. 테스트(`.CrashReproductionTests`)로 검증하고 코드를 짰어야 했다.
+
+---
 
 ## 🔗 관련 파일
 - `doc/investigation/Crash_Root_Cause.md` (초기 분석 문서)
