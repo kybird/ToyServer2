@@ -3,6 +3,12 @@
 ## 🚀 Tasks In-Progress & Remaining
 
 ### Critical Optimization Tasks (Next Sprint)
+- [ ] **[CRITICAL] NATS Driver Memory Leak (Confirmed)**
+    - **문제**: `Subscribe` 시 할당한 콜백 래퍼(`persistentCallback`)가 해제되지 않음 (확정 누수).
+    - **해결**: 구독 해지 및 객체 소멸 시 반드시 `delete`하도록 수정.
+- [ ] **[CRITICAL] CommandConsole Shutdown Safety (UAF Risk)**
+    - **문제**: `Stop()` 시 `detach()` 사용으로 인해 메인 프로세스 종료 후에도 스레드가 살아있어 UAF 위험.
+    - **해결**: `detach()` 제거, `join()` 사용, 비동기 입력 대기 도입.
 - [ ] **[CRITICAL] Multi-Level MessagePool 확장**
     - **목표**: 4KB 초과 시 힙 할당을 방지하고, 대형 패킷(9KB)을 효율적으로 처리하기 위한 계층형 풀 도입.
     - **스펙**:
@@ -17,12 +23,12 @@
     - 수신 버퍼 `resize()` 시 발생하는 불필요한 0 초기화 제거 (`reserve` + `push_back` 활용).
     - 초당 수십 GB의 메모리 쓰기 부하 제거.
 
-- [ ] **[HIGH] UDPSession::SendReliable Large Packet Optimization (Confirmed Issue)**
+- [ ] **[HIGH] UDPSession Partial Hot Path Optimization**
     - **참조**: `doc/code_review/2026_02_19_System_Review.md`
     - **파일**: `src/System/Session/UDPSession.cpp:232`
-    - **문제**: `SendReliable`에서 1024바이트 초과 패킷 직렬화 시 `std::vector` 임시 할당 발생.
-    - **영향**: 대형 패킷 빈번 전송 시 힙 할당/해제 부하 증가 (Hot Path 위반 잔재).
-    - **해결**: `MessagePool`에서 Buffer를 할당받아 직렬화 후 전송하도록 변경 (Zero-Copy).
+    - **문제**: `SendReliable`에서 대형 패킷(>1KB) 전송 시 `std::vector` 힙 할당 발생.
+    - **영향**: 대형 패킷 빈번 전송 시 힙 할당/해제 부하 증가 (Partial Hot Path Violation).
+    - **해결**: `MessagePool` 또는 `Block Allocator`를 사용하여 Zero-Copy 보장.
 
 - [ ] **[LONG-TERM] Smart Packet Builder (Auto-Chunking Helper)**
     - **목표**: 개발자가 패킷 크기를 신경 쓰지 않고 데이터를 밀어 넣으면, 프레임워크가 알아서 안전한 크기(Chunk)로 잘라서 보내주는 헬퍼 도입.
@@ -46,13 +52,7 @@
 - [ ] **[LOW] ThreadPool Graceful Shutdown**
     - **목표**: 서버 종료 시(`Stop()`) 대기 중인 작업(DB 저장 등)을 모두 처리하고 안전하게 종료.
     - **이유**: 현재 `ThreadPool`은 즉시 종료(`return`)하여 데이터 유실 가능성 있음.
-- [ ] **[LOW] Command Console Thread Safety**
-    - **목표**: 콘솔 명령어 핸들러(`/reload` 등)를 별도 스레드가 아닌 Main Thread(`Dispatcher`)에서 실행하도록 변경.
-    - **이유**: `CommandConsole` 스레드에서 직접 `Session`이나 `Config`를 건드리면 Race Condition 발생 가능.
-- [ ] **[LOW] NATS Driver Memory Leak**
-    - **문제**: `Subscribe` 시 할당한 콜백 래퍼(`persistentCallback`)가 해제되지 않음.
-    - **해결**: 구독 해지 시 `delete` 로직 추가 필요.
-- [ ] **[LOW] Metrics Lock Contention**
+- [ ] **[MEDIUM] Metrics Optimization**
     - **문제**: `GetCounter` 호출 시마다 `mutex` 잠금.
     - **해결**: 카운터 포인터를 멤버 변수로 캐싱하여 사용.
 

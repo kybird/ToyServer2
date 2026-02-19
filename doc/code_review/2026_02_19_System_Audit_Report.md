@@ -1,6 +1,6 @@
-# System 프레임워크 종합 감사 보고서 (Code & Structure Audit)
+# System 프레임워크 종합 감사 보고서 (Code & Structure Audit) - Revised
 
-**작성일**: 2026-02-19
+**작성일**: 2026-02-19 (Updated based on Critique)
 **대상**: `src/System` 전체 코드 및 디렉토리 구조
 **감사자**: Antigravity Smart Agent
 
@@ -8,62 +8,52 @@
 
 ## 1. 종합 요약 (Executive Summary)
 
-`src/System` 프레임워크는 기능적으로는 고성능 MMORPG 서버의 훌륭한 기반을 갖추고 있으나, **물리적 파일 구조(Directory Structure)** 측면에서는 정리되지 않은 부분들이 다수 발견되었습니다.
-특히 불필요한 중첩 폴더(`Dispatcher/DISPATCHER`)와 루트 디렉토리에 산재한 인터페이스 파일들은 프로젝트의 장기적인 유지보수성을 저해하는 요인입니다.
+`src/System` 프레임워크의 상세 감사 결과, 기능적 완성도는 높으나 **메모리 누수(Memory Leak)**와 **스레드 안전성(Thread Safety)** 측면에서 치명적인 결함이 발견되었습니다. 또한, 디렉토리 구조의 정리 정돈이 미흡하여 유지보수성을 저해하고 있습니다.
 
-*   **코드 품질 (Logic)**: ⭐⭐⭐⭐⭐ (5.0/5.0) - *기능적 완성도 높음*
+*   **코드 품질 (Logic)**: ⭐⭐⭐⭐ (4.0/5.0) - *Zero-Copy 인프라는 훌륭하나, MQ/Console에 치명적 버그 존재*
 *   **구조 정돈 (Structure)**: ⭐⭐⭐ (3.0/5.0) - *중첩 폴더, 인터페이스 산재 등 정리 필요*
-*   **성능 최적화 (Perf)**: ⭐⭐⭐⭐ (4.0/5.0) - *메모리 할당 최적화 필요*
+*   **안정성 (Stability)**: ⭐⭐⭐ (3.0/5.0) - *Nats 누수 및 Console UAF 위험*
 
 ---
 
-## 2. 코드 품질 상세 분석 (Code Quality Audit)
+## 2. 모듈별 상세 분석 (Module Analysis)
 
 ### 2.1. Foundation & Network
 *   **Timer & Log**: `TimingWheel`과 `Async Logger`는 최적화 수준이 매우 높음.
-*   **UDP Network**: `Zero-Copy` 및 `Context Pooling`으로 인프라는 훌륭하나, `UDPSession`이 힙 할당을 하여 병목이 됨. **(Hot Path Violation)**
-*   **CrashHandler**: 이미 구현되어 있음 (`System/Debug/CrashHandler.cpp`).
+*   **UDP Network**: `Zero-Copy` 인프라는 훌륭함. 단, `UDPSession::SendReliable`에서 대형 패킷 전송 시 `std::vector` 힙 할당이 발생하여 부분적인 성능 저하 유발 (**Partial Hot Path Violation**).
+*   **CrashHandler**: `System/Debug/CrashHandler.cpp`에 구현되어 있으며, `ServerMain` 등에서 초기화 호출도 확인됨. (기존 보고서 정정)
 
 ### 2.2. Data & Utility
 *   **Database**: `Async Transaction` 패턴이 우수하며 `RAII` 커넥션 풀링도 안전함.
-*   **MQ/Metrics**: 기본적인 구조는 갖췄으나, `NatsDriver`의 메모리 누수 가능성과 `Metrics`의 락 경합 이슈가 존재함.
-*   **Console**: 명령어 처리가 별도 스레드에서 돌아가므로, `Dispatcher`를 통한 스레드 동기화가 필요함.
+*   **MQ (`NatsDriver`)**: **[CRITICAL]** `Subscribe` 시 할당한 `persistentCallback` 힙 메모리를 해제하는 로직이 전무함. 이는 실행 시간이 길어질수록 메모리가 무한히 증가하는 **확정적 메모리 누수(Confirmed Memory Leak)**임.
+*   **Console (`CommandConsole`)**: **[CRITICAL]** `Stop()` 시 스레드를 `detach()`하고 있어, 메인 프로세스 종료 시 `InputLoop`가 살아있는 상태에서 소멸된 객체에 접근할 위험(**Use-After-Free**)이 있음.
+
+### 2.3. Structure (Directory)
+*   **중복 중첩**: `src/System/Dispatcher/DISPATCHER` 폴더 존재. (정리 필요)
+*   **루트 오염**: `I*.h` 인터페이스 파일들이 루트에 산재함.
+*   **역할 모호**: `Drivers` 폴더가 `Database`와 분리되어 있어 구조적 혼란 야기.
 
 ---
 
-## 3. 디렉토리 구조 진단 (Structure Audit)
+## 3. 핵심 개선 권고 사항 (Critical Recommendations)
 
-코드는 훌륭하지만, 파일 배치와 조직화 상태는 개선이 시급합니다.
+### 🚨 Priority 0: 치명적 버그 수정 (Safety First)
+1.  **NatsDriver Memory Leak Fix**: 구독 해제 및 객체 소멸 시 `persistentCallback`을 반드시 `delete`하도록 수정.
+2.  **CommandConsole Shutdown Safety**: `detach()` 제거 및 `join()`으로 변경. `std::getline` 블로킹 문제를 해결하기 위해 비동기 입력이나 `CancelIo` 고려.
 
-### 3.1. [CRITICAL] 중복 중첩 폴더 (Redundant Nesting)
-*   **발견**: `src/System/Dispatcher/DISPATCHER` 폴더 존재.
-*   **진단**: 명백한 실수이거나 정리되지 않은 잔재입니다. `Dispatcher` 폴더 안에 또 대문자 `DISPATCHER` 폴더를 만들어 파일을 숨겨두는 것은 탐색을 방해합니다.
-*   **권고**: `System/Dispatcher/DISPATCHER/*` -> `System/Dispatcher/*`로 파일 이동 후 빈 폴더 삭제.
-
-### 3.2. [HIGH] 루트 인터페이스 오염 (Root Pollution)
-*   **발견**: `src/System` 루트에 `IConfig.h`, `IDatabase.h`, `ILog.h`, `ITimer.h` 등 12개의 인터페이스 헤더가 산재함.
-*   **진단**: 인터페이스와 구현체가 물리적으로 멀리 떨어져 있어 응집도가 낮아 보입니다.
-*   **권고**: 각 인터페이스를 해당 기능 폴더로 이동 (예: `System/IConfig.h` -> `System/Config/IConfig.h`). `System/Pch.h`는 루트 유지.
-
-### 3.3. [MEDIUM] 모호한 역할 분리 (Ambiguous Separation)
-*   **발견**: `System/Database`와 `System/Drivers` 폴더가 분리되어 있음.
-*   **진단**: `Drivers` 내부의 `MySQL`, `SQLite`는 사실상 데이터베이스 구현체입니다. `System/Drivers`라는 이름은 너무 포괄적입니다.
-*   **권고**: `System/Drivers` 폴더를 제거하고, `System/Database/Drivers` 하위로 통합하거나 `System/Database/Impl`로 재배치.
-
----
-
-## 4. 개선 및 리팩토링 권고 (Action Items)
-
-### 🔥 Priority 1: 핫패스 & 버그 수정 (Code)
-1.  **UDPSession 최적화**: 힙 할당 제거 및 `MessagePool` 활용.
-2.  **MQ Memory Leak Fix**: `NatsDriver` 콜백 메모리 관리 추가.
-3.  **Console Thread Safety**: `Dispatcher::Push`로 명령어 실행 동기화.
+### ⚠️ Priority 1: 성능 병목 해결 (Optimization)
+1.  **UDPSession Heap Allocation**: `SendReliable`의 대형 패킷 경로에서 `std::vector` 대신 `MessagePool` 또는 `Block Allocator` 사용.
+2.  **Metrics Optimization**: `GetCounter` 호출 시 락 경합을 피하기 위해, 카운터 객체를 멤버 변수로 캐싱(`shared_ptr`)하여 사용.
 
 ### 🧹 Priority 2: 디렉토리 구조 정리 (Cleanup)
 1.  **Flatten Dispatcher**: `System/Dispatcher/DISPATCHER` 폴더 제거 및 파일 상위 이동.
 2.  **Move Interfaces**: 루트의 `I*.h` 파일들을 각 기능별 서브디렉토리로 이동.
-3.  **Merge Drivers**: `System/Drivers` -> `System/Database/Drivers`로 이동.
+3.  **Merge Drivers**: `System/Drivers` -> `src/System/Database/Drivers`로 이동.
 
-### ℹ️ Priority 3: 안정성 및 편의성
-1.  **CrashHandler 통합**: `ServerMain`에서 초기화.
-2.  **Metrics Optimization**: 락 경합 최소화(캐싱).
+---
+
+## 4. 결론 (Conclusion)
+
+인프라의 성능(`Zero-Copy`)은 훌륭하지만, **안정성(Leak/Crash)**을 위협하는 요소들이 발견되었습니다.
+특히 `NatsDriver`의 누수와 `CommandConsole`의 UAF 위험은 서버 장기 운영 시 치명적이므로 **즉시 수정(Immediate Fix)**이 필요합니다.
+구조적 정리(Cleanup)는 그 이후에 진행해도 늦지 않습니다.
