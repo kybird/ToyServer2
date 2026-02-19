@@ -17,8 +17,8 @@
     - 수신 버퍼 `resize()` 시 발생하는 불필요한 0 초기화 제거 (`reserve` + `push_back` 활용).
     - 초당 수십 GB의 메모리 쓰기 부하 제거.
 
-- [ ] **[HIGH] UDPSession::SendReliable Large Packet Optimization (Partial Issue)**
-    - **참조**: `doc/specs/HighPerformanceUDP.md` (Commit 6)
+- [ ] **[HIGH] UDPSession::SendReliable Large Packet Optimization (Confirmed Issue)**
+    - **참조**: `doc/code_review/2026_02_19_System_Review.md`
     - **파일**: `src/System/Session/UDPSession.cpp:232`
     - **문제**: `SendReliable`에서 1024바이트 초과 패킷 직렬화 시 `std::vector` 임시 할당 발생.
     - **영향**: 대형 패킷 빈번 전송 시 힙 할당/해제 부하 증가 (Hot Path 위반 잔재).
@@ -33,6 +33,47 @@
         PacketBuilder<S_MoveObjectBatch> builder(objects);
         builder.ProcessInChunks(300, [](auto& packet, auto& obj) { ... }, BroadcastFunc);
         ```
+
+## Essential Features (Framework Missing)
+- [ ] **[SOLVED] Crash Dump Handler (Activation Check)**
+    - **상태**: `src/System/Debug/CrashHandler`에 구현 확인됨.
+    - **작업**: `ServerMain.cpp`에서 `CrashHandler::Init()`가 호출되는지 확인하고, 테스트 크래시로 덤프 생성 검증.
+- [ ] **[MEDIUM] Config Hot-Reload**
+    - **목표**: 서버 중단 없이 설정 파일(`DesignData`)을 리로드.
+    - **필요성**: 라이브 서비스 중 밸런스 패치(예: 몬스터 스펙 조정) 대응.
+- [ ] **[LOW] IP Ban / Filter**
+    - **목표**: 악성 클라이언트 접속 차단 계층(DDOS 방어용).
+- [ ] **[LOW] ThreadPool Graceful Shutdown**
+    - **목표**: 서버 종료 시(`Stop()`) 대기 중인 작업(DB 저장 등)을 모두 처리하고 안전하게 종료.
+    - **이유**: 현재 `ThreadPool`은 즉시 종료(`return`)하여 데이터 유실 가능성 있음.
+- [ ] **[LOW] Command Console Thread Safety**
+    - **목표**: 콘솔 명령어 핸들러(`/reload` 등)를 별도 스레드가 아닌 Main Thread(`Dispatcher`)에서 실행하도록 변경.
+    - **이유**: `CommandConsole` 스레드에서 직접 `Session`이나 `Config`를 건드리면 Race Condition 발생 가능.
+- [ ] **[LOW] NATS Driver Memory Leak**
+    - **문제**: `Subscribe` 시 할당한 콜백 래퍼(`persistentCallback`)가 해제되지 않음.
+    - **해결**: 구독 해지 시 `delete` 로직 추가 필요.
+- [ ] **[LOW] Metrics Lock Contention**
+    - **문제**: `GetCounter` 호출 시마다 `mutex` 잠금.
+    - **해결**: 카운터 포인터를 멤버 변수로 캐싱하여 사용.
+
+## Refactoring & Cleanup (Structure)
+- [ ] **[MEDIUM] Flatten Dispatcher Folder**
+    - **목표**: `src/System/Dispatcher/DISPATCHER` 폴더 내용을 상위로 이동하고 빈 폴더 삭제.
+- [ ] **[LOW] Redistribute Root Interfaces**
+    - **목표**: `src/System/I*.h` 파일들을 각 기능별 서브디렉토리로 이동하여 응집도 향상.
+- [ ] **[LOW] Merge Database Drivers**
+    - **목표**: `src/System/Drivers` 폴더를 `src/System/Database/Drivers`로 이동하여 역할 명확화.
+
+## Framework Promotion Candidates (From Game Server)
+- [ ] **[HIGH] Promote Vector2**
+    - **대상**: `src/Examples/VampireSurvivor/Server/Math/Vector2.h`
+    - **목표**: `src/System/Math/Vector2.h`로 이동하여 프레임워크 표준 타입으로 사용.
+- [ ] **[MEDIUM] Generalize SpatialGrid**
+    - **대상**: `src/Examples/VampireSurvivor/Server/Game/SpatialGrid.h`
+    - **목표**: `GameObject` 의존성을 제거하고 템플릿(`SpatialHashGrid<T>`)으로 일반화하여 `src/System/Algorithm`으로 이동.
+- [ ] **[MEDIUM] Generalize BehaviorTree**
+    - **대상**: `src/Examples/VampireSurvivor/Server/Entity/AI/BehaviorTree/BehaviorTree.h`
+    - **목표**: `Monster/Room` 의존성을 `Context` 템플릿으로 추상화하여 `src/System/AI`로 이동.
 
 ---
 
