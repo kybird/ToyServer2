@@ -201,9 +201,10 @@ void Room::SendToPlayer(uint64_t sessionId, const System::IPacket &pkt)
 {
     if (_dispatcher)
     {
+        // Session::SendPacket과 동일한 방식
+        // CrashReproductionTests 검증: ByteSizeLong()은 정확하므로 safeSize 불필요
         uint16_t size = pkt.GetTotalSize();
-        uint16_t safeSize = size + (size / 10) + 16;
-        auto *msg = System::MessagePool::AllocatePacket(safeSize);
+        auto *msg = System::MessagePool::AllocatePacket(size);
         if (msg == nullptr)
             return;
 
@@ -225,9 +226,10 @@ void Room::BroadcastPacket(const System::IPacket &pkt, uint64_t excludeSessionId
     if (!_dispatcher)
         return;
 
+    // Session::SendPacket과 동일한 방식
+    // CrashReproductionTests 검증: ByteSizeLong()은 정확하므로 safeSize 불필요
     uint16_t size = pkt.GetTotalSize();
-    uint16_t safeSize = size + (size / 10) + 16;
-    auto *msg = System::MessagePool::AllocatePacket(safeSize);
+    auto *msg = System::MessagePool::AllocatePacket(size);
     if (msg == nullptr)
         return;
 

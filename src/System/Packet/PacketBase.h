@@ -9,7 +9,7 @@
 
 // [Configuration] Uncomment to enable safety margin for Protobuf serialization
 // This was introduced to handle potential varint size mismatches but tests showed it's currently unnecessary.
-// #define USE_PROTOBUF_SERIALIZE_SAFETY_MARGIN
+#define USE_PROTOBUF_SERIALIZE_SAFETY_MARGIN
 
 namespace System {
 
