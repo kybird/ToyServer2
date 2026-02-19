@@ -2,6 +2,9 @@
 
 **Date**: 2026-02-07
 **Target**: UDP Session Pool & KCP Logic Overhead (Comparison Study)
+**Source Code**: `src/System/Session/tests/TestPerf.cpp` (GTest)
+
+> **Note**: This report is based on historical data. To reproduce results, build the `SystemTests` target and run `TestPerf`.
 
 ## 1. Overview
 네트워크 엔진의 효율성을 객관적으로 증명하기 위해, 현재 구현된 **실험군(Pooling/KCP)**과 기존 방식의 **대조군(Direct/Raw)**을 비교 분석함.

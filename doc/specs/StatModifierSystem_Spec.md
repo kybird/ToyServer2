@@ -1,4 +1,6 @@
-# 범용 Stat Modifier 시스템 구현 계획 (상용 수준 아키텍처)
+# 범용 Stat Modifier 시스템 구현 명세 (Stat Modifier System Spec) - [Status: IMPLEMENTED]
+
+**구현 위치**: `src/Examples/VampireSurvivor/Server/Entity/StatModifier.h`
 
 몬스터와 플레이어의 스탯(이동속도, 공격력 등)을 특정 기능에 종속시키지 않고, 범용적으로 관리할 수 있는 **Stat Modifier 시스템**을 설계합니다.
 

@@ -140,13 +140,15 @@ void GatewaySession::OnDisconnect()
         msg->type = System::MessageType::NETWORK_DISCONNECT;
         msg->sessionId = GetId();
         msg->session = this;
-        if (_dispatcher)
+        if (_dispatcher != nullptr)
         {
             IncRef();
             _dispatcher->Post(msg);
         }
         else
+        {
             System::MessagePool::Free(msg);
+        }
     }
 }
 

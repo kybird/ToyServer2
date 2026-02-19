@@ -4,9 +4,9 @@
 
 ## 1. 메모리 관리 (Memory Management)
 
-### [ ] 고성능 글로벌 할당기 도입 (mimalloc / tcmalloc)
-- **배경**: 벤치마크 결과, 람다(Tiny) 및 대형(Large) 패킷에서 사용하는 시스템 할당자(LFH)는 범용적이지만 극강의 성능이 필요할 때 병목이 될 수 있음.
-- **실측 기반 통찰**: 람다 풀링 실패 사례(3.7배 느려짐)를 교훈 삼아, 억지 풀링 대신 **Thread-Local 캐시를 가진 고성능 할당기**를 도입하는 것이 차세대 정석임.
+### [ ] 고성능 글로벌 할당기 도입 (mimalloc / tcmalloc) - [HOLD]
+- **상태**: 현재 `MessagePool` 및 `SimplePool` 최적화에 집중. `Multi-Level MessagePool` 도입 후 재검토 예정.
+- **이유**: 외부 종속성 추가 대비 이득 불분명. LFH(Low Fragmentation Heap)가 이미 준수한 성능을 보임.
 
 ### [x] Fixed-Size Function Wrapper (무할당 람다) - 롤백 및 최적화 완료
 - **성과**: 4KB 고정 풀링 시도 결과 성능 하락(48ms -> 181ms) 확인. 현재 Windows LFH(Low Fragmentation Heap)를 활용한 할당 방식으로 회귀하여 안정성 및 캐시 효율 확보.
@@ -21,14 +21,12 @@
 ### [x] Hybrid Send Strategy (Gather Write vs Linearize) - 완료
 - **성과**: `Session::Flush`에서 `Linearize` 버퍼를 사용한 단일 `async_write` 전략이 기본 적용됨. 대형 패킷에 대해서는 수동 Scatter-Gather가 아닌 시스템 성능에 최적화된 복사를 우선 채택.
 
-### [ ] 가변형 제로복사 파이프라인 (Adaptive Zero-Copy Pipeline)
-- **배경**: 동일 프레임워크로 **게이트웨이(암호화 필요)**와 **백엔드(평문/고속)**를 모두 구축할 수 있는 범용성 확보가 필요함.
-- **설계 원칙**: 핫패스에서 모든 종류의 분기(`if`), 간접 호출(vtable), 원자적 연산(`std::atomic`)을 제거.
-- **구현 전략**: 런타임 다형성 대신 **구체 클래스 분리** 방식 채택.
-    - **`GatewaySession`**: 외부 클라이언트 대응, 암호화/복호화 필수 (1-Copy 허용).
-    - **`BackendSession`**: 내부 서버 간 통신, 평문 전용 (0-Copy 목표).
-    - **`SessionCommon.h`**: 공통 유틸리티 헬퍼 (버퍼 조작, 패킷 파싱).
-- **핵심 이점**: 서버 역할은 시작 시 단 한 번 결정되므로, 세션 생성 시점에만 팩토리 분기 발생. 이후 `OnRecv` 핫패스는 분기 없이 각자의 최적 경로만 실행.
+### [x] 가변형 제로복사 파이프라인 (Adaptive Zero-Copy Pipeline) - 완료 (구조적 분리)
+- **달성**: `GatewaySession`(암호화/Linearize)과 `BackendSession`(평문/Scatter-Gather) 클래스 분리로 구현 완료.
+- **상세**:
+    - **`GatewaySession`**: 암호화가 필수적이므로 `LinearBuffer` 복사 방식 채택 (1-Copy).
+    - **`BackendSession`**: 내부 통신용으로 `std::vector<const_buffer>`를 활용한 Scatter-Gather 전송 (Zero-Copy 지향).
+- **향후 과제**: `BackendSession`의 실제 Zero-Copy 효율성 검증 (`todo.md` 참조).
 
 ---
 
@@ -46,5 +44,6 @@
 
 ## 4. 기타 (Miscellaneous)
 
-### [ ] SIMD 기반 패킷 직렬화 및 검사
-- **목표**: 패킷 헤더 검사나 간단한 체크섬 연산에 AVX/SSE 명령어를 적용하여 미세 최적화.
+### [ ] SIMD 기반 패킷 직렬화 및 검사 - [HOLD]
+- **상태**: 현재 프로파일링 상에서 직렬화/검사가 병목이 아님.
+- **계획**: 추후 `ProfileResult` 분석 후 필요시 `todo.md`로 이관.

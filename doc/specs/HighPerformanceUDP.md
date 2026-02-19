@@ -424,7 +424,7 @@ Commit 5: Fix KCP output callback to use pooled PacketMessage + AsyncSend
   - `AllocatePacket(len)` + `memcpy(msg->Payload(), buf, len)`
   - call AsyncSend with TAG_KCP
 
-Commit 6 (optional but recommended): Remove vector in UDPSession::SendReliable
+Commit 6 (optional but recommended): Remove vector in UDPSession::SendReliable - [TODO] (See doc/todo.md)
 - Update `src/System/Session/UDPSession.cpp`:
   - avoid `std::vector<uint8_t>` when serializing to KCP
   - serialize into pooled PacketMessage and feed KCP from it

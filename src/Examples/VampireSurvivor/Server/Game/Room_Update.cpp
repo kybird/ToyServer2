@@ -318,18 +318,20 @@ void Room::SyncNetwork()
     if (objects.empty())
         return;
 
+    // [Fix] Packet Chunking (Max 300 per packet)
+    // Prevents Overflow > 65535 bytes
+    const int CHUNK_SIZE = 300;
     Protocol::S_MoveObjectBatch moveBatch;
     moveBatch.set_server_tick(_serverTick);
 
-    int validCount = 0;
-    int invalidCount = 0;
+    int countInPacket = 0;
 
     for (const auto &obj : objects)
     {
         if (obj->IsDead())
             continue;
 
-        // [Fix] NaN/Inf 값 검증 (Protobuf 직렬화 크래시 방지)
+        // [Fix] NaN/Inf Check
         float x = obj->GetX();
         float y = obj->GetY();
         float vx = obj->GetVX();
@@ -337,15 +339,10 @@ void Room::SyncNetwork()
 
         if (!std::isfinite(x) || !std::isfinite(y) || !std::isfinite(vx) || !std::isfinite(vy))
         {
-            LOG_ERROR(
-                "[CRITICAL] Invalid float in Object {}: x={}, y={}, vx={}, vy={}",
-                obj->GetId(), x, y, vx, vy
-            );
-            invalidCount++;
+            LOG_ERROR("[CRITICAL] Invalid float in Object {}: x={}, y={}, vx={}, vy={}", obj->GetId(), x, y, vx, vy);
             continue;
         }
 
-        // 플레이어, 몬스터, 투사체 모두 동기화
         auto *pos = moveBatch.add_moves();
         pos->set_object_id(obj->GetId());
         pos->set_x(x);
@@ -354,14 +351,20 @@ void Room::SyncNetwork()
         pos->set_vy(vy);
         pos->set_state(obj->GetState());
         pos->set_look_left(obj->GetLookLeft());
-        validCount++;
+
+        countInPacket++;
+
+        // If chunk limit reached, send and reset
+        if (countInPacket >= CHUNK_SIZE)
+        {
+            BroadcastPacket(S_MoveObjectBatchPacket(moveBatch));
+            moveBatch.Clear();
+            moveBatch.set_server_tick(_serverTick);
+            countInPacket = 0;
+        }
     }
 
-    if (invalidCount > 0)
-    {
-        LOG_WARN("[SyncNetwork] Skipped {} invalid objects (NaN/Inf detected)", invalidCount);
-    }
-
+    // Send remaining objects
     if (moveBatch.moves_size() > 0)
     {
         BroadcastPacket(S_MoveObjectBatchPacket(std::move(moveBatch)));

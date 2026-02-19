@@ -4,10 +4,16 @@
 #include <cassert>
 #include <concepts>
 #include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+
+// [Configuration] Uncomment to enable safety margin for Protobuf serialization
+// This was introduced to handle potential varint size mismatches but tests showed it's currently unnecessary.
+// #define USE_PROTOBUF_SERIALIZE_SAFETY_MARGIN
 
 namespace System {
 
-constexpr size_t MaxPacketSize = 1048576; // 65535 -> 1MB
+constexpr size_t MaxPacketSize = 65535; // UINT16_MAX
 
 template <typename T>
 concept PacketHeaderConcept = requires(T t) {
@@ -24,11 +30,15 @@ class PacketBase : public IPacket
 protected:
     static_assert(THeader::SIZE <= MaxPacketSize, "Header size exceeds maximum");
 
-    static constexpr uint16_t CalculateSafeSize(size_t bodySize)
+    static uint16_t CalculateSafeSize(size_t bodySize)
     {
         constexpr size_t headerSize = THeader::SIZE;
         const size_t totalSize = headerSize + bodySize;
-        assert(totalSize <= MaxPacketSize && "Packet too large");
+        if (totalSize > MaxPacketSize)
+        {
+            fprintf(stderr, "Packet too large: %zu > %zu\n", totalSize, MaxPacketSize);
+            std::abort();
+        }
         return static_cast<uint16_t>(totalSize);
     }
 
@@ -106,15 +116,20 @@ public:
     void SerializeBodyTo(void *buffer) const
     {
         size_t bodySize = GetBodySize();
+#ifdef USE_PROTOBUF_SERIALIZE_SAFETY_MARGIN
         // [Fix] Protobuf varint encoding can slightly exceed ByteSizeLong()
         // Add 10% safety margin to prevent buffer overflow
         size_t safeSize = bodySize + (bodySize / 10) + 16;
-        
+
         if (!_proto.SerializeToArray(buffer, static_cast<int>(safeSize)))
         {
             // Fallback: Try with exact size if safe size fails
             _proto.SerializeToArray(buffer, static_cast<int>(bodySize));
         }
+#else
+        // Use exact size (Default behavior verified by tests)
+        _proto.SerializeToArray(buffer, static_cast<int>(bodySize));
+#endif
     }
 
     void Reset()

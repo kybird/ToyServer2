@@ -174,40 +174,6 @@ LOG_DEBUG("Pool size: {}", _tcpPool.size());  // ✅
 
 ---
 
-### 7. UDPSession - 핫패스에서 동적 메모리 할당 (코딩 컨벤션 위반)
-**파일**: `src/System/Session/UDPSession.cpp:123-124`
-
-**문제**:
-```cpp
-std::vector<uint8_t> sendBuffer;  // ❌ 패킷 전송마다 힙 할당
-sendBuffer.resize(UDPTransportHeader::SIZE + packetSize);
-```
-
-**코딩 컨벤션 4.2 위반**: 핫패스에서 동적 메모리 할당 금지
-
-**영향**: 성능 저하, 레이턴시 증가
-
-**해결 방법**:
-```cpp
-// Option 1: 멤버 변수로 버퍼 재사용
-class UDPSession {
-    std::vector<uint8_t> _sendBuffer;  // 재사용 버퍼
-};
-
-void Flush() {
-    _sendBuffer.clear();
-    _sendBuffer.resize(UDPTransportHeader::SIZE + packetSize);
-    // ...
-}
-
-// Option 2: 스택 할당 (크기가 작을 경우)
-uint8_t sendBuffer[MAX_UDP_PACKET_SIZE];
-
-// Option 3: 풀링된 버퍼 사용
-auto buffer = BufferPool::Allocate(size);
-```
-
----
 
 ### 8. UDPSession - 빈 if 블록
 **파일**: `src/System/Session/UDPSession.cpp:138-141`
@@ -225,6 +191,15 @@ if (msg->isPooled) {
     MessagePool::Free(msg);  // ✅ 풀 반환
 }
 ```
+
+---
+
+## ✅ 해결됨 (Resolved)
+
+### 7. UDPSession - 핫패스에서 동적 메모리 할당
+**상태**: **수정 완료** (Flush 함수 리팩토링으로 해결)
+- `MessagePool` 및 `AsyncSend`로 Zero-Copy 전송 구현 완료.
+- 단, `SendReliable`의 1024바이트 초과 패킷 처리는 별도 최적화 필요 (TODO 등록됨).
 
 ---
 
@@ -256,10 +231,10 @@ if (msg->isPooled) {
 - [x] 인터페이스/구현 분리 (I 접두어)
 - [x] 의존성 주입 패턴
 - [x] RAII 및 소유권 관리
-- [ ] 핫패스 가이드라인 (UDPSession::Flush 위반)
+- [x] 핫패스 가이드라인 (UDPSession::Flush 위반)
 - [x] Manager 네이밍 지양
 
-### 테스트 추가 필요
-- UDP 세션 생명주기 테스트
-- NAT rebinding 시나리오 테스트
-- 메모리 누수 검증 (Valgrind/AddressSanitizer)
+### 테스트 추가 필요 (todo.md 로 이관됨)
+- [ ] UDP 세션 생명주기 테스트 (`todo.md` 참조)
+- [ ] NAT rebinding 시나리오 테스트 (`todo.md` 참조)
+- [ ] 메모리 누수 검증 (Valgrind/AddressSanitizer -> CrtDbgFlag) (`todo.md` 참조)

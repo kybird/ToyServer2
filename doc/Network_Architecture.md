@@ -62,7 +62,7 @@ UDP 상에 자체적인 전송 헤더와 KCP 레이어를 얹어 다중화(Multi
 - **SessionFactory 독점권**: 세션의 객체 생성 및 소멸(반납)은 반드시 `SessionFactory`를 통해서만 이루어져야 합니다. 외부에서 `new`/`delete`를 직접 사용하는 것을 엄격히 금지합니다.
 - **Acquire (대여)**: `SessionFactory::Create()`를 통해 풀에서 세션을 대여합니다.
 - **Release (반납)**: `SessionFactory::Destroy()` 호출 시 `OnRecycle()`을 통해 멤버 변수들을 초기화하고 풀로 안전하게 반납합니다.
-- **Safety**: 공유 포인터(`std::shared_ptr`)를 사용하여 세션이 디스패처 큐에 머무는 동안 객체가 소멸되지 않도록 보장합니다.
+- **Safety**: `Reference Counting`(`AddRef`/`DecRef`)을 사용하여 세션이 네트워크 I/O 또는 디스패처 큐에 머무는 동안 객체가 소멸되지 않도록 보장합니다.
 
 ---
 
@@ -87,4 +87,4 @@ UDP 상에 자체적인 전송 헤더와 KCP 레이어를 얹어 다중화(Multi
 - **Registry**: `UDPEndpointRegistry`를 통해 활성 세션 정보 및 타임아웃 관리.
 
 ---
-*최종 업데이트: 2026-02-07 (네트워크 문서 통합 및 최신화)*
+*최종 업데이트: 2026-02-18 (RefCounting 설명 정정 및 최신화)*

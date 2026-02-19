@@ -1,15 +1,10 @@
-# UDP 송신 패스 최적화 완료 보고서
+# UDP Send Path Fix Report (2026-02-07) - [Historical Record]
 
-**작성일**: 2026-02-08
-**작업자**: Atlas Orchestrator
-**계획**: `.sisyphus/plans/udp-send-path-fix.md`
+> **Note**: This document is an **Incident Post-Mortem**. It describes a specific bug in the UDP send path that caused memory corruption and how it was fixed. The described fixes are now part of the stable codebase.
 
----
-
-## 1. 개요
-
-### 목표
-ToyServer2의 UDP 송신 경로를 할당 없는(Zero-Allocation) 메모리 안전한 경로로 개선하고, 성능 병목을 제거합니다.
+## 1. 개요 (Overview)
+- **대상**: `UDPNetworkImpl` 및 `UDPSession` 송신 로직
+- **문제**: `async_send_to` 호출 시 임시 버퍼(`std::vector` 로컬 변수)를 사용하여, 비동기 작업 완료 전에 메모리가 해제되는 **Use-After-Free** 버그 발생.
 
 ### 작업 기간
 - **시작**: 2026-02-08

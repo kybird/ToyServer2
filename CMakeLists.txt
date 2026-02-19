@@ -387,6 +387,7 @@ set(VS_TEST_SOURCES
     tests/TestMessagePoolExpansion.cpp
     tests/TestSmartNotifyBenchmark.cpp
     tests/TestMemoryBench.cpp
+    src/System/Packet/tests/CrashReproductionTests.cpp
 )
 add_executable(UnitTests ${VS_TEST_SOURCES} ${GAME_SOURCES})
 target_include_directories(UnitTests PRIVATE 

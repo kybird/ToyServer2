@@ -1,5 +1,5 @@
 @echo off
-chcp 65001 >nul
+REM chcp 65001 >nul
 echo Starting VampireSurvivor Server...
 
 cd build\Debug
