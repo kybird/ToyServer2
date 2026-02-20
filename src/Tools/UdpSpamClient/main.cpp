@@ -1,6 +1,6 @@
 #include "System/Dispatcher/MessagePool.h"
-#include "System/Network/UDPNetworkImpl.h"
 #include "System/Network/UDPLimits.h"
+#include "System/Network/UDPNetworkImpl.h"
 #include "System/Pch.h"
 #include <atomic>
 #include <boost/asio.hpp>
@@ -9,7 +9,6 @@
 #include <string>
 #include <thread>
 #include <vector>
-
 
 /**
  * @brief UDP AsyncSend 패스 검증을 위한 툴
@@ -23,8 +22,8 @@ int main(int argc, char *argv[])
 {
     // 기본값
     std::string mode = "asyncsend";
-    uint16_t payloadSize = 200;      // 기본: 정상 크기
-    uint32_t sendCount = 50000;      // 기본: 50000개 전송
+    uint16_t payloadSize = 200; // 기본: 정상 크기
+    uint32_t sendCount = 50000; // 기본: 50000개 전송
     std::string destStr = "127.0.0.1:9999";
 
     // 커맨드라인 인자 파싱
@@ -97,9 +96,7 @@ int main(int argc, char *argv[])
                 return 1;
             }
 
-            boost::asio::ip::udp::endpoint dest(
-                boost::asio::ip::make_address(ipStr), port
-            );
+            boost::asio::ip::udp::endpoint dest(boost::asio::ip::make_address(ipStr), port);
 
             std::atomic<uint32_t> sentCount{0};
             std::atomic<uint32_t> failedCount{0};
@@ -130,8 +127,7 @@ int main(int argc, char *argv[])
                         // UDPTransportHeader 값
                         uint8_t tag = System::UDPTransportHeader::TAG_RAW_UDP;
                         uint64_t sessionId = 0x123456789ABCDEF0ULL;
-                        uint128_t udpToken = static_cast<uint128_t>(0xAABBCCDD11223344ULL);
-                        udpToken = (udpToken << 64) | static_cast<uint128_t>(0x5566778899AABBCCULL);
+                        uint128_t udpToken(0x5566778899AABBCCULL, 0xAABBCCDD11223344ULL);
 
                         // AsyncSend 호출 (소유권 전달)
                         udpNet.AsyncSend(dest, tag, sessionId, udpToken, packet, payloadSize);
@@ -155,8 +151,8 @@ int main(int argc, char *argv[])
                     {
                         std::this_thread::sleep_for(std::chrono::seconds(1));
                         uint32_t current = sentCount.load();
-                        std::cout << "Progress: " << current << " / " << sendCount
-                                  << " (+" << (current - lastCount) << " pps)" << std::endl;
+                        std::cout << "Progress: " << current << " / " << sendCount << " (+" << (current - lastCount)
+                                  << " pps)" << std::endl;
                         lastCount = current;
 
                         // 모든 전송 완료 확인
@@ -223,8 +219,7 @@ int main(int argc, char *argv[])
                     return 1;
                 }
             }
-        }
-        catch (const std::exception &e)
+        } catch (const std::exception &e)
         {
             std::cerr << "Exception: " << e.what() << std::endl;
             return 1;
@@ -238,4 +233,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-

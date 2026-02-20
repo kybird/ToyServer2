@@ -25,38 +25,41 @@
 
 // Common Defines will go here
 
-// Cross-platform 128-bit unsigned integer definition
-#if defined(_MSC_VER)
-    // MSVC supports unsigned __int128
-    using uint128_t = unsigned __int128;
-#else
-    // GCC/Clang support __uint128_t
-    using uint128_t = __uint128_t;
-#endif
-
-// UINT128_MAX is not defined by standard, so we define it
-constexpr uint128_t UINT128_MAX = ~static_cast<uint128_t>(0);
-
-// std::hash specialization for uint128_t (needed for MSVC unsigned __int128)
-namespace System
+// Cross-platform 128-bit unsigned integer struct
+struct uint128_t
 {
-    struct uint128_hash
+    uint64_t high;
+    uint64_t low;
+
+    uint128_t() = default;
+    constexpr uint128_t(uint64_t l) : high(0), low(l)
     {
-        size_t operator()(const uint128_t& key) const noexcept
-        {
-            #if defined(_MSC_VER)
-                // MSVC: hash based on high and low 64-bit parts
-                uint64_t high = static_cast<uint64_t>(key >> 64);
-                uint64_t low = static_cast<uint64_t>(key);
-                std::hash<uint64_t> hasher;
-                return hasher(high) ^ (hasher(low) + 0x9e3779b97f4a7c15);
-            #else
-                // GCC/Clang: simple hash based on both parts
-                uint64_t high = static_cast<uint64_t>(key >> 64);
-                uint64_t low = static_cast<uint64_t>(key);
-                std::hash<uint64_t> hasher;
-                return hasher(high) ^ hasher(low);
-            #endif
-        }
-    };
-}
+    }
+    constexpr uint128_t(uint64_t h, uint64_t l) : high(h), low(l)
+    {
+    }
+
+    bool operator==(const uint128_t &other) const
+    {
+        return high == other.high && low == other.low;
+    }
+    bool operator!=(const uint128_t &other) const
+    {
+        return !(*this == other);
+    }
+};
+
+// UINT128_MAX equivalent
+constexpr uint128_t UINT128_MAX = uint128_t(0xFFFFFFFFFFFFFFFFULL, 0xFFFFFFFFFFFFFFFFULL);
+
+// std::hash specialization for uint128_t
+namespace System {
+struct uint128_hash
+{
+    size_t operator()(const uint128_t &key) const noexcept
+    {
+        std::hash<uint64_t> hasher;
+        return hasher(key.high) ^ (hasher(key.low) + 0x9e3779b97f4a7c15);
+    }
+};
+} // namespace System

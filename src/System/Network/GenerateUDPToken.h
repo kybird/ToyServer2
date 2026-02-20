@@ -20,9 +20,9 @@ public:
     {
         static thread_local std::random_device rd;
         static thread_local std::mt19937 rng(rd());
-        static std::uniform_int_distribution<uint128_t> dist(0, UINT128_MAX);
+        static std::uniform_int_distribution<uint64_t> dist(0, UINT64_MAX);
 
-        return static_cast<uint128_t>(dist(rng));
+        return uint128_t(dist(rng), dist(rng));
     }
 };
 
