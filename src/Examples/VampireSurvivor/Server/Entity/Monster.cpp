@@ -1,7 +1,7 @@
 #include "Entity/Monster.h"
 #include "AI/IAIBehavior.h"
-#include "Entity/AI/Movement/IMovementStrategy.h"
-#include "Entity/AI/Movement/SurroundingFlockingStrategy.h"
+#include "Entity/AI/IMovementStrategy.h"
+#include "Entity/AI/Movement/CellBasedMovementStrategy.h"
 #include "Entity/ExpGem.h"
 #include "Game/ObjectManager.h"
 #include "Game/Room.h"
@@ -12,13 +12,14 @@ namespace SimpleGame {
 Monster::Monster(int32_t id, int32_t monsterTypeId)
     : GameObject(id, Protocol::ObjectType::MONSTER), _monsterTypeId(monsterTypeId)
 {
-    _movementStrategy = std::make_shared<SurroundingFlockingStrategy>();
+    _movementStrategy = std::make_shared<Movement::CellBasedMovementStrategy>();
 }
 
 Monster::Monster() : GameObject(0, Protocol::ObjectType::MONSTER)
 {
-    _movementStrategy = std::make_shared<SurroundingFlockingStrategy>();
+    _movementStrategy = std::make_shared<Movement::CellBasedMovementStrategy>();
 }
+
 
 void Monster::SetMovementStrategy(std::shared_ptr<IMovementStrategy> strategy)
 {
@@ -134,7 +135,7 @@ void Monster::Reset()
     _modifiers.Clear();
 
     // [Fix] Reset movement strategy to default if needed (but usually set in Initialize/CreateAI)
-    // _movementStrategy = std::make_shared<SurroundingFlockingStrategy>();
+    // _movementStrategy = std::make_shared<CellBasedMovementStrategy>();
 }
 
 void Monster::Initialize(

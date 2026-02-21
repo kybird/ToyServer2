@@ -1,9 +1,11 @@
 #include "Game/Room.h"
 #include "Core/UserDB.h"
+#include "Entity/AI/Movement/CellBasedMovementStrategy.h"
 #include "Entity/AI/Movement/FluidStackingStrategy.h"
 #include "Entity/AI/Movement/SmartFlockingStrategy.h"
 #include "Entity/AI/Movement/StrictSeparationStrategy.h"
 #include "Entity/AI/Movement/SurroundingFlockingStrategy.h"
+#include "Entity/AI/Movement/VampireSurvivorMovementStrategy.h"
 #include "Entity/Monster.h"
 #include "Entity/Player.h"
 #include "Entity/Projectile.h"
@@ -169,6 +171,7 @@ void Room::ExecuteReset()
     _isStopping.store(false); // [Fix] 방을 다시 사용할 수 있도록 부활
     _totalRunTime = 0.0f;
     _serverTick = 0;
+    _debugBroadcastTimer = 0.0f; // [Fix] Visualizer 멈춤 (타이머 음수화) 방지
 
     _lastPerfLogTime = 0.0f;
     _totalUpdateSec = 0.0f;
@@ -561,19 +564,27 @@ void Room::SetMonsterStrategy(const std::string &strategyName)
                 std::shared_ptr<IMovementStrategy> strategy;
                 if (strategyName == "smart")
                 {
-                    strategy = std::make_shared<SmartFlockingStrategy>();
+                    strategy = std::make_shared<Movement::SmartFlockingStrategy>();
                 }
                 else if (strategyName == "fluid")
                 {
-                    strategy = std::make_shared<FluidStackingStrategy>();
+                    strategy = std::make_shared<Movement::FluidStackingStrategy>();
                 }
                 else if (strategyName == "strict")
                 {
-                    strategy = std::make_shared<StrictSeparationStrategy>();
+                    strategy = std::make_shared<Movement::StrictSeparationStrategy>();
                 }
                 else if (strategyName == "surround")
                 {
-                    strategy = std::make_shared<SurroundingFlockingStrategy>();
+                    strategy = std::make_shared<Movement::SurroundingFlockingStrategy>();
+                }
+                else if (strategyName == "cell")
+                {
+                    strategy = std::make_shared<Movement::CellBasedMovementStrategy>();
+                }
+                else if (strategyName == "vampire")
+                {
+                    strategy = std::make_shared<VampireSurvivorMovementStrategy>();
                 }
                 else
                 {

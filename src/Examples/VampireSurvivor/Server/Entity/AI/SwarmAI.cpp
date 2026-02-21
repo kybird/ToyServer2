@@ -1,5 +1,5 @@
 #include "Entity/AI/SwarmAI.h"
-#include "Entity/AI/Movement/IMovementStrategy.h"
+#include "Entity/AI/IMovementStrategy.h"
 #include "Entity/Monster.h"
 #include "Game/GameConfig.h"
 #include "Game/Room.h"

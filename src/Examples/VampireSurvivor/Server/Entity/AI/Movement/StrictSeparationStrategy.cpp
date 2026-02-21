@@ -3,7 +3,7 @@
 #include "Game/Room.h"
 #include "System/Utility/FastRandom.h"
 
-namespace SimpleGame {
+namespace SimpleGame::Movement {
 
 void StrictSeparationStrategy::CalculateMovement(
     Monster *monster, Room *room, float dt, float targetX, float targetY, float &outVx, float &outVy
@@ -11,14 +11,14 @@ void StrictSeparationStrategy::CalculateMovement(
 {
     (void)dt;
 
-    // 1. Calculate Chase Vector (Base Intent)
+    // 1. 추적 벡터 계산 (기본 목표)
     float dx = targetX - monster->GetX();
     float dy = targetY - monster->GetY();
     float distSq = dx * dx + dy * dy;
     float dist = std::sqrt(distSq);
 
-    // Stop if reached target (Simple collision with player radius)
-    // Assuming player radius 0.5 + Monster 0.5 + Margin 0.1 = 1.1
+    // 목표 도달 시 정지 (플레이어 범위와의 단순 충돌 처리)
+    // 가정: 플레이어 반지름 0.5 + 몬스터 0.5 + 여유 공간 0.1 = 1.1
     if (dist <= 1.1f)
     {
         outVx = 0;
@@ -26,11 +26,11 @@ void StrictSeparationStrategy::CalculateMovement(
         return;
     }
 
-    // Normalized chase direction
+    // 정규화된 추적 방향
     float nx = dx / dist;
     float ny = dy / dist;
 
-    // 2. Strict Separation Check
+    // 2. 엄격한 거리두기(분리) 점검
     float sepX = 0, sepY = 0;
     int sepCount = 0;
     float maxOverlap = 0.0f;
@@ -46,7 +46,7 @@ void StrictSeparationStrategy::CalculateMovement(
             float ddx = monster->GetX() - n->GetX();
             float ddy = monster->GetY() - n->GetY();
             float lSq = ddx * ddx + ddy * ddy;
-            float minSep = 1.2f; // Balanced Gap
+            float minSep = 1.2f; // 균형 잡힌 간격
 
             if (lSq < minSep * minSep)
             {
@@ -57,7 +57,7 @@ void StrictSeparationStrategy::CalculateMovement(
 
                 if (l < 0.001f)
                 {
-                    // Random nudge for perfect overlap
+                    // 완벽히 겹쳤을 때를 대비한 무작위 위치 조작
                     static thread_local System::Utility::FastRandom rng;
                     sepX += rng.NextFloat(-1.0f, 1.0f);
                     sepY += rng.NextFloat(-1.0f, 1.0f);
@@ -75,14 +75,14 @@ void StrictSeparationStrategy::CalculateMovement(
 
     float speed = monster->GetSpeed();
 
-    // 3. Resolve Intent
+    // 3. 최종 벡터 확정
     if (sepCount > 0 && maxOverlap > 0.1f)
     {
-        // [CRITICAL] Stop chasing, pure separation
+        // [위기상황] 추적 정지, 오직 밀어내는 동작만 수행
         nx = sepX;
         ny = sepY;
 
-        // Emergency escape speed
+        // 긴급상황 탈출 속도 적용
         if (maxOverlap > 0.3f)
             speed *= 1.5f;
 
@@ -95,7 +95,7 @@ void StrictSeparationStrategy::CalculateMovement(
     }
     else if (sepCount > 0)
     {
-        // Minor blend
+        // 약한 분리 혼합 (블렌딩)
         float sepAvgX = sepX / sepCount;
         float sepAvgY = sepY / sepCount;
 
@@ -114,4 +114,4 @@ void StrictSeparationStrategy::CalculateMovement(
     outVy = ny * speed;
 }
 
-} // namespace SimpleGame
+} // namespace SimpleGame::Movement

@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace SimpleGame {
+namespace SimpleGame::Movement {
 
 void SurroundingFlockingStrategy::CalculateMovement(
     Monster *monster, Room *room, float dt, float targetX, float targetY, float &outVx, float &outVy
@@ -25,7 +25,7 @@ void SurroundingFlockingStrategy::CalculateMovement(
     }
 
     float dist = std::sqrt(distSq);
-    float nx = dx / dist; // Chase direction (to player)
+    float nx = dx / dist; // 플레이어를 향하는 추적 방향
     float ny = dy / dist;
 
     // 1. 주변 몬스터 탐색 및 분리 로직
@@ -59,7 +59,7 @@ void SurroundingFlockingStrategy::CalculateMovement(
             float d = std::sqrt(d2);
             float overlap = minSep - d;
 
-            // Separation: 중심에서 멀어지는 방향
+            // 분리(Separation): 중심에서 멀어지는 방향
             sepX -= (ox / d) * overlap;
             sepY -= (oy / d) * overlap;
             sepCount++;
@@ -125,4 +125,4 @@ void SurroundingFlockingStrategy::CalculateMovement(
     outVy = monster->GetVY() * 0.85f + finalTargetVy * 0.15f;
 }
 
-} // namespace SimpleGame
+} // namespace SimpleGame::Movement

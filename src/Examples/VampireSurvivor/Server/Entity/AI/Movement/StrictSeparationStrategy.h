@@ -1,18 +1,18 @@
 #pragma once
 
-#include "IMovementStrategy.h"
+#include "Entity/AI/IMovementStrategy.h"
 #include <cmath>
 #include <cstdlib>
 
-namespace SimpleGame {
+namespace SimpleGame::Movement {
 
 /**
- * @brief Strict separation strategy.
+ * @brief 엄격한 분리(Separation) 이동 전략입니다.
  *
- * Prioritizes not overlapping with other monsters.
- * If overlapped, it stops chasing and only pushes away.
+ * 다른 몬스터와 겹치지 않는 것을 최우선으로 합니다.
+ * 만약 겹치게 되면, 추적을 멈추고 서로 밀어내는 동작만 수행합니다.
  */
-class StrictSeparationStrategy : public IMovementStrategy
+class StrictSeparationStrategy : public SimpleGame::IMovementStrategy
 {
 public:
     void CalculateMovement(
@@ -20,4 +20,4 @@ public:
     ) override;
 };
 
-} // namespace SimpleGame
+} // namespace SimpleGame::Movement

@@ -2,6 +2,7 @@
 #include "Entity/Player.h"
 #include <atomic>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "System/ITimer.h"
@@ -124,6 +125,22 @@ public:
 
     bool CheckWinCondition() const;
 
+    // Cell-Based Navigation
+    void ClearOccupancyMap()
+    {
+        _occupiedCells.clear();
+    }
+    bool IsCellOccupied(int x, int y) const
+    {
+        uint64_t key = (static_cast<uint64_t>(static_cast<uint32_t>(x)) << 32) | static_cast<uint32_t>(y);
+        return _occupiedCells.find(key) != _occupiedCells.end();
+    }
+    void OccupyCell(int x, int y)
+    {
+        uint64_t key = (static_cast<uint64_t>(static_cast<uint32_t>(x)) << 32) | static_cast<uint32_t>(y);
+        _occupiedCells.insert(key);
+    }
+
 private:
     // [Serialization] Actual logic execution in Room's Strand
     void ExecuteEnter(const std::shared_ptr<Player> &player);
@@ -146,6 +163,7 @@ private:
     int _roomId;
     std::string _title;
     std::unordered_map<uint64_t, std::shared_ptr<Player>> _players;
+    std::unordered_set<uint64_t> _occupiedCells; // 1x1 점유 맵
 
     std::shared_ptr<System::ITimer> _timer;
     System::ITimer::TimerHandle _timerHandle = 0;

@@ -40,6 +40,9 @@ void Room::ExecuteUpdate(float deltaTime)
     auto currentObjects = _objMgr.GetAllObjects();
     _grid.Rebuild(currentObjects);
 
+    // [New] 매 틱마다 1x1 점유 맵 초기화
+    ClearOccupancyMap();
+
     // [3] Object Update (AI & DamageEmitter Spawn)
     // Now AI can use spatial queries correctly
     for (auto &obj : currentObjects)

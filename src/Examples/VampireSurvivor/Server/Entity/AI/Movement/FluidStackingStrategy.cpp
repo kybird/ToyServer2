@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace SimpleGame {
+namespace SimpleGame::Movement {
 
 void FluidStackingStrategy::CalculateMovement(
     Monster *monster, Room *room, float dt, float targetX, float targetY, float &outVx, float &outVy
@@ -124,4 +124,4 @@ void FluidStackingStrategy::CalculateMovement(
     outVy = curVy * 0.9f + targetVy * 0.1f;
 }
 
-} // namespace SimpleGame
+} // namespace SimpleGame::Movement

@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
                         // UDPTransportHeader 값
                         uint8_t tag = System::UDPTransportHeader::TAG_RAW_UDP;
                         uint64_t sessionId = 0x123456789ABCDEF0ULL;
-                        uint128_t udpToken(0x5566778899AABBCCULL, 0xAABBCCDD11223344ULL);
+                        System::uint128_t udpToken(0x5566778899AABBCCULL, 0xAABBCCDD11223344ULL);
 
                         // AsyncSend 호출 (소유권 전달)
                         udpNet.AsyncSend(dest, tag, sessionId, udpToken, packet, payloadSize);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Entity/AI/Movement/IMovementStrategy.h"
+#include "Entity/AI/IMovementStrategy.h"
 #include "Entity/Monster.h" // [Fix] Include for GetMovementStrategy
 #include "IAIBehavior.h"
 #include <cmath>

@@ -273,7 +273,8 @@ void ServerApp::RegisterConsoleCommands()
              if (args.empty())
                  return;
              std::string strategy = args[0];
-             if (strategy == "strict" || strategy == "smart" || strategy == "fluid")
+             if (strategy == "strict" || strategy == "smart" || strategy == "fluid" || strategy == "surround" ||
+                 strategy == "vampire")
              {
                  if (auto r = RoomManager::Instance().GetRoom(1))
                  {

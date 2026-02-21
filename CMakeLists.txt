@@ -292,10 +292,12 @@ set(GAME_SOURCES
     src/Examples/VampireSurvivor/Server/Entity/AI/WanderAI.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/SwarmAI.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/BossAI.cpp
+    src/Examples/VampireSurvivor/Server/Entity/AI/Movement/CellBasedMovementStrategy.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/Movement/FluidStackingStrategy.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/Movement/SmartFlockingStrategy.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/Movement/StrictSeparationStrategy.cpp
     src/Examples/VampireSurvivor/Server/Entity/AI/Movement/SurroundingFlockingStrategy.cpp
+    src/Examples/VampireSurvivor/Server/Entity/AI/Movement/VampireSurvivorMovementStrategy.cpp
     src/Examples/VampireSurvivor/Server/Entity/ProjectileFactory.cpp
     src/Examples/VampireSurvivor/Server/Entity/Projectile.cpp
     ${PROTO_SRCS} ${PROTO_HDRS}

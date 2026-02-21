@@ -3,7 +3,7 @@
 #include "Game/Room.h"
 #include "System/Utility/FastRandom.h"
 
-namespace SimpleGame {
+namespace SimpleGame::Movement {
 
 void SmartFlockingStrategy::CalculateMovement(
     Monster *monster, Room *room, float dt, float targetX, float targetY, float &outVx, float &outVy
@@ -11,7 +11,7 @@ void SmartFlockingStrategy::CalculateMovement(
 {
     (void)dt;
 
-    // 1. Calculate Chase Vector
+    // 1. 추적 벡터 계산
     float dx = targetX - monster->GetX();
     float dy = targetY - monster->GetY();
     float distSq = dx * dx + dy * dy;
@@ -28,13 +28,13 @@ void SmartFlockingStrategy::CalculateMovement(
     float ny = dy / dist;
     float speed = monster->GetSpeed();
 
-    // 2. Look-Ahead & Separation
+    // 2. 전방 주시 및 분리 계산
     float sepX = 0, sepY = 0;
     int sepCount = 0;
     float maxOverlap = 0.0f;
     bool blockedAhead = false;
 
-    // Look-ahead position (Next step)
+    // 전방 주시 위치 (다음 스텝)
     float lookAheadX = monster->GetX() + nx * 0.5f;
     float lookAheadY = monster->GetY() + ny * 0.5f;
 
@@ -49,7 +49,7 @@ void SmartFlockingStrategy::CalculateMovement(
             float nX = n->GetX();
             float nY = n->GetY();
 
-            // [Separation] Check current overlap
+            // [분리] 현재 겹침 정도 확인
             float ddx = monster->GetX() - nX;
             float ddy = monster->GetY() - nY;
             float lSq = ddx * ddx + ddy * ddy;
@@ -71,18 +71,18 @@ void SmartFlockingStrategy::CalculateMovement(
                 else
                 {
                     float weight = overlap / minSep;
-                    sepX += (ddx / l) * weight * 2.5f; // Stronger push
+                    sepX += (ddx / l) * weight * 2.5f; // 더 강하게 밀어내기
                     sepY += (ddy / l) * weight * 2.5f;
                 }
                 sepCount++;
             }
 
-            // [Look-Ahead] Check future blocking (only if not already deeply overlapping)
+            // [전방 주시] 향후 충돌 여부 확인 (이미 심하게 겹쳐있지 않은 경우에만)
             if (maxOverlap < 0.1f)
             {
                 float fdx = lookAheadX - nX;
                 float fdy = lookAheadY - nY;
-                if (fdx * fdx + fdy * fdy < 1.0f) // If my future head hits their body
+                if (fdx * fdx + fdy * fdy < 1.0f) // 내 미래의 머리가 상대방의 몸에 부딪히는 경우
                 {
                     blockedAhead = true;
                 }
@@ -90,10 +90,10 @@ void SmartFlockingStrategy::CalculateMovement(
         }
     }
 
-    // 3. Resolve
+    // 3. 최종 벡터 결정
     if (sepCount > 0 && maxOverlap > 0.1f)
     {
-        // [EMERGENCY] Deep overlap -> Force Separation
+        // [긴급] 심하게 겹침 -> 강제 분리
         nx = sepX;
         ny = sepY;
         if (maxOverlap > 0.3f)
@@ -159,7 +159,7 @@ void SmartFlockingStrategy::CalculateMovement(
 
         if (sepCount > 0)
         {
-            // Minor separation blending
+            // 약간의 분리 로직 혼합
             float sepAvgX = sepX / sepCount;
             float sepAvgY = sepY / sepCount;
 
@@ -179,4 +179,4 @@ void SmartFlockingStrategy::CalculateMovement(
     outVy = ny * speed;
 }
 
-} // namespace SimpleGame
+} // namespace SimpleGame::Movement

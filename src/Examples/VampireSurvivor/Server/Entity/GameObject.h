@@ -60,9 +60,9 @@ public:
     {
         _vx = vx;
         _vy = vy;
-        if (vx < -0.01f)
+        if (vx < -0.1f)
             _lookLeft = true;
-        else if (vx > 0.01f)
+        else if (vx > 0.1f)
             _lookLeft = false;
     }
 

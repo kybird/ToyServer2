@@ -1,18 +1,18 @@
 #pragma once
 
-#include "IMovementStrategy.h"
+#include "Entity/AI/IMovementStrategy.h"
 #include <cmath>
 #include <cstdlib>
 
-namespace SimpleGame {
+namespace SimpleGame::Movement {
 
 /**
- * @brief Smart flocking strategy.
+ * @brief 스마트 군집(Flocking) 이동 전략입니다.
  *
- * Combines separation, alignment, and look-ahead collision avoidance.
- * Prevents jittering by stopping before collision ("Patience").
+ * 분리, 정렬 기능에 전방 주시 충돌 회피 기법을 결합합니다.
+ * 충돌 전에 정지하여 부들거리는 현상(Jittering)을 방지합니다("인내심" 로직 적용).
  */
-class SmartFlockingStrategy : public IMovementStrategy
+class SmartFlockingStrategy : public SimpleGame::IMovementStrategy
 {
 public:
     void CalculateMovement(
@@ -20,4 +20,4 @@ public:
     ) override;
 };
 
-} // namespace SimpleGame
+} // namespace SimpleGame::Movement
