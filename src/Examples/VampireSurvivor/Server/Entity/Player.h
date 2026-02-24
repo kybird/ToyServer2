@@ -61,6 +61,7 @@ public:
     void AddExp(int32_t amount, Room *room);
     void AddDefaultSkills(const std::vector<int32_t> &skillIds, Room *room);
     void RefreshInventoryEffects(Room *room);
+    void CheckWeaponEvolutions(Room *room);
 
     // Passive Stats Calculation
     float GetDamageMultiplier() const;

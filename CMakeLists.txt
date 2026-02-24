@@ -278,6 +278,15 @@ set(GAME_SOURCES
     src/Examples/VampireSurvivor/Server/Game/RoomManager.cpp
     src/Examples/VampireSurvivor/Server/Game/WaveManager.cpp
     src/Examples/VampireSurvivor/Server/Game/DamageEmitter.cpp
+    src/Examples/VampireSurvivor/Server/Game/Emitter/EmitterFactory.cpp
+    src/Examples/VampireSurvivor/Server/Game/Emitter/LinearEmitter.cpp
+    src/Examples/VampireSurvivor/Server/Game/Emitter/OrbitEmitter.cpp
+    src/Examples/VampireSurvivor/Server/Game/Emitter/ZoneEmitter.cpp
+    src/Examples/VampireSurvivor/Server/Game/Emitter/DirectionalEmitter.cpp
+    src/Examples/VampireSurvivor/Server/Game/Emitter/ArcEmitter.cpp
+    src/Examples/VampireSurvivor/Server/Game/Emitter/AuraEmitter.cpp
+    src/Examples/VampireSurvivor/Server/Game/Emitter/AoEEmitter.cpp
+    src/Examples/VampireSurvivor/Server/Game/Emitter/FieldStateEmitter.cpp
     src/Examples/VampireSurvivor/Server/Game/CombatManager.cpp
     src/Examples/VampireSurvivor/Server/Game/LevelUpManager.cpp
     src/Examples/VampireSurvivor/Server/Game/Effect/EffectManager.cpp

@@ -435,6 +435,59 @@ void Player::Update(float dt, Room *room)
     );
 }
 
+void Player::CheckWeaponEvolutions(Room *room)
+{
+    if (_inventory == nullptr)
+        return;
+
+    auto weaponIds = _inventory->GetOwnedWeaponIds();
+    for (int weaponId : weaponIds)
+    {
+        const auto *wpInfo = DataManager::Instance().GetWeaponInfo(weaponId);
+        if (!wpInfo)
+            continue;
+
+        // Evolution check
+        if (wpInfo->evolutionId > 0 && wpInfo->evolutionPassiveId > 0)
+        {
+            int level = _inventory->GetWeaponLevel(weaponId);
+            if (level >= wpInfo->maxLevel)
+            { // reached max level
+                if (_inventory->HasPassive(wpInfo->evolutionPassiveId))
+                { // has required passive
+                    // Evolve!
+                    LOG_INFO("[Player] Evolving weapon {} into {}", wpInfo->name, wpInfo->evolutionId);
+
+                    // Remove old weapon
+                    _inventory->RemoveWeapon(weaponId);
+
+                    // Add new evolved weapon
+                    _inventory->AddOrUpgradeWeapon(wpInfo->evolutionId);
+
+                    // Remove old emitter
+                    _emitters.erase(
+                        std::remove_if(
+                            _emitters.begin(),
+                            _emitters.end(),
+                            [weaponId](const auto &e)
+                            {
+                                return e->GetWeaponId() == weaponId;
+                            }
+                        ),
+                        _emitters.end()
+                    );
+
+                    // Call RefreshInventoryEffects to create new emitter
+                    RefreshInventoryEffects(room);
+
+                    // Evolve one weapon at a time to prevent iterator invalidation
+                    return;
+                }
+            }
+        }
+    }
+}
+
 void Player::AddDefaultSkills(const std::vector<int32_t> &skillIds, Room *room)
 {
     if (_inventory == nullptr)
@@ -792,7 +845,7 @@ void Player::RefreshInventoryEffects(Room *room)
             if (tmpl && level > 0)
             {
                 // Find the correct level info (handles sparse/out-of-order level arrays)
-                const WeaponLevelInfo* levelData = nullptr;
+                const WeaponLevelInfo *levelData = nullptr;
                 for (const auto &lvl : tmpl->levels)
                 {
                     if (lvl.level == level)
@@ -813,8 +866,12 @@ void Player::RefreshInventoryEffects(Room *room)
                 }
                 else
                 {
-                    LOG_WARN("[Player] Level {} not found for weapon {} (total levels: {})",
-                             level, weaponId, tmpl->levels.size());
+                    LOG_WARN(
+                        "[Player] Level {} not found for weapon {} (total levels: {})",
+                        level,
+                        weaponId,
+                        tmpl->levels.size()
+                    );
                 }
             }
         }

@@ -5,6 +5,7 @@
 #include "Entity/Player.h"
 #include "Entity/Projectile.h"
 #include "Entity/ProjectileFactory.h"
+#include "Game/Emitter/EmitterFactory.h"
 #include "Game/Room.h"
 #include "Math/Vector2.h"
 #include "System/ILog.h"
@@ -52,6 +53,8 @@ DamageEmitter::DamageEmitter(int32_t skillId, std::shared_ptr<Player> owner, int
     _timer = _tickInterval; // Ready to fire
 }
 
+DamageEmitter::~DamageEmitter() = default;
+
 void DamageEmitter::Update(float dt, Room *room)
 {
     auto owner = _owner.lock();
@@ -95,7 +98,7 @@ void DamageEmitter::Update(float dt, Room *room)
     }
 
     // Weapon Level Multipliers
-    const WeaponLevelInfo* levelData = nullptr;
+    const WeaponLevelInfo *levelData = nullptr;
     if (_weaponId > 0)
     {
         const auto *weaponTmpl = DataManager::Instance().GetWeaponInfo(_weaponId);
@@ -109,7 +112,7 @@ void DamageEmitter::Update(float dt, Room *room)
                     break;
                 }
             }
-            
+
             if (levelData)
             {
                 effectiveDamageMult *= levelData->damageMult;
@@ -215,26 +218,26 @@ void DamageEmitter::Update(float dt, Room *room)
     {
         _timer -= currentTickInterval;
 
-            float px = owner->GetX();
-            float py = owner->GetY();
-            int32_t finalDamage = static_cast<int32_t>(_damage * effectiveDamageMult);
-            float finalRadius = _hitRadius * effectiveAreaMult;
+        float px = owner->GetX();
+        float py = owner->GetY();
+        int32_t finalDamage = static_cast<int32_t>(_damage * effectiveDamageMult);
+        float finalRadius = _hitRadius * effectiveAreaMult;
 
-            std::string effectiveEffectType = tmpl ? tmpl->effectType : "";
-            float effectiveEffectValue = tmpl ? tmpl->effectValue : 0.0f;
-            float effectiveEffectDuration = tmpl ? tmpl->effectDuration : 0.0f;
+        std::string effectiveEffectType = tmpl ? tmpl->effectType : "";
+        float effectiveEffectValue = tmpl ? tmpl->effectValue : 0.0f;
+        float effectiveEffectDuration = tmpl ? tmpl->effectDuration : 0.0f;
 
-            if (levelData)
-            {
-                if (!levelData->effectType.empty())
-                    effectiveEffectType = levelData->effectType;
-                if (levelData->effectValue != 0.0f)
-                    effectiveEffectValue = levelData->effectValue;
-                if (levelData->effectDuration != 0.0f)
-                    effectiveEffectDuration = levelData->effectDuration;
-            }
+        if (levelData)
+        {
+            if (!levelData->effectType.empty())
+                effectiveEffectType = levelData->effectType;
+            if (levelData->effectValue != 0.0f)
+                effectiveEffectValue = levelData->effectValue;
+            if (levelData->effectDuration != 0.0f)
+                effectiveEffectDuration = levelData->effectDuration;
+        }
 
-            if (_emitterType == "Linear")
+        if (_emitterType == "Linear")
         {
             Vector2 direction = owner->GetFacingDirection();
 
@@ -405,7 +408,7 @@ void DamageEmitter::Update(float dt, Room *room)
                     widthMult = levelData->params.at("skill_width_mult");
                 if (levelData->params.contains("skill_height_mult"))
                     heightMult = levelData->params.at("skill_height_mult");
-                
+
                 for (const auto &flag : levelData->flags)
                 {
                     if (flag == "BIDIRECTIONAL")
@@ -416,7 +419,8 @@ void DamageEmitter::Update(float dt, Room *room)
             float finalBoxWidth = _width * effectiveAreaMult * widthMult;
             float finalBoxHeight = _height * effectiveAreaMult * heightMult;
 
-            auto doDirectionalAttack = [&](const Vector2& attackDir, float boxWidth, float boxHeight) {
+            auto doDirectionalAttack = [&](const Vector2 &attackDir, float boxWidth, float boxHeight)
+            {
                 float cx = px + attackDir.x * (boxHeight * 0.5f);
                 float cy = py + attackDir.y * (boxHeight * 0.5f);
 
@@ -468,7 +472,10 @@ void DamageEmitter::Update(float dt, Room *room)
                         if (!effectiveEffectType.empty())
                         {
                             m->AddStatusEffect(
-                                effectiveEffectType, effectiveEffectValue, effectiveEffectDuration, room->GetTotalRunTime()
+                                effectiveEffectType,
+                                effectiveEffectValue,
+                                effectiveEffectDuration,
+                                room->GetTotalRunTime()
                             );
                         }
 

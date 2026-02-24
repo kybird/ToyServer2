@@ -15,6 +15,7 @@ class DamageEmitter
 {
 public:
     DamageEmitter(int32_t skillId, std::shared_ptr<Player> owner, int32_t weaponId = 0, int32_t level = 1);
+    ~DamageEmitter();
     void Update(float dt, Room *room);
     bool IsExpired() const;
 
@@ -29,6 +30,10 @@ public:
     int32_t GetWeaponId() const
     {
         return _weaponId;
+    }
+    int32_t GetTypeId() const
+    {
+        return _typeId;
     }
 
 private:
@@ -61,6 +66,8 @@ private:
     float _width = 1.0f;       // [New] Rectangular width
     float _height = 1.0f;      // [New] Rectangular height
     bool _active = true;
+
+    std::unique_ptr<class IEmitter> _emitter;
 };
 
 } // namespace SimpleGame

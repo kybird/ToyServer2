@@ -7,14 +7,64 @@
         "weight": 100,
         "max_level": 8,
         "levels": [
-            { "level": 1, "skill_id": 1, "damage_mult": 1.0, "cooldown_mult": 1.0, "desc": "Fire Dagger" },
-            { "level": 2, "skill_id": 1, "damage_mult": 1.2, "cooldown_mult": 1.0, "desc": "Damage +20%" },
-            { "level": 3, "skill_id": 1, "damage_mult": 1.2, "cooldown_mult": 1.0, "pierce_count": 1, "desc": "Pierce +1" },
-            { "level": 4, "skill_id": 1, "damage_mult": 1.4, "cooldown_mult": 1.0, "desc": "Damage +20%" },
-            { "level": 5, "skill_id": 1, "damage_mult": 1.4, "cooldown_mult": 0.9, "desc": "Cooldown -10%" },
-            { "level": 6, "skill_id": 1, "damage_mult": 1.6, "cooldown_mult": 0.9, "desc": "Damage +20%" },
-            { "level": 7, "skill_id": 1, "damage_mult": 1.6, "cooldown_mult": 0.8, "pierce_count": 2, "desc": "Pierce +1, Cooldown -10%" },
-            { "level": 8, "skill_id": 1, "damage_mult": 2.0, "cooldown_mult": 0.7, "desc": "Final: Damage +100%, Cooldown -30%" }
+            {
+                "level": 1,
+                "skill_id": 1,
+                "damage_mult": 1.0,
+                "cooldown_mult": 1.0,
+                "desc": "Fire Dagger"
+            },
+            {
+                "level": 2,
+                "skill_id": 1,
+                "damage_mult": 1.2,
+                "cooldown_mult": 1.0,
+                "desc": "Damage +20%"
+            },
+            {
+                "level": 3,
+                "skill_id": 1,
+                "damage_mult": 1.2,
+                "cooldown_mult": 1.0,
+                "pierce_count": 1,
+                "desc": "Pierce +1"
+            },
+            {
+                "level": 4,
+                "skill_id": 1,
+                "damage_mult": 1.4,
+                "cooldown_mult": 1.0,
+                "desc": "Damage +20%"
+            },
+            {
+                "level": 5,
+                "skill_id": 1,
+                "damage_mult": 1.4,
+                "cooldown_mult": 0.9,
+                "desc": "Cooldown -10%"
+            },
+            {
+                "level": 6,
+                "skill_id": 1,
+                "damage_mult": 1.6,
+                "cooldown_mult": 0.9,
+                "desc": "Damage +20%"
+            },
+            {
+                "level": 7,
+                "skill_id": 1,
+                "damage_mult": 1.6,
+                "cooldown_mult": 0.8,
+                "pierce_count": 2,
+                "desc": "Pierce +1, Cooldown -10%"
+            },
+            {
+                "level": 8,
+                "skill_id": 1,
+                "damage_mult": 2.0,
+                "cooldown_mult": 0.7,
+                "desc": "Final: Damage +100%, Cooldown -30%"
+            }
         ]
     },
     {
@@ -22,17 +72,67 @@
         "name": "Poison Dart",
         "description": "Fires a projectile that poisons enemies",
         "icon": "dart",
-        "weight": 80,
+        "weight": 100,
         "max_level": 8,
         "levels": [
-            { "level": 1, "skill_id": 2, "damage_mult": 1.0, "cooldown_mult": 1.0, "desc": "Fire Poison Dart" },
-            { "level": 2, "skill_id": 2, "damage_mult": 1.0, "cooldown_mult": 1.0, "pierce_count": 1, "desc": "Pierce +1" },
-            { "level": 3, "skill_id": 2, "damage_mult": 1.2, "cooldown_mult": 1.0, "desc": "Damage +20%" },
-            { "level": 4, "skill_id": 2, "damage_mult": 1.2, "cooldown_mult": 0.9, "desc": "Cooldown -10%" },
-            { "level": 5, "skill_id": 2, "damage_mult": 1.4, "cooldown_mult": 0.9, "desc": "Damage +20%" },
-            { "level": 6, "skill_id": 2, "damage_mult": 1.4, "cooldown_mult": 0.9, "pierce_count": 2, "desc": "Pierce +1" },
-            { "level": 7, "skill_id": 2, "damage_mult": 1.6, "cooldown_mult": 0.8, "desc": "Damage +20%, Cooldown -10%" },
-            { "level": 8, "skill_id": 2, "damage_mult": 2.0, "cooldown_mult": 0.7, "desc": "Final: Death Dart" }
+            {
+                "level": 1,
+                "skill_id": 2,
+                "damage_mult": 1.0,
+                "cooldown_mult": 1.0,
+                "desc": "Fire Poison Dart"
+            },
+            {
+                "level": 2,
+                "skill_id": 2,
+                "damage_mult": 1.0,
+                "cooldown_mult": 1.0,
+                "pierce_count": 1,
+                "desc": "Pierce +1"
+            },
+            {
+                "level": 3,
+                "skill_id": 2,
+                "damage_mult": 1.2,
+                "cooldown_mult": 1.0,
+                "desc": "Damage +20%"
+            },
+            {
+                "level": 4,
+                "skill_id": 2,
+                "damage_mult": 1.2,
+                "cooldown_mult": 0.9,
+                "desc": "Cooldown -10%"
+            },
+            {
+                "level": 5,
+                "skill_id": 2,
+                "damage_mult": 1.4,
+                "cooldown_mult": 0.9,
+                "desc": "Damage +20%"
+            },
+            {
+                "level": 6,
+                "skill_id": 2,
+                "damage_mult": 1.4,
+                "cooldown_mult": 0.9,
+                "pierce_count": 2,
+                "desc": "Pierce +1"
+            },
+            {
+                "level": 7,
+                "skill_id": 2,
+                "damage_mult": 1.6,
+                "cooldown_mult": 0.8,
+                "desc": "Damage +20%, Cooldown -10%"
+            },
+            {
+                "level": 8,
+                "skill_id": 2,
+                "damage_mult": 2.0,
+                "cooldown_mult": 0.7,
+                "desc": "Final: Death Dart"
+            }
         ]
     },
     {
@@ -40,17 +140,68 @@
         "name": "Frost Nova",
         "description": "Freezes nearby enemies, slowing them down",
         "icon": "frost_nova",
-        "weight": 60,
+        "weight": 100,
         "max_level": 8,
         "levels": [
-            { "level": 1, "skill_id": 3, "damage_mult": 1.0, "cooldown_mult": 1.0, "desc": "Release Frost" },
-            { "level": 2, "skill_id": 3, "damage_mult": 1.0, "cooldown_mult": 0.95, "desc": "Cooldown -5%" },
-            { "level": 3, "skill_id": 3, "damage_mult": 1.2, "cooldown_mult": 0.95, "desc": "Damage +20%" },
-            { "level": 4, "skill_id": 3, "damage_mult": 1.2, "cooldown_mult": 0.9, "area_mult": 1.1, "desc": "Area +10%" },
-            { "level": 5, "skill_id": 3, "damage_mult": 1.4, "cooldown_mult": 0.9, "desc": "Damage +20%" },
-            { "level": 6, "skill_id": 3, "damage_mult": 1.4, "cooldown_mult": 0.85, "area_mult": 1.2, "desc": "Area +10%" },
-            { "level": 7, "skill_id": 3, "damage_mult": 1.6, "cooldown_mult": 0.85, "desc": "Damage +20%" },
-            { "level": 8, "skill_id": 3, "damage_mult": 2.0, "cooldown_mult": 0.75, "area_mult": 1.3, "desc": "Final: Absolute Zero" }
+            {
+                "level": 1,
+                "skill_id": 3,
+                "damage_mult": 1.0,
+                "cooldown_mult": 1.0,
+                "desc": "Release Frost"
+            },
+            {
+                "level": 2,
+                "skill_id": 3,
+                "damage_mult": 1.0,
+                "cooldown_mult": 0.95,
+                "desc": "Cooldown -5%"
+            },
+            {
+                "level": 3,
+                "skill_id": 3,
+                "damage_mult": 1.2,
+                "cooldown_mult": 0.95,
+                "desc": "Damage +20%"
+            },
+            {
+                "level": 4,
+                "skill_id": 3,
+                "damage_mult": 1.2,
+                "cooldown_mult": 0.9,
+                "area_mult": 1.1,
+                "desc": "Area +10%"
+            },
+            {
+                "level": 5,
+                "skill_id": 3,
+                "damage_mult": 1.4,
+                "cooldown_mult": 0.9,
+                "desc": "Damage +20%"
+            },
+            {
+                "level": 6,
+                "skill_id": 3,
+                "damage_mult": 1.4,
+                "cooldown_mult": 0.85,
+                "area_mult": 1.2,
+                "desc": "Area +10%"
+            },
+            {
+                "level": 7,
+                "skill_id": 3,
+                "damage_mult": 1.6,
+                "cooldown_mult": 0.85,
+                "desc": "Damage +20%"
+            },
+            {
+                "level": 8,
+                "skill_id": 3,
+                "damage_mult": 2.0,
+                "cooldown_mult": 0.75,
+                "area_mult": 1.3,
+                "desc": "Final: Absolute Zero"
+            }
         ]
     },
     {
@@ -58,17 +209,69 @@
         "name": "Greatsword",
         "description": "Swing a massive blade in an arc",
         "icon": "greatsword",
-        "weight": 50,
+        "weight": 100,
         "max_level": 8,
         "levels": [
-            { "level": 1, "skill_id": 4, "damage_mult": 1.0, "cooldown_mult": 1.0, "desc": "Swing Blade" },
-            { "level": 2, "skill_id": 4, "damage_mult": 1.0, "cooldown_mult": 0.95, "area_mult": 1.1, "desc": "Area +10%" },
-            { "level": 3, "skill_id": 4, "damage_mult": 1.2, "cooldown_mult": 0.95, "desc": "Damage +20%" },
-            { "level": 4, "skill_id": 4, "damage_mult": 1.2, "cooldown_mult": 0.9, "area_mult": 1.2, "desc": "Area +10%" },
-            { "level": 5, "skill_id": 4, "damage_mult": 1.4, "cooldown_mult": 0.9, "desc": "Damage +20%" },
-            { "level": 6, "skill_id": 4, "damage_mult": 1.4, "cooldown_mult": 0.85, "area_mult": 1.3, "desc": "Area +10%" },
-            { "level": 7, "skill_id": 4, "damage_mult": 1.6, "cooldown_mult": 0.85, "desc": "Damage +20%" },
-            { "level": 8, "skill_id": 4, "damage_mult": 2.0, "cooldown_mult": 0.8, "area_mult": 1.4, "desc": "Final: Dragon Slayer" }
+            {
+                "level": 1,
+                "skill_id": 4,
+                "damage_mult": 1.0,
+                "cooldown_mult": 1.0,
+                "desc": "Swing Blade"
+            },
+            {
+                "level": 2,
+                "skill_id": 4,
+                "damage_mult": 1.0,
+                "cooldown_mult": 0.95,
+                "area_mult": 1.1,
+                "desc": "Area +10%"
+            },
+            {
+                "level": 3,
+                "skill_id": 4,
+                "damage_mult": 1.2,
+                "cooldown_mult": 0.95,
+                "desc": "Damage +20%"
+            },
+            {
+                "level": 4,
+                "skill_id": 4,
+                "damage_mult": 1.2,
+                "cooldown_mult": 0.9,
+                "area_mult": 1.2,
+                "desc": "Area +10%"
+            },
+            {
+                "level": 5,
+                "skill_id": 4,
+                "damage_mult": 1.4,
+                "cooldown_mult": 0.9,
+                "desc": "Damage +20%"
+            },
+            {
+                "level": 6,
+                "skill_id": 4,
+                "damage_mult": 1.4,
+                "cooldown_mult": 0.85,
+                "area_mult": 1.3,
+                "desc": "Area +10%"
+            },
+            {
+                "level": 7,
+                "skill_id": 4,
+                "damage_mult": 1.6,
+                "cooldown_mult": 0.85,
+                "desc": "Damage +20%"
+            },
+            {
+                "level": 8,
+                "skill_id": 4,
+                "damage_mult": 2.0,
+                "cooldown_mult": 0.8,
+                "area_mult": 1.4,
+                "desc": "Final: Dragon Slayer"
+            }
         ]
     },
     {
@@ -76,19 +279,74 @@
         "name": "King Bible",
         "description": "Orbiting books protect the player",
         "icon": "MagicBolt",
-        "weight": 70,
+        "weight": 100,
         "max_level": 8,
         "evolution_id": 11,
         "evolution_passive_id": 6,
         "levels": [
-            { "level": 1, "skill_id": 5, "damage_mult": 1.0, "cooldown_mult": 1.0, "desc": "Orbiting Books" },
-            { "level": 2, "skill_id": 5, "damage_mult": 1.0, "cooldown_mult": 1.0, "projectile_count": 1, "desc": "Count +1" },
-            { "level": 3, "skill_id": 5, "damage_mult": 1.2, "cooldown_mult": 1.0, "area_mult": 1.1, "desc": "Damage +20%, Area +10%" },
-            { "level": 4, "skill_id": 5, "damage_mult": 1.2, "cooldown_mult": 0.95, "projectile_count": 2, "desc": "Count +1" },
-            { "level": 5, "skill_id": 5, "damage_mult": 1.4, "cooldown_mult": 0.95, "area_mult": 1.2, "desc": "Damage +20%" },
-            { "level": 6, "skill_id": 5, "damage_mult": 1.4, "cooldown_mult": 0.9, "projectile_count": 3, "desc": "Count +1" },
-            { "level": 7, "skill_id": 5, "damage_mult": 1.6, "cooldown_mult": 0.9, "area_mult": 1.3, "desc": "Damage +20%" },
-            { "level": 8, "skill_id": 5, "damage_mult": 2.0, "cooldown_mult": 0.8, "projectile_count": 4, "desc": "Final: Bible Master" }
+            {
+                "level": 1,
+                "skill_id": 5,
+                "damage_mult": 1.0,
+                "cooldown_mult": 1.0,
+                "desc": "Orbiting Books"
+            },
+            {
+                "level": 2,
+                "skill_id": 5,
+                "damage_mult": 1.0,
+                "cooldown_mult": 1.0,
+                "projectile_count": 1,
+                "desc": "Count +1"
+            },
+            {
+                "level": 3,
+                "skill_id": 5,
+                "damage_mult": 1.2,
+                "cooldown_mult": 1.0,
+                "area_mult": 1.1,
+                "desc": "Damage +20%, Area +10%"
+            },
+            {
+                "level": 4,
+                "skill_id": 5,
+                "damage_mult": 1.2,
+                "cooldown_mult": 0.95,
+                "projectile_count": 2,
+                "desc": "Count +1"
+            },
+            {
+                "level": 5,
+                "skill_id": 5,
+                "damage_mult": 1.4,
+                "cooldown_mult": 0.95,
+                "area_mult": 1.2,
+                "desc": "Damage +20%"
+            },
+            {
+                "level": 6,
+                "skill_id": 5,
+                "damage_mult": 1.4,
+                "cooldown_mult": 0.9,
+                "projectile_count": 3,
+                "desc": "Count +1"
+            },
+            {
+                "level": 7,
+                "skill_id": 5,
+                "damage_mult": 1.6,
+                "cooldown_mult": 0.9,
+                "area_mult": 1.3,
+                "desc": "Damage +20%"
+            },
+            {
+                "level": 8,
+                "skill_id": 5,
+                "damage_mult": 2.0,
+                "cooldown_mult": 0.8,
+                "projectile_count": 4,
+                "desc": "Final: Bible Master"
+            }
         ]
     },
     {
@@ -96,17 +354,69 @@
         "name": "Lightning Ring",
         "description": "Strikes random enemies with lightning",
         "icon": "MagicBolt",
-        "weight": 60,
+        "weight": 100,
         "max_level": 8,
         "levels": [
-            { "level": 1, "skill_id": 6, "damage_mult": 1.0, "cooldown_mult": 1.0, "desc": "Lightning Strike" },
-            { "level": 2, "skill_id": 6, "damage_mult": 1.0, "cooldown_mult": 0.95, "desc": "Cooldown -5%" },
-            { "level": 3, "skill_id": 6, "damage_mult": 1.3, "cooldown_mult": 0.95, "projectile_count": 1, "desc": "Damage +30%, Count +1" },
-            { "level": 4, "skill_id": 6, "damage_mult": 1.3, "cooldown_mult": 0.9, "desc": "Cooldown -5%" },
-            { "level": 5, "skill_id": 6, "damage_mult": 1.6, "cooldown_mult": 0.9, "projectile_count": 2, "desc": "Damage +30%, Count +1" },
-            { "level": 6, "skill_id": 6, "damage_mult": 1.6, "cooldown_mult": 0.85, "desc": "Cooldown -5%" },
-            { "level": 7, "skill_id": 6, "damage_mult": 2.0, "cooldown_mult": 0.85, "projectile_count": 3, "desc": "Damage +40%, Count +1" },
-            { "level": 8, "skill_id": 6, "damage_mult": 2.5, "cooldown_mult": 0.75, "projectile_count": 4, "desc": "Final: Thunder God" }
+            {
+                "level": 1,
+                "skill_id": 6,
+                "damage_mult": 1.0,
+                "cooldown_mult": 1.0,
+                "desc": "Lightning Strike"
+            },
+            {
+                "level": 2,
+                "skill_id": 6,
+                "damage_mult": 1.0,
+                "cooldown_mult": 0.95,
+                "desc": "Cooldown -5%"
+            },
+            {
+                "level": 3,
+                "skill_id": 6,
+                "damage_mult": 1.3,
+                "cooldown_mult": 0.95,
+                "projectile_count": 1,
+                "desc": "Damage +30%, Count +1"
+            },
+            {
+                "level": 4,
+                "skill_id": 6,
+                "damage_mult": 1.3,
+                "cooldown_mult": 0.9,
+                "desc": "Cooldown -5%"
+            },
+            {
+                "level": 5,
+                "skill_id": 6,
+                "damage_mult": 1.6,
+                "cooldown_mult": 0.9,
+                "projectile_count": 2,
+                "desc": "Damage +30%, Count +1"
+            },
+            {
+                "level": 6,
+                "skill_id": 6,
+                "damage_mult": 1.6,
+                "cooldown_mult": 0.85,
+                "desc": "Cooldown -5%"
+            },
+            {
+                "level": 7,
+                "skill_id": 6,
+                "damage_mult": 2.0,
+                "cooldown_mult": 0.85,
+                "projectile_count": 3,
+                "desc": "Damage +40%, Count +1"
+            },
+            {
+                "level": 8,
+                "skill_id": 6,
+                "damage_mult": 2.5,
+                "cooldown_mult": 0.75,
+                "projectile_count": 4,
+                "desc": "Final: Thunder God"
+            }
         ]
     },
     {
@@ -119,14 +429,72 @@
         "evolution_id": 10,
         "evolution_passive_id": 2,
         "levels": [
-            { "level": 1, "skill_id": 7, "damage_mult": 1.0, "cooldown_mult": 1.0, "desc": "Whip Attack" },
-            { "level": 2, "skill_id": 7, "damage_mult": 1.0, "cooldown_mult": 1.0, "flags": ["BIDIRECTIONAL"], "desc": "Attacks both sides" },
-            { "level": 3, "skill_id": 7, "damage_mult": 1.1, "cooldown_mult": 1.0, "area_mult": 1.1, "desc": "Damage +10%, Area +10%" },
-            { "level": 4, "skill_id": 7, "damage_mult": 1.2, "cooldown_mult": 0.95, "area_mult": 1.1, "desc": "Damage +10%" },
-            { "level": 5, "skill_id": 7, "damage_mult": 1.2, "cooldown_mult": 0.9, "area_mult": 1.2, "desc": "Cooldown -5%" },
-            { "level": 6, "skill_id": 7, "damage_mult": 1.3, "cooldown_mult": 0.9, "area_mult": 1.2, "desc": "Damage +10%, Area +10%" },
-            { "level": 7, "skill_id": 7, "damage_mult": 1.4, "cooldown_mult": 0.85, "area_mult": 1.3, "desc": "Damage +10%" },
-            { "level": 8, "skill_id": 7, "damage_mult": 1.5, "cooldown_mult": 0.8, "crit_chance": 0.1, "area_mult": 1.4, "desc": "Final: Vampire Hunter (+10% crit)" }
+            {
+                "level": 1,
+                "skill_id": 7,
+                "damage_mult": 1.0,
+                "cooldown_mult": 1.0,
+                "desc": "Whip Attack"
+            },
+            {
+                "level": 2,
+                "skill_id": 7,
+                "damage_mult": 1.0,
+                "cooldown_mult": 1.0,
+                "flags": [
+                    "BIDIRECTIONAL"
+                ],
+                "desc": "Attacks both sides"
+            },
+            {
+                "level": 3,
+                "skill_id": 7,
+                "damage_mult": 1.1,
+                "cooldown_mult": 1.0,
+                "area_mult": 1.1,
+                "desc": "Damage +10%, Area +10%"
+            },
+            {
+                "level": 4,
+                "skill_id": 7,
+                "damage_mult": 1.2,
+                "cooldown_mult": 0.95,
+                "area_mult": 1.1,
+                "desc": "Damage +10%"
+            },
+            {
+                "level": 5,
+                "skill_id": 7,
+                "damage_mult": 1.2,
+                "cooldown_mult": 0.9,
+                "area_mult": 1.2,
+                "desc": "Cooldown -5%"
+            },
+            {
+                "level": 6,
+                "skill_id": 7,
+                "damage_mult": 1.3,
+                "cooldown_mult": 0.9,
+                "area_mult": 1.2,
+                "desc": "Damage +10%, Area +10%"
+            },
+            {
+                "level": 7,
+                "skill_id": 7,
+                "damage_mult": 1.4,
+                "cooldown_mult": 0.85,
+                "area_mult": 1.3,
+                "desc": "Damage +10%"
+            },
+            {
+                "level": 8,
+                "skill_id": 7,
+                "damage_mult": 1.5,
+                "cooldown_mult": 0.8,
+                "crit_chance": 0.1,
+                "area_mult": 1.4,
+                "desc": "Final: Vampire Hunter (+10% crit)"
+            }
         ]
     },
     {
@@ -134,17 +502,69 @@
         "name": "Garlic",
         "description": "Damages nearby enemies and reduces knockback resistance",
         "icon": "MagicBolt",
-        "weight": 80,
+        "weight": 100,
         "max_level": 8,
         "levels": [
-            { "level": 1, "skill_id": 8, "damage_mult": 1.0, "cooldown_mult": 1.0, "desc": "Aura of Damage" },
-            { "level": 2, "skill_id": 8, "damage_mult": 1.0, "cooldown_mult": 1.0, "area_mult": 1.2, "desc": "Area +20%" },
-            { "level": 3, "skill_id": 8, "damage_mult": 1.5, "cooldown_mult": 1.0, "desc": "Damage +50%" },
-            { "level": 4, "skill_id": 8, "damage_mult": 1.5, "cooldown_mult": 1.0, "area_mult": 1.4, "desc": "Area +20%" },
-            { "level": 5, "skill_id": 8, "damage_mult": 2.0, "cooldown_mult": 1.0, "desc": "Damage +50%" },
-            { "level": 6, "skill_id": 8, "damage_mult": 2.0, "cooldown_mult": 1.0, "area_mult": 1.6, "desc": "Area +20%" },
-            { "level": 7, "skill_id": 8, "damage_mult": 2.5, "cooldown_mult": 1.0, "desc": "Damage +50%" },
-            { "level": 8, "skill_id": 8, "damage_mult": 3.0, "cooldown_mult": 1.0, "area_mult": 1.8, "desc": "Final: Soul Eater" }
+            {
+                "level": 1,
+                "skill_id": 8,
+                "damage_mult": 1.0,
+                "cooldown_mult": 1.0,
+                "desc": "Aura of Damage"
+            },
+            {
+                "level": 2,
+                "skill_id": 8,
+                "damage_mult": 1.0,
+                "cooldown_mult": 1.0,
+                "area_mult": 1.2,
+                "desc": "Area +20%"
+            },
+            {
+                "level": 3,
+                "skill_id": 8,
+                "damage_mult": 1.5,
+                "cooldown_mult": 1.0,
+                "desc": "Damage +50%"
+            },
+            {
+                "level": 4,
+                "skill_id": 8,
+                "damage_mult": 1.5,
+                "cooldown_mult": 1.0,
+                "area_mult": 1.4,
+                "desc": "Area +20%"
+            },
+            {
+                "level": 5,
+                "skill_id": 8,
+                "damage_mult": 2.0,
+                "cooldown_mult": 1.0,
+                "desc": "Damage +50%"
+            },
+            {
+                "level": 6,
+                "skill_id": 8,
+                "damage_mult": 2.0,
+                "cooldown_mult": 1.0,
+                "area_mult": 1.6,
+                "desc": "Area +20%"
+            },
+            {
+                "level": 7,
+                "skill_id": 8,
+                "damage_mult": 2.5,
+                "cooldown_mult": 1.0,
+                "desc": "Damage +50%"
+            },
+            {
+                "level": 8,
+                "skill_id": 8,
+                "damage_mult": 3.0,
+                "cooldown_mult": 1.0,
+                "area_mult": 1.8,
+                "desc": "Final: Soul Eater"
+            }
         ]
     },
     {
@@ -152,11 +572,20 @@
         "name": "Bloody Whip",
         "description": "Evolved Whip: Heals on hit",
         "icon": "dagger",
-        "weight": 0,
+        "weight": 100,
         "unique_group": 1,
         "max_level": 1,
         "levels": [
-            { "level": 1, "skill_id": 7, "damage_mult": 3.0, "cooldown_mult": 0.7, "flags": ["BIDIRECTIONAL"], "desc": "Bloody Whip" }
+            {
+                "level": 1,
+                "skill_id": 7,
+                "damage_mult": 3.0,
+                "cooldown_mult": 0.7,
+                "flags": [
+                    "BIDIRECTIONAL"
+                ],
+                "desc": "Bloody Whip"
+            }
         ]
     },
     {
@@ -164,11 +593,18 @@
         "name": "Unholy Vespers",
         "description": "Evolved King Bible: Infinite duration",
         "icon": "MagicBolt",
-        "weight": 0,
+        "weight": 100,
         "unique_group": 2,
         "max_level": 1,
         "levels": [
-            { "level": 1, "skill_id": 5, "damage_mult": 2.5, "cooldown_mult": 0.1, "projectile_count": 4, "desc": "Unholy Vespers" }
+            {
+                "level": 1,
+                "skill_id": 5,
+                "damage_mult": 2.5,
+                "cooldown_mult": 0.1,
+                "projectile_count": 4,
+                "desc": "Unholy Vespers"
+            }
         ]
     }
 ]

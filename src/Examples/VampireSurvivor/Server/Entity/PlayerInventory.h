@@ -53,6 +53,16 @@ public:
     int GetPassiveLevel(int passiveId) const;
 
     /**
+     * @brief 무기 삭제 (진화용)
+     */
+    void RemoveWeapon(int weaponId);
+
+    /**
+     * @brief 특정 패시브 보유 확인
+     */
+    bool HasPassive(int passiveId) const;
+
+    /**
      * @brief 빈 무기 슬롯이 있는지 확인
      */
     bool HasEmptyWeaponSlot() const;

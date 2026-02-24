@@ -45,6 +45,7 @@ void SelectLevelUpHandler::Handle(System::SessionContext &ctx, System::PacketVie
             LevelUpManager levelUpMgr;
             levelUpMgr.ApplySelection(player.get(), optionIndex, room.get());
 
+            player->CheckWeaponEvolutions(room.get());
             player->ExitLevelUpState(room.get());
 
             LOG_INFO(

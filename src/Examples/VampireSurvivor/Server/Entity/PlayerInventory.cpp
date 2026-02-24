@@ -146,4 +146,14 @@ bool PlayerInventory::IsPassiveMaxLevel(int passiveId) const
     return it->second >= tmpl->maxLevel;
 }
 
+void PlayerInventory::RemoveWeapon(int weaponId)
+{
+    _weapons.erase(weaponId);
+}
+
+bool PlayerInventory::HasPassive(int passiveId) const
+{
+    return _passives.find(passiveId) != _passives.end();
+}
+
 } // namespace SimpleGame
