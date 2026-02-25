@@ -378,4 +378,26 @@ const PassiveInfo *DataManager::GetPassiveInfo(int32_t id)
     return nullptr;
 }
 
+bool DataManager::LoadMapData(int32_t mapId, const std::string &path)
+{
+    auto tileMap = std::make_unique<TileMap>();
+    if (!tileMap->LoadFromJson(path))
+    {
+        LOG_ERROR("DataManager: Failed to load TileMap (ID:{}) from {}", mapId, path);
+        return false;
+    }
+
+    _maps[mapId] = std::move(tileMap);
+    LOG_INFO("DataManager: Successfully loaded TileMap (ID:{})", mapId);
+    return true;
+}
+
+const TileMap *DataManager::GetMap(int32_t mapId) const
+{
+    auto it = _maps.find(mapId);
+    if (it != _maps.end())
+        return it->second.get();
+    return nullptr;
+}
+
 } // namespace SimpleGame

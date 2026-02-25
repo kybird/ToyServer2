@@ -165,37 +165,63 @@ bool CheckCollision(const std::shared_ptr<GameObject> &a, const std::shared_ptr<
 
 void Room::UpdatePhysics(float deltaTime, const std::vector<std::shared_ptr<GameObject>> &objects)
 {
-    // Define bounds (Map 2000x2000?)
-    // Assuming map is large enough.
-
     for (auto &obj : objects)
     {
         if (obj->IsDead())
             continue;
 
-        // Only Monsters collide with each other
-        bool isMonster = (obj->GetType() == Protocol::ObjectType::MONSTER);
-
         float vx = obj->GetVX();
         float vy = obj->GetVY();
-
-        // Projectiles and other non-monsters just move linearly
-        if (!isMonster)
-        {
-            obj->SetPos(obj->GetX() + vx * deltaTime, obj->GetY() + vy * deltaTime);
-            continue;
-        }
-
-        float currentX = obj->GetX();
-        float currentY = obj->GetY();
         float moveX = vx * deltaTime;
         float moveY = vy * deltaTime;
 
-        // [Physics Removed]
-        // Collision avoidance is now fully handled by AI (Steering Behaviors).
-        // Physics only handles simple movement integration.
+        // 투사체가 아니면서 움직임이 없는 경우 스킵
+        if (moveX == 0.0f && moveY == 0.0f)
+            continue;
 
-        obj->SetPos(currentX + moveX, currentY + moveY);
+        // 충돌 검사 (TileMap)
+        if (_tileMap != nullptr)
+        {
+            float radius = 15.0f; // 기본 반지름 (충분히 크거나 몬스터 반경으로 사용)
+            if (obj->GetType() == Protocol::ObjectType::MONSTER)
+            {
+                auto monster = std::dynamic_pointer_cast<Monster>(obj);
+                if (monster)
+                    radius = monster->GetRadius();
+            }
+            else if (obj->GetType() == Protocol::ObjectType::PLAYER)
+            {
+                radius = 15.0f;
+            }
+            else
+            {
+                radius = 5.0f; // Projectile (투사체는 타일에 막히도록 기획될 수 있음)
+            }
+
+            auto sweep = _tileMap->SweepTest(obj->GetX(), obj->GetY(), moveX, moveY, radius);
+            if (sweep.hit)
+            {
+                // 충돌 시점까지 이동한 거리
+                float remainingX = moveX * (1.0f - sweep.time);
+                float remainingY = moveY * (1.0f - sweep.time);
+
+                // 벽의 법선 벡터를 이용해 속도 성분 제거 (Sliding)
+                _tileMap->Slide(remainingX, remainingY, sweep.normalX, sweep.normalY);
+
+                // 슬라이딩 후 최종 위치 적용
+                obj->SetPos(sweep.hitX + remainingX, sweep.hitY + remainingY);
+
+                // 만약 투사체였다면 벽에 맞았을 때 소멸 처리 등 기획에 따라 여기서 처리 가능
+            }
+            else
+            {
+                obj->SetPos(obj->GetX() + moveX, obj->GetY() + moveY);
+            }
+        }
+        else
+        {
+            obj->SetPos(obj->GetX() + moveX, obj->GetY() + moveY);
+        }
     }
 }
 

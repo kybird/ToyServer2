@@ -274,6 +274,7 @@ set(GAME_SOURCES
     src/Examples/VampireSurvivor/Server/Game/Room_Broadcast.cpp
 
     src/Examples/VampireSurvivor/Server/Game/SpatialGrid.cpp
+    src/Examples/VampireSurvivor/Server/Game/TileMap.cpp
 
     src/Examples/VampireSurvivor/Server/Game/RoomManager.cpp
     src/Examples/VampireSurvivor/Server/Game/WaveManager.cpp
@@ -378,6 +379,7 @@ install(DIRECTORY src/Share DESTINATION dist/include
 set(VS_TEST_SOURCES
     src/Examples/VampireSurvivor/tests/main_test.cpp
     src/Examples/VampireSurvivor/tests/TestRoom.cpp
+    src/Examples/VampireSurvivor/tests/TestTileMap.cpp
     src/Examples/VampireSurvivor/tests/TestCombat.cpp
     src/Examples/VampireSurvivor/tests/TestDeadReckoningCorrection.cpp
     src/Examples/VampireSurvivor/tests/TestEffectSystem.cpp

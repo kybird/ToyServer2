@@ -1,6 +1,8 @@
 #pragma once
 #include "Entity/MonsterAIType.h"
+#include "Game/TileMap.h"
 #include "System/ILog.h"
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -83,16 +85,16 @@ struct WeaponLevelInfo
     std::string desc;
 
     // Projectile/Attack modifiers
-    int32_t projectileCount = 0;  // Additional projectiles
-    int32_t pierceCount = 0;      // Additional pierce
-    int32_t maxTargets = 0;       // Override max targets (0 = use base)
+    int32_t projectileCount = 0; // Additional projectiles
+    int32_t pierceCount = 0;     // Additional pierce
+    int32_t maxTargets = 0;      // Override max targets (0 = use base)
 
     // Critical modifiers
-    float critChance = 0.0f;      // Additional crit chance
-    float critDamageMult = 1.0f;  // Crit damage multiplier
+    float critChance = 0.0f;     // Additional crit chance
+    float critDamageMult = 1.0f; // Crit damage multiplier
 
     // Effect modifiers (for skills with effects)
-    std::string effectType;       // Override/add effect type
+    std::string effectType; // Override/add effect type
     float effectValue = 0.0f;
     float effectDuration = 0.0f;
 
@@ -121,7 +123,7 @@ struct PassiveLevelInfo
 {
     int32_t level;
     float bonus = 0.0f;
-    float bonus2 = 0.0f;      // Secondary bonus (e.g., speed + crit)
+    float bonus2 = 0.0f; // Secondary bonus (e.g., speed + crit)
     std::string desc;
 };
 
@@ -131,11 +133,12 @@ struct PassiveInfo
     std::string name;
     std::string description;
     std::string icon;
-    std::string statType;      // "damage", "max_hp", "speed", "cooldown", "area", "projectile_count", "pierce", "crit_chance", "crit_damage"
-    std::string statType2;     // Secondary stat (optional)
+    std::string statType;  // "damage", "max_hp", "speed", "cooldown", "area", "projectile_count", "pierce",
+                           // "crit_chance", "crit_damage"
+    std::string statType2; // Secondary stat (optional)
     int32_t maxLevel;
-    int32_t weight = 100;      // 가중치 (추첨 확률)
-    int32_t uniqueGroup = 0;   // 중복 방지 그룹 ID
+    int32_t weight = 100;    // 가중치 (추첨 확률)
+    int32_t uniqueGroup = 0; // 중복 방지 그룹 ID
     std::vector<PassiveLevelInfo> levels;
 };
 
@@ -177,6 +180,10 @@ public:
         return _passives;
     }
 
+    // TileMap Integration
+    bool LoadMapData(int32_t mapId, const std::string &path);
+    const TileMap *GetMap(int32_t mapId) const;
+
     // For Testing
     void AddMonsterInfo(const MonsterInfo &tmpl)
     {
@@ -215,6 +222,7 @@ private:
     std::vector<WaveInfo> _waves;
     std::unordered_map<int32_t, WeaponInfo> _weapons;
     std::unordered_map<int32_t, PassiveInfo> _passives;
+    std::unordered_map<int32_t, std::unique_ptr<TileMap>> _maps;
 };
 
 } // namespace SimpleGame

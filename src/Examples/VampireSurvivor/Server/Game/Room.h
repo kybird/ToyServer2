@@ -11,6 +11,7 @@
 #include "Game/GameConfig.h"
 #include "Game/ObjectManager.h"
 #include "Game/SpatialGrid.h"
+#include "Game/TileMap.h"
 #include "Game/WaveManager.h"
 
 namespace System {
@@ -118,6 +119,11 @@ public:
     float GetTotalRunTime() const;
     uint32_t GetServerTick() const;
 
+    const TileMap *GetTileMap() const
+    {
+        return _tileMap;
+    }
+
     // Debug Commands
     void DebugAddExpToAll(int32_t exp);
     void DebugSpawnMonster(int32_t monsterId, int32_t count);
@@ -196,6 +202,8 @@ private:
     std::atomic<bool> _isUpdating{false}; // [New] 업데이트 중복 실행 방지 플래그
     std::atomic<size_t> _playerCount{0};  // [New] Strand 바깥 호출을 위한 thread-safe 카운터
     bool _enableMonsterPhysics = false;   // [New] Toggle for monster-to-monster physical collisions
+
+    const TileMap *_tileMap = nullptr;
 };
 
 } // namespace SimpleGame

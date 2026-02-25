@@ -1,4 +1,5 @@
 #include "Game/Room.h"
+#include "Core/DataManager.h"
 #include "Core/UserDB.h"
 #include "Entity/AI/Movement/CellBasedMovementStrategy.h"
 #include "Entity/AI/Movement/FluidStackingStrategy.h"
@@ -29,6 +30,13 @@ Room::Room(
 {
     _combatMgr = std::make_unique<CombatManager>();
     _effectMgr = std::make_unique<EffectManager>();
+
+    // TODO: MapID should be passed if multiple maps. Hardcoding to 1 for now.
+    _tileMap = DataManager::Instance().GetMap(1);
+    if (_tileMap == nullptr)
+    {
+        LOG_WARN("Room {} initialized without a TileMap.", _roomId);
+    }
 }
 
 Room::~Room()

@@ -108,6 +108,12 @@ bool ServerApp::InitGameData()
     success &= DataManager::Instance().LoadWeaponData("data/WeaponData.json");
     success &= DataManager::Instance().LoadPassiveData("data/PassiveData.json");
 
+    // 타일맵 로드 (실패해도 일단 경고만 남기고 서버 시작)
+    if (!DataManager::Instance().LoadMapData(1, "data/Map01.json"))
+    {
+        LOG_WARN("Failed to load Map01.json");
+    }
+
     if (!success)
     {
         LOG_WARN("Failed to load some game data. Server may not function correctly.");
