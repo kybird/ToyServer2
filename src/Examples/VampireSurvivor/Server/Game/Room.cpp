@@ -288,7 +288,6 @@ void Room::ExecuteEnter(const std::shared_ptr<Player> &player)
                         LOG_INFO("Applied {} skills to Player {}", skills.size(), player->GetSessionId());
 
                         self->_objMgr.AddObject(player);
-                        self->_grid.Add(player);
 
                         LOG_INFO(
                             "Player {} entered Room {}. Total Players: {}",
@@ -330,7 +329,6 @@ void Room::ExecuteEnter(const std::shared_ptr<Player> &player)
         }
 
         _objMgr.AddObject(player);
-        _grid.Add(player);
 
         if (!_gameStarted)
         {
@@ -464,7 +462,6 @@ void Room::ExecuteLeave(uint64_t sessionId)
         auto player = it->second;
         player->SetRoomId(0);
 
-        _grid.Remove(player);
         _objMgr.RemoveObject(player->GetId());
 
         Protocol::S_DespawnObject despawn;

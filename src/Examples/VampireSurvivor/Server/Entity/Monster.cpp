@@ -20,7 +20,6 @@ Monster::Monster() : GameObject(0, Protocol::ObjectType::MONSTER)
     _movementStrategy = std::make_shared<Movement::CellBasedMovementStrategy>();
 }
 
-
 void Monster::SetMovementStrategy(std::shared_ptr<IMovementStrategy> strategy)
 {
     _movementStrategy = strategy;
@@ -82,7 +81,6 @@ void Monster::TakeDamage(int32_t damage, Room *room)
             gem->Initialize(gem->GetId(), _x, _y, 10);
 
             room->GetObjectManager().AddObject(gem);
-            room->GetSpatialGrid().Add(gem);
 
             std::vector<std::shared_ptr<GameObject>> spawns;
             spawns.push_back(gem);

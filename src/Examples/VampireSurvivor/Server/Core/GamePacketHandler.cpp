@@ -1,8 +1,9 @@
 #include "Core/GamePacketHandler.h"
+#include "Core/GameEvents.h"
 #include "Entity/Player.h"
 #include "Game/Room.h"
-#include "Game/RoomManager.h"
 #include "GamePackets.h"
+#include "System/Events/EventBus.h"
 #include "System/ILog.h"
 
 // Handlers
@@ -57,31 +58,10 @@ void GamePacketHandler::HandlePacket(System::SessionContext ctx, System::PacketV
 void GamePacketHandler::OnSessionDisconnect(System::SessionContext ctx)
 {
     uint64_t sessionId = ctx.Id();
-    LOG_INFO("Session {} Disconnected. Cleaning up...", sessionId);
+    LOG_INFO("Session {} Disconnected.", sessionId);
 
-    // 1. Remove from Lobby
-    if (RoomManager::Instance().IsInLobby(sessionId))
-    {
-        RoomManager::Instance().LeaveLobby(sessionId);
-        LOG_INFO("Session {} removed from Lobby.", sessionId);
-    }
-
-    // 2. Remove from Room/Game
-    auto player = RoomManager::Instance().GetPlayer(sessionId);
-    if (player)
-    {
-        // Safe to call Room::Leave as it is thread-safe (internal mutex)
-        int roomId = player->GetRoomId();
-        auto room = RoomManager::Instance().GetRoom(roomId);
-        if (room)
-        {
-            room->Leave(sessionId);
-        }
-
-        // Unregister from global map
-        RoomManager::Instance().UnregisterPlayer(sessionId);
-        LOG_INFO("Session {} unregistered from Player Map.", sessionId);
-    }
+    // Broadcast the disconnect event to all interested subsystems via EventBus.
+    System::EventBus::Instance().Publish(SessionDisconnectedEvent{sessionId});
 }
 
 } // namespace SimpleGame

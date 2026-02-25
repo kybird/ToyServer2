@@ -1,8 +1,10 @@
 #include "JoinRoomHandler.h"
+#include "Core/GameEvents.h"
 #include "Entity/PlayerFactory.h"
 #include "Game/RoomManager.h"
 #include "GamePackets.h"
 #include "Protocol/game.pb.h"
+#include "System/Events/EventBus.h"
 #include "System/ILog.h"
 #include <string>
 
@@ -46,9 +48,9 @@ void JoinRoomHandler::Handle(System::SessionContext &ctx, System::PacketView pac
 
             // 4. Enter Room (this will send existing objects to the player)
             room->Enter(player);
-            // Remove from lobby if there
-            RoomManager::Instance().LeaveLobby(sessionId);
-            RoomManager::Instance().RegisterPlayer(sessionId, player);
+
+            // 5. Broadcast RoomJoinedEvent
+            System::EventBus::Instance().Publish(RoomJoinedEvent{sessionId, roomId, player});
         }
         else
         {

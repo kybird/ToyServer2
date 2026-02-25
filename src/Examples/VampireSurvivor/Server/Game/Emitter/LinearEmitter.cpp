@@ -97,7 +97,7 @@ void LinearEmitter::Update(
                 proj->SetRadius(0.2f);
                 proj->SetPierce(stats.pierceCount);
                 room->GetObjectManager().AddObject(proj);
-                room->GetSpatialGrid().Add(proj);
+
                 room->BroadcastSpawn({proj});
             }
         }

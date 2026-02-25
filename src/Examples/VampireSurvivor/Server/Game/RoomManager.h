@@ -1,4 +1,5 @@
 #pragma once
+#include "Core/GameEvents.h"
 #include "Game/Room.h"
 #include <algorithm>
 #include <map>
@@ -47,6 +48,11 @@ public:
     void BroadcastPacketToLobby(const System::IPacket &pkt);
 
 private:
+    // EventBus Handlers
+    void HandleSessionDisconnected(const SessionDisconnectedEvent &evt);
+    void HandleRoomJoined(const RoomJoinedEvent &evt);
+    void HandleRoomLeft(const RoomLeftEvent &evt);
+
     std::map<int, std::shared_ptr<Room>> _rooms;
     std::map<uint64_t, std::shared_ptr<Player>> _players;
     std::vector<uint64_t> _lobbySessions; // Session IDs in Lobby

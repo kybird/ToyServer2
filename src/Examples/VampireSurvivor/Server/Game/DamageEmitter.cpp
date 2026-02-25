@@ -307,7 +307,7 @@ void DamageEmitter::Update(float dt, Room *room)
                     proj->SetRadius(0.2f);
                     proj->SetPierce(_pierce + additionalPierce);
                     room->_objMgr.AddObject(proj);
-                    room->_grid.Add(proj);
+
                     room->BroadcastSpawn({proj});
                 }
             }

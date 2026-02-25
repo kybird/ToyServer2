@@ -1,4 +1,5 @@
 #include "Game/RoomManager.h"
+#include "Core/GameEvents.h"
 #include "Core/UserDB.h"
 #include "System/IFramework.h"
 #include "System/ISession.h"
@@ -25,6 +26,29 @@ void RoomManager::Init(std::shared_ptr<System::IFramework> framework, std::share
     if (_rooms.empty())
     {
         CreateRoom(1);
+    }
+
+    // Subscribe to System Events
+    if (_framework && _framework->GetDispatcher())
+    {
+        _framework->Subscribe<SessionDisconnectedEvent>(
+            [this](const SessionDisconnectedEvent &evt)
+            {
+                this->HandleSessionDisconnected(evt);
+            }
+        );
+        _framework->Subscribe<RoomJoinedEvent>(
+            [this](const RoomJoinedEvent &evt)
+            {
+                this->HandleRoomJoined(evt);
+            }
+        );
+        _framework->Subscribe<RoomLeftEvent>(
+            [this](const RoomLeftEvent &evt)
+            {
+                this->HandleRoomLeft(evt);
+            }
+        );
     }
 }
 
@@ -182,6 +206,65 @@ void RoomManager::BroadcastPacketToLobby(const System::IPacket &pkt)
             }
         );
     }
+}
+
+// --- EventBus Handlers ---
+
+void RoomManager::HandleSessionDisconnected(const SessionDisconnectedEvent &evt)
+{
+    uint64_t sessionId = evt.sessionId;
+
+    // 1. Remove from Lobby
+    if (IsInLobby(sessionId))
+    {
+        LeaveLobby(sessionId);
+        LOG_INFO("Session {} removed from Lobby.", sessionId);
+    }
+
+    // 2. Remove from Room/Game
+    auto player = GetPlayer(sessionId);
+    if (player)
+    {
+        int roomId = player->GetRoomId();
+        auto room = GetRoom(roomId);
+        if (room)
+        {
+            room->Leave(sessionId);
+        }
+
+        // Unregister from global map
+        UnregisterPlayer(sessionId);
+        LOG_INFO("Session {} unregistered from Player Map.", sessionId);
+    }
+}
+
+void RoomManager::HandleRoomJoined(const RoomJoinedEvent &evt)
+{
+    uint64_t sessionId = evt.sessionId;
+
+    // Remove from lobby if there
+    LeaveLobby(sessionId);
+    RegisterPlayer(sessionId, evt.player);
+}
+
+void RoomManager::HandleRoomLeft(const RoomLeftEvent &evt)
+{
+    uint64_t sessionId = evt.sessionId;
+
+    auto player = GetPlayer(sessionId);
+    if (player)
+    {
+        int roomId = player->GetRoomId();
+        auto room = GetRoom(roomId);
+        if (room)
+        {
+            room->Leave(sessionId);
+        }
+
+        UnregisterPlayer(sessionId);
+    }
+
+    EnterLobby(sessionId);
 }
 
 } // namespace SimpleGame

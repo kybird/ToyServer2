@@ -72,7 +72,7 @@ void CombatManager::ResolveCleanup(Room *room)
         {
             despawnIds.push_back(obj->GetId());
             pickerIds.push_back(pickerId);
-            room->_grid.Remove(obj);
+
             room->_objMgr.RemoveObject(obj->GetId());
         }
     }
@@ -129,7 +129,8 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
                     // [Precision] Using a slight margin for hit detection stability
                     if (distSq <= (sumRad + 0.1f) * (sumRad + 0.1f))
                     {
-                        // [Fix] Check if already hit this target (prevent piercing projectile from hitting same target repeatedly)
+                        // [Fix] Check if already hit this target (prevent piercing projectile from hitting same target
+                        // repeatedly)
                         if (proj->HasHit(monster->GetId()))
                             continue;
 
@@ -156,7 +157,8 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
                                     if (levelInfo.skillId == skillId)
                                     {
                                         int32_t playerWeaponLevel = player->GetInventory().GetWeaponLevel(weapon.id);
-                                        if (playerWeaponLevel > 0 && playerWeaponLevel <= static_cast<int32_t>(weapon.levels.size()))
+                                        if (playerWeaponLevel > 0 &&
+                                            playerWeaponLevel <= static_cast<int32_t>(weapon.levels.size()))
                                         {
                                             const auto &levelData = weapon.levels[playerWeaponLevel - 1];
                                             additionalCritChance = levelData.critChance;
@@ -202,7 +204,9 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
 
                             if (effectType == Effect::Type::SLOW)
                             {
-                                monster->AddStatusEffect("SLOW", skillInfo->effectValue, skillInfo->effectDuration, room->_totalRunTime);
+                                monster->AddStatusEffect(
+                                    "SLOW", skillInfo->effectValue, skillInfo->effectDuration, room->_totalRunTime
+                                );
                             }
                             else
                             {
@@ -210,7 +214,8 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
                                 effect.type = effectType;
                                 effect.sourceId = proj->GetOwnerId();
                                 effect.endTime = room->_totalRunTime + skillInfo->effectDuration;
-                                effect.tickInterval = skillInfo->effectInterval > 0.0f ? skillInfo->effectInterval : 0.5f;
+                                effect.tickInterval =
+                                    skillInfo->effectInterval > 0.0f ? skillInfo->effectInterval : 0.5f;
                                 effect.lastTickTime = room->_totalRunTime;
                                 effect.value = skillInfo->effectValue;
                                 room->GetEffectManager().ApplyEffect(monster->GetId(), effect);

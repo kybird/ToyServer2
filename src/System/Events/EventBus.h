@@ -2,10 +2,12 @@
 
 #include "System/Dispatcher/IDispatcher.h"
 #include "System/ILog.h"
+#include <atomic>
 #include <functional>
-#include <map>
+#include <memory>
 #include <mutex>
 #include <typeindex>
+#include <unordered_map>
 #include <vector>
 
 namespace System {
@@ -13,6 +15,7 @@ namespace System {
 /*
     Type-Safe Asynchronous Event Bus.
     Delegate execution to IDispatcher (Thread-Safe).
+    Uses Copy-On-Write (COW) pattern to ensure Lock-Free Publish.
 */
 class EventBus
 {
@@ -21,13 +24,6 @@ public:
     {
         static EventBus instance;
         return instance;
-    }
-
-    // For Testing: Clear all listeners
-    void Reset()
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _listeners.clear();
     }
 
     // Callback signature: void(const EventType&)
@@ -40,9 +36,24 @@ public:
         GenericCallback func;
     };
 
+    using ListenerMap = std::unordered_map<std::type_index, std::vector<Listener>>;
+
+    EventBus()
+    {
+        // Initialize with an empty map
+        _listeners.store(std::make_shared<ListenerMap>());
+    }
+
+    // For Testing: Clear all listeners
+    void Reset()
+    {
+        std::lock_guard<std::mutex> lock(_writeMutex);
+        _listeners.store(std::make_shared<ListenerMap>());
+    }
+
     template <typename EventType, typename CallbackType> void Subscribe(IDispatcher *target, CallbackType callback)
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::mutex> lock(_writeMutex);
         std::type_index typeIdx(typeid(EventType));
 
         // Wrap specific callback into generic one
@@ -52,21 +63,30 @@ public:
             callback(*ev);
         };
 
-        _listeners[typeIdx].push_back({target, wrapper});
+        // 1. Read current map
+        std::shared_ptr<ListenerMap> currentMap = _listeners.load();
+
+        // 2. Copy current map (Copy-On-Write)
+        auto newMap = std::make_shared<ListenerMap>(*currentMap);
+
+        // 3. Modify the new map
+        (*newMap)[typeIdx].push_back({target, wrapper});
+
+        // 4. Atomically swap the pointer
+        _listeners.store(newMap);
+
         LOG_INFO("EventBus: Subscribed to {}", typeid(EventType).name());
     }
 
     template <typename EventType> void Publish(EventType event)
     {
-        // Copy event to capture in lambda
-        // Note: EventType must be CopyConstructible
-        // Optimization: Use shared_ptr<Event> for large events? For now, value copy is safer.
+        // Lock-Free Read using std::atomic<std::shared_ptr<T>> (C++20 feature)
+        std::shared_ptr<ListenerMap> currentMap = _listeners.load();
 
-        std::lock_guard<std::mutex> lock(_mutex);
         std::type_index typeIdx(typeid(EventType));
 
-        auto it = _listeners.find(typeIdx);
-        if (it == _listeners.end())
+        auto it = currentMap->find(typeIdx);
+        if (it == currentMap->end())
             return;
 
         for (const auto &listener : it->second)
@@ -91,8 +111,8 @@ public:
     }
 
 private:
-    std::mutex _mutex;
-    std::map<std::type_index, std::vector<Listener>> _listeners;
+    std::mutex _writeMutex; // Used ONLY for Subscribe/Reset to serialize writes
+    std::atomic<std::shared_ptr<ListenerMap>> _listeners;
 };
 
 } // namespace System

@@ -320,7 +320,6 @@ void WaveManager::SpawnMonster(int32_t monsterTypeId, float hpMultiplier, Room *
     if (monster)
     {
         _objMgr.AddObject(monster);
-        _grid.Add(monster);
 
         // Broadcast Spawn
         Protocol::S_SpawnObject msg;
