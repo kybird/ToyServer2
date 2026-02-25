@@ -45,8 +45,9 @@ class Room : public System::ITimerListener, public std::enable_shared_from_this<
 
 public:
     Room(
-        int roomId, std::shared_ptr<System::IFramework> framework, std::shared_ptr<System::IDispatcher> dispatcher,
-        std::shared_ptr<System::ITimer> timer, std::shared_ptr<System::IStrand> strand, std::shared_ptr<UserDB> userDB
+        int roomId, int mapId, std::shared_ptr<System::IFramework> framework,
+        std::shared_ptr<System::IDispatcher> dispatcher, std::shared_ptr<System::ITimer> timer,
+        std::shared_ptr<System::IStrand> strand, std::shared_ptr<UserDB> userDB
     );
     virtual ~Room() override;
 
@@ -124,6 +125,11 @@ public:
         return _tileMap;
     }
 
+    int32_t GetMapId() const
+    {
+        return _mapId;
+    }
+
     // Debug Commands
     void DebugAddExpToAll(int32_t exp);
     void DebugSpawnMonster(int32_t monsterId, int32_t count);
@@ -167,6 +173,7 @@ private:
 private:
     std::shared_ptr<System::IFramework> _framework;
     int _roomId;
+    int _mapId;
     std::string _title;
     std::unordered_map<uint64_t, std::shared_ptr<Player>> _players;
     std::unordered_set<uint64_t> _occupiedCells; // 1x1 점유 맵

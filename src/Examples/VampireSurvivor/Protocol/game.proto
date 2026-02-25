@@ -76,8 +76,7 @@ message C_Login {
 message S_Login {
   bool success = 1;
   int32 my_player_id = 2;
-  float map_width = 3;
-  float map_height = 4;
+  // map_width, map_height removed in favor of Room-based map_id loading
   uint32 server_tick_rate = 5;      // 서버 tick rate (초당 tick 수, 예: 30)
   float server_tick_interval = 6;   // 서버 tick 간격 (초 단위, 예: 0.0333)
   uint32 server_tick = 7;           // 현재 서버 Tick (Room 1 기준)
@@ -86,11 +85,13 @@ message S_Login {
 message C_CreateRoom {
     int32 wave_pattern_id = 1;
     string room_title = 2;
+    int32 map_id = 3;
 }
 
 message S_CreateRoom {
     bool success = 1;
     int32 room_id = 2;
+    int32 map_id = 3;
 }
 
 message C_JoinRoom {
@@ -100,6 +101,7 @@ message C_JoinRoom {
 message S_JoinRoom {
     bool success = 1;
     int32 room_id = 2;
+    int32 map_id = 3;
 }
 
 message C_EnterLobby {
@@ -123,6 +125,7 @@ message RoomInfo {
     int32 max_players = 3;
     bool is_playing = 4;
     string room_title = 5;
+    int32 map_id = 6;
 }
 
 message C_GetRoomList {

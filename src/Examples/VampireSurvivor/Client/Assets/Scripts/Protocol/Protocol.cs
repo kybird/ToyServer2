@@ -26,109 +26,110 @@ namespace Protocol {
           string.Concat(
             "CgpnYW1lLnByb3RvEghQcm90b2NvbCJHCgdDX0xvZ2luEhAKCHVzZXJuYW1l",
             "GAEgASgJEhAKCHBhc3N3b3JkGAIgASgJEhgKEGNvbmZpZ19maWxlX3BhdGgY",
-            "AyABKAkipAEKB1NfTG9naW4SDwoHc3VjY2VzcxgBIAEoCBIUCgxteV9wbGF5",
-            "ZXJfaWQYAiABKAUSEQoJbWFwX3dpZHRoGAMgASgCEhIKCm1hcF9oZWlnaHQY",
-            "BCABKAISGAoQc2VydmVyX3RpY2tfcmF0ZRgFIAEoDRIcChRzZXJ2ZXJfdGlj",
-            "a19pbnRlcnZhbBgGIAEoAhITCgtzZXJ2ZXJfdGljaxgHIAEoDSI7CgxDX0Ny",
-            "ZWF0ZVJvb20SFwoPd2F2ZV9wYXR0ZXJuX2lkGAEgASgFEhIKCnJvb21fdGl0",
-            "bGUYAiABKAkiMAoMU19DcmVhdGVSb29tEg8KB3N1Y2Nlc3MYASABKAgSDwoH",
-            "cm9vbV9pZBgCIAEoBSIdCgpDX0pvaW5Sb29tEg8KB3Jvb21faWQYASABKAUi",
-            "LgoKU19Kb2luUm9vbRIPCgdzdWNjZXNzGAEgASgIEg8KB3Jvb21faWQYAiAB",
-            "KAUiDgoMQ19FbnRlckxvYmJ5Ih8KDFNfRW50ZXJMb2JieRIPCgdzdWNjZXNz",
-            "GAEgASgIIg0KC0NfTGVhdmVSb29tIh4KC1NfTGVhdmVSb29tEg8KB3N1Y2Nl",
-            "c3MYASABKAgicQoIUm9vbUluZm8SDwoHcm9vbV9pZBgBIAEoBRIXCg9jdXJy",
-            "ZW50X3BsYXllcnMYAiABKAUSEwoLbWF4X3BsYXllcnMYAyABKAUSEgoKaXNf",
-            "cGxheWluZxgEIAEoCBISCgpyb29tX3RpdGxlGAUgASgJIiYKDUNfR2V0Um9v",
-            "bUxpc3QSFQoNb25seV9qb2luYWJsZRgBIAEoCCIvCgpTX1Jvb21MaXN0EiEK",
-            "BXJvb21zGAEgAygLMhIuUHJvdG9jb2wuUm9vbUluZm8iFQoGQ19DaGF0EgsK",
-            "A21zZxgBIAEoCSIoCgZTX0NoYXQSEQoJcGxheWVyX2lkGAEgASgFEgsKA21z",
-            "ZxgCIAEoCSINCgtDX0dhbWVSZWFkeSLpAQoKT2JqZWN0SW5mbxIRCglvYmpl",
-            "Y3RfaWQYASABKAUSIgoEdHlwZRgCIAEoDjIULlByb3RvY29sLk9iamVjdFR5",
-            "cGUSDwoHdHlwZV9pZBgDIAEoBRIJCgF4GAQgASgCEgkKAXkYBSABKAISCgoC",
-            "aHAYBiABKAUSDgoGbWF4X2hwGAcgASgFEiQKBXN0YXRlGAggASgOMhUuUHJv",
-            "dG9jb2wuT2JqZWN0U3RhdGUSEAoIb3duZXJfaWQYCSABKAUSCgoCdngYCiAB",
-            "KAISCgoCdnkYCyABKAISEQoJbG9va19sZWZ0GAwgASgIIksKDVNfU3Bhd25P",
-            "YmplY3QSJQoHb2JqZWN0cxgBIAMoCzIULlByb3RvY29sLk9iamVjdEluZm8S",
-            "EwoLc2VydmVyX3RpY2sYAiABKA0iOQoPU19EZXNwYXduT2JqZWN0EhIKCm9i",
-            "amVjdF9pZHMYASADKAUSEgoKcGlja2VyX2lkcxgCIAMoBSKFAQoJT2JqZWN0",
-            "UG9zEhEKCW9iamVjdF9pZBgBIAEoBRIJCgF4GAIgASgCEgkKAXkYAyABKAIS",
-            "CgoCdngYBCABKAISCgoCdnkYBSABKAISJAoFc3RhdGUYBiABKA4yFS5Qcm90",
-            "b2NvbC5PYmplY3RTdGF0ZRIRCglsb29rX2xlZnQYByABKAgiTAoRU19Nb3Zl",
-            "T2JqZWN0QmF0Y2gSIgoFbW92ZXMYASADKAsyEy5Qcm90b2NvbC5PYmplY3RQ",
-            "b3MSEwoLc2VydmVyX3RpY2sYAiABKA0iQAoLQ19Nb3ZlSW5wdXQSEwoLY2xp",
-            "ZW50X3RpY2sYASABKA0SDQoFZGlyX3gYAiABKAUSDQoFZGlyX3kYAyABKAUi",
-            "UgoQU19QbGF5ZXJTdGF0ZUFjaxITCgtzZXJ2ZXJfdGljaxgBIAEoDRITCgtj",
-            "bGllbnRfdGljaxgCIAEoDRIJCgF4GAMgASgCEgkKAXkYBCABKAIiQgoKQ19V",
-            "c2VTa2lsbBIQCghza2lsbF9pZBgBIAEoBRIQCgh0YXJnZXRfeBgCIAEoAhIQ",
-            "Cgh0YXJnZXRfeRgDIAEoAiLWAQoNU19Ta2lsbEVmZmVjdBIRCgljYXN0ZXJf",
-            "aWQYASABKAUSEAoIc2tpbGxfaWQYAiABKAUSCQoBeBgDIAEoAhIJCgF5GAQg",
-            "ASgCEhIKCnRhcmdldF9pZHMYBSADKAUSDgoGcmFkaXVzGAYgASgCEhgKEGR1",
-            "cmF0aW9uX3NlY29uZHMYByABKAISEwoLYXJjX2RlZ3JlZXMYCCABKAISGAoQ",
-            "cm90YXRpb25fZGVncmVlcxgJIAEoAhINCgV3aWR0aBgKIAEoAhIOCgZoZWln",
-            "aHQYCyABKAIiYgoOU19EYW1hZ2VFZmZlY3QSEAoIc2tpbGxfaWQYASABKAUS",
-            "EgoKdGFyZ2V0X2lkcxgCIAMoBRIVCg1kYW1hZ2VfdmFsdWVzGAMgAygFEhMK",
-            "C2lzX2NyaXRpY2FsGAQgAygIIl8KC1NfS25vY2tiYWNrEhEKCW9iamVjdF9p",
-            "ZBgBIAEoBRINCgVkaXJfeBgCIAEoAhINCgVkaXJfeRgDIAEoAhINCgVmb3Jj",
-            "ZRgEIAEoAhIQCghkdXJhdGlvbhgFIAEoAiIjCg5TX1BsYXllckRvd25lZBIR",
-            "CglwbGF5ZXJfaWQYASABKAUiIwoOU19QbGF5ZXJSZXZpdmUSEQoJcGxheWVy",
-            "X2lkGAEgASgFIkIKC1NfRXhwQ2hhbmdlEhMKC2N1cnJlbnRfZXhwGAEgASgF",
-            "Eg8KB21heF9leHAYAiABKAUSDQoFbGV2ZWwYAyABKAUiQwoKU19IcENoYW5n",
-            "ZRIRCglvYmplY3RfaWQYASABKAUSEgoKY3VycmVudF9ocBgCIAEoAhIOCgZt",
-            "YXhfaHAYAyABKAIiSwoMU19XYXZlTm90aWZ5EhIKCndhdmVfaW5kZXgYASAB",
-            "KAUSDQoFdGl0bGUYAiABKAkSGAoQZHVyYXRpb25fc2Vjb25kcxgDIAEoAiKH",
-            "AQoNTGV2ZWxVcE9wdGlvbhIRCglvcHRpb25faWQYASABKAUSEAoIc2tpbGxf",
-            "aWQYAiABKAUSDAoEbmFtZRgDIAEoCRIMCgRkZXNjGAQgASgJEg4KBmlzX25l",
-            "dxgFIAEoCBIlCglpdGVtX3R5cGUYBiABKA4yEi5Qcm90b2NvbC5JdGVtVHlw",
-            "ZSJpCg9TX0xldmVsVXBPcHRpb24SKAoHb3B0aW9ucxgBIAMoCzIXLlByb3Rv",
-            "Y29sLkxldmVsVXBPcHRpb24SFwoPdGltZW91dF9zZWNvbmRzGAIgASgCEhMK",
-            "C3Nsb3dfcmFkaXVzGAMgASgCIicKD0NfU2VsZWN0TGV2ZWxVcBIUCgxvcHRp",
-            "b25faW5kZXgYASABKAUiNgoJU19HYW1lV2luEhUKDXRvdGFsX3RpbWVfbXMY",
-            "ASABKAMSEgoKa2lsbF9jb3VudBgCIAEoBSI2CgpTX0dhbWVPdmVyEhgKEHN1",
-            "cnZpdmVkX3RpbWVfbXMYASABKAMSDgoGaXNfd2luGAIgASgIIiEKDFNfUGxh",
-            "eWVyRGVhZBIRCglwbGF5ZXJfaWQYASABKAUiGwoGU19QaW5nEhEKCXRpbWVz",
-            "dGFtcBgBIAEoAyIbCgZDX1BvbmcSEQoJdGltZXN0YW1wGAEgASgDIhsKBkNf",
-            "UGluZxIRCgl0aW1lc3RhbXAYASABKAMiGwoGU19Qb25nEhEKCXRpbWVzdGFt",
-            "cBgBIAEoAyIoChFTX0RlYnVnU2VydmVyVGljaxITCgtzZXJ2ZXJfdGljaxgB",
-            "IAEoDSI+Cg1JbnZlbnRvcnlJdGVtEgoKAmlkGAEgASgFEg0KBWxldmVsGAIg",
-            "ASgFEhIKCmlzX3Bhc3NpdmUYAyABKAgiTgoRU19VcGRhdGVJbnZlbnRvcnkS",
-            "EQoJcGxheWVyX2lkGAEgASgFEiYKBWl0ZW1zGAIgAygLMhcuUHJvdG9jb2wu",
-            "SW52ZW50b3J5SXRlbSqBBgoFTXNnSWQSCAoETk9ORRAAEgsKB0NfTE9HSU4Q",
-            "ZBILCgdTX0xPR0lOEGUSEQoNQ19DUkVBVEVfUk9PTRBmEhEKDVNfQ1JFQVRF",
-            "X1JPT00QZxIPCgtDX0pPSU5fUk9PTRBoEg8KC1NfSk9JTl9ST09NEGkSEwoP",
-            "Q19HRVRfUk9PTV9MSVNUEGoSDwoLU19ST09NX0xJU1QQaxIRCg1DX0VOVEVS",
-            "X0xPQkJZEG4SEQoNU19FTlRFUl9MT0JCWRBvEhAKDENfTEVBVkVfUk9PTRBw",
-            "EhAKDFNfTEVBVkVfUk9PTRBxEhAKDENfR0FNRV9SRUFEWRByEgoKBkNfQ0hB",
-            "VBB4EgoKBlNfQ0hBVBB5EhMKDlNfU1BBV05fT0JKRUNUEMgBEhUKEFNfREVT",
-            "UEFXTl9PQkpFQ1QQyQESGAoTU19NT1ZFX09CSkVDVF9CQVRDSBDKARIRCgxD",
-            "X01PVkVfSU5QVVQQywESFwoSU19QTEFZRVJfU1RBVEVfQUNLEMwBEhAKC0Nf",
-            "VVNFX1NLSUxMEKwCEhMKDlNfU0tJTExfRUZGRUNUEK0CEhQKD1NfREFNQUdF",
-            "X0VGRkVDVBCuAhIQCgtTX0tOT0NLQkFDSxCxAhIUCg9TX1BMQVlFUl9ET1dO",
-            "RUQQsgISFAoPU19QTEFZRVJfUkVWSVZFELMCEhEKDFNfRVhQX0NIQU5HRRCQ",
-            "AxIWChFTX0xFVkVMX1VQX09QVElPThCRAxIWChFDX1NFTEVDVF9MRVZFTF9V",
-            "UBCSAxIQCgtTX0hQX0NIQU5HRRCTAxISCg1TX1dBVkVfTk9USUZZEJQDEg8K",
-            "ClNfR0FNRV9XSU4Q9AMSEAoLU19HQU1FX09WRVIQ9QMSEgoNU19QTEFZRVJf",
-            "REVBRBD2AxILCgZTX1BJTkcQhAcSCwoGQ19QT05HEIUHEgsKBkNfUElORxCG",
-            "BxILCgZTX1BPTkcQhwcSGAoTU19ERUJVR19TRVJWRVJfVElDSxCIBxIXChJT",
-            "X1VQREFURV9JTlZFTlRPUlkQiQcqTAoKT2JqZWN0VHlwZRILCgdVTktOT1dO",
-            "EAASCgoGUExBWUVSEAESCwoHTU9OU1RFUhACEg4KClBST0pFQ1RJTEUQAxII",
-            "CgRJVEVNEAQqZAoLT2JqZWN0U3RhdGUSCAoESURMRRAAEgoKBk1PVklORxAB",
-            "Eg0KCUFUVEFDS0lORxACEggKBERFQUQQAxIKCgZET1dORUQQBBINCglLTk9D",
-            "S0JBQ0sQBRILCgdTVFVOTkVEEAYqLQoISXRlbVR5cGUSDwoLV0VBUE9OX1RZ",
-            "UEUQABIQCgxQQVNTSVZFX1RZUEUQAWIGcHJvdG8z"));
+            "AyABKAkifQoHU19Mb2dpbhIPCgdzdWNjZXNzGAEgASgIEhQKDG15X3BsYXll",
+            "cl9pZBgCIAEoBRIYChBzZXJ2ZXJfdGlja19yYXRlGAUgASgNEhwKFHNlcnZl",
+            "cl90aWNrX2ludGVydmFsGAYgASgCEhMKC3NlcnZlcl90aWNrGAcgASgNIksK",
+            "DENfQ3JlYXRlUm9vbRIXCg93YXZlX3BhdHRlcm5faWQYASABKAUSEgoKcm9v",
+            "bV90aXRsZRgCIAEoCRIOCgZtYXBfaWQYAyABKAUiQAoMU19DcmVhdGVSb29t",
+            "Eg8KB3N1Y2Nlc3MYASABKAgSDwoHcm9vbV9pZBgCIAEoBRIOCgZtYXBfaWQY",
+            "AyABKAUiHQoKQ19Kb2luUm9vbRIPCgdyb29tX2lkGAEgASgFIj4KClNfSm9p",
+            "blJvb20SDwoHc3VjY2VzcxgBIAEoCBIPCgdyb29tX2lkGAIgASgFEg4KBm1h",
+            "cF9pZBgDIAEoBSIOCgxDX0VudGVyTG9iYnkiHwoMU19FbnRlckxvYmJ5Eg8K",
+            "B3N1Y2Nlc3MYASABKAgiDQoLQ19MZWF2ZVJvb20iHgoLU19MZWF2ZVJvb20S",
+            "DwoHc3VjY2VzcxgBIAEoCCKBAQoIUm9vbUluZm8SDwoHcm9vbV9pZBgBIAEo",
+            "BRIXCg9jdXJyZW50X3BsYXllcnMYAiABKAUSEwoLbWF4X3BsYXllcnMYAyAB",
+            "KAUSEgoKaXNfcGxheWluZxgEIAEoCBISCgpyb29tX3RpdGxlGAUgASgJEg4K",
+            "Bm1hcF9pZBgGIAEoBSImCg1DX0dldFJvb21MaXN0EhUKDW9ubHlfam9pbmFi",
+            "bGUYASABKAgiLwoKU19Sb29tTGlzdBIhCgVyb29tcxgBIAMoCzISLlByb3Rv",
+            "Y29sLlJvb21JbmZvIhUKBkNfQ2hhdBILCgNtc2cYASABKAkiKAoGU19DaGF0",
+            "EhEKCXBsYXllcl9pZBgBIAEoBRILCgNtc2cYAiABKAkiDQoLQ19HYW1lUmVh",
+            "ZHki6QEKCk9iamVjdEluZm8SEQoJb2JqZWN0X2lkGAEgASgFEiIKBHR5cGUY",
+            "AiABKA4yFC5Qcm90b2NvbC5PYmplY3RUeXBlEg8KB3R5cGVfaWQYAyABKAUS",
+            "CQoBeBgEIAEoAhIJCgF5GAUgASgCEgoKAmhwGAYgASgFEg4KBm1heF9ocBgH",
+            "IAEoBRIkCgVzdGF0ZRgIIAEoDjIVLlByb3RvY29sLk9iamVjdFN0YXRlEhAK",
+            "CG93bmVyX2lkGAkgASgFEgoKAnZ4GAogASgCEgoKAnZ5GAsgASgCEhEKCWxv",
+            "b2tfbGVmdBgMIAEoCCJLCg1TX1NwYXduT2JqZWN0EiUKB29iamVjdHMYASAD",
+            "KAsyFC5Qcm90b2NvbC5PYmplY3RJbmZvEhMKC3NlcnZlcl90aWNrGAIgASgN",
+            "IjkKD1NfRGVzcGF3bk9iamVjdBISCgpvYmplY3RfaWRzGAEgAygFEhIKCnBp",
+            "Y2tlcl9pZHMYAiADKAUihQEKCU9iamVjdFBvcxIRCglvYmplY3RfaWQYASAB",
+            "KAUSCQoBeBgCIAEoAhIJCgF5GAMgASgCEgoKAnZ4GAQgASgCEgoKAnZ5GAUg",
+            "ASgCEiQKBXN0YXRlGAYgASgOMhUuUHJvdG9jb2wuT2JqZWN0U3RhdGUSEQoJ",
+            "bG9va19sZWZ0GAcgASgIIkwKEVNfTW92ZU9iamVjdEJhdGNoEiIKBW1vdmVz",
+            "GAEgAygLMhMuUHJvdG9jb2wuT2JqZWN0UG9zEhMKC3NlcnZlcl90aWNrGAIg",
+            "ASgNIkAKC0NfTW92ZUlucHV0EhMKC2NsaWVudF90aWNrGAEgASgNEg0KBWRp",
+            "cl94GAIgASgFEg0KBWRpcl95GAMgASgFIlIKEFNfUGxheWVyU3RhdGVBY2sS",
+            "EwoLc2VydmVyX3RpY2sYASABKA0SEwoLY2xpZW50X3RpY2sYAiABKA0SCQoB",
+            "eBgDIAEoAhIJCgF5GAQgASgCIkIKCkNfVXNlU2tpbGwSEAoIc2tpbGxfaWQY",
+            "ASABKAUSEAoIdGFyZ2V0X3gYAiABKAISEAoIdGFyZ2V0X3kYAyABKAIi1gEK",
+            "DVNfU2tpbGxFZmZlY3QSEQoJY2FzdGVyX2lkGAEgASgFEhAKCHNraWxsX2lk",
+            "GAIgASgFEgkKAXgYAyABKAISCQoBeRgEIAEoAhISCgp0YXJnZXRfaWRzGAUg",
+            "AygFEg4KBnJhZGl1cxgGIAEoAhIYChBkdXJhdGlvbl9zZWNvbmRzGAcgASgC",
+            "EhMKC2FyY19kZWdyZWVzGAggASgCEhgKEHJvdGF0aW9uX2RlZ3JlZXMYCSAB",
+            "KAISDQoFd2lkdGgYCiABKAISDgoGaGVpZ2h0GAsgASgCImIKDlNfRGFtYWdl",
+            "RWZmZWN0EhAKCHNraWxsX2lkGAEgASgFEhIKCnRhcmdldF9pZHMYAiADKAUS",
+            "FQoNZGFtYWdlX3ZhbHVlcxgDIAMoBRITCgtpc19jcml0aWNhbBgEIAMoCCJf",
+            "CgtTX0tub2NrYmFjaxIRCglvYmplY3RfaWQYASABKAUSDQoFZGlyX3gYAiAB",
+            "KAISDQoFZGlyX3kYAyABKAISDQoFZm9yY2UYBCABKAISEAoIZHVyYXRpb24Y",
+            "BSABKAIiIwoOU19QbGF5ZXJEb3duZWQSEQoJcGxheWVyX2lkGAEgASgFIiMK",
+            "DlNfUGxheWVyUmV2aXZlEhEKCXBsYXllcl9pZBgBIAEoBSJCCgtTX0V4cENo",
+            "YW5nZRITCgtjdXJyZW50X2V4cBgBIAEoBRIPCgdtYXhfZXhwGAIgASgFEg0K",
+            "BWxldmVsGAMgASgFIkMKClNfSHBDaGFuZ2USEQoJb2JqZWN0X2lkGAEgASgF",
+            "EhIKCmN1cnJlbnRfaHAYAiABKAISDgoGbWF4X2hwGAMgASgCIksKDFNfV2F2",
+            "ZU5vdGlmeRISCgp3YXZlX2luZGV4GAEgASgFEg0KBXRpdGxlGAIgASgJEhgK",
+            "EGR1cmF0aW9uX3NlY29uZHMYAyABKAIihwEKDUxldmVsVXBPcHRpb24SEQoJ",
+            "b3B0aW9uX2lkGAEgASgFEhAKCHNraWxsX2lkGAIgASgFEgwKBG5hbWUYAyAB",
+            "KAkSDAoEZGVzYxgEIAEoCRIOCgZpc19uZXcYBSABKAgSJQoJaXRlbV90eXBl",
+            "GAYgASgOMhIuUHJvdG9jb2wuSXRlbVR5cGUiaQoPU19MZXZlbFVwT3B0aW9u",
+            "EigKB29wdGlvbnMYASADKAsyFy5Qcm90b2NvbC5MZXZlbFVwT3B0aW9uEhcK",
+            "D3RpbWVvdXRfc2Vjb25kcxgCIAEoAhITCgtzbG93X3JhZGl1cxgDIAEoAiIn",
+            "Cg9DX1NlbGVjdExldmVsVXASFAoMb3B0aW9uX2luZGV4GAEgASgFIjYKCVNf",
+            "R2FtZVdpbhIVCg10b3RhbF90aW1lX21zGAEgASgDEhIKCmtpbGxfY291bnQY",
+            "AiABKAUiNgoKU19HYW1lT3ZlchIYChBzdXJ2aXZlZF90aW1lX21zGAEgASgD",
+            "Eg4KBmlzX3dpbhgCIAEoCCIhCgxTX1BsYXllckRlYWQSEQoJcGxheWVyX2lk",
+            "GAEgASgFIhsKBlNfUGluZxIRCgl0aW1lc3RhbXAYASABKAMiGwoGQ19Qb25n",
+            "EhEKCXRpbWVzdGFtcBgBIAEoAyIbCgZDX1BpbmcSEQoJdGltZXN0YW1wGAEg",
+            "ASgDIhsKBlNfUG9uZxIRCgl0aW1lc3RhbXAYASABKAMiKAoRU19EZWJ1Z1Nl",
+            "cnZlclRpY2sSEwoLc2VydmVyX3RpY2sYASABKA0iPgoNSW52ZW50b3J5SXRl",
+            "bRIKCgJpZBgBIAEoBRINCgVsZXZlbBgCIAEoBRISCgppc19wYXNzaXZlGAMg",
+            "ASgIIk4KEVNfVXBkYXRlSW52ZW50b3J5EhEKCXBsYXllcl9pZBgBIAEoBRIm",
+            "CgVpdGVtcxgCIAMoCzIXLlByb3RvY29sLkludmVudG9yeUl0ZW0qgQYKBU1z",
+            "Z0lkEggKBE5PTkUQABILCgdDX0xPR0lOEGQSCwoHU19MT0dJThBlEhEKDUNf",
+            "Q1JFQVRFX1JPT00QZhIRCg1TX0NSRUFURV9ST09NEGcSDwoLQ19KT0lOX1JP",
+            "T00QaBIPCgtTX0pPSU5fUk9PTRBpEhMKD0NfR0VUX1JPT01fTElTVBBqEg8K",
+            "C1NfUk9PTV9MSVNUEGsSEQoNQ19FTlRFUl9MT0JCWRBuEhEKDVNfRU5URVJf",
+            "TE9CQlkQbxIQCgxDX0xFQVZFX1JPT00QcBIQCgxTX0xFQVZFX1JPT00QcRIQ",
+            "CgxDX0dBTUVfUkVBRFkQchIKCgZDX0NIQVQQeBIKCgZTX0NIQVQQeRITCg5T",
+            "X1NQQVdOX09CSkVDVBDIARIVChBTX0RFU1BBV05fT0JKRUNUEMkBEhgKE1Nf",
+            "TU9WRV9PQkpFQ1RfQkFUQ0gQygESEQoMQ19NT1ZFX0lOUFVUEMsBEhcKElNf",
+            "UExBWUVSX1NUQVRFX0FDSxDMARIQCgtDX1VTRV9TS0lMTBCsAhITCg5TX1NL",
+            "SUxMX0VGRkVDVBCtAhIUCg9TX0RBTUFHRV9FRkZFQ1QQrgISEAoLU19LTk9D",
+            "S0JBQ0sQsQISFAoPU19QTEFZRVJfRE9XTkVEELICEhQKD1NfUExBWUVSX1JF",
+            "VklWRRCzAhIRCgxTX0VYUF9DSEFOR0UQkAMSFgoRU19MRVZFTF9VUF9PUFRJ",
+            "T04QkQMSFgoRQ19TRUxFQ1RfTEVWRUxfVVAQkgMSEAoLU19IUF9DSEFOR0UQ",
+            "kwMSEgoNU19XQVZFX05PVElGWRCUAxIPCgpTX0dBTUVfV0lOEPQDEhAKC1Nf",
+            "R0FNRV9PVkVSEPUDEhIKDVNfUExBWUVSX0RFQUQQ9gMSCwoGU19QSU5HEIQH",
+            "EgsKBkNfUE9ORxCFBxILCgZDX1BJTkcQhgcSCwoGU19QT05HEIcHEhgKE1Nf",
+            "REVCVUdfU0VSVkVSX1RJQ0sQiAcSFwoSU19VUERBVEVfSU5WRU5UT1JZEIkH",
+            "KkwKCk9iamVjdFR5cGUSCwoHVU5LTk9XThAAEgoKBlBMQVlFUhABEgsKB01P",
+            "TlNURVIQAhIOCgpQUk9KRUNUSUxFEAMSCAoESVRFTRAEKmQKC09iamVjdFN0",
+            "YXRlEggKBElETEUQABIKCgZNT1ZJTkcQARINCglBVFRBQ0tJTkcQAhIICgRE",
+            "RUFEEAMSCgoGRE9XTkVEEAQSDQoJS05PQ0tCQUNLEAUSCwoHU1RVTk5FRBAG",
+            "Ki0KCEl0ZW1UeXBlEg8KC1dFQVBPTl9UWVBFEAASEAoMUEFTU0lWRV9UWVBF",
+            "EAFiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Protocol.MsgId), typeof(global::Protocol.ObjectType), typeof(global::Protocol.ObjectState), typeof(global::Protocol.ItemType), }, null, new pbr::GeneratedClrTypeInfo[] {
             new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.C_Login), global::Protocol.C_Login.Parser, new[]{ "Username", "Password", "ConfigFilePath" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.S_Login), global::Protocol.S_Login.Parser, new[]{ "Success", "MyPlayerId", "MapWidth", "MapHeight", "ServerTickRate", "ServerTickInterval", "ServerTick" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.C_CreateRoom), global::Protocol.C_CreateRoom.Parser, new[]{ "WavePatternId", "RoomTitle" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.S_CreateRoom), global::Protocol.S_CreateRoom.Parser, new[]{ "Success", "RoomId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.S_Login), global::Protocol.S_Login.Parser, new[]{ "Success", "MyPlayerId", "ServerTickRate", "ServerTickInterval", "ServerTick" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.C_CreateRoom), global::Protocol.C_CreateRoom.Parser, new[]{ "WavePatternId", "RoomTitle", "MapId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.S_CreateRoom), global::Protocol.S_CreateRoom.Parser, new[]{ "Success", "RoomId", "MapId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.C_JoinRoom), global::Protocol.C_JoinRoom.Parser, new[]{ "RoomId" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.S_JoinRoom), global::Protocol.S_JoinRoom.Parser, new[]{ "Success", "RoomId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.S_JoinRoom), global::Protocol.S_JoinRoom.Parser, new[]{ "Success", "RoomId", "MapId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.C_EnterLobby), global::Protocol.C_EnterLobby.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.S_EnterLobby), global::Protocol.S_EnterLobby.Parser, new[]{ "Success" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.C_LeaveRoom), global::Protocol.C_LeaveRoom.Parser, null, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.S_LeaveRoom), global::Protocol.S_LeaveRoom.Parser, new[]{ "Success" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.RoomInfo), global::Protocol.RoomInfo.Parser, new[]{ "RoomId", "CurrentPlayers", "MaxPlayers", "IsPlaying", "RoomTitle" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.RoomInfo), global::Protocol.RoomInfo.Parser, new[]{ "RoomId", "CurrentPlayers", "MaxPlayers", "IsPlaying", "RoomTitle", "MapId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.C_GetRoomList), global::Protocol.C_GetRoomList.Parser, new[]{ "OnlyJoinable" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.S_RoomList), global::Protocol.S_RoomList.Parser, new[]{ "Rooms" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Protocol.C_Chat), global::Protocol.C_Chat.Parser, new[]{ "Msg" }, null, null, null, null),
@@ -580,8 +581,6 @@ namespace Protocol {
     public S_Login(S_Login other) : this() {
       success_ = other.success_;
       myPlayerId_ = other.myPlayerId_;
-      mapWidth_ = other.mapWidth_;
-      mapHeight_ = other.mapHeight_;
       serverTickRate_ = other.serverTickRate_;
       serverTickInterval_ = other.serverTickInterval_;
       serverTick_ = other.serverTick_;
@@ -618,35 +617,11 @@ namespace Protocol {
       }
     }
 
-    /// <summary>Field number for the "map_width" field.</summary>
-    public const int MapWidthFieldNumber = 3;
-    private float mapWidth_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float MapWidth {
-      get { return mapWidth_; }
-      set {
-        mapWidth_ = value;
-      }
-    }
-
-    /// <summary>Field number for the "map_height" field.</summary>
-    public const int MapHeightFieldNumber = 4;
-    private float mapHeight_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public float MapHeight {
-      get { return mapHeight_; }
-      set {
-        mapHeight_ = value;
-      }
-    }
-
     /// <summary>Field number for the "server_tick_rate" field.</summary>
     public const int ServerTickRateFieldNumber = 5;
     private uint serverTickRate_;
     /// <summary>
-    /// 서버 tick rate (초당 tick 수, 예: 30)
+    /// map_width, map_height removed in favor of Room-based map_id loading
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -704,8 +679,6 @@ namespace Protocol {
       }
       if (Success != other.Success) return false;
       if (MyPlayerId != other.MyPlayerId) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(MapWidth, other.MapWidth)) return false;
-      if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(MapHeight, other.MapHeight)) return false;
       if (ServerTickRate != other.ServerTickRate) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.Equals(ServerTickInterval, other.ServerTickInterval)) return false;
       if (ServerTick != other.ServerTick) return false;
@@ -718,8 +691,6 @@ namespace Protocol {
       int hash = 1;
       if (Success != false) hash ^= Success.GetHashCode();
       if (MyPlayerId != 0) hash ^= MyPlayerId.GetHashCode();
-      if (MapWidth != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(MapWidth);
-      if (MapHeight != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(MapHeight);
       if (ServerTickRate != 0) hash ^= ServerTickRate.GetHashCode();
       if (ServerTickInterval != 0F) hash ^= pbc::ProtobufEqualityComparers.BitwiseSingleEqualityComparer.GetHashCode(ServerTickInterval);
       if (ServerTick != 0) hash ^= ServerTick.GetHashCode();
@@ -748,14 +719,6 @@ namespace Protocol {
       if (MyPlayerId != 0) {
         output.WriteRawTag(16);
         output.WriteInt32(MyPlayerId);
-      }
-      if (MapWidth != 0F) {
-        output.WriteRawTag(29);
-        output.WriteFloat(MapWidth);
-      }
-      if (MapHeight != 0F) {
-        output.WriteRawTag(37);
-        output.WriteFloat(MapHeight);
       }
       if (ServerTickRate != 0) {
         output.WriteRawTag(40);
@@ -787,14 +750,6 @@ namespace Protocol {
         output.WriteRawTag(16);
         output.WriteInt32(MyPlayerId);
       }
-      if (MapWidth != 0F) {
-        output.WriteRawTag(29);
-        output.WriteFloat(MapWidth);
-      }
-      if (MapHeight != 0F) {
-        output.WriteRawTag(37);
-        output.WriteFloat(MapHeight);
-      }
       if (ServerTickRate != 0) {
         output.WriteRawTag(40);
         output.WriteUInt32(ServerTickRate);
@@ -823,12 +778,6 @@ namespace Protocol {
       if (MyPlayerId != 0) {
         size += 1 + pb::CodedOutputStream.ComputeInt32Size(MyPlayerId);
       }
-      if (MapWidth != 0F) {
-        size += 1 + 4;
-      }
-      if (MapHeight != 0F) {
-        size += 1 + 4;
-      }
       if (ServerTickRate != 0) {
         size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ServerTickRate);
       }
@@ -855,12 +804,6 @@ namespace Protocol {
       }
       if (other.MyPlayerId != 0) {
         MyPlayerId = other.MyPlayerId;
-      }
-      if (other.MapWidth != 0F) {
-        MapWidth = other.MapWidth;
-      }
-      if (other.MapHeight != 0F) {
-        MapHeight = other.MapHeight;
       }
       if (other.ServerTickRate != 0) {
         ServerTickRate = other.ServerTickRate;
@@ -896,14 +839,6 @@ namespace Protocol {
           }
           case 16: {
             MyPlayerId = input.ReadInt32();
-            break;
-          }
-          case 29: {
-            MapWidth = input.ReadFloat();
-            break;
-          }
-          case 37: {
-            MapHeight = input.ReadFloat();
             break;
           }
           case 40: {
@@ -943,14 +878,6 @@ namespace Protocol {
           }
           case 16: {
             MyPlayerId = input.ReadInt32();
-            break;
-          }
-          case 29: {
-            MapWidth = input.ReadFloat();
-            break;
-          }
-          case 37: {
-            MapHeight = input.ReadFloat();
             break;
           }
           case 40: {
@@ -1009,6 +936,7 @@ namespace Protocol {
     public C_CreateRoom(C_CreateRoom other) : this() {
       wavePatternId_ = other.wavePatternId_;
       roomTitle_ = other.roomTitle_;
+      mapId_ = other.mapId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -1042,6 +970,18 @@ namespace Protocol {
       }
     }
 
+    /// <summary>Field number for the "map_id" field.</summary>
+    public const int MapIdFieldNumber = 3;
+    private int mapId_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int MapId {
+      get { return mapId_; }
+      set {
+        mapId_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -1059,6 +999,7 @@ namespace Protocol {
       }
       if (WavePatternId != other.WavePatternId) return false;
       if (RoomTitle != other.RoomTitle) return false;
+      if (MapId != other.MapId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1068,6 +1009,7 @@ namespace Protocol {
       int hash = 1;
       if (WavePatternId != 0) hash ^= WavePatternId.GetHashCode();
       if (RoomTitle.Length != 0) hash ^= RoomTitle.GetHashCode();
+      if (MapId != 0) hash ^= MapId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1094,6 +1036,10 @@ namespace Protocol {
         output.WriteRawTag(18);
         output.WriteString(RoomTitle);
       }
+      if (MapId != 0) {
+        output.WriteRawTag(24);
+        output.WriteInt32(MapId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1112,6 +1058,10 @@ namespace Protocol {
         output.WriteRawTag(18);
         output.WriteString(RoomTitle);
       }
+      if (MapId != 0) {
+        output.WriteRawTag(24);
+        output.WriteInt32(MapId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1127,6 +1077,9 @@ namespace Protocol {
       }
       if (RoomTitle.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(RoomTitle);
+      }
+      if (MapId != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(MapId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1145,6 +1098,9 @@ namespace Protocol {
       }
       if (other.RoomTitle.Length != 0) {
         RoomTitle = other.RoomTitle;
+      }
+      if (other.MapId != 0) {
+        MapId = other.MapId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -1173,6 +1129,10 @@ namespace Protocol {
             RoomTitle = input.ReadString();
             break;
           }
+          case 24: {
+            MapId = input.ReadInt32();
+            break;
+          }
         }
       }
     #endif
@@ -1198,6 +1158,10 @@ namespace Protocol {
           }
           case 18: {
             RoomTitle = input.ReadString();
+            break;
+          }
+          case 24: {
+            MapId = input.ReadInt32();
             break;
           }
         }
@@ -1244,6 +1208,7 @@ namespace Protocol {
     public S_CreateRoom(S_CreateRoom other) : this() {
       success_ = other.success_;
       roomId_ = other.roomId_;
+      mapId_ = other.mapId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -1277,6 +1242,18 @@ namespace Protocol {
       }
     }
 
+    /// <summary>Field number for the "map_id" field.</summary>
+    public const int MapIdFieldNumber = 3;
+    private int mapId_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int MapId {
+      get { return mapId_; }
+      set {
+        mapId_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -1294,6 +1271,7 @@ namespace Protocol {
       }
       if (Success != other.Success) return false;
       if (RoomId != other.RoomId) return false;
+      if (MapId != other.MapId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1303,6 +1281,7 @@ namespace Protocol {
       int hash = 1;
       if (Success != false) hash ^= Success.GetHashCode();
       if (RoomId != 0) hash ^= RoomId.GetHashCode();
+      if (MapId != 0) hash ^= MapId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1329,6 +1308,10 @@ namespace Protocol {
         output.WriteRawTag(16);
         output.WriteInt32(RoomId);
       }
+      if (MapId != 0) {
+        output.WriteRawTag(24);
+        output.WriteInt32(MapId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1347,6 +1330,10 @@ namespace Protocol {
         output.WriteRawTag(16);
         output.WriteInt32(RoomId);
       }
+      if (MapId != 0) {
+        output.WriteRawTag(24);
+        output.WriteInt32(MapId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1362,6 +1349,9 @@ namespace Protocol {
       }
       if (RoomId != 0) {
         size += 1 + pb::CodedOutputStream.ComputeInt32Size(RoomId);
+      }
+      if (MapId != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(MapId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1380,6 +1370,9 @@ namespace Protocol {
       }
       if (other.RoomId != 0) {
         RoomId = other.RoomId;
+      }
+      if (other.MapId != 0) {
+        MapId = other.MapId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -1408,6 +1401,10 @@ namespace Protocol {
             RoomId = input.ReadInt32();
             break;
           }
+          case 24: {
+            MapId = input.ReadInt32();
+            break;
+          }
         }
       }
     #endif
@@ -1433,6 +1430,10 @@ namespace Protocol {
           }
           case 16: {
             RoomId = input.ReadInt32();
+            break;
+          }
+          case 24: {
+            MapId = input.ReadInt32();
             break;
           }
         }
@@ -1677,6 +1678,7 @@ namespace Protocol {
     public S_JoinRoom(S_JoinRoom other) : this() {
       success_ = other.success_;
       roomId_ = other.roomId_;
+      mapId_ = other.mapId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -1710,6 +1712,18 @@ namespace Protocol {
       }
     }
 
+    /// <summary>Field number for the "map_id" field.</summary>
+    public const int MapIdFieldNumber = 3;
+    private int mapId_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int MapId {
+      get { return mapId_; }
+      set {
+        mapId_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -1727,6 +1741,7 @@ namespace Protocol {
       }
       if (Success != other.Success) return false;
       if (RoomId != other.RoomId) return false;
+      if (MapId != other.MapId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -1736,6 +1751,7 @@ namespace Protocol {
       int hash = 1;
       if (Success != false) hash ^= Success.GetHashCode();
       if (RoomId != 0) hash ^= RoomId.GetHashCode();
+      if (MapId != 0) hash ^= MapId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -1762,6 +1778,10 @@ namespace Protocol {
         output.WriteRawTag(16);
         output.WriteInt32(RoomId);
       }
+      if (MapId != 0) {
+        output.WriteRawTag(24);
+        output.WriteInt32(MapId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -1780,6 +1800,10 @@ namespace Protocol {
         output.WriteRawTag(16);
         output.WriteInt32(RoomId);
       }
+      if (MapId != 0) {
+        output.WriteRawTag(24);
+        output.WriteInt32(MapId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -1795,6 +1819,9 @@ namespace Protocol {
       }
       if (RoomId != 0) {
         size += 1 + pb::CodedOutputStream.ComputeInt32Size(RoomId);
+      }
+      if (MapId != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(MapId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -1813,6 +1840,9 @@ namespace Protocol {
       }
       if (other.RoomId != 0) {
         RoomId = other.RoomId;
+      }
+      if (other.MapId != 0) {
+        MapId = other.MapId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -1841,6 +1871,10 @@ namespace Protocol {
             RoomId = input.ReadInt32();
             break;
           }
+          case 24: {
+            MapId = input.ReadInt32();
+            break;
+          }
         }
       }
     #endif
@@ -1866,6 +1900,10 @@ namespace Protocol {
           }
           case 16: {
             RoomId = input.ReadInt32();
+            break;
+          }
+          case 24: {
+            MapId = input.ReadInt32();
             break;
           }
         }
@@ -2636,6 +2674,7 @@ namespace Protocol {
       maxPlayers_ = other.maxPlayers_;
       isPlaying_ = other.isPlaying_;
       roomTitle_ = other.roomTitle_;
+      mapId_ = other.mapId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -2705,6 +2744,18 @@ namespace Protocol {
       }
     }
 
+    /// <summary>Field number for the "map_id" field.</summary>
+    public const int MapIdFieldNumber = 6;
+    private int mapId_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int MapId {
+      get { return mapId_; }
+      set {
+        mapId_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -2725,6 +2776,7 @@ namespace Protocol {
       if (MaxPlayers != other.MaxPlayers) return false;
       if (IsPlaying != other.IsPlaying) return false;
       if (RoomTitle != other.RoomTitle) return false;
+      if (MapId != other.MapId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -2737,6 +2789,7 @@ namespace Protocol {
       if (MaxPlayers != 0) hash ^= MaxPlayers.GetHashCode();
       if (IsPlaying != false) hash ^= IsPlaying.GetHashCode();
       if (RoomTitle.Length != 0) hash ^= RoomTitle.GetHashCode();
+      if (MapId != 0) hash ^= MapId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -2775,6 +2828,10 @@ namespace Protocol {
         output.WriteRawTag(42);
         output.WriteString(RoomTitle);
       }
+      if (MapId != 0) {
+        output.WriteRawTag(48);
+        output.WriteInt32(MapId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -2805,6 +2862,10 @@ namespace Protocol {
         output.WriteRawTag(42);
         output.WriteString(RoomTitle);
       }
+      if (MapId != 0) {
+        output.WriteRawTag(48);
+        output.WriteInt32(MapId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -2829,6 +2890,9 @@ namespace Protocol {
       }
       if (RoomTitle.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(RoomTitle);
+      }
+      if (MapId != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(MapId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -2856,6 +2920,9 @@ namespace Protocol {
       }
       if (other.RoomTitle.Length != 0) {
         RoomTitle = other.RoomTitle;
+      }
+      if (other.MapId != 0) {
+        MapId = other.MapId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -2896,6 +2963,10 @@ namespace Protocol {
             RoomTitle = input.ReadString();
             break;
           }
+          case 48: {
+            MapId = input.ReadInt32();
+            break;
+          }
         }
       }
     #endif
@@ -2933,6 +3004,10 @@ namespace Protocol {
           }
           case 42: {
             RoomTitle = input.ReadString();
+            break;
+          }
+          case 48: {
+            MapId = input.ReadInt32();
             break;
           }
         }

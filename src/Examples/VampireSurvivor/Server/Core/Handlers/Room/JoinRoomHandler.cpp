@@ -41,6 +41,7 @@ void JoinRoomHandler::Handle(System::SessionContext &ctx, System::PacketView pac
             Protocol::S_JoinRoom res;
             res.set_success(true);
             res.set_room_id(roomId);
+            res.set_map_id(room->GetMapId());
 
             S_JoinRoomPacket respPacket(res);
             ctx.Send(respPacket);

@@ -28,6 +28,7 @@ void GetRoomListHandler::Handle(System::SessionContext &ctx, System::PacketView 
             roomInfo->set_max_players(room->GetMaxPlayers());
             roomInfo->set_is_playing(room->IsPlaying());
             roomInfo->set_room_title(room->GetTitle());
+            roomInfo->set_map_id(room->GetMapId());
         }
 
         S_RoomListPacket respPacket(res);

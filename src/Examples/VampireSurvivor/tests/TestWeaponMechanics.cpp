@@ -2,16 +2,16 @@
 #include "Entity/Monster.h"
 #include "Entity/MonsterFactory.h"
 #include "Entity/Player.h"
+#include "Entity/PlayerInventory.h"
 #include "Entity/Projectile.h"
 #include "Entity/ProjectileFactory.h"
-#include "Entity/PlayerInventory.h"
 #include "Game/DamageEmitter.h"
 #include "Game/Effect/EffectManager.h"
 #include "Game/LevelUpManager.h"
 #include "Game/Room.h"
 #include "MockSystem.h"
-#include <gtest/gtest.h>
 #include <cmath>
+#include <gtest/gtest.h>
 
 namespace SimpleGame {
 
@@ -35,6 +35,7 @@ TEST(WeaponMechanicsTest, InfinitePierceProjectileDoesNotExpireOnFirstHit)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         100,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),
@@ -75,8 +76,8 @@ TEST(WeaponMechanicsTest, InfinitePierceProjectileDoesNotExpireOnFirstHit)
     // Verify both monsters were hit and projectile is NOT expired
     EXPECT_LT(m1->GetHp(), m1InitialHp); // Monster 1 took damage
     EXPECT_LT(m2->GetHp(), m2InitialHp); // Monster 2 took damage
-    EXPECT_FALSE(proj->IsExpired()); // Infinite pierce projectile should NOT be expired
-    EXPECT_FALSE(proj->IsHit()); // OnHit should not consume infinite pierce
+    EXPECT_FALSE(proj->IsExpired());     // Infinite pierce projectile should NOT be expired
+    EXPECT_FALSE(proj->IsHit());         // OnHit should not consume infinite pierce
 }
 
 // ============================================================
@@ -118,6 +119,7 @@ TEST(WeaponMechanicsTest, SpeedMultScalesProjectileVelocity)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         101,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),
@@ -208,6 +210,7 @@ TEST(WeaponMechanicsTest, MaxTargetsOverrideCapsAoEHits)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         102,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),
@@ -243,9 +246,12 @@ TEST(WeaponMechanicsTest, MaxTargetsOverrideCapsAoEHits)
 
     // Count how many monsters took damage
     int hitCount = 0;
-    if (m1->GetHp() < m1InitialHp) hitCount++;
-    if (m2->GetHp() < m2InitialHp) hitCount++;
-    if (m3->GetHp() < m3InitialHp) hitCount++;
+    if (m1->GetHp() < m1InitialHp)
+        hitCount++;
+    if (m2->GetHp() < m2InitialHp)
+        hitCount++;
+    if (m3->GetHp() < m3InitialHp)
+        hitCount++;
 
     // Should only hit 1 target despite having 3 in range
     EXPECT_EQ(hitCount, 1);
@@ -271,6 +277,7 @@ TEST(WeaponMechanicsTest, PoisonDoTAppliesDamageOverTime)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         103,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),
@@ -344,6 +351,7 @@ TEST(WeaponMechanicsTest, PlayerBaseCritModifiesProjectileDamage)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         104,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),
@@ -439,6 +447,7 @@ TEST(WeaponMechanicsTest, SparseWeaponLevelsDoNotCrashEmitterCreation)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         105,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),
@@ -539,6 +548,7 @@ TEST(WeaponMechanicsTest, LevelUpIntegrationTest)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         106,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),

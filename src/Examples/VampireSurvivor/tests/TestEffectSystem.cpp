@@ -7,7 +7,6 @@
 #include "Protocol/game.pb.h"
 #include <gtest/gtest.h>
 
-
 using namespace SimpleGame;
 
 class MockAI : public IAIBehavior
@@ -32,6 +31,7 @@ TEST(EffectSystemTest, KnockbackStateBlocksAI)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         999,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),

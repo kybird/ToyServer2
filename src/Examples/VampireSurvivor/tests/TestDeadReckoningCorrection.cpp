@@ -76,7 +76,7 @@ protected:
         RoomManager::Instance().Init(mockFramework, nullptr);
 
         // Setup Room
-        room = RoomManager::Instance().CreateRoom(999, "TestRoom");
+        room = RoomManager::Instance().CreateRoom(999, "TestRoom", 1);
         // [Fix] StartGame sets _gameStarted = true, required for ExecuteUpdate
         room->StartGame();
 

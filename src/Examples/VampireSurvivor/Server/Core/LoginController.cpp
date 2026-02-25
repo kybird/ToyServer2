@@ -1,5 +1,6 @@
 #include "Core/LoginController.h"
 #include "Core/GameEvents.h"
+#include "Core/UserDB.h"
 #include "Game/GameConfig.h"
 #include "Game/Room.h"
 #include "Game/RoomManager.h"
@@ -70,8 +71,6 @@ void LoginController::OnLogin(const LoginRequestEvent &evt)
             if (success)
             {
                 resMsg.set_my_player_id(static_cast<int32_t>(sessionId));
-                resMsg.set_map_width(0);
-                resMsg.set_map_height(0);
                 resMsg.set_server_tick_rate(GameConfig::TPS);
                 resMsg.set_server_tick_interval(GameConfig::TICK_INTERVAL_SEC);
 

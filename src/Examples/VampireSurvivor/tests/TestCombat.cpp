@@ -27,6 +27,7 @@ TEST(CombatTest, ProjectileHitsMonster)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         1,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),
@@ -78,6 +79,7 @@ TEST(CombatTest, MonsterDies)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         2,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),
@@ -130,6 +132,7 @@ TEST(CombatTest, MonsterContactsPlayer)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         3,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),
@@ -167,6 +170,7 @@ TEST(CombatTest, OverkillDoesNotResultInNegativeHp)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         4,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),
@@ -223,6 +227,7 @@ TEST(CombatTest, LinearEmitterHitsNearestMonster)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         5,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),
@@ -273,6 +278,7 @@ TEST(CombatTest, LinearEmitterRespectsLifetime)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         6,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),
@@ -321,6 +327,7 @@ TEST(CombatTest, LinearEmitterSpawnsProjectile)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         10,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),

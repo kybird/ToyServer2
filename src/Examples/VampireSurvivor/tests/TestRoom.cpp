@@ -77,6 +77,7 @@ TEST(RoomTest, EnterAndLeave)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         1,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),
@@ -105,6 +106,7 @@ TEST(RoomTest, MultiplePlayers)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         2,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),
@@ -246,6 +248,7 @@ TEST(SendPacketTest, BroadcastPacketToEmptyRoomNoCrash)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         999,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),
@@ -264,6 +267,7 @@ TEST(SendPacketTest, BroadcastPacketToRoomWithPlayers)
     auto mockFramework = std::make_shared<System::MockFramework>();
     auto room = std::make_shared<Room>(
         998,
+        1,
         mockFramework,
         mockFramework->GetDispatcher(),
         mockFramework->GetTimer(),

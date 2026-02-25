@@ -22,17 +22,18 @@
 namespace SimpleGame {
 
 Room::Room(
-    int roomId, std::shared_ptr<System::IFramework> framework, std::shared_ptr<System::IDispatcher> dispatcher,
-    std::shared_ptr<System::ITimer> timer, std::shared_ptr<System::IStrand> strand, std::shared_ptr<UserDB> userDB
+    int roomId, int mapId, std::shared_ptr<System::IFramework> framework,
+    std::shared_ptr<System::IDispatcher> dispatcher, std::shared_ptr<System::ITimer> timer,
+    std::shared_ptr<System::IStrand> strand, std::shared_ptr<UserDB> userDB
 )
-    : _roomId(roomId), _framework(std::move(framework)), _timer(std::move(timer)), _strand(std::move(strand)),
-      _waveMgr(_objMgr, _grid, roomId), _dispatcher(std::move(dispatcher)), _userDB(std::move(userDB))
+    : _roomId(roomId), _mapId(mapId), _framework(std::move(framework)), _timer(std::move(timer)),
+      _strand(std::move(strand)), _waveMgr(_objMgr, _grid, roomId), _dispatcher(std::move(dispatcher)),
+      _userDB(std::move(userDB))
 {
     _combatMgr = std::make_unique<CombatManager>();
     _effectMgr = std::make_unique<EffectManager>();
 
-    // TODO: MapID should be passed if multiple maps. Hardcoding to 1 for now.
-    _tileMap = DataManager::Instance().GetMap(1);
+    _tileMap = DataManager::Instance().GetMap(_mapId);
     if (_tileMap == nullptr)
     {
         LOG_WARN("Room {} initialized without a TileMap.", _roomId);

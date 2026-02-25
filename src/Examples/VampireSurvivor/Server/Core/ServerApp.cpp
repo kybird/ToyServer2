@@ -4,6 +4,7 @@
 #include "Core/GamePacketHandler.h"
 #include "Core/LoginController.h"
 #include "Core/UserDB.h"
+#include "Game/Room.h"
 #include "Game/RoomManager.h"
 #include "Protocol/game.pb.h"
 #include "System/Drivers/MySQL/MySQLDriver.h"

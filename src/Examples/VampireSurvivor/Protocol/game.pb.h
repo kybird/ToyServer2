@@ -2238,8 +2238,6 @@ class S_Login final : public ::google::protobuf::Message
   enum : int {
     kSuccessFieldNumber = 1,
     kMyPlayerIdFieldNumber = 2,
-    kMapWidthFieldNumber = 3,
-    kMapHeightFieldNumber = 4,
     kServerTickRateFieldNumber = 5,
     kServerTickIntervalFieldNumber = 6,
     kServerTickFieldNumber = 7,
@@ -2262,26 +2260,6 @@ class S_Login final : public ::google::protobuf::Message
   private:
   ::int32_t _internal_my_player_id() const;
   void _internal_set_my_player_id(::int32_t value);
-
-  public:
-  // float map_width = 3;
-  void clear_map_width() ;
-  float map_width() const;
-  void set_map_width(float value);
-
-  private:
-  float _internal_map_width() const;
-  void _internal_set_map_width(float value);
-
-  public:
-  // float map_height = 4;
-  void clear_map_height() ;
-  float map_height() const;
-  void set_map_height(float value);
-
-  private:
-  float _internal_map_height() const;
-  void _internal_set_map_height(float value);
 
   public:
   // uint32 server_tick_rate = 5;
@@ -2319,7 +2297,7 @@ class S_Login final : public ::google::protobuf::Message
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      3, 7, 0,
+      3, 5, 0,
       0, 2>
       _table_;
 
@@ -2339,8 +2317,6 @@ class S_Login final : public ::google::protobuf::Message
                           const S_Login& from_msg);
     bool success_;
     ::int32_t my_player_id_;
-    float map_width_;
-    float map_height_;
     ::uint32_t server_tick_rate_;
     float server_tick_interval_;
     ::uint32_t server_tick_;
@@ -2928,6 +2904,7 @@ class S_JoinRoom final : public ::google::protobuf::Message
   enum : int {
     kSuccessFieldNumber = 1,
     kRoomIdFieldNumber = 2,
+    kMapIdFieldNumber = 3,
   };
   // bool success = 1;
   void clear_success() ;
@@ -2949,12 +2926,22 @@ class S_JoinRoom final : public ::google::protobuf::Message
   void _internal_set_room_id(::int32_t value);
 
   public:
+  // int32 map_id = 3;
+  void clear_map_id() ;
+  ::int32_t map_id() const;
+  void set_map_id(::int32_t value);
+
+  private:
+  ::int32_t _internal_map_id() const;
+  void _internal_set_map_id(::int32_t value);
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.S_JoinRoom)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      1, 2, 0,
+      2, 3, 0,
       0, 2>
       _table_;
 
@@ -2974,6 +2961,7 @@ class S_JoinRoom final : public ::google::protobuf::Message
                           const S_JoinRoom& from_msg);
     bool success_;
     ::int32_t room_id_;
+    ::int32_t map_id_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -4814,6 +4802,7 @@ class S_CreateRoom final : public ::google::protobuf::Message
   enum : int {
     kSuccessFieldNumber = 1,
     kRoomIdFieldNumber = 2,
+    kMapIdFieldNumber = 3,
   };
   // bool success = 1;
   void clear_success() ;
@@ -4835,12 +4824,22 @@ class S_CreateRoom final : public ::google::protobuf::Message
   void _internal_set_room_id(::int32_t value);
 
   public:
+  // int32 map_id = 3;
+  void clear_map_id() ;
+  ::int32_t map_id() const;
+  void set_map_id(::int32_t value);
+
+  private:
+  ::int32_t _internal_map_id() const;
+  void _internal_set_map_id(::int32_t value);
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.S_CreateRoom)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      1, 2, 0,
+      2, 3, 0,
       0, 2>
       _table_;
 
@@ -4860,6 +4859,7 @@ class S_CreateRoom final : public ::google::protobuf::Message
                           const S_CreateRoom& from_msg);
     bool success_;
     ::int32_t room_id_;
+    ::int32_t map_id_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -5227,6 +5227,7 @@ class RoomInfo final : public ::google::protobuf::Message
     kCurrentPlayersFieldNumber = 2,
     kMaxPlayersFieldNumber = 3,
     kIsPlayingFieldNumber = 4,
+    kMapIdFieldNumber = 6,
   };
   // string room_title = 5;
   void clear_room_title() ;
@@ -5284,12 +5285,22 @@ class RoomInfo final : public ::google::protobuf::Message
   void _internal_set_is_playing(bool value);
 
   public:
+  // int32 map_id = 6;
+  void clear_map_id() ;
+  ::int32_t map_id() const;
+  void set_map_id(::int32_t value);
+
+  private:
+  ::int32_t _internal_map_id() const;
+  void _internal_set_map_id(::int32_t value);
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.RoomInfo)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      3, 5, 0,
+      3, 6, 0,
       36, 2>
       _table_;
 
@@ -5312,6 +5323,7 @@ class RoomInfo final : public ::google::protobuf::Message
     ::int32_t current_players_;
     ::int32_t max_players_;
     bool is_playing_;
+    ::int32_t map_id_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -8573,6 +8585,7 @@ class C_CreateRoom final : public ::google::protobuf::Message
   enum : int {
     kRoomTitleFieldNumber = 2,
     kWavePatternIdFieldNumber = 1,
+    kMapIdFieldNumber = 3,
   };
   // string room_title = 2;
   void clear_room_title() ;
@@ -8600,12 +8613,22 @@ class C_CreateRoom final : public ::google::protobuf::Message
   void _internal_set_wave_pattern_id(::int32_t value);
 
   public:
+  // int32 map_id = 3;
+  void clear_map_id() ;
+  ::int32_t map_id() const;
+  void set_map_id(::int32_t value);
+
+  private:
+  ::int32_t _internal_map_id() const;
+  void _internal_set_map_id(::int32_t value);
+
+  public:
   // @@protoc_insertion_point(class_scope:Protocol.C_CreateRoom)
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
   static const ::google::protobuf::internal::TcParseTable<
-      1, 2, 0,
+      2, 3, 0,
       40, 2>
       _table_;
 
@@ -8625,6 +8648,7 @@ class C_CreateRoom final : public ::google::protobuf::Message
                           const C_CreateRoom& from_msg);
     ::google::protobuf::internal::ArenaStringPtr room_title_;
     ::int32_t wave_pattern_id_;
+    ::int32_t map_id_;
     ::google::protobuf::internal::CachedSize _cached_size_;
     PROTOBUF_TSAN_DECLARE_MEMBER
   };
@@ -10081,50 +10105,6 @@ inline void S_Login::_internal_set_my_player_id(::int32_t value) {
   _impl_.my_player_id_ = value;
 }
 
-// float map_width = 3;
-inline void S_Login::clear_map_width() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.map_width_ = 0;
-}
-inline float S_Login::map_width() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_Login.map_width)
-  return _internal_map_width();
-}
-inline void S_Login::set_map_width(float value) {
-  _internal_set_map_width(value);
-  // @@protoc_insertion_point(field_set:Protocol.S_Login.map_width)
-}
-inline float S_Login::_internal_map_width() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.map_width_;
-}
-inline void S_Login::_internal_set_map_width(float value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.map_width_ = value;
-}
-
-// float map_height = 4;
-inline void S_Login::clear_map_height() {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.map_height_ = 0;
-}
-inline float S_Login::map_height() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_Login.map_height)
-  return _internal_map_height();
-}
-inline void S_Login::set_map_height(float value) {
-  _internal_set_map_height(value);
-  // @@protoc_insertion_point(field_set:Protocol.S_Login.map_height)
-}
-inline float S_Login::_internal_map_height() const {
-  ::google::protobuf::internal::TSanRead(&_impl_);
-  return _impl_.map_height_;
-}
-inline void S_Login::_internal_set_map_height(float value) {
-  ::google::protobuf::internal::TSanWrite(&_impl_);
-  _impl_.map_height_ = value;
-}
-
 // uint32 server_tick_rate = 5;
 inline void S_Login::clear_server_tick_rate() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
@@ -10265,6 +10245,28 @@ inline void C_CreateRoom::set_allocated_room_title(std::string* value) {
   // @@protoc_insertion_point(field_set_allocated:Protocol.C_CreateRoom.room_title)
 }
 
+// int32 map_id = 3;
+inline void C_CreateRoom::clear_map_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.map_id_ = 0;
+}
+inline ::int32_t C_CreateRoom::map_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.C_CreateRoom.map_id)
+  return _internal_map_id();
+}
+inline void C_CreateRoom::set_map_id(::int32_t value) {
+  _internal_set_map_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.C_CreateRoom.map_id)
+}
+inline ::int32_t C_CreateRoom::_internal_map_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.map_id_;
+}
+inline void C_CreateRoom::_internal_set_map_id(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.map_id_ = value;
+}
+
 // -------------------------------------------------------------------
 
 // S_CreateRoom
@@ -10311,6 +10313,28 @@ inline ::int32_t S_CreateRoom::_internal_room_id() const {
 inline void S_CreateRoom::_internal_set_room_id(::int32_t value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.room_id_ = value;
+}
+
+// int32 map_id = 3;
+inline void S_CreateRoom::clear_map_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.map_id_ = 0;
+}
+inline ::int32_t S_CreateRoom::map_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_CreateRoom.map_id)
+  return _internal_map_id();
+}
+inline void S_CreateRoom::set_map_id(::int32_t value) {
+  _internal_set_map_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_CreateRoom.map_id)
+}
+inline ::int32_t S_CreateRoom::_internal_map_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.map_id_;
+}
+inline void S_CreateRoom::_internal_set_map_id(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.map_id_ = value;
 }
 
 // -------------------------------------------------------------------
@@ -10385,6 +10409,28 @@ inline ::int32_t S_JoinRoom::_internal_room_id() const {
 inline void S_JoinRoom::_internal_set_room_id(::int32_t value) {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.room_id_ = value;
+}
+
+// int32 map_id = 3;
+inline void S_JoinRoom::clear_map_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.map_id_ = 0;
+}
+inline ::int32_t S_JoinRoom::map_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_JoinRoom.map_id)
+  return _internal_map_id();
+}
+inline void S_JoinRoom::set_map_id(::int32_t value) {
+  _internal_set_map_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_JoinRoom.map_id)
+}
+inline ::int32_t S_JoinRoom::_internal_map_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.map_id_;
+}
+inline void S_JoinRoom::_internal_set_map_id(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.map_id_ = value;
 }
 
 // -------------------------------------------------------------------
@@ -10585,6 +10631,28 @@ inline void RoomInfo::set_allocated_room_title(std::string* value) {
     _impl_.room_title_.Set("", GetArena());
   }
   // @@protoc_insertion_point(field_set_allocated:Protocol.RoomInfo.room_title)
+}
+
+// int32 map_id = 6;
+inline void RoomInfo::clear_map_id() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.map_id_ = 0;
+}
+inline ::int32_t RoomInfo::map_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.RoomInfo.map_id)
+  return _internal_map_id();
+}
+inline void RoomInfo::set_map_id(::int32_t value) {
+  _internal_set_map_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.RoomInfo.map_id)
+}
+inline ::int32_t RoomInfo::_internal_map_id() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.map_id_;
+}
+inline void RoomInfo::_internal_set_map_id(::int32_t value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.map_id_ = value;
 }
 
 // -------------------------------------------------------------------

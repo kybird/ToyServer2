@@ -38,8 +38,8 @@ protected:
 
 TEST_F(SwarmPerformanceTest, StressTest500Monsters)
 {
-    // Room 생성자 인자 수정 (6개)
-    auto room = std::make_shared<Room>(1, nullptr, nullptr, nullptr, nullptr, nullptr);
+    // Room 생성자 인자 수정 (7개: roomId, mapId, framework, ...)
+    auto room = std::make_shared<Room>(1, 1, nullptr, nullptr, nullptr, nullptr, nullptr);
 
     // Private 멤버 접근 에러 수정: 인터페이스 사용
     ObjectManager &objMgr = room->GetObjectManager();

@@ -21,11 +21,7 @@ void RoomManager::Init(std::shared_ptr<System::IFramework> framework, std::share
     // Re-create default room with timer
     if (_rooms.empty())
     {
-        CreateRoom(1);
-    }
-    if (_rooms.empty())
-    {
-        CreateRoom(1);
+        CreateRoom(1, "Default Room", 1);
     }
 
     // Subscribe to System Events
@@ -73,14 +69,10 @@ void RoomManager::Cleanup()
     LOG_INFO("RoomManager Cleanup Done.");
 }
 
-void RoomManager::TestMethod()
+std::shared_ptr<Room> RoomManager::CreateRoom(int roomId, const std::string &title, int mapId)
 {
-    // Empty test
-}
-
-std::shared_ptr<Room> RoomManager::CreateRoom(int roomId, const std::string &title)
-{
-    std::cout << "[DEBUG] RoomManager::CreateRoom(" << roomId << ", " << title << ") Entry" << std::endl;
+    std::cout << "[DEBUG] RoomManager::CreateRoom(" << roomId << ", " << title << ", mapId: " << mapId << ") Entry"
+              << std::endl;
     std::lock_guard<std::mutex> lock(_mutex);
     if (!_timer)
     {
@@ -97,7 +89,7 @@ std::shared_ptr<Room> RoomManager::CreateRoom(int roomId, const std::string &tit
 
     std::cout << "[DEBUG] Creating Room Object..." << std::endl;
     std::shared_ptr<Room> newRoom =
-        std::make_shared<Room>(roomId, _framework, _framework->GetDispatcher(), _timer, strand, _userDB);
+        std::make_shared<Room>(roomId, mapId, _framework, _framework->GetDispatcher(), _timer, strand, _userDB);
     newRoom->SetTitle(title);
 
     std::cout << "[DEBUG] Room Object Created. Adding to map..." << std::endl;

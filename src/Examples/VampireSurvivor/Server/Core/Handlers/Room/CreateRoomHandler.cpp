@@ -25,11 +25,13 @@ void CreateRoomHandler::Handle(System::SessionContext &ctx, System::PacketView p
         if (title.empty())
             title = "Room " + std::to_string(newRoomId);
 
-        auto room = RoomManager::Instance().CreateRoom(newRoomId, title);
+        int32_t mapId = req.map_id();
+        auto room = RoomManager::Instance().CreateRoom(newRoomId, title, mapId);
 
         Protocol::S_CreateRoom res;
         res.set_success(true);
         res.set_room_id(newRoomId);
+        res.set_map_id(mapId);
 
         S_CreateRoomPacket respPacket(res);
         ctx.Send(respPacket);
