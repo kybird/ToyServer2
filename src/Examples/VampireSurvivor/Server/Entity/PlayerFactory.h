@@ -1,7 +1,8 @@
 #pragma once
 #include "Entity/Player.h"
 #include "Game/ObjectManager.h"
-#include "System/IObjectPool.h"
+#include "System/Memory/LockFreeObjectPool.h"
+#include "System/Memory/RefPtr.h"
 
 namespace SimpleGame {
 
@@ -17,13 +18,13 @@ public:
         return instance;
     }
 
-    std::shared_ptr<Player> CreatePlayer(int32_t gameId, uint64_t sessionId);
+    ::System::RefPtr<Player> CreatePlayer(int32_t gameId, uint64_t sessionId);
     void Release(Player *player);
 
 private:
     PlayerFactory();
 
-    std::unique_ptr<System::IObjectPool<Player>> _pool;
+    std::unique_ptr<::System::LockFreeObjectPool<Player>> _pool;
 };
 
 } // namespace SimpleGame

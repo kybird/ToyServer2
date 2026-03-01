@@ -27,6 +27,11 @@ public:
         _vx = _vy = 0.0f;
     }
 
+    virtual void ReturnToPool() override
+    {
+        // ExpGems belong to ObjectManager or pool. To be handled via factory.
+    }
+
     int32_t GetExpAmount() const
     {
         return _expAmount;

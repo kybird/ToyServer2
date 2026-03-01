@@ -15,7 +15,7 @@
 
 namespace SimpleGame {
 
-DamageEmitter::DamageEmitter(int32_t skillId, std::shared_ptr<Player> owner, int32_t weaponId, int32_t level)
+DamageEmitter::DamageEmitter(int32_t skillId, ::System::RefPtr<Player> owner, int32_t weaponId, int32_t level)
     : _skillId(skillId), _owner(owner), _weaponId(weaponId), _level(level)
 {
     const auto *tmpl = DataManager::Instance().GetSkillInfo(skillId);
@@ -57,7 +57,7 @@ DamageEmitter::~DamageEmitter() = default;
 
 void DamageEmitter::Update(float dt, Room *room)
 {
-    auto owner = _owner.lock();
+    auto owner = _owner;
     if (!owner || owner->IsDead() || !room || !_active)
         return;
 
@@ -245,7 +245,7 @@ void DamageEmitter::Update(float dt, Room *room)
             auto monsters = room->GetMonstersInRange(px, py, 30.0f);
             if (!monsters.empty())
             {
-                std::shared_ptr<Monster> nearest = nullptr;
+                ::System::RefPtr<Monster> nearest = nullptr;
                 float minDistSq = std::numeric_limits<float>::max();
 
                 for (auto &monster : monsters)
@@ -619,7 +619,7 @@ void DamageEmitter::Update(float dt, Room *room)
         }
         else if (_emitterType == "Aura")
         {
-            std::vector<std::shared_ptr<Monster>> victims = room->GetMonstersInRange(px, py, finalRadius);
+            std::vector<::System::RefPtr<Monster>> victims = room->GetMonstersInRange(px, py, finalRadius);
 
             int32_t finalMaxTargets = _maxTargetsPerTick + additionalProjectiles;
             if (levelData && levelData->maxTargets > 0)
@@ -689,7 +689,7 @@ void DamageEmitter::Update(float dt, Room *room)
         else
         {
             // AoE Pulse Damage (default fallback)
-            std::vector<std::shared_ptr<Monster>> victims = room->GetMonstersInRange(px, py, finalRadius);
+            std::vector<::System::RefPtr<Monster>> victims = room->GetMonstersInRange(px, py, finalRadius);
 
             if (_targetRule == "Nearest")
             {
@@ -799,7 +799,7 @@ bool DamageEmitter::IsExpired() const
 {
     if (!_active)
         return true;
-    auto owner = _owner.lock();
+    auto owner = _owner;
     return !owner || owner->IsDead();
 }
 

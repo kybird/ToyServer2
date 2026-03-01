@@ -163,7 +163,7 @@ bool CheckCollision(const std::shared_ptr<GameObject> &a, const std::shared_ptr<
     return distSq < (radSum * radSum);
 }
 
-void Room::UpdatePhysics(float deltaTime, const std::vector<std::shared_ptr<GameObject>> &objects)
+void Room::UpdatePhysics(float deltaTime, const std::vector<::System::RefPtr<GameObject>> &objects)
 {
     for (auto &obj : objects)
     {
@@ -185,7 +185,7 @@ void Room::UpdatePhysics(float deltaTime, const std::vector<std::shared_ptr<Game
             float radius = 15.0f; // 기본 반지름 (충분히 크거나 몬스터 반경으로 사용)
             if (obj->GetType() == Protocol::ObjectType::MONSTER)
             {
-                auto monster = std::dynamic_pointer_cast<Monster>(obj);
+                auto monster = (Monster *)obj.get();
                 if (monster)
                     radius = monster->GetRadius();
             }
@@ -280,7 +280,7 @@ void Room::BroadcastPacket(const System::IPacket &pkt, uint64_t excludeSessionId
     }
 }
 
-void Room::BroadcastSpawn(const std::vector<std::shared_ptr<GameObject>> &objects)
+void Room::BroadcastSpawn(const std::vector<::System::RefPtr<GameObject>> &objects)
 {
     if (objects.empty())
         return;
@@ -304,13 +304,13 @@ void Room::BroadcastSpawn(const std::vector<std::shared_ptr<GameObject>> &object
 
         if (obj->GetType() == Protocol::ObjectType::MONSTER)
         {
-            auto m = std::dynamic_pointer_cast<Monster>(obj);
+            auto m = (Monster *)obj.get();
             if (m)
                 info->set_type_id(m->GetMonsterTypeId());
         }
         else if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
         {
-            auto p = std::dynamic_pointer_cast<Projectile>(obj);
+            auto p = (Projectile *)obj.get();
             if (p)
                 info->set_type_id(p->GetTypeId());
         }
@@ -418,9 +418,9 @@ void Room::SyncNetwork()
 }
 
 // [Spatial Queries]
-std::shared_ptr<Player> Room::GetNearestPlayer(float x, float y)
+::System::RefPtr<Player> Room::GetNearestPlayer(float x, float y)
 {
-    std::shared_ptr<Player> nearest = nullptr;
+    ::System::RefPtr<Player> nearest = nullptr;
     float minDstSq = std::numeric_limits<float>::max();
 
     for (const auto &[sid, player] : _players)
@@ -442,24 +442,24 @@ std::shared_ptr<Player> Room::GetNearestPlayer(float x, float y)
     return nearest;
 }
 
-std::vector<std::shared_ptr<Monster>> Room::GetMonstersInRange(float x, float y, float radius)
+std::vector<::System::RefPtr<Monster>> Room::GetMonstersInRange(float x, float y, float radius)
 {
-    std::vector<std::shared_ptr<GameObject>> results;
+    std::vector<::System::RefPtr<GameObject>> queryResults;
 
     // Fix: Use _grid logic correctly.
     // ObjectManager doesn't have QueryRange. SpatialGrid does.
-    _grid.QueryRange(x, y, radius, results, _objMgr);
+    _grid.Query(x, y, radius, queryResults, _objMgr);
 
-    std::vector<std::shared_ptr<Monster>> monsters;
-    monsters.reserve(results.size());
+    std::vector<::System::RefPtr<Monster>> monsters;
+    monsters.reserve(queryResults.size());
 
-    for (auto &obj : results)
+    for (auto &obj : queryResults)
     {
         if (obj->GetType() == Protocol::ObjectType::MONSTER)
         {
-            auto m = std::dynamic_pointer_cast<Monster>(obj);
+            auto m = (Monster *)obj.get();
             if (m && !m->IsDead())
-                monsters.push_back(m);
+                monsters.push_back(::System::RefPtr<Monster>(m));
         }
     }
     return monsters;

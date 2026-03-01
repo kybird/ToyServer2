@@ -1,3 +1,4 @@
+// [Smart Pointer Refactor] Force re-compilation
 #include "JoinRoomHandler.h"
 #include "Core/GameEvents.h"
 #include "Entity/PlayerFactory.h"

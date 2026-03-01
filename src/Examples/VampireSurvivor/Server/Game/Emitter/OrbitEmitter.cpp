@@ -13,7 +13,7 @@ OrbitEmitter::OrbitEmitter(float initialTimer) : _timer(initialTimer)
 }
 
 void OrbitEmitter::Update(
-    float dt, Room *room, DamageEmitter *emitter, std::shared_ptr<Player> owner, const WeaponStats &stats
+    float dt, Room *room, DamageEmitter *emitter, ::System::RefPtr<Player> owner, const WeaponStats &stats
 )
 {
     _timer += dt;

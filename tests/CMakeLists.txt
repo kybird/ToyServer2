@@ -71,3 +71,17 @@ target_link_libraries(TestSmartNotifyBenchmark
 target_precompile_headers(TestSmartNotifyBenchmark PRIVATE "${CMAKE_SOURCE_DIR}/src/System/Pch.h")
 
 gtest_discover_tests(TestSmartNotifyBenchmark)
+
+# IntrusivePtr Test
+add_executable(TestIntrusivePtr
+    TestIntrusivePtr.cpp
+)
+
+target_link_libraries(TestIntrusivePtr
+    PRIVATE
+        System
+        GTest::gtest_main
+)
+target_precompile_headers(TestIntrusivePtr PRIVATE "${CMAKE_SOURCE_DIR}/src/System/Pch.h")
+
+gtest_discover_tests(TestIntrusivePtr)

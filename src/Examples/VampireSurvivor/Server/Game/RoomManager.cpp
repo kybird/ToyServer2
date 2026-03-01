@@ -139,7 +139,7 @@ std::vector<std::shared_ptr<Room>> RoomManager::GetAllRooms()
     return rooms;
 }
 
-void RoomManager::RegisterPlayer(uint64_t sessionId, std::shared_ptr<Player> player)
+void RoomManager::RegisterPlayer(uint64_t sessionId, ::System::RefPtr<Player> player)
 {
     std::lock_guard<std::mutex> lock(_mutex);
     _players[sessionId] = player;
@@ -151,7 +151,7 @@ void RoomManager::UnregisterPlayer(uint64_t sessionId)
     _players.erase(sessionId);
 }
 
-std::shared_ptr<Player> RoomManager::GetPlayer(uint64_t sessionId)
+::System::RefPtr<Player> RoomManager::GetPlayer(uint64_t sessionId)
 {
     std::lock_guard<std::mutex> lock(_mutex);
     auto it = _players.find(sessionId);

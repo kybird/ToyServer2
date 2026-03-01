@@ -89,7 +89,7 @@ TEST(RoomTest, EnterAndLeave)
 
     // Create a player
     MockSession session1(100);
-    auto player1 = std::make_shared<Player>(1, session1.GetId());
+    auto player1 = ::System::RefPtr<Player>(new Player(1, session1.GetId()));
     player1->Initialize(1, session1.GetId(), 100, 5.0f);
 
     // Enter
@@ -117,9 +117,9 @@ TEST(RoomTest, MultiplePlayers)
     MockSession s1(101);
     MockSession s2(102);
 
-    auto p1 = std::make_shared<Player>(101, s1.GetId());
+    auto p1 = ::System::RefPtr<Player>(new Player(101, s1.GetId()));
     p1->Initialize(101, s1.GetId(), 100, 5.0f);
-    auto p2 = std::make_shared<Player>(102, s2.GetId());
+    auto p2 = ::System::RefPtr<Player>(new Player(102, s2.GetId()));
     p2->Initialize(102, s2.GetId(), 100, 5.0f);
 
     room->Enter(p1);
@@ -281,9 +281,9 @@ TEST(SendPacketTest, BroadcastPacketToRoomWithPlayers)
     mockFramework->GetMockDispatcher()->RegisterSession(201, &s1);
     mockFramework->GetMockDispatcher()->RegisterSession(202, &s2);
 
-    auto p1 = std::make_shared<Player>(201, s1.GetId());
+    auto p1 = ::System::RefPtr<Player>(new Player(201, s1.GetId()));
     p1->Initialize(201, s1.GetId(), 100, 5.0f);
-    auto p2 = std::make_shared<Player>(202, s2.GetId());
+    auto p2 = ::System::RefPtr<Player>(new Player(202, s2.GetId()));
     p2->Initialize(202, s2.GetId(), 100, 5.0f);
 
     room->Enter(p1);

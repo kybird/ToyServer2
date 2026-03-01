@@ -47,20 +47,20 @@ void CombatManager::ResolveCleanup(Room *room)
 
         if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
         {
-            auto proj = std::static_pointer_cast<Projectile>(obj);
+            auto proj = ::System::RefPtr<Projectile>(static_cast<Projectile *>(obj.get()));
             if (proj->IsExpired())
                 shouldRemove = true;
         }
         if (obj->GetType() == Protocol::ObjectType::MONSTER)
         {
 
-            auto monster = std::static_pointer_cast<Monster>(obj);
+            auto monster = ::System::RefPtr<Monster>(static_cast<Monster *>(obj.get()));
             if (monster->IsDead())
                 shouldRemove = true;
         }
         else if (obj->GetType() == Protocol::ObjectType::ITEM)
         {
-            auto gem = std::static_pointer_cast<ExpGem>(obj);
+            auto gem = ::System::RefPtr<ExpGem>(static_cast<ExpGem *>(obj.get()));
             if (gem->IsPickedUp())
             {
                 shouldRemove = true;
@@ -92,15 +92,13 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
     {
         if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
         {
-            auto proj = std::static_pointer_cast<Projectile>(obj);
+            auto proj = (Projectile *)obj.get();
             if (proj->IsExpired())
                 continue;
 
             // [Optimization] Increase query radius for fast-moving projectiles
             room->_queryBuffer.clear();
-            room->_grid.QueryRange(
-                proj->GetX(), proj->GetY(), proj->GetRadius() + 1.5f, room->_queryBuffer, room->_objMgr
-            );
+            room->_grid.Query(proj->GetX(), proj->GetY(), proj->GetRadius() + 1.5f, room->_queryBuffer, room->_objMgr);
 
             // Use GameObject (Single Path)
             for (auto &target : room->_queryBuffer)
@@ -117,7 +115,7 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
 
                 if (target->GetType() == Protocol::ObjectType::MONSTER)
                 {
-                    auto monster = std::static_pointer_cast<Monster>(target);
+                    auto monster = ::System::RefPtr<Monster>(static_cast<Monster *>(target.get()));
                     if (monster->IsDead())
                         continue;
 
@@ -143,7 +141,7 @@ void CombatManager::ResolveProjectileCollisions(float dt, Room *room)
                         auto ownerObj = room->GetObjectManager().GetObject(proj->GetOwnerId());
                         if (ownerObj && ownerObj->GetType() == Protocol::ObjectType::PLAYER)
                         {
-                            auto player = std::static_pointer_cast<Player>(ownerObj);
+                            auto player = ::System::RefPtr<Player>(static_cast<Player *>(ownerObj.get()));
                             float baseCritChance = player->GetCriticalChance();
 
                             // Find weapon level info to add crit modifiers
@@ -273,7 +271,7 @@ void CombatManager::CollectAttackEvents(Room *room, std::vector<AttackEvent> &ou
         if (obj->GetType() != Protocol::ObjectType::MONSTER)
             continue;
 
-        auto monster = std::dynamic_pointer_cast<Monster>(obj);
+        auto monster = ::System::RefPtr<Monster>(static_cast<Monster *>(obj.get()));
         if (!monster || monster->IsDead())
             continue;
 
@@ -326,7 +324,7 @@ void CombatManager::ExecuteAttackEvents(Room *room, const std::vector<AttackEven
         auto monsterObj = room->_objMgr.GetObject(evt.monsterId);
         if (monsterObj && monsterObj->GetType() == Protocol::ObjectType::MONSTER)
         {
-            auto monster = std::static_pointer_cast<Monster>(monsterObj);
+            auto monster = ::System::RefPtr<Monster>(static_cast<Monster *>(monsterObj.get()));
             monster->ResetAttackCooldown(evt.attackTime);
         }
 
@@ -367,7 +365,7 @@ void CombatManager::ResolveItemCollisions(float dt, Room *room)
         if (obj->GetType() != Protocol::ObjectType::ITEM)
             continue;
 
-        auto gem = std::static_pointer_cast<ExpGem>(obj);
+        auto gem = ::System::RefPtr<ExpGem>(static_cast<ExpGem *>(obj.get()));
         if (gem->IsPickedUp())
             continue;
 

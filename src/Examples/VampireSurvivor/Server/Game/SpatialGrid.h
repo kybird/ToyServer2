@@ -1,6 +1,7 @@
 #pragma once
 #include "Entity/GameObject.h"
 #include "Protocol/game.pb.h"
+#include "System/Memory/RefPtr.h"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -30,7 +31,7 @@ public:
     }
 
     // [Optimization] 모든 객체를 격자에 일괄 재배치 (O(N))
-    void Rebuild(const std::vector<std::shared_ptr<GameObject>> &objects);
+    void Rebuild(const std::vector<::System::RefPtr<GameObject>> &objects);
 
     // 좌표를 격자 인덱스로 변환 (Wrap-around 방식 지원)
     inline int GetIndex(float x, float y) const
@@ -52,9 +53,9 @@ public:
     }
 
     // QueryRange (CombatManager 등에서 사용)
-    void QueryRange(
-        float x, float y, float radius, std::vector<std::shared_ptr<GameObject>> &outResults, ObjectManager &objMgr
-    );
+    void Query(
+        float x, float y, float radius, std::vector<::System::RefPtr<GameObject>> &outResults, ObjectManager &objMgr
+    ) const;
 
     void Clear();
 

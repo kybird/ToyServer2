@@ -1,3 +1,4 @@
+// [Smart Pointer Refactor] Force re-compilation to pick up std::shared_ptr<Room> changes
 #include "Handlers/Game/SelectLevelUpHandler.h"
 #include "Entity/Player.h"
 #include "Game/LevelUpManager.h"

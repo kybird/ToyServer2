@@ -3,9 +3,9 @@
 
 namespace SimpleGame {
 
-void SpatialGrid::QueryRange(
-    float x, float y, float radius, std::vector<std::shared_ptr<GameObject>> &outResults, ObjectManager &objMgr
-)
+void SpatialGrid::Query(
+    float x, float y, float radius, std::vector<::System::RefPtr<GameObject>> &outResults, ObjectManager &objMgr
+) const
 {
     outResults.clear();
     float radiusSq = radius * radius;
@@ -26,8 +26,7 @@ void SpatialGrid::QueryRange(
             const auto &cell = _cells[static_cast<size_t>(idx)];
             for (int32_t id : cell.monsterIds)
             {
-                auto obj = objMgr.GetObject(id);
-                if (obj)
+                if (::System::RefPtr<GameObject> obj = objMgr.GetObject(id))
                 {
                     float dx = obj->GetX() - x;
                     float dy = obj->GetY() - y;
@@ -41,7 +40,7 @@ void SpatialGrid::QueryRange(
     }
 }
 
-void SpatialGrid::Rebuild(const std::vector<std::shared_ptr<GameObject>> &objects)
+void SpatialGrid::Rebuild(const std::vector<::System::RefPtr<GameObject>> &objects)
 {
     // 1. 기존 데이터 초기화 (메모리 재할당 방지를 위해 clear만 수행)
     for (auto &cell : _cells)

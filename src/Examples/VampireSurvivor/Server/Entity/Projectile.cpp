@@ -1,8 +1,14 @@
 #include "Entity/Projectile.h"
+#include "Entity/ProjectileFactory.h"
 #include "Game/Room.h"
 #include <cmath>
 
 namespace SimpleGame {
+
+void Projectile::ReturnToPool()
+{
+    ProjectileFactory::Instance().Release(const_cast<Projectile *>(this));
+}
 
 void Projectile::Update(float dt, Room *room)
 {

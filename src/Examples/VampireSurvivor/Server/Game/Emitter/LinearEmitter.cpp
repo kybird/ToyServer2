@@ -16,7 +16,7 @@ LinearEmitter::LinearEmitter(float initialTimer) : _timer(initialTimer)
 }
 
 void LinearEmitter::Update(
-    float dt, Room *room, DamageEmitter *emitter, std::shared_ptr<Player> owner, const WeaponStats &stats
+    float dt, Room *room, DamageEmitter *emitter, ::System::RefPtr<Player> owner, const WeaponStats &stats
 )
 {
     _timer += dt;
@@ -34,7 +34,7 @@ void LinearEmitter::Update(
             auto monsters = room->GetMonstersInRange(px, py, 30.0f);
             if (!monsters.empty())
             {
-                std::shared_ptr<Monster> nearest = nullptr;
+                ::System::RefPtr<Monster> nearest = nullptr;
                 float minDistSq = std::numeric_limits<float>::max();
 
                 for (auto &monster : monsters)

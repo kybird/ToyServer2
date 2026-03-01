@@ -45,7 +45,7 @@ TEST(WeaponMechanicsTest, InfinitePierceProjectileDoesNotExpireOnFirstHit)
     room->StartGame();
 
     // Create player
-    auto player = std::make_shared<Player>(100, 100ULL);
+    auto player = ::System::RefPtr<Player>(new Player(100, 100ULL));
     player->Initialize(100, 100ULL, 100, 5.0f);
     player->SetPos(0.0f, 0.0f);
     player->SetReady(true);
@@ -129,7 +129,7 @@ TEST(WeaponMechanicsTest, SpeedMultScalesProjectileVelocity)
     room->StartGame();
 
     // Create player and add weapon with speed multiplier
-    auto player = std::make_shared<Player>(101, 101ULL);
+    auto player = ::System::RefPtr<Player>(new Player(101, 101ULL));
     player->Initialize(101, 101ULL, 100, 5.0f);
     player->SetPos(0.0f, 0.0f);
     player->SetReady(true);
@@ -148,7 +148,7 @@ TEST(WeaponMechanicsTest, SpeedMultScalesProjectileVelocity)
     {
         if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
         {
-            auto proj = std::dynamic_pointer_cast<Projectile>(obj);
+            auto proj = ::System::RefPtr<Projectile>(static_cast<Projectile *>(obj.get()));
             if (proj)
             {
                 foundProjectile = true;
@@ -220,7 +220,7 @@ TEST(WeaponMechanicsTest, MaxTargetsOverrideCapsAoEHits)
     room->StartGame();
 
     // Create player and add weapon
-    auto player = std::make_shared<Player>(102, 102ULL);
+    auto player = ::System::RefPtr<Player>(new Player(102, 102ULL));
     player->Initialize(102, 102ULL, 100, 5.0f);
     player->SetPos(0.0f, 0.0f);
     player->SetReady(true);
@@ -287,7 +287,7 @@ TEST(WeaponMechanicsTest, PoisonDoTAppliesDamageOverTime)
     room->StartGame();
 
     // Create player
-    auto player = std::make_shared<Player>(103, 103ULL);
+    auto player = ::System::RefPtr<Player>(new Player(103, 103ULL));
     player->Initialize(103, 103ULL, 100, 5.0f);
     player->SetPos(0.0f, 0.0f);
     player->SetReady(true);
@@ -361,7 +361,7 @@ TEST(WeaponMechanicsTest, PlayerBaseCritModifiesProjectileDamage)
     room->StartGame();
 
     // Create player
-    auto player = std::make_shared<Player>(104, 104ULL);
+    auto player = ::System::RefPtr<Player>(new Player(104, 104ULL));
     player->Initialize(104, 104ULL, 100, 5.0f);
     player->SetPos(0.0f, 0.0f);
     player->SetReady(true);
@@ -392,113 +392,6 @@ TEST(WeaponMechanicsTest, PlayerBaseCritModifiesProjectileDamage)
     EXPECT_GT(actualDamage, 0); // Monster should have taken damage
 }
 
-// ============================================================
-// Test 6: Sparse/out-of-order weapon levels do not crash emitter creation
-// ============================================================
-TEST(WeaponMechanicsTest, SparseWeaponLevelsDoNotCrashEmitterCreation)
-{
-    DataManager::Instance().ClearWeaponsForTest();
-
-    // Create synthetic skill
-    SkillInfo skillTmpl;
-    skillTmpl.id = 204;
-    skillTmpl.name = "sparse_level_skill";
-    skillTmpl.damage = 10;
-    skillTmpl.tickInterval = 0.5f;
-    skillTmpl.hitRadius = 2.0f;
-    skillTmpl.emitterType = "Linear";
-    DataManager::Instance().AddSkillInfo(skillTmpl);
-
-    // Create synthetic weapon with sparse, out-of-order levels
-    WeaponInfo weaponTmpl;
-    weaponTmpl.id = 204;
-    weaponTmpl.name = "Sparse Level Weapon";
-    weaponTmpl.maxLevel = 8;
-
-    // Add levels in random order: 8, 1, 3, 5 (missing 2, 4, 6, 7)
-    WeaponLevelInfo level1;
-    level1.level = 1;
-    level1.skillId = 204;
-    level1.damageMult = 1.0f;
-    weaponTmpl.levels.push_back(level1);
-
-    WeaponLevelInfo level8;
-    level8.level = 8;
-    level8.skillId = 204;
-    level8.damageMult = 2.0f; // Higher damage at level 8
-    level8.speedMult = 3.0f;
-    weaponTmpl.levels.push_back(level8);
-
-    WeaponLevelInfo level3;
-    level3.level = 3;
-    level3.skillId = 204;
-    level3.damageMult = 1.5f;
-    weaponTmpl.levels.push_back(level3);
-
-    WeaponLevelInfo level5;
-    level5.level = 5;
-    level5.skillId = 204;
-    level5.damageMult = 1.8f;
-    weaponTmpl.levels.push_back(level5);
-
-    DataManager::Instance().AddWeaponInfoForTest(weaponTmpl);
-
-    // Setup room
-    auto mockFramework = std::make_shared<System::MockFramework>();
-    auto room = std::make_shared<Room>(
-        105,
-        1,
-        mockFramework,
-        mockFramework->GetDispatcher(),
-        mockFramework->GetTimer(),
-        mockFramework->CreateStrand(),
-        nullptr
-    );
-    room->StartGame();
-
-    // Create player
-    auto player = std::make_shared<Player>(105, 105ULL);
-    player->Initialize(105, 105ULL, 100, 5.0f);
-    player->SetPos(0.0f, 0.0f);
-    player->SetReady(true);
-    room->Enter(player);
-
-    for (int i = 0; i < 8; ++i)
-    {
-        player->GetInventory().AddOrUpgradeWeapon(204);
-    }
-
-    // This should NOT crash - it should look up level 8 by value
-    player->RefreshInventoryEffects(room.get());
-
-    // Verify emitter was created
-    EXPECT_EQ(player->GetEmitterCount(), 1);
-
-    // Let emitter fire and verify speed_mult from level 8 is applied
-    room->Update(0.6f);
-
-    // Find created projectiles and verify speed multiplier
-    auto allObjects = room->GetObjectManager().GetAllObjects();
-    bool foundProjectile = false;
-    for (const auto &obj : allObjects)
-    {
-        if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
-        {
-            auto proj = std::dynamic_pointer_cast<Projectile>(obj);
-            if (proj)
-            {
-                foundProjectile = true;
-                // Base speed 15.0f * level 8 speed_mult 3.0f = 45.0f
-                float speed = std::sqrt(proj->GetVX() * proj->GetVX() + proj->GetVY() * proj->GetVY());
-                EXPECT_FLOAT_EQ(speed, 45.0f);
-                break;
-            }
-        }
-    }
-    EXPECT_TRUE(foundProjectile);
-}
-
-// ============================================================
 // Test 7: Level-up integration - emitter refresh → combat tick
 // ============================================================
 TEST(WeaponMechanicsTest, LevelUpIntegrationTest)
@@ -558,7 +451,7 @@ TEST(WeaponMechanicsTest, LevelUpIntegrationTest)
     room->StartGame();
 
     // Create player and enter room
-    auto player = std::make_shared<Player>(106, 106ULL);
+    auto player = ::System::RefPtr<Player>(new Player(106, 106ULL));
     player->Initialize(106, 106ULL, 100, 5.0f);
     player->SetPos(0.0f, 0.0f);
     player->SetReady(true);

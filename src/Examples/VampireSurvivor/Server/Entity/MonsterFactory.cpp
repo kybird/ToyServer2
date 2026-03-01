@@ -20,10 +20,11 @@ MonsterFactory &MonsterFactory::Instance()
 
 MonsterFactory::MonsterFactory()
 {
-    _pool = std::make_unique<System::SimplePool<Monster>>(1000);
+    _pool = std::make_unique<::System::LockFreeObjectPool<Monster>>();
+    _pool->Init(0, 1000);
 }
 
-std::shared_ptr<Monster>
+::System::RefPtr<Monster>
 MonsterFactory::CreateMonster(ObjectManager &objMgr, int32_t monsterTypeId, float x, float y, int32_t hpOverride)
 {
     const auto *tmpl = DataManager::Instance().GetMonsterInfo(monsterTypeId);
@@ -36,23 +37,14 @@ MonsterFactory::CreateMonster(ObjectManager &objMgr, int32_t monsterTypeId, floa
     int32_t finalHp = (hpOverride > 0) ? hpOverride : tmpl->hp;
 
     // Acquire from pool or alloc
-    Monster *raw = _pool->Acquire();
-    if (!raw)
+    ::System::RefPtr<Monster> monster = _pool->Pop();
+    if (!monster)
     {
         // Should not happen with current SimplePool unless alloc limit reached
         return nullptr;
     }
 
     int32_t id = objMgr.GenerateId();
-
-    // Custom deleter returns to pool
-    std::shared_ptr<Monster> monster(
-        raw,
-        [](Monster *m)
-        {
-            MonsterFactory::Instance().Release(m);
-        }
-    );
 
     // Init
     monster->Initialize(
@@ -69,11 +61,11 @@ MonsterFactory::CreateMonster(ObjectManager &objMgr, int32_t monsterTypeId, floa
     return monster;
 }
 
-std::vector<std::shared_ptr<Monster>> MonsterFactory::SpawnBatch(
+std::vector<::System::RefPtr<Monster>> MonsterFactory::SpawnBatch(
     ObjectManager &objMgr, int32_t monsterTypeId, int count, float minX, float maxX, float minY, float maxY
 )
 {
-    std::vector<std::shared_ptr<Monster>> monsters;
+    std::vector<::System::RefPtr<Monster>> monsters;
     monsters.reserve(count);
 
     // Naive Random for now (Can be improved with proper C++ random if needed)
@@ -96,8 +88,9 @@ void MonsterFactory::Release(Monster *monster)
 {
     if (monster)
     {
-        monster->Reset();
-        _pool->Release(monster);
+        // lock-free object pool actually calls Reset() in Pop(), but it's okay.
+        // monster->Reset(); // We can omit this per LockFreeObjectPool's design.
+        _pool->Push(monster);
     }
 }
 

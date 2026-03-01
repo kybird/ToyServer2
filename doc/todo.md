@@ -18,12 +18,16 @@
         - **Small Pool (1KB)**: 빈번한 소형 패킷(이동, 스탯) 및 일반 UDP용 (`UDP_MAX_APP_BYTES` $\approx$ 1.2KB).
         - **Large Pool (16KB)**: 몬스터/플레이어 동기화 패킷(약 9KB) 및 KCP 재조립용.
     - **전략**: `AllocatePacket`에서 사이즈 분기에 따라 적절한 풀에서 블록을 가져오도록 변경.
+- [ ] **[CRITICAL] SpatialGrid & Room Loop 성능 최적화 (Lock Contention 해소)**
+    - **문제**: `SpatialGrid::Query`가 루프 내부에서 `objMgr.GetObject(id)`를 호출하며 수천 번의 Mutex Lock 점유 발생. 또한 한 틱에 `GetAllObjects()`를 과도하게 호출하여 리스트 복사 부하 가중.
+    - **해결**:
+        - `SpatialGrid`가 ID 대신 `::System::RefPtr<GameObject>`를 직접 들고 있도록 수정 (Lock 제거).
+        - `Room::ExecuteUpdate` 시작 시 `GetAllObjects()` 결과를 한 번만 획득하여 하위 시스템으로 전파.
+    - **상태**: 리팩토링 후 성능 저하 보고됨, 즉시 수정 필요.
 - [ ] **[CRITICAL] Lock-Free Entity Pooling (SimplePool 교체 & std::bad_weak_ptr 크래시 해결)**
+    - **상태**: `::System::RefPtr` 도입을 통한 1단계 마이그레이션 완료 (Player, Monster, Projectile 등).
     - **원인**: 현재 `PlayerFactory` 등이 `SimplePool` 사용 중 객체를 `std::shared_ptr` 커스텀 딜리터로 풀에 반환함. 이 과정에서 `std::enable_shared_from_this`의 내부 컨트롤 블록(`weak_ptr`)이 파괴/만료된 상태로 메모리가 재사용되어, `RefreshInventoryEffects` 등에서 `shared_from_this()` 호출 시 `std::bad_weak_ptr` CommandConsole 입력 시 크래시 발생 확인.
-    - **목표**: 투사체/몬스터 대량 생성 시 심각한 락 경합 리스크 해소 및 C++ 모던 스마트 포인터의 제어 블록(Control Block) 한계 극복.
-    - **방안 (다음 세션 진행)**:
-        1. **단기 해결**: `SimplePool` 내부에서 `Acquire`/`Release` 시 Placement New(`new (obj) T()`, `obj->~T()`)를 명시적으로 호출하여 컨트롤 블록을 안전하게 초기화.
-        2. **장기 아키텍처**: `std::shared_ptr` 대신 외부 힙 할당이 없는 `boost::intrusive_ptr`(또는 독자적 TRefCountPtr)을 도입하고, `LockFreeObjectPool` (`concurrentqueue` 기반)과 융합하여 진정한 Zero-Allocation 파이프라인 구축.
+    - **해결**: `std::shared_ptr` 대신 외부 힙 할당이 없는 침투식 포인터인 `::System::RefPtr`을 도입하여 컨트롤 블록 한계 극복.
 - [ ] **[HIGH] GatewaySession 버퍼 최적화 (Zero-fill 제거)**
     - 수신 버퍼 `resize()` 시 발생하는 불필요한 0 초기화 제거 (`reserve` + `push_back` 활용).
     - 초당 수십 GB의 메모리 쓰기 부하 제거.

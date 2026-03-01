@@ -13,7 +13,7 @@ protected:
     void SetUp() override
     {
         // 프리젠테이션용 데이터 준비
-        MessagePool::Prepare(2000);
+        MessagePool::Prepare(2000, 2000, 2000);
     }
 };
 

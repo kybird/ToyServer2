@@ -82,7 +82,7 @@ protected:
 
         // [Fix] Make ID and SessionID same to avoid CombatManager lookup failure
         session = std::make_shared<MockSession>(100);
-        player = std::make_shared<Player>(100, 100ULL);
+        player = ::System::RefPtr<Player>(new Player(100, 100ULL));
         player->Initialize(100, 100ULL, 100, 5.0f);
         player->SetReady(true);
         room->Enter(player);
@@ -98,7 +98,7 @@ protected:
     }
 
     std::shared_ptr<Room> room;
-    std::shared_ptr<Player> player;
+    ::System::RefPtr<Player> player;
     std::shared_ptr<MockSession> session;
     std::shared_ptr<System::MockFramework> mockFramework;
 };

@@ -10,7 +10,7 @@ class OrbitEmitter : public IEmitter
 public:
     OrbitEmitter(float initialTimer = 0.0f);
     void Update(
-        float dt, Room *room, DamageEmitter *emitter, std::shared_ptr<Player> owner, const WeaponStats &stats
+        float dt, Room *room, DamageEmitter *emitter, ::System::RefPtr<Player> owner, const WeaponStats &stats
     ) override;
 };
 

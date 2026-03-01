@@ -60,7 +60,7 @@ private:
     // Clustering & Spawning Logic
     struct PlayerCluster
     {
-        std::vector<std::shared_ptr<GameObject>> players;
+        std::vector<::System::RefPtr<GameObject>> players;
         float centerX = 0.0f;
         float centerY = 0.0f;
     };

@@ -1,6 +1,7 @@
 #include "Entity/Player.h"
 #include "Core/DataManager.h"
 #include "Entity/Monster.h"
+#include "Entity/PlayerFactory.h"
 #include "Entity/PlayerInventory.h"
 #include "Game/DamageEmitter.h"
 #include "Game/GameConfig.h"
@@ -23,6 +24,13 @@ Player::Player() : GameObject(0, Protocol::ObjectType::PLAYER), _sessionId(0)
 }
 
 Player::~Player() = default;
+
+void Player::ReturnToPool()
+{
+    // Need to include PlayerFactory.h
+    // This will be called when RefCount hits 0
+    PlayerFactory::Instance().Release(const_cast<Player *>(this));
+}
 
 void Player::Initialize(int32_t gameId, uint64_t sessionId, int32_t hp, float speed)
 {
@@ -368,7 +376,7 @@ void Player::Update(float dt, Room *room)
                     auto obj = room->GetObjectManager().GetObject(id);
                     if (obj && obj->GetType() == Protocol::ObjectType::MONSTER)
                     {
-                        auto m = std::static_pointer_cast<Monster>(obj);
+                        auto m = ::System::RefPtr<Monster>(static_cast<Monster *>(obj.get()));
                         m->RemoveLevelUpSlow();
 
                         // 배치 패킷에 추가
@@ -590,7 +598,7 @@ void Player::ExitLevelUpState(Room *room)
             auto obj = room->GetObjectManager().GetObject(id);
             if (obj != nullptr && obj->GetType() == Protocol::ObjectType::MONSTER)
             {
-                auto m = std::static_pointer_cast<Monster>(obj);
+                auto m = ::System::RefPtr<Monster>(static_cast<Monster *>(obj.get()));
                 m->RemoveLevelUpSlow();
             }
         }
@@ -854,9 +862,8 @@ void Player::RefreshInventoryEffects(Room *room)
                 if (levelData)
                 {
                     int skillId = levelData->skillId;
-                    auto emitter = std::make_shared<DamageEmitter>(
-                        skillId, std::static_pointer_cast<Player>(shared_from_this()), weaponId, level
-                    );
+                    auto emitter =
+                        std::make_shared<DamageEmitter>(skillId, ::System::RefPtr<Player>(this), weaponId, level);
                     _emitters.push_back(emitter);
                     LOG_INFO("[Player] Added new emitter for weapon {} level {}", weaponId, level);
                 }

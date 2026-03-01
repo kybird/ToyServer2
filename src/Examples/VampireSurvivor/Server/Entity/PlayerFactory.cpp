@@ -1,31 +1,20 @@
 #include "PlayerFactory.h"
 #include "Core/DataManager.h"
 #include "Game/GameConfig.h"
-#include "System/Memory/SimplePool.h"
 
 namespace SimpleGame {
 
 PlayerFactory::PlayerFactory()
 {
-    _pool = std::make_unique<System::SimplePool<Player>>(100);
+    _pool = std::make_unique<::System::LockFreeObjectPool<Player>>();
+    _pool->Init(0, 1000);
 }
 
-std::shared_ptr<Player> PlayerFactory::CreatePlayer(int32_t gameId, uint64_t sessionId)
+::System::RefPtr<Player> PlayerFactory::CreatePlayer(int32_t gameId, uint64_t sessionId)
 {
-    // ID is passed in (server-wide UserID or generated GameID?)
-    // In Room.cpp, user ID is passed.
-
-    Player *raw = _pool->Acquire();
-    if (!raw)
+    ::System::RefPtr<Player> player = _pool->Pop();
+    if (!player)
         return nullptr;
-
-    std::shared_ptr<Player> player(
-        raw,
-        [](Player *p)
-        {
-            PlayerFactory::Instance().Release(p);
-        }
-    );
 
     const auto *tmpl = DataManager::Instance().GetPlayerInfo(1);
     int32_t hp = tmpl ? tmpl->hp : GameConfig::DEFAULT_PLAYER_HP;
@@ -37,8 +26,7 @@ std::shared_ptr<Player> PlayerFactory::CreatePlayer(int32_t gameId, uint64_t ses
 
 void PlayerFactory::Release(Player *player)
 {
-    player->Reset();
-    _pool->Release(player);
+    // _pool->Push(player) will be called internally when RefCount hits 0.
 }
 
 } // namespace SimpleGame

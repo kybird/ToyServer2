@@ -1,10 +1,10 @@
 #pragma once
-#include "System/IObjectPool.h"
-#include <memory>
+#include "Entity/Projectile.h"
+#include "System/Memory/LockFreeObjectPool.h"
+#include "System/Memory/RefPtr.h"
 
 namespace SimpleGame {
 
-class Projectile;
 class ObjectManager;
 
 /**
@@ -15,7 +15,7 @@ class ProjectileFactory
 public:
     static ProjectileFactory &Instance();
 
-    std::shared_ptr<Projectile> CreateProjectile(
+    ::System::RefPtr<Projectile> CreateProjectile(
         ObjectManager &objMgr, int32_t ownerId, int32_t skillId, int32_t typeId, float x, float y, float vx, float vy,
         int32_t damage, float lifetime
     );
@@ -25,7 +25,7 @@ private:
     ProjectileFactory();
     ~ProjectileFactory() = default;
 
-    std::unique_ptr<System::IObjectPool<Projectile>> _pool;
+    ::System::LockFreeObjectPool<Projectile> _pool;
 };
 
 } // namespace SimpleGame

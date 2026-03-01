@@ -16,6 +16,7 @@ public:
     Monster(int32_t id, int32_t monsterTypeId);
     Monster();
     virtual ~Monster() = default;
+    virtual void ReturnToPool() override;
 
     int32_t GetMonsterTypeId() const
     {

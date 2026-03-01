@@ -4,11 +4,13 @@
 #include <cstdint>
 #include <memory>
 
+#include "System/Memory/RefCounted.h"
+
 namespace SimpleGame {
 
 class Room; // Forward declaration
 
-class GameObject : public std::enable_shared_from_this<GameObject>
+class GameObject : public System::RefCounted<GameObject>
 {
 public:
     GameObject(int32_t id, Protocol::ObjectType type) : _id(id), _type(type)
@@ -23,6 +25,33 @@ public:
     virtual void TakeDamage(int32_t damage, Room *room)
     {
     }
+
+    virtual void Reset()
+    {
+        _state = Protocol::ObjectState::IDLE;
+        _stateExpiresAt = 0.0f;
+        _x = 0.0f;
+        _y = 0.0f;
+        _vx = 0.0f;
+        _vy = 0.0f;
+        _lookLeft = false;
+        _hp = _maxHp; // Refill HP safely
+
+        // Modifiers must be cleared properly depending on their clear functionality
+        _gridCellKey = 0;
+        _isInGrid = false;
+
+        _lastSentX = 0.0f;
+        _lastSentY = 0.0f;
+        _lastSentVX = 0.0f;
+        _lastSentVY = 0.0f;
+        _lastSentTime = 0.0f;
+        _lastSentServerTick = 0;
+        _lastSentState = Protocol::ObjectState::IDLE;
+    }
+
+    // Required by RefCounted
+    virtual void ReturnToPool() = 0;
 
     int32_t GetId() const
     {

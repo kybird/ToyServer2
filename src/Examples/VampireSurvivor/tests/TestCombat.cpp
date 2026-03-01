@@ -51,7 +51,7 @@ TEST(CombatTest, ProjectileHitsMonster)
 
     // [Fix] Room::Update now requires at least one player to process anything
     // [Fix] Make ID and SessionID same to workaround CombatManager lookup logic
-    auto p = std::make_shared<Player>(100, 100ULL);
+    auto p = ::System::RefPtr<Player>(new Player(100, 100ULL));
     p->Initialize(100, 100ULL, 100, 5.0f);
     p->SetReady(true);
     room->Enter(p);
@@ -95,7 +95,7 @@ TEST(CombatTest, MonsterDies)
 
     // [Fix] Room::Update now requires at least one player to process anything
     // [Fix] Manually create and init to avoid PlayerFactory dependency issues
-    auto p = std::make_shared<Player>(100, 100ULL);
+    auto p = ::System::RefPtr<Player>(new Player(100, 100ULL));
     p->Initialize(100, 100ULL, 100, 5.0f);
     p->SetReady(true);
     room->Enter(p);
@@ -143,7 +143,7 @@ TEST(CombatTest, MonsterContactsPlayer)
     room->StartGame();
 
     // [Fix] Make ID and SessionID same to workaround CombatManager::ExecuteAttackEvents lookup bug
-    auto player = std::make_shared<Player>(100, 100ULL);
+    auto player = ::System::RefPtr<Player>(new Player(100, 100ULL));
     player->Initialize(100, 100ULL, 100, 5.0f);
     player->SetPos(0.0f, 0.0f);
 
@@ -180,7 +180,7 @@ TEST(CombatTest, OverkillDoesNotResultInNegativeHp)
     // [Fix] StartGame sets _gameStarted = true
     room->StartGame();
 
-    auto player = std::make_shared<Player>(100, 100ULL);
+    auto player = ::System::RefPtr<Player>(new Player(100, 100ULL));
     player->Initialize(100, 100ULL, 100, 5.0f);
     player->SetHp(10);
     player->SetReady(true);
@@ -191,7 +191,7 @@ TEST(CombatTest, OverkillDoesNotResultInNegativeHp)
     EXPECT_EQ(player->GetHp(), 0);
     EXPECT_TRUE(player->IsDead());
 
-    auto monster = std::make_shared<Monster>(200, 1);
+    auto monster = ::System::RefPtr<Monster>(new Monster(200, 1));
     monster->Initialize(200, 1, 100, 0.5f, 10, 1.0f, 2.0f);
     monster->SetHp(10);
 
@@ -238,7 +238,7 @@ TEST(CombatTest, LinearEmitterHitsNearestMonster)
     room->StartGame();
 
     // [Fix] Make ID and SessionID same
-    auto player = std::make_shared<Player>(100, 100ULL);
+    auto player = ::System::RefPtr<Player>(new Player(100, 100ULL));
     player->Initialize(100, 100ULL, 100, 5.0f);
     player->ApplyInput(1, 1, 0);
     player->SetVelocity(0, 0);
@@ -288,7 +288,7 @@ TEST(CombatTest, LinearEmitterRespectsLifetime)
     // [Fix] StartGame sets _gameStarted = true
     room->StartGame();
     // [Fix] Make ID and SessionID same
-    auto player = std::make_shared<Player>(100, 100ULL);
+    auto player = ::System::RefPtr<Player>(new Player(100, 100ULL));
     player->Initialize(100, 100ULL, 100, 5.0f);
     player->SetReady(true);
     room->Enter(player);
@@ -338,7 +338,7 @@ TEST(CombatTest, LinearEmitterSpawnsProjectile)
     room->StartGame();
 
     // [Fix] Make ID and SessionID same
-    auto player = std::make_shared<Player>(100, 100ULL);
+    auto player = ::System::RefPtr<Player>(new Player(100, 100ULL));
     player->Initialize(100, 100ULL, 100, 5.0f);
     player->ApplyInput(1, 1, 0);
     player->SetVelocity(0, 0);
@@ -356,7 +356,8 @@ TEST(CombatTest, LinearEmitterSpawnsProjectile)
     {
         if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
         {
-            auto proj = std::dynamic_pointer_cast<Projectile>(obj);
+            auto proj = (Projectile *)
+                            obj.get(); // Using raw pointer cast as dynamic_pointer_cast won't work with RefPtr directly
             if (proj && proj->GetSkillId() == 10)
             {
                 foundProjectile = true;

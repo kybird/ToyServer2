@@ -42,12 +42,12 @@ TEST(EffectSystemTest, KnockbackStateBlocksAI)
     room->StartGame();
 
     // [Fix] Room::ExecuteUpdate requires at least one player to run
-    auto p = std::make_shared<Player>(100, 100ULL);
+    auto p = ::System::RefPtr<Player>(new Player(100, 100ULL));
     p->Initialize(100, 100ULL, 100, 5.0f);
     p->SetReady(true);
     room->Enter(p);
 
-    auto monster = std::make_shared<Monster>(1, 101);
+    auto monster = ::System::RefPtr<Monster>(new Monster(1, 101));
     auto mockAI = std::make_unique<MockAI>();
     auto *aiPtr = mockAI.get();
     monster->SetAI(std::move(mockAI));

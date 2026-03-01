@@ -313,9 +313,20 @@ set(GAME_SOURCES
     ${PROTO_SRCS} ${PROTO_HDRS}
 )
 
+add_library(VampireSurvivorLogic STATIC ${GAME_SOURCES})
+target_include_directories(VampireSurvivorLogic PUBLIC 
+    src 
+    ${CMAKE_CURRENT_BINARY_DIR}
+    src/Examples/VampireSurvivor/Server
+    src/Examples/VampireSurvivor
+    src/Examples/VampireSurvivor/Common
+    src/Examples/VampireSurvivor/Server/Core
+)
+target_precompile_headers(VampireSurvivorLogic PRIVATE src/System/Pch.h)
+target_link_libraries(VampireSurvivorLogic PUBLIC System Share protobuf::libprotobuf)
+
 add_executable(VampireSurvivorServer
     src/Examples/VampireSurvivor/Server/Main.cpp
-    ${GAME_SOURCES}
 )
 
 target_include_directories(VampireSurvivorServer PRIVATE 
@@ -329,7 +340,7 @@ target_include_directories(VampireSurvivorServer PRIVATE
 
 target_precompile_headers(VampireSurvivorServer PRIVATE src/System/Pch.h)
 
-target_link_libraries(VampireSurvivorServer PRIVATE System Share protobuf::libprotobuf)
+target_link_libraries(VampireSurvivorServer PRIVATE VampireSurvivorLogic)
 
 
 
@@ -401,8 +412,10 @@ set(VS_TEST_SOURCES
     tests/TestSmartNotifyBenchmark.cpp
     tests/TestMemoryBench.cpp
     src/System/Packet/tests/CrashReproductionTests.cpp
+    tests/TestRefPtr.cpp
+    tests/TestLockFreeObjectPool.cpp
 )
-add_executable(UnitTests ${VS_TEST_SOURCES} ${GAME_SOURCES})
+add_executable(UnitTests ${VS_TEST_SOURCES})
 target_include_directories(UnitTests PRIVATE 
     src
     src/Examples/VampireSurvivor/Server
@@ -411,7 +424,7 @@ target_include_directories(UnitTests PRIVATE
     src/Examples/VampireSurvivor/Server/Core
 )
 target_precompile_headers(UnitTests PRIVATE src/System/Pch.h)
-target_link_libraries(UnitTests PRIVATE System Share GTest::gtest GTest::gmock protobuf::libprotobuf)
+target_link_libraries(UnitTests PRIVATE VampireSurvivorLogic GTest::gtest GTest::gmock)
 
 
 

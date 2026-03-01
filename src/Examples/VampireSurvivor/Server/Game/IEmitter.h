@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Math/Vector2.h"
+#include "System/Memory/RefPtr.h"
 #include <memory>
 #include <string>
 
@@ -44,7 +45,7 @@ public:
     virtual ~IEmitter() = default;
 
     virtual void
-    Update(float dt, Room *room, DamageEmitter *emitter, std::shared_ptr<Player> owner, const WeaponStats &stats) = 0;
+    Update(float dt, Room *room, DamageEmitter *emitter, ::System::RefPtr<Player> owner, const WeaponStats &stats) = 0;
 };
 
 } // namespace SimpleGame

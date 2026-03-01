@@ -6,7 +6,6 @@
 #include <thread>
 #include <vector>
 
-
 using namespace System;
 
 // 캐시 라인(64B) 오염을 유도하는 워크로드
@@ -25,7 +24,7 @@ class MemoryStrategyBench : public ::testing::Test
 protected:
     void SetUp() override
     {
-        MessagePool::Prepare(100000);
+        MessagePool::Prepare(100000, 100000, 100000);
     }
     void TearDown() override
     {

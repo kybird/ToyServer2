@@ -1,4 +1,5 @@
 #pragma once
+#include "System/Memory/RefPtr.h"
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -25,7 +26,7 @@ struct RoomJoinedEvent
 {
     uint64_t sessionId;
     int roomId;
-    std::shared_ptr<Player> player;
+    ::System::RefPtr<Player> player;
 };
 
 struct RoomLeftEvent

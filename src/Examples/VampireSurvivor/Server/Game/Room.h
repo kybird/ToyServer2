@@ -13,6 +13,7 @@
 #include "Game/SpatialGrid.h"
 #include "Game/TileMap.h"
 #include "Game/WaveManager.h"
+#include <memory>
 
 namespace System {
 class IPacket;
@@ -51,11 +52,11 @@ public:
     );
     virtual ~Room() override;
 
-    void Enter(const std::shared_ptr<Player> &player);
+    void Enter(const ::System::RefPtr<Player> &player);
     void Leave(uint64_t sessionId);
     void OnPlayerReady(uint64_t sessionId);
     void BroadcastPacket(const System::IPacket &pkt, uint64_t excludeSessionId = 0);
-    void BroadcastSpawn(const std::vector<std::shared_ptr<GameObject>> &objects);
+    void BroadcastSpawn(const std::vector<::System::RefPtr<GameObject>> &objects);
     void BroadcastDespawn(const std::vector<int32_t> &objectIds, const std::vector<int32_t> &pickerIds = {});
     void SendToPlayer(uint64_t sessionId, const System::IPacket &pkt);
 
@@ -80,8 +81,8 @@ public:
     }
     bool IsPlaying() const;
 
-    std::shared_ptr<Player> GetNearestPlayer(float x, float y);
-    std::vector<std::shared_ptr<Monster>> GetMonstersInRange(float x, float y, float radius);
+    ::System::RefPtr<Player> GetNearestPlayer(float x, float y);
+    std::vector<::System::RefPtr<Monster>> GetMonstersInRange(float x, float y, float radius);
 
     std::shared_ptr<System::IStrand> GetStrand() const
     {
@@ -155,7 +156,7 @@ public:
 
 private:
     // [Serialization] Actual logic execution in Room's Strand
-    void ExecuteEnter(const std::shared_ptr<Player> &player);
+    void ExecuteEnter(const ::System::RefPtr<Player> &player);
     void ExecuteLeave(uint64_t sessionId);
     void ExecuteOnPlayerReady(uint64_t sessionId);
     void ExecuteStartGame();
@@ -165,7 +166,7 @@ private:
     void ExecuteStop();
     void InternalClear();
 
-    void UpdatePhysics(float deltaTime, const std::vector<std::shared_ptr<GameObject>> &objects);
+    void UpdatePhysics(float deltaTime, const std::vector<::System::RefPtr<GameObject>> &objects);
     void SyncNetwork();
     void BroadcastDebugState();
     void BroadcastDebugClear();
@@ -175,7 +176,7 @@ private:
     int _roomId;
     int _mapId;
     std::string _title;
-    std::unordered_map<uint64_t, std::shared_ptr<Player>> _players;
+    std::unordered_map<uint64_t, ::System::RefPtr<Player>> _players;
     std::unordered_set<uint64_t> _occupiedCells; // 1x1 점유 맵
 
     std::shared_ptr<System::ITimer> _timer;
@@ -183,7 +184,7 @@ private:
     std::shared_ptr<System::IStrand> _strand;
 
     ObjectManager _objMgr;
-    std::vector<std::shared_ptr<GameObject>> _queryBuffer;
+    std::vector<::System::RefPtr<GameObject>> _queryBuffer;
 
     SpatialGrid _grid{GameConfig::NEAR_GRID_CELL_SIZE};
     WaveManager _waveMgr;

@@ -247,7 +247,7 @@ void Room::Update(float deltaTime)
     ExecuteUpdate(deltaTime);
 }
 
-void Room::Enter(const std::shared_ptr<Player> &player)
+void Room::Enter(const ::System::RefPtr<Player> &player)
 {
     auto self = shared_from_this();
     if (_strand)
@@ -265,7 +265,7 @@ void Room::Enter(const std::shared_ptr<Player> &player)
     }
 }
 
-void Room::ExecuteEnter(const std::shared_ptr<Player> &player)
+void Room::ExecuteEnter(const ::System::RefPtr<Player> &player)
 {
     _players[player->GetSessionId()] = player;
     _playerCount++; // [Thread-Safe] atomic 카운터 증가
@@ -406,7 +406,7 @@ void Room::ExecuteOnPlayerReady(uint64_t sessionId)
 
             if (obj->GetType() == Protocol::ObjectType::MONSTER)
             {
-                auto monster = std::dynamic_pointer_cast<Monster>(obj);
+                auto monster = (Monster *)obj.get();
                 if (monster != nullptr)
                 {
                     info->set_type_id(monster->GetMonsterTypeId());
@@ -414,7 +414,7 @@ void Room::ExecuteOnPlayerReady(uint64_t sessionId)
             }
             else if (obj->GetType() == Protocol::ObjectType::PROJECTILE)
             {
-                auto proj = std::dynamic_pointer_cast<Projectile>(obj);
+                auto proj = (Projectile *)obj.get();
                 if (proj != nullptr)
                 {
                     info->set_type_id(proj->GetTypeId());
@@ -570,27 +570,27 @@ void Room::SetMonsterStrategy(const std::string &strategyName)
                 std::shared_ptr<IMovementStrategy> strategy;
                 if (strategyName == "smart")
                 {
-                    strategy = std::make_shared<Movement::SmartFlockingStrategy>();
+                    strategy = std::shared_ptr<IMovementStrategy>(new Movement::SmartFlockingStrategy());
                 }
                 else if (strategyName == "fluid")
                 {
-                    strategy = std::make_shared<Movement::FluidStackingStrategy>();
+                    strategy = std::shared_ptr<IMovementStrategy>(new Movement::FluidStackingStrategy());
                 }
                 else if (strategyName == "strict")
                 {
-                    strategy = std::make_shared<Movement::StrictSeparationStrategy>();
+                    strategy = std::shared_ptr<IMovementStrategy>(new Movement::StrictSeparationStrategy());
                 }
                 else if (strategyName == "surround")
                 {
-                    strategy = std::make_shared<Movement::SurroundingFlockingStrategy>();
+                    strategy = std::shared_ptr<IMovementStrategy>(new Movement::SurroundingFlockingStrategy());
                 }
                 else if (strategyName == "cell")
                 {
-                    strategy = std::make_shared<Movement::CellBasedMovementStrategy>();
+                    strategy = std::shared_ptr<IMovementStrategy>(new Movement::CellBasedMovementStrategy());
                 }
                 else if (strategyName == "vampire")
                 {
-                    strategy = std::make_shared<VampireSurvivorMovementStrategy>();
+                    strategy = std::shared_ptr<IMovementStrategy>(new VampireSurvivorMovementStrategy());
                 }
                 else
                 {
@@ -604,7 +604,7 @@ void Room::SetMonsterStrategy(const std::string &strategyName)
                 {
                     if (obj->GetType() == Protocol::ObjectType::MONSTER)
                     {
-                        auto monster = std::dynamic_pointer_cast<Monster>(obj);
+                        auto monster = (Monster *)obj.get();
                         if (monster)
                         {
                             monster->SetMovementStrategy(strategy);

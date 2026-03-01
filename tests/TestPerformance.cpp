@@ -54,7 +54,7 @@ TEST_F(SwarmPerformanceTest, StressTest500Monsters)
     // DOD 최적화 기능이 삭제되었으므로, 기존의 수동 Grid 관리는 의미가 없어짐
 
     // Add Dummy Player to trigger AI
-    auto player = std::make_shared<Player>(1000, 0ULL);
+    auto player = ::System::RefPtr<Player>(new Player(1000, 0ULL));
     player->Initialize(1000, 0ULL, 100, 5.0f);
     player->SetPos(1000.0f, 1000.0f); // Center
     player->SetReady(true);

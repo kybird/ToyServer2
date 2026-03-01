@@ -16,6 +16,8 @@ public:
     {
     }
 
+    virtual void ReturnToPool() override;
+
     void Initialize(int32_t id, int32_t ownerId, int32_t skillId, int32_t typeId)
     {
         _id = id;

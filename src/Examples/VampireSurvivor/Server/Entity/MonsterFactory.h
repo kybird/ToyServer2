@@ -1,12 +1,12 @@
 #pragma once
+#include "Entity/Monster.h"
 #include "Entity/MonsterAIType.h"
-#include "System/IObjectPool.h"
-#include <memory>
+#include "System/Memory/LockFreeObjectPool.h"
+#include "System/Memory/RefPtr.h"
 #include <vector>
 
 namespace SimpleGame {
 
-class Monster;
 class ObjectManager;
 class IAIBehavior;
 
@@ -23,14 +23,14 @@ public:
     /**
      * @brief Create a monster with stats from template and appropriate AI.
      */
-    std::shared_ptr<Monster>
+    ::System::RefPtr<Monster>
     CreateMonster(ObjectManager &objMgr, int32_t monsterTypeId, float x, float y, int32_t hpOverride = 0);
 
     /**
      * @brief Spawn multiple monsters efficiently.
      * @return List of spawned monsters.
      */
-    std::vector<std::shared_ptr<Monster>>
+    std::vector<::System::RefPtr<Monster>>
     SpawnBatch(ObjectManager &objMgr, int32_t monsterTypeId, int count, float minX, float maxX, float minY, float maxY);
 
     /**
@@ -51,7 +51,7 @@ private:
      */
     std::unique_ptr<IAIBehavior> CreateAI(MonsterAIType type, float speed);
 
-    std::unique_ptr<System::IObjectPool<Monster>> _pool;
+    std::unique_ptr<::System::LockFreeObjectPool<Monster>> _pool;
 };
 
 } // namespace SimpleGame

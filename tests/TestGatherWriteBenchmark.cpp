@@ -8,7 +8,6 @@
 #include <vector>
 #include <windows.h>
 
-
 using namespace System;
 using boost::asio::ip::tcp;
 
@@ -46,7 +45,7 @@ protected:
 
     void SetUp() override
     {
-        MessagePool::Prepare(2000);
+        MessagePool::Prepare(2000, 2000, 2000);
         acceptor = new tcp::acceptor(io_context, tcp::endpoint(boost::asio::ip::address_v4::loopback(), 0));
         clientSideSocket = new tcp::socket(io_context);
         serverSideSocket = new tcp::socket(io_context);

@@ -27,7 +27,7 @@ class DispatcherBenchmark : public ::testing::Test
 protected:
     void SetUp() override
     {
-        MessagePool::Prepare(10000);
+        MessagePool::Prepare(10000, 10000, 10000);
     }
 };
 

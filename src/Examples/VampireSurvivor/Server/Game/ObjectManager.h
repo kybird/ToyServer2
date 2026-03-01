@@ -3,6 +3,7 @@
 #include "Entity/Monster.h"
 #include "Entity/Player.h"
 #include "Entity/Projectile.h"
+#include "System/Memory/RefPtr.h"
 #include <memory>
 #include <mutex>
 #include <unordered_map>
@@ -21,7 +22,7 @@ public:
         return ++_nextId;
     }
 
-    void AddObject(std::shared_ptr<GameObject> obj)
+    void AddObject(::System::RefPtr<GameObject> obj)
     {
         std::lock_guard<std::mutex> lock(_mutex);
         _objects[obj->GetId()] = obj;
@@ -59,7 +60,7 @@ public:
         _aliveMonsterCount = 0;
     }
 
-    std::shared_ptr<GameObject> GetObject(int32_t id)
+    ::System::RefPtr<GameObject> GetObject(int32_t id)
     {
         std::lock_guard<std::mutex> lock(_mutex);
         auto it = _objects.find(id);
@@ -75,10 +76,10 @@ public:
     }
 
     // Snapshot for iteration (Thread-safe copy or use with caution)
-    std::vector<std::shared_ptr<GameObject>> GetAllObjects()
+    std::vector<::System::RefPtr<GameObject>> GetAllObjects()
     {
         std::lock_guard<std::mutex> lock(_mutex);
-        std::vector<std::shared_ptr<GameObject>> vec;
+        std::vector<::System::RefPtr<GameObject>> vec;
         vec.reserve(_objects.size());
         for (auto &pair : _objects)
         {
@@ -94,8 +95,8 @@ public:
 
 private:
     std::atomic<int32_t> _nextId{1000}; // Reserve 0-999 for Players or special
-    std::unordered_map<int32_t, std::shared_ptr<GameObject>> _objects;
-    std::mutex _mutex;
+    std::unordered_map<int32_t, ::System::RefPtr<GameObject>> _objects;
+    mutable std::mutex _mutex; // Protects access to map and sequencesterCount = 0;
     int32_t _aliveMonsterCount = 0;
 };
 

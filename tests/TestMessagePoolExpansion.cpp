@@ -9,7 +9,7 @@ class MessagePoolExpansionTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        MessagePool::Prepare(100);
+        MessagePool::Prepare(100, 100, 100);
     }
 
     void TearDown() override
@@ -29,13 +29,13 @@ TEST_F(MessagePoolExpansionTest, PacketAllocationStrategy)
         MessagePool::Free(msg);
     }
 
-    // 2. 대형 패킷 (4KB 초과) - 힙 할당 확인
+    // 2. 대형 패킷 (4KB 초과 16KB 이하) - 풀링 확인
     {
         const uint16_t LARGE_SIZE = 8192; // 8KB
         PacketMessage *msg = MessagePool::AllocatePacket(LARGE_SIZE);
         ASSERT_NE(msg, nullptr);
         EXPECT_EQ(msg->length, LARGE_SIZE);
-        EXPECT_FALSE(msg->isPooled);
+        EXPECT_TRUE(msg->isPooled); // NOW TRUE because LARGE_SIZE pool limit is 16KB
 
         // 데이터 쓰기 테스트 (메모리 경계 확인)
         std::memset(msg->Payload(), 0xCC, LARGE_SIZE);

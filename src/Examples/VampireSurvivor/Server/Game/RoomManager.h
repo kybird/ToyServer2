@@ -35,9 +35,9 @@ public:
     std::shared_ptr<Room> GetRoom(int roomId);
     std::vector<std::shared_ptr<Room>> GetAllRooms(); // Get all rooms for listing
 
-    void RegisterPlayer(uint64_t sessionId, std::shared_ptr<Player> player);
+    void RegisterPlayer(uint64_t sessionId, ::System::RefPtr<Player> player);
     void UnregisterPlayer(uint64_t sessionId);
-    std::shared_ptr<Player> GetPlayer(uint64_t sessionId);
+    ::System::RefPtr<Player> GetPlayer(uint64_t sessionId);
 
     // Lobby Management
     void EnterLobby(uint64_t sessionId); // [SessionContext Refactoring] Preferred
@@ -52,7 +52,7 @@ private:
     void HandleRoomLeft(const RoomLeftEvent &evt);
 
     std::map<int, std::shared_ptr<Room>> _rooms;
-    std::map<uint64_t, std::shared_ptr<Player>> _players;
+    std::map<uint64_t, ::System::RefPtr<Player>> _players;
     std::vector<uint64_t> _lobbySessions; // Session IDs in Lobby
     std::mutex _mutex;
     std::shared_ptr<System::IFramework> _framework;

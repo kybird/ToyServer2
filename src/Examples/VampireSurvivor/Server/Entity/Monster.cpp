@@ -3,6 +3,7 @@
 #include "Entity/AI/IMovementStrategy.h"
 #include "Entity/AI/Movement/CellBasedMovementStrategy.h"
 #include "Entity/ExpGem.h"
+#include "Entity/MonsterFactory.h"
 #include "Game/ObjectManager.h"
 #include "Game/Room.h"
 #include "GamePackets.h"
@@ -18,6 +19,11 @@ Monster::Monster(int32_t id, int32_t monsterTypeId)
 Monster::Monster() : GameObject(0, Protocol::ObjectType::MONSTER)
 {
     _movementStrategy = std::make_shared<Movement::CellBasedMovementStrategy>();
+}
+
+void Monster::ReturnToPool()
+{
+    MonsterFactory::Instance().Release(const_cast<Monster *>(this));
 }
 
 void Monster::SetMovementStrategy(std::shared_ptr<IMovementStrategy> strategy)
@@ -77,12 +83,12 @@ void Monster::TakeDamage(int32_t damage, Room *room)
         // [Unified Gem Drop] 모든 대미지 원인에 대해 사망 시 젬 스폰
         if (room != nullptr)
         {
-            auto gem = std::make_shared<ExpGem>(room->GetObjectManager().GenerateId(), 10);
+            auto gem = ::System::RefPtr<ExpGem>(new ExpGem(room->GetObjectManager().GenerateId(), 10));
             gem->Initialize(gem->GetId(), _x, _y, 10);
 
             room->GetObjectManager().AddObject(gem);
 
-            std::vector<std::shared_ptr<GameObject>> spawns;
+            std::vector<::System::RefPtr<GameObject>> spawns;
             spawns.push_back(gem);
             room->BroadcastSpawn(spawns);
         }

@@ -19,7 +19,6 @@ void Room::BroadcastDebugState()
     if (!_framework)
         return;
 
-    // Safety check for Network casting
     auto network = std::dynamic_pointer_cast<System::NetworkImpl>(_framework->GetNetwork());
     if (!network)
         return;

@@ -22,6 +22,7 @@ public:
     // Default constructor for pooling
     Player();
     virtual ~Player() override;
+    virtual void ReturnToPool() override;
 
     // Init for pooling
     void Initialize(int32_t gameId, uint64_t sessionId, int32_t hp, float speed);

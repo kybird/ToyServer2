@@ -138,14 +138,14 @@ std::vector<WaveManager::PlayerCluster> WaveManager::BuildClusters(Room *room) c
     // Get All Players
     // Note: We need a way to get players from Room.
     // Since we don't have direct access to Room::_players map, we use ObjectManager or need Room to expose it.
-    // Assuming ObjectManager contains players.
-    std::vector<std::shared_ptr<GameObject>> allPlayers;
+    // Get nearby players to pick a spawn position relative to them
+    std::vector<::System::RefPtr<GameObject>> allPlayers;
     auto objects = _objMgr.GetAllObjects();
     for (auto &obj : objects)
     {
         if (obj->GetType() == Protocol::ObjectType::PLAYER)
         {
-            auto player = std::dynamic_pointer_cast<Player>(obj);
+            auto player = ::System::RefPtr<Player>(static_cast<Player *>(obj.get()));
             if (player && !player->IsDead())
             {
                 allPlayers.push_back(obj);

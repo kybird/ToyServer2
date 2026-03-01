@@ -1,4 +1,4 @@
-#pragma once
+#include "System/Memory/RefPtr.h"
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -14,7 +14,7 @@ class Room;
 class DamageEmitter
 {
 public:
-    DamageEmitter(int32_t skillId, std::shared_ptr<Player> owner, int32_t weaponId = 0, int32_t level = 1);
+    DamageEmitter(int32_t skillId, ::System::RefPtr<Player> owner, int32_t weaponId = 0, int32_t level = 1);
     ~DamageEmitter();
     void Update(float dt, Room *room);
     bool IsExpired() const;
@@ -42,7 +42,7 @@ private:
     int32_t _skillId;
     int32_t _weaponId = 0;
     int32_t _level = 1;
-    std::weak_ptr<Player> _owner;
+    ::System::RefPtr<Player> _owner;
 
     int32_t _damage = 0;
     int32_t _typeId = 0;
