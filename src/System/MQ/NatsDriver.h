@@ -4,7 +4,6 @@
 #include <nats/nats.h>
 #include <vector>
 
-
 namespace System::MQ {
 
 class NatsDriver : public IMessageDriver
@@ -25,6 +24,7 @@ private:
     natsConnection *m_conn = nullptr;
     std::mutex m_mutex;
     std::vector<natsSubscription *> m_subs;
+    std::vector<MessageCallback *> m_callbacks; // Track dynamically allocated callbacks
 };
 
 } // namespace System::MQ

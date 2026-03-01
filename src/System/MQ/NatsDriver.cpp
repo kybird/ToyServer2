@@ -2,7 +2,6 @@
 #include "System/Pch.h"
 #include <iostream>
 
-
 namespace System::MQ {
 
 NatsDriver::NatsDriver()
@@ -42,6 +41,12 @@ void NatsDriver::Disconnect()
         natsSubscription_Destroy(sub);
     }
     m_subs.clear();
+
+    for (auto cb : m_callbacks)
+    {
+        delete cb;
+    }
+    m_callbacks.clear();
 
     if (m_conn)
     {
@@ -95,6 +100,7 @@ bool NatsDriver::Subscribe(const std::string &topic, MessageCallback callback)
     if (s == NATS_OK)
     {
         m_subs.push_back(sub);
+        m_callbacks.push_back(persistentCallback);
         return true;
     }
     else

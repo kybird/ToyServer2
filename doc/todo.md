@@ -3,13 +3,13 @@
 ## 🚀 Tasks In-Progress & Remaining
 
 ### Critical Optimization Tasks (Next Sprint)
-- [ ] **[CRITICAL] NATS Driver Memory Leak (Confirmed)**
+- [x] **[SOLVED] NATS Driver Memory Leak (Confirmed)**
     - **문제**: `Subscribe` 시 할당한 콜백 래퍼(`persistentCallback`)가 해제되지 않음 (확정 누수).
-    - **해결**: 구독 해지 및 객체 소멸 시 반드시 `delete`하도록 수정.
+    - **해결**: 구독 해지 및 객체 소멸 시 반드시 `delete`하도록 추적 벡터 `m_callbacks`를 추가하여 수정.
 - [ ] **[CRITICAL] CommandConsole Shutdown Safety (UAF Risk)**
     - **문제**: `Stop()` 시 `detach()` 사용으로 인해 메인 프로세스 종료 후에도 스레드가 살아있어 UAF 위험.
     - **해결**: `detach()` 제거, `join()` 사용, 비동기 입력 대기 도입.
-- [ ] **[CRITICAL] Multi-Level MessagePool 확장**
+- [x] **[SOLVED] Multi-Level MessagePool 확장**
     - **사전 작업 (Data-Driven Profiling)**: 
         - `MessagePool::AllocatePacket` 내부에 `IMetrics`를 연동하여 패킷 사이즈별(ex: 1KB 이하, 4KB 이하, 힙 할당) 할당 빈도 카운팅 (`GetMetrics().GetCounter()->Increment()`).
         - 기존 통합되어 있는 WebSocket 서버를 활용하여 외부 의존성(Grafana 등) 없이 가벼운 실시간 웹 모니터링 대시보드(HTML/JS)로 메트릭(JSON)을 푸시(Push)하여 실제 빈도 및 병목 눈으로 확인하기.
@@ -134,6 +134,13 @@
 ## 🧪 QA & Testing Infrastructure (From Code Review)
 
 ### Priority Tests
+- [ ] **[HIGH] MessagePool 사후 모니터링 추적 (monitor.html)**
+    - **목표**: Multi-Level MessagePool 확장에 따른 메모리 할당 분포 추적 및 Heap 의존성 감지.
+    - **📌 핵심 모니터링 지표**:
+        - `msgpool_alloc_heap` (OS Heap Fallback 횟수): **1 이상이면** 16KB를 초과하는 초과 스펙의 대형 패킷이 발생했다는 의미 (즉각적인 최적화/청크 분할 대상).
+        - `msgpool_heap_bytes` (총 힙 할당 바이트): 허용 범위를 넘은 패킷으로 인한 메모리 오버헤드 측정.
+        - **풀 별 부하 측정**: `<1KB`, `<4KB`, `<16KB` 메트릭을 주시하여 병목이 발생하는 풀 사이즈가 있는지 주기적으로 진단.
+
 - [ ] **[HIGH] UDP Session Lifecycle Test (`UDPSessionTest.cpp`)**
     - **목표**: 세션 생성부터 소멸까지의 참조 카운트(RefCnt) 및 상태 변화 완전 검증.
     - **시나리오**:
