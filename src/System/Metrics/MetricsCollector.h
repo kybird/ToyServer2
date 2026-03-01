@@ -52,6 +52,7 @@ public:
     std::shared_ptr<Gauge> GetGauge(const std::string &name) override;
 
     void LogMetrics() override;
+    std::string ToJson() override;
 
 private:
     std::mutex _mutex;

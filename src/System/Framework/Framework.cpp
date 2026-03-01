@@ -118,9 +118,9 @@ bool Framework::Init(std::shared_ptr<IConfig> config, std::shared_ptr<IPacketHan
     }
 
     // 2. Prepare Pools & Encryption (Hidden from User)
-    LOG_INFO("Pre-allocating MessagePool...");
-    // [Production] Pre-allocate enough messages to handle initial bursts (20,000 targets 10,000 CCU)
-    System::MessagePool::Prepare(20000);
+    // [Production] Pre-allocate enough messages to handle initial bursts
+    // Small: 20,000 (1KB), Medium: 5,000 (4KB), Large: 1,000 (16KB)
+    System::MessagePool::Prepare(20000, 5000, 1000);
 
     // [Encryption] Configure Factory
     std::string encType = serverConfig.encryption;

@@ -83,8 +83,8 @@ int main(int argc, char *argv[])
     {
         try
         {
-            // MessagePool 초기화
-            System::MessagePool::Prepare(8192);
+            // MessagePool 초기화 (Small: 8192, Medium: 1024, Large: 256)
+            System::MessagePool::Prepare(8192, 1024, 256);
 
             boost::asio::io_context ioContext;
             System::UDPNetworkImpl udpNet(ioContext);

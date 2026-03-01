@@ -10,7 +10,10 @@
     - **문제**: `Stop()` 시 `detach()` 사용으로 인해 메인 프로세스 종료 후에도 스레드가 살아있어 UAF 위험.
     - **해결**: `detach()` 제거, `join()` 사용, 비동기 입력 대기 도입.
 - [ ] **[CRITICAL] Multi-Level MessagePool 확장**
-    - **목표**: 4KB 초과 시 힙 할당을 방지하고, 대형 패킷(9KB)을 효율적으로 처리하기 위한 계층형 풀 도입.
+    - **사전 작업 (Data-Driven Profiling)**: 
+        - `MessagePool::AllocatePacket` 내부에 `IMetrics`를 연동하여 패킷 사이즈별(ex: 1KB 이하, 4KB 이하, 힙 할당) 할당 빈도 카운팅 (`GetMetrics().GetCounter()->Increment()`).
+        - 기존 통합되어 있는 WebSocket 서버를 활용하여 외부 의존성(Grafana 등) 없이 가벼운 실시간 웹 모니터링 대시보드(HTML/JS)로 메트릭(JSON)을 푸시(Push)하여 실제 빈도 및 병목 눈으로 확인하기.
+    - **목표**: 프로파일링 결과를 바탕으로 4KB 초과 시 힙 할당을 방지하고, 대형 패킷(9KB)을 효율적으로 처리하기 위한 계층형 풀 크기 산정 및 도입.
     - **스펙**:
         - **Small Pool (1KB)**: 빈번한 소형 패킷(이동, 스탯) 및 일반 UDP용 (`UDP_MAX_APP_BYTES` $\approx$ 1.2KB).
         - **Large Pool (16KB)**: 몬스터/플레이어 동기화 패킷(약 9KB) 및 KCP 재조립용.
@@ -57,6 +60,10 @@
     - **해결**: 카운터 포인터를 멤버 변수로 캐싱하여 사용.
 
 ## Refactoring & Cleanup (Structure)
+- [ ] **[HIGH] main.cpp 추상화 위반 해결 (Implementation Header 제거)**
+    - **문제**: `main.cpp`에서 `NetworkImpl.h`, `WebSocketNetworkImpl.h` 등 구현체 헤더를 직접 참조하고 있음.
+    - **원인**: 실시간 메트릭 브로드캐스트를 위해 `INetwork`에서 구현체로 `dynamic_pointer_cast`를 수행하기 때문.
+    - **해결**: `IFramework` 또는 `INetwork` 인터페이스에 메트릭 브로드캐스트 기능을 추상화하여 제공하도록 수정.
 - [ ] **[MEDIUM] Flatten Dispatcher Folder**
     - **목표**: `src/System/Dispatcher/DISPATCHER` 폴더 내용을 상위로 이동하고 빈 폴더 삭제.
 - [ ] **[LOW] Redistribute Root Interfaces**

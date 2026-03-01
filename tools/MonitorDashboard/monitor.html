@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToyServer2 Real-time Metrics</title>
+    <!-- Use Chart.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .status.connected { background-color: #28a745; }
+        .status.disconnected { background-color: #dc3545; }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+        .card {
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .stat-box {
+            background-color: #333;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #17a2b8;
+        }
+        .stat-value.danger {
+            color: #dc3545;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>ToyServer2 🚀 MessagePool Profiler</h2>
+            <div id="connectionStatus" class="status disconnected">Disconnected</div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Left Column: Chart -->
+            <div class="card">
+                <h3>MessagePool Allocations (Cumulative)</h3>
+                <canvas id="poolChart"></canvas>
+            </div>
+
+            <!-- Right Column: Stats -->
+            <div class="card">
+                <h3>Critical Metrics</h3>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div id="heapAlloc" class="stat-value">0</div>
+                        <div class="stat-label">Heap Fallbacks (OS Alloc)</div>
+                    </div>
+                    <div class="stat-box">
+                        <div id="heapBytes" class="stat-value">0 B</div>
+                        <div class="stat-label">Total Heap Memory</div>
+                    </div>
+                    <div class="stat-box">
+                        <div id="totalAlloc" class="stat-value">0</div>
+                        <div class="stat-label">Total Pool Hits</div>
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 30px;">Raw Data</h3>
+                <pre id="rawData" style="font-size: 11px; color: #888; overflow-x: auto;"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Setup Chart
+        const ctx = document.getElementById('poolChart').getContext('2d');
+        const labels = ['<=64B', '<=128B', '<=256B', '<=512B', '<=1KB', '<=2KB', '<=4KB', '<=8KB', '<=16KB', '>16KB'];
+        const keys = [
+            'msgpool_alloc_64b', 'msgpool_alloc_128b', 'msgpool_alloc_256b', 
+            'msgpool_alloc_512b', 'msgpool_alloc_1kb', 'msgpool_alloc_2kb', 
+            'msgpool_alloc_4kb', 'msgpool_alloc_8kb', 'msgpool_alloc_16kb', 
+            'msgpool_alloc_over16kb'
+        ];
+
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Allocations',
+                    data: Array(10).fill(0),
+                    backgroundColor: [
+                        '#4CAF50', '#4CAF50', '#4CAF50', '#4CAF50', '#4CAF50', // Greens for <=1KB
+                        '#FFC107', '#FFC107', // Yellows for 2-4KB
+                        '#F44336', '#F44336', '#B71C1C' // Reds for >4KB
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#444' }
+                    },
+                    x: {
+                        grid: { color: '#444' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        // Setup WebSocket
+        let ws = null;
+        const statusEl = document.getElementById('connectionStatus');
+
+        function connect() {
+            // Default port config for WebSocket is 8080 usually, adjust if needed
+            ws = new WebSocket('ws://localhost:8080');
+
+            ws.onopen = () => {
+                statusEl.textContent = 'Connected';
+                statusEl.className = 'status connected';
+            };
+
+            ws.onclose = () => {
+                statusEl.textContent = 'Disconnected (Retrying...)';
+                statusEl.className = 'status disconnected';
+                setTimeout(connect, 2000);
+            };
+
+            ws.onerror = (err) => {
+                console.error("WebSocket Error:", err);
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    
+                    // The server might send Room state ("rid") or Metrics (no "rid")
+                    // If it's pure metrics, we expect keys like msgpool_alloc_1kb
+                    if(data["msgpool_alloc_1kb"] !== undefined) {
+                        
+                        document.getElementById('rawData').textContent = JSON.stringify(data, null, 2);
+
+                        // Update Chart
+                        let totalHits = 0;
+                        const newData = keys.map(k => {
+                            const val = data[k] || 0;
+                            totalHits += val;
+                            return val;
+                        });
+                        chart.data.datasets[0].data = newData;
+                        chart.update();
+
+                        // Update Stats
+                        const heapAllocs = data["msgpool_alloc_heap"] || 0;
+                        const heapBytes = data["msgpool_heap_bytes"] || 0;
+                        
+                        const heapEl = document.getElementById('heapAlloc');
+                        heapEl.textContent = heapAllocs;
+                        if(heapAllocs > 0) heapEl.className = 'stat-value danger';
+                        
+                        document.getElementById('heapBytes').textContent = (heapBytes / 1024).toFixed(2) + ' KB';
+                        document.getElementById('totalAlloc').textContent = totalHits;
+                    }
+
+                } catch(e) {
+                    // Ignore parsing errors for other ws messages
+                }
+            };
+        }
+
+        // Init
+        connect();
+    </script>
+</body>
+</html>

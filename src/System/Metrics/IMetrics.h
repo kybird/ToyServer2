@@ -37,6 +37,7 @@ public:
     virtual std::shared_ptr<Gauge> GetGauge(const std::string &name) = 0;
 
     virtual void LogMetrics() = 0;
+    virtual std::string ToJson() = 0;
 };
 
 // Singleton Accessor (To replace GetMonitor)

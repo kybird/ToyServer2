@@ -9,6 +9,11 @@
 #include <iostream>
 #include <string>
 
+// 새롭게 추가할 헤더들
+#include "System/Metrics/IMetrics.h"
+#include "System/Network/NetworkImpl.h"
+#include "System/Network/WebSocketNetworkImpl.h"
+
 #define ENABLE_MEMORY_PROFILE
 #ifdef ENABLE_MEMORY_PROFILE
 #include "System/Debug/MemoryMetrics.h"
@@ -90,13 +95,11 @@ int main(int argc, char *argv[])
 
 #ifdef ENABLE_MEMORY_PROFILE
                 // Memory Monitor (1 sec interval)
-                // Monitor (1 sec interval)
-                // Monitor (1 sec interval)
                 class StatsListener : public System::ITimerListener
                 {
                 public:
-                    System::IFramework *framework;
-                    StatsListener(System::IFramework *fw) : framework(fw)
+                    System::IFramework *frameworkPtr;
+                    StatsListener(System::IFramework *fw) : frameworkPtr(fw)
                     {
                     }
 
@@ -104,12 +107,8 @@ int main(int argc, char *argv[])
                     {
                         auto active = System::Debug::MemoryMetrics::GetActiveAllocations();
                         auto msgPoolSize = System::MessagePool::GetPoolSize();
-                        // auto sessionPoolSize = System::SessionPool<System::Session>::GetApproximatePoolSize();
-                        // Need check if SessionPool has this method public or static. It was refactored.
-                        // Assuming GetApproximatePoolSize exists based on previous file reads.
-                        // Actually let's just use 0 if unsure to avoid build break, or use what was there.
                         auto sessionPoolSize = 0;
-                        auto queueSize = framework->GetDispatcherQueueSize();
+                        auto queueSize = frameworkPtr->GetDispatcherQueueSize();
                         auto activeSessionCount = 0;
 
                         LOG_INFO(
@@ -120,20 +119,13 @@ int main(int argc, char *argv[])
                             queueSize
                         );
 
-                        // [Diagnostics]
-                        auto recv = System::Debug::MemoryMetrics::RecvPacket.load();
-                        auto allocFail = System::Debug::MemoryMetrics::AllocFail.load();
-                        auto posted = System::Debug::MemoryMetrics::Posted.load();
-                        auto processed = System::Debug::MemoryMetrics::Processed.load();
-                        auto echoed = System::Debug::MemoryMetrics::Echoed.load();
-                        LOG_INFO(
-                            "[Pkt] Recv={}, AllocFail={}, Posted={}, Processed={}, Echoed={}",
-                            recv,
-                            allocFail,
-                            posted,
-                            processed,
-                            echoed
-                        );
+                        // Broadcast metrics as JSON over WebSocket
+                        auto network = std::dynamic_pointer_cast<System::NetworkImpl>(frameworkPtr->GetNetwork());
+                        if (network && network->GetWebSocket())
+                        {
+                            std::string metricsJson = System::GetMetrics().ToJson();
+                            network->GetWebSocket()->Broadcast(metricsJson);
+                        }
                     }
                 };
 
@@ -145,8 +137,8 @@ int main(int argc, char *argv[])
                 // Perfect.
 
                 framework->GetTimer()->SetInterval(
-                    100,   // ID
-                    10000, // 10 sec
+                    100,  // ID
+                    1000, // 1 sec
                     statsListener.get()
                 );
 #endif

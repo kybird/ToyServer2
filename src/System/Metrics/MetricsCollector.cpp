@@ -46,6 +46,36 @@ void MetricsCollector::LogMetrics()
     LOG_INFO("[Metrics] Accepts: {}, PPS/Total: {}, Jobs: {}", accepts, packets, jobs);
 }
 
+std::string MetricsCollector::ToJson()
+{
+    std::lock_guard<std::mutex> lock(_mutex);
+    std::string json = "{";
+    bool first = true;
+    for (const auto &pair : _registry)
+    {
+        if (!first)
+            json += ",";
+        json += "\"" + pair.first + "\":";
+
+        // Very basic RTTI to get value cleanly
+        if (auto counter = std::dynamic_pointer_cast<Counter>(pair.second))
+        {
+            json += std::to_string(counter->GetValue());
+        }
+        else if (auto gauge = std::dynamic_pointer_cast<Gauge>(pair.second))
+        {
+            json += std::to_string(gauge->GetValue());
+        }
+        else
+        {
+            json += "0";
+        }
+        first = false;
+    }
+    json += "}";
+    return json;
+}
+
 // Global Accessor Implementation
 IMetrics &GetMetrics()
 {
