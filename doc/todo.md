@@ -19,7 +19,7 @@
         - **Large Pool (16KB)**: 몬스터/플레이어 동기화 패킷(약 9KB) 및 KCP 재조립용.
     - **전략**: `AllocatePacket`에서 사이즈 분기에 따라 적절한 풀에서 블록을 가져오도록 변경.
 - [ ] **[CRITICAL] Lock-Free Entity Pooling (SimplePool 교체 & std::bad_weak_ptr 크래시 해결)**
-    - **원인**: 현재 `PlayerFactory` 등이 `SimplePool` 사용 중 객체를 `std::shared_ptr` 커스텀 딜리터로 풀에 반환함. 이 과정에서 `std::enable_shared_from_this`의 내부 컨트롤 블록(`weak_ptr`)이 파괴/만료된 상태로 메모리가 재사용되어, `RefreshInventoryEffects` 등에서 `shared_from_this()` 호출 시 `std::bad_weak_ptr` 서버 부팅 크래시 발생 확인.
+    - **원인**: 현재 `PlayerFactory` 등이 `SimplePool` 사용 중 객체를 `std::shared_ptr` 커스텀 딜리터로 풀에 반환함. 이 과정에서 `std::enable_shared_from_this`의 내부 컨트롤 블록(`weak_ptr`)이 파괴/만료된 상태로 메모리가 재사용되어, `RefreshInventoryEffects` 등에서 `shared_from_this()` 호출 시 `std::bad_weak_ptr` CommandConsole 입력 시 크래시 발생 확인.
     - **목표**: 투사체/몬스터 대량 생성 시 심각한 락 경합 리스크 해소 및 C++ 모던 스마트 포인터의 제어 블록(Control Block) 한계 극복.
     - **방안 (다음 세션 진행)**:
         1. **단기 해결**: `SimplePool` 내부에서 `Acquire`/`Release` 시 Placement New(`new (obj) T()`, `obj->~T()`)를 명시적으로 호출하여 컨트롤 블록을 안전하게 초기화.
@@ -105,11 +105,10 @@
     - **해결**: `PacketBase` MaxSize(65535) 제한 및 `Room_Update` 청크 분할(300개) 적용.
     - **상세**: `doc/learning/2026_02_19_Protobuf_Crash_Analysis.md` 참조.
 
-- [ ] **[CRITICAL] CombatManager 레벨 인덱스 접근 버그 수정**
-    - **파일**: `src/Examples/VampireSurvivor/Server/Game/CombatManager.cpp:161`
-    - **문제**: `weapon.levels[playerWeaponLevel - 1]` 인덱스 접근 사용
-    - **영향**: sparse level 배열 (예: [1, 8]만 있는 경우)에서 out-of-bounds 접근 → 크래시
-    - **해결**: T3에서 `Player::RefreshInventoryEffects`처럼 level 값으로 검색하도록 변경 필요
+- [x] **[SOLVED] CombatManager 레벨 인덱스 접근 버그 수정 (Dense Array Optimization)**
+    - **파일**: `src/Examples/VampireSurvivor/Server/Game/CombatManager.cpp:161` 등 다수
+    - **원인**: 기획 데이터(JSON)에 비어 있는 레벨(Sparse level array)이 존재할 때 `weapon.levels[playerWeaponLevel - 1]`로 접근 시 Out-of-Bounds 크래시 위험.
+    - **해결**: `DataManager`에서 무기/패시브 기획 데이터를 로드할 때 누락된 레벨이 있으면 즉시 프로그램 종료(Assert 기능)하도록 검증 로직 추가. 이를 통해 모든 레벨 데이터가 1-indexed 오름차순 Dense Array임을 런타임에 완벽히 보장하여 `O(1)` 직접 접근의 안전성 확보 및 성능 향상 완료.
 
 ### Warning
 - [ ] **[MEDIUM] Projectile::_hitTargets 벡터 무한 증가 방지**

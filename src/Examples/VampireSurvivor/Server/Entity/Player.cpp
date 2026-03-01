@@ -844,15 +844,11 @@ void Player::RefreshInventoryEffects(Room *room)
             const auto *tmpl = DataManager::Instance().GetWeaponInfo(weaponId);
             if (tmpl && level > 0)
             {
-                // Find the correct level info (handles sparse/out-of-order level arrays)
+                // O(1) Direct Access (DataManager guarantees dense 1-indexed array)
                 const WeaponLevelInfo *levelData = nullptr;
-                for (const auto &lvl : tmpl->levels)
+                if (level <= static_cast<int32_t>(tmpl->levels.size()))
                 {
-                    if (lvl.level == level)
-                    {
-                        levelData = &lvl;
-                        break;
-                    }
+                    levelData = &tmpl->levels[level - 1];
                 }
 
                 if (levelData)

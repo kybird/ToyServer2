@@ -298,6 +298,22 @@ bool DataManager::LoadWeaponData(const std::string &path)
 
                     data.levels.push_back(levelData);
                 }
+
+                // [Validation] Ensure levels are dense and 1-indexed (Level 1, 2, 3...)
+                for (size_t i = 0; i < data.levels.size(); ++i)
+                {
+                    if (data.levels[i].level != static_cast<int32_t>(i + 1))
+                    {
+                        LOG_ERROR(
+                            "Weapon data error: Level array must be dense and 1-indexed. Weapon ID: {}, Expected "
+                            "Level: {}, Found Level: {}",
+                            data.id,
+                            i + 1,
+                            data.levels[i].level
+                        );
+                        std::exit(EXIT_FAILURE);
+                    }
+                }
             }
 
             _weapons[data.id] = data;
@@ -356,6 +372,22 @@ bool DataManager::LoadPassiveData(const std::string &path)
                     levelData.bonus2 = lvl.value("bonus2", 0.0f);
                     levelData.desc = lvl.value("desc", "");
                     data.levels.push_back(levelData);
+                }
+
+                // [Validation] Ensure levels are dense and 1-indexed (Level 1, 2, 3...)
+                for (size_t i = 0; i < data.levels.size(); ++i)
+                {
+                    if (data.levels[i].level != static_cast<int32_t>(i + 1))
+                    {
+                        LOG_ERROR(
+                            "Passive data error: Level array must be dense and 1-indexed. Passive ID: {}, Expected "
+                            "Level: {}, Found Level: {}",
+                            data.id,
+                            i + 1,
+                            data.levels[i].level
+                        );
+                        std::exit(EXIT_FAILURE);
+                    }
                 }
             }
 
