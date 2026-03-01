@@ -13,11 +13,18 @@ namespace System {
 
 class CommandConsole : public ICommandConsole
 {
+private:
+    // Shared state to prevent UAF when thread is detached and CommandConsole is destroyed
+    struct SharedState
+    {
+        std::atomic<bool> _running{false};
+        std::map<std::string, CommandDescriptor> _commands;
+    };
+
 public:
     CommandConsole(std::shared_ptr<IConfig> config);
     ~CommandConsole() override;
 
-    // Start the input thread
     // Start the input thread
     void Start();
 
@@ -32,13 +39,9 @@ public:
     void ProcessCommand(const std::string &line);
 
 private:
-    void InputLoop();
-
     std::thread _inputThread;
-    std::atomic<bool> _running = false;
     std::shared_ptr<IConfig> _config;
-
-    std::map<std::string, CommandDescriptor> _commands;
+    std::shared_ptr<SharedState> _state;
 };
 
 } // namespace System

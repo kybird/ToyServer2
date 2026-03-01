@@ -6,9 +6,9 @@
 - [x] **[SOLVED] NATS Driver Memory Leak (Confirmed)**
     - **문제**: `Subscribe` 시 할당한 콜백 래퍼(`persistentCallback`)가 해제되지 않음 (확정 누수).
     - **해결**: 구독 해지 및 객체 소멸 시 반드시 `delete`하도록 추적 벡터 `m_callbacks`를 추가하여 수정.
-- [ ] **[CRITICAL] CommandConsole Shutdown Safety (UAF Risk)**
+- [x] **[SOLVED] CommandConsole Shutdown Safety (UAF Risk)**
     - **문제**: `Stop()` 시 `detach()` 사용으로 인해 메인 프로세스 종료 후에도 스레드가 살아있어 UAF 위험.
-    - **해결**: `detach()` 제거, `join()` 사용, 비동기 입력 대기 도입.
+    - **해결**: `std::shared_ptr<SharedState>`를 도입하여 스레드 생명주기와 객체 캡처 무결성을 보장(UAF 원천 차단).
 - [x] **[SOLVED] Multi-Level MessagePool 확장**
     - **사전 작업 (Data-Driven Profiling)**: 
         - `MessagePool::AllocatePacket` 내부에 `IMetrics`를 연동하여 패킷 사이즈별(ex: 1KB 이하, 4KB 이하, 힙 할당) 할당 빈도 카운팅 (`GetMetrics().GetCounter()->Increment()`).
@@ -18,10 +18,12 @@
         - **Small Pool (1KB)**: 빈번한 소형 패킷(이동, 스탯) 및 일반 UDP용 (`UDP_MAX_APP_BYTES` $\approx$ 1.2KB).
         - **Large Pool (16KB)**: 몬스터/플레이어 동기화 패킷(약 9KB) 및 KCP 재조립용.
     - **전략**: `AllocatePacket`에서 사이즈 분기에 따라 적절한 풀에서 블록을 가져오도록 변경.
-- [ ] **[CRITICAL] Lock-Free Entity Pooling (SimplePool 교체)**
-    - 현재 `ProjectileFactory`, `MonsterFactory`가 느린 `SimplePool` (`std::mutex` 기반) 사용 중.
-    - 투사체/몬스터 대량 생성 시 심각한 락 경합 예상.
-    - `LockFreeObjectPool` (`concurrentqueue` 기반) 도입 및 `Factory` 포팅 필요.
+- [ ] **[CRITICAL] Lock-Free Entity Pooling (SimplePool 교체 & std::bad_weak_ptr 크래시 해결)**
+    - **원인**: 현재 `PlayerFactory` 등이 `SimplePool` 사용 중 객체를 `std::shared_ptr` 커스텀 딜리터로 풀에 반환함. 이 과정에서 `std::enable_shared_from_this`의 내부 컨트롤 블록(`weak_ptr`)이 파괴/만료된 상태로 메모리가 재사용되어, `RefreshInventoryEffects` 등에서 `shared_from_this()` 호출 시 `std::bad_weak_ptr` 서버 부팅 크래시 발생 확인.
+    - **목표**: 투사체/몬스터 대량 생성 시 심각한 락 경합 리스크 해소 및 C++ 모던 스마트 포인터의 제어 블록(Control Block) 한계 극복.
+    - **방안 (다음 세션 진행)**:
+        1. **단기 해결**: `SimplePool` 내부에서 `Acquire`/`Release` 시 Placement New(`new (obj) T()`, `obj->~T()`)를 명시적으로 호출하여 컨트롤 블록을 안전하게 초기화.
+        2. **장기 아키텍처**: `std::shared_ptr` 대신 외부 힙 할당이 없는 `boost::intrusive_ptr`(또는 독자적 TRefCountPtr)을 도입하고, `LockFreeObjectPool` (`concurrentqueue` 기반)과 융합하여 진정한 Zero-Allocation 파이프라인 구축.
 - [ ] **[HIGH] GatewaySession 버퍼 최적화 (Zero-fill 제거)**
     - 수신 버퍼 `resize()` 시 발생하는 불필요한 0 초기화 제거 (`reserve` + `push_back` 활용).
     - 초당 수십 GB의 메모리 쓰기 부하 제거.

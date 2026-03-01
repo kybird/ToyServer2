@@ -10,7 +10,8 @@
 
 namespace System {
 
-CommandConsole::CommandConsole(std::shared_ptr<IConfig> config) : _config(config)
+CommandConsole::CommandConsole(std::shared_ptr<IConfig> config)
+    : _config(config), _state(std::make_shared<SharedState>())
 {
     // Register Default Commands
 
@@ -52,7 +53,7 @@ CommandConsole::CommandConsole(std::shared_ptr<IConfig> config) : _config(config
          [this](const std::vector<std::string> &args)
          {
              LOG_INFO("Available Commands:");
-             for (const auto &[cmd, desc] : _commands)
+             for (const auto &[cmd, desc] : _state->_commands)
              {
                  LOG_INFO("  {:<10} - {}", cmd, desc.description);
              }
@@ -78,45 +79,76 @@ CommandConsole::~CommandConsole()
 
 void CommandConsole::Start()
 {
-    if (_running.exchange(true))
+    if (_state->_running.exchange(true))
         return;
 
-    _inputThread = std::thread(&CommandConsole::InputLoop, this);
+    _inputThread = std::thread(
+        [state = _state, this]()
+        {
+            std::string line;
+            while (state->_running && std::getline(std::cin, line))
+            {
+                if (line.empty())
+                    continue;
+
+                // Process command matching logic using the captured state
+                std::istringstream iss(line);
+                std::string cmd;
+                iss >> cmd;
+
+                std::vector<std::string> args;
+                std::string arg;
+                while (iss >> arg)
+                {
+                    args.push_back(arg);
+                }
+
+                auto it = state->_commands.find(cmd);
+                if (it != state->_commands.end())
+                {
+                    try
+                    {
+                        it->second.handler(args);
+                    } catch (const std::exception &e)
+                    {
+                        LOG_ERROR("Error executing command '{}': {}", cmd, e.what());
+                    } catch (...)
+                    {
+                        LOG_ERROR("Unknown error executing command '{}'", cmd);
+                    }
+                }
+                else
+                {
+                    LOG_INFO("Unknown command: {}", cmd);
+                }
+            }
+        }
+    );
+
     LOG_INFO("Command Console Started. Type '/help' for commands.");
 }
 
 void CommandConsole::Stop()
 {
-    _running = false;
+    _state->_running = false;
     if (_inputThread.joinable())
     {
         _inputThread.detach();
     }
 }
 
-void CommandConsole::InputLoop()
-{
-    std::string line;
-    while (_running && std::getline(std::cin, line))
-    {
-        if (line.empty())
-            continue;
-        ProcessCommand(line);
-    }
-}
-
 void CommandConsole::RegisterCommand(const CommandDescriptor &desc)
 {
-    if (_commands.contains(desc.command))
+    if (_state->_commands.contains(desc.command))
     {
         LOG_WARN("Command '{}' is already registered. Overwriting.", desc.command);
     }
-    _commands[desc.command] = desc;
+    _state->_commands[desc.command] = desc;
 }
 
 void CommandConsole::UnregisterCommand(const std::string &command)
 {
-    _commands.erase(command);
+    _state->_commands.erase(command);
 }
 
 void CommandConsole::ProcessCommand(const std::string &line)
@@ -132,8 +164,8 @@ void CommandConsole::ProcessCommand(const std::string &line)
         args.push_back(arg);
     }
 
-    auto it = _commands.find(cmd);
-    if (it != _commands.end())
+    auto it = _state->_commands.find(cmd);
+    if (it != _state->_commands.end())
     {
         try
         {
