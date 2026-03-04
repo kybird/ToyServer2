@@ -58,6 +58,11 @@ public:
     void RemoveWeapon(int weaponId);
 
     /**
+     * @brief 패시브 삭제
+     */
+    void RemovePassive(int passiveId);
+
+    /**
      * @brief 특정 패시브 보유 확인
      */
     bool HasPassive(int passiveId) const;

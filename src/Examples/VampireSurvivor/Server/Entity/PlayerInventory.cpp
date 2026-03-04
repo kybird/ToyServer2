@@ -151,6 +151,11 @@ void PlayerInventory::RemoveWeapon(int weaponId)
     _weapons.erase(weaponId);
 }
 
+void PlayerInventory::RemovePassive(int passiveId)
+{
+    _passives.erase(passiveId);
+}
+
 bool PlayerInventory::HasPassive(int passiveId) const
 {
     return _passives.find(passiveId) != _passives.end();

@@ -4,6 +4,7 @@
 #include "Core/GamePacketHandler.h"
 #include "Core/LoginController.h"
 #include "Core/UserDB.h"
+#include "Game/CommandManager.h"
 #include "Game/Room.h"
 #include "Game/RoomManager.h"
 #include "Protocol/game.pb.h"
@@ -15,6 +16,7 @@
 #include "System/MQ/MessageQoS.h"
 #include "System/MQ/MessageSystem.h"
 #include "System/Session/SessionFactory.h"
+
 
 #include "System/Debug/CrashHandler.h"
 namespace SimpleGame {
@@ -208,6 +210,9 @@ bool ServerApp::InitGameLogic()
         );
     }
 
+    // Command Manager
+    CommandManager::Instance().Init();
+
     return true;
 }
 
@@ -217,79 +222,27 @@ void ServerApp::RegisterConsoleCommands()
     if (!console)
         return;
 
-    console->RegisterCommand(
-        {"/levelup",
-         "Level Up Room 1 Players",
-         [](const std::vector<std::string> &args)
-         {
-             int exp = 100;
-             if (!args.empty())
-                 try
-                 {
-                     exp = std::stoi(args[0]);
-                 } catch (...)
-                 {
-                 }
+    // 통합 CommandManager의 모든 명령어를 터미널 콘솔에 등록
+    for (const auto &[cmd, info] : CommandManager::Instance().GetCommands())
+    {
+        console->RegisterCommand(
+            {cmd,
+             info.description,
+             [cmd](const std::vector<std::string> &args)
+             {
+                 CommandContext ctx;
+                 ctx.sessionId = 0; // Server Console
+                 ctx.roomId = 1;    // Default Room 1
+                 ctx.isGM = true;
 
-             auto rooms = RoomManager::Instance().GetAllRooms();
-             for (auto &r : rooms)
-             {
-                 r->DebugAddExpToAll(exp);
-             }
-             LOG_INFO("Debug: Added {} EXP to all players in all rooms.", exp);
-         }}
-    );
-
-    console->RegisterCommand(
-        {"/spawn",
-         "Spawn Monster",
-         [](const std::vector<std::string> &args)
-         {
-             if (args.size() < 2)
-                 return;
-             try
-             {
-                 int id = std::stoi(args[0]);
-                 int count = std::stoi(args[1]);
-                 if (auto r = RoomManager::Instance().GetRoom(1))
-                     r->DebugSpawnMonster(id, count);
-             } catch (...)
-             {
-             }
-         }}
-    );
-
-    console->RegisterCommand(
-        {"/god",
-         "Toggle God Mode for all players",
-         [](const std::vector<std::string> &args)
-         {
-             auto rooms = RoomManager::Instance().GetAllRooms();
-             for (auto &r : rooms)
-             {
-                 r->DebugToggleGodMode();
-             }
-         }}
-    );
-
-    console->RegisterCommand(
-        {"/ai",
-         "Change Monster AI Strategy (/ai strict | /ai smart | /ai fluid)",
-         [](const std::vector<std::string> &args)
-         {
-             if (args.empty())
-                 return;
-             std::string strategy = args[0];
-             if (strategy == "strict" || strategy == "smart" || strategy == "fluid" || strategy == "surround" ||
-                 strategy == "vampire")
-             {
-                 if (auto r = RoomManager::Instance().GetRoom(1))
-                 {
-                     r->SetMonsterStrategy(strategy);
-                 }
-             }
-         }}
-    );
+                 // 인자로 들어온 것들을 다시 합쳐서 Execute 호출 (추후 ICommandConsole 인터페이스 개선 가능)
+                 std::string line = cmd;
+                 for (const auto &arg : args)
+                     line += " " + arg;
+                 CommandManager::Instance().Execute(ctx, line);
+             }}
+        );
+    }
 }
 
 } // namespace SimpleGame

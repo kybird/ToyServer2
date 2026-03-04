@@ -827,6 +827,23 @@ void Player::RefreshInventoryEffects(Room *room)
 
     // 2. Refresh weapon emitters
     const auto &weaponIds = _inventory->GetOwnedWeaponIds();
+
+    // Remove emitters for weapons no longer in inventory
+    _emitters.erase(
+        std::remove_if(
+            _emitters.begin(),
+            _emitters.end(),
+            [&weaponIds](const std::shared_ptr<DamageEmitter> &e)
+            {
+                int weaponId = e->GetWeaponId();
+                if (weaponId == 0)
+                    return false; // Skip built-in emitters (if any)
+                return std::find(weaponIds.begin(), weaponIds.end(), weaponId) == weaponIds.end();
+            }
+        ),
+        _emitters.end()
+    );
+
     for (int weaponId : weaponIds)
     {
         int level = _inventory->GetWeaponLevel(weaponId);

@@ -277,6 +277,7 @@ set(GAME_SOURCES
     src/Examples/VampireSurvivor/Server/Game/TileMap.cpp
 
     src/Examples/VampireSurvivor/Server/Game/RoomManager.cpp
+    src/Examples/VampireSurvivor/Server/Game/CommandManager.cpp
     src/Examples/VampireSurvivor/Server/Game/WaveManager.cpp
     src/Examples/VampireSurvivor/Server/Game/DamageEmitter.cpp
     src/Examples/VampireSurvivor/Server/Game/Emitter/EmitterFactory.cpp
