@@ -415,6 +415,7 @@ set(VS_TEST_SOURCES
     src/System/Packet/tests/CrashReproductionTests.cpp
     tests/TestRefPtr.cpp
     tests/TestLockFreeObjectPool.cpp
+    tests/TestSecurityReproduction.cpp
 )
 add_executable(UnitTests ${VS_TEST_SOURCES})
 target_include_directories(UnitTests PRIVATE 

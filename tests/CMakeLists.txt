@@ -85,3 +85,17 @@ target_link_libraries(TestIntrusivePtr
 target_precompile_headers(TestIntrusivePtr PRIVATE "${CMAKE_SOURCE_DIR}/src/System/Pch.h")
 
 gtest_discover_tests(TestIntrusivePtr)
+
+# Security Reproduction Test
+add_executable(TestSecurityReproduction
+    TestSecurityReproduction.cpp
+)
+
+target_link_libraries(TestSecurityReproduction
+    PRIVATE
+        System
+        GTest::gtest_main
+)
+target_precompile_headers(TestSecurityReproduction PRIVATE "${CMAKE_SOURCE_DIR}/src/System/Pch.h")
+
+gtest_discover_tests(TestSecurityReproduction)
